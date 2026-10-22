@@ -1,0 +1,258 @@
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap");
+
+/* Bloom Family — өнгө (bb-*), анимейшн (bloom-*) */
+@keyframes bloomFade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes bloomPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes bloomSlide {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes bloomFloat {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-3deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(3deg);
+  }
+}
+@keyframes bloomWiggle {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  20% {
+    transform: rotate(-14deg);
+  }
+  40% {
+    transform: rotate(12deg);
+  }
+  60% {
+    transform: rotate(-8deg);
+  }
+  80% {
+    transform: rotate(6deg);
+  }
+}
+.bb-grad-1 {
+  background-image: linear-gradient(to bottom right, #a5d6a7, #81c784);
+}
+.bb-grad-2 {
+  background-image: linear-gradient(to bottom right, #81c784, #5e9e64);
+}
+.bb-grad-3 {
+  background-image: linear-gradient(to right, #f2a68f, #ffd8cc);
+}
+.bb-grad-4 {
+  background-image: linear-gradient(to bottom right, #ffffff, rgba(232, 245, 233, 0.6));
+}
+.bb-grad-5 {
+  background-image: linear-gradient(to bottom right, rgba(232, 245, 233, 0.6), #ffffff);
+}
+.bb-grad-6 {
+  background-image: linear-gradient(to bottom right, #81c784, #5e9e64);
+}
+.bb-grad-7 {
+  background-image: linear-gradient(to bottom right, #ffffff, rgba(255, 216, 204, 0.3));
+}
+.bb-grad-8 {
+  background-image: linear-gradient(to right, #a5d6a7, #81c784);
+}
+.bb-grad-9 {
+  background-image: linear-gradient(to bottom right, #e8f5e9, rgba(255, 216, 204, 0.6));
+}
+.bb-grad-10 {
+  background-image: linear-gradient(to bottom right, #81c784, #5e9e64);
+}
+.bb-grad-11 {
+  background-image: linear-gradient(to bottom right, #e8f5e9, #faf8f5, rgba(255, 216, 204, 0.4));
+}
+.bb-grad-12 {
+  background-image: linear-gradient(to bottom right, #a5d6a7, #81c784);
+}
+.bb-bg-FFD8CC-60 {
+  background-color: rgba(255, 216, 204, 0.6);
+}
+.bb-bg-E8F5E9 {
+  background-color: #e8f5e9;
+}
+.bb-text-C2674F {
+  color: #c2674f;
+}
+.bb-text-4F8A55 {
+  color: #4f8a55;
+}
+.bb-bg-81C784 {
+  background-color: #81c784;
+}
+.bb-shadow-81C784-30 {
+  box-shadow:
+    0 20px 25px -5px rgba(129, 199, 132, 0.3),
+    0 8px 10px -6px rgba(129, 199, 132, 0.3);
+}
+.bb-bg-FFD8CC {
+  background-color: #ffd8cc;
+}
+.bb-fill-C2674F-40 {
+  fill: rgba(194, 103, 79, 0.4);
+}
+.bb-border-E8F5E9 {
+  border-color: #e8f5e9;
+}
+.bb-border-FFD8CC-70 {
+  border-color: rgba(255, 216, 204, 0.7);
+}
+.bb-bg-FFD8CC-50 {
+  background-color: rgba(255, 216, 204, 0.5);
+}
+.bb-bg-E8F5E9-70 {
+  background-color: rgba(232, 245, 233, 0.7);
+}
+.bb-text-81C784 {
+  color: #81c784;
+}
+.bb-bg-5E9E64 {
+  background-color: #5e9e64;
+}
+.bb-bg-FFD8CC-40 {
+  background-color: rgba(255, 216, 204, 0.4);
+}
+.bb-shadow-F2A68F-30 {
+  box-shadow:
+    0 20px 25px -5px rgba(242, 166, 143, 0.3),
+    0 8px 10px -6px rgba(242, 166, 143, 0.3);
+}
+.bb-text-B4553C {
+  color: #b4553c;
+}
+.bb-border-F2A68F {
+  border-color: #f2a68f;
+}
+.bb-shadow-F2A68F-20 {
+  box-shadow:
+    0 20px 25px -5px rgba(242, 166, 143, 0.2),
+    0 8px 10px -6px rgba(242, 166, 143, 0.2);
+}
+.bb-bg-FAF8F5 {
+  background-color: #faf8f5;
+}
+.bb-border-FFD8CC {
+  border-color: #ffd8cc;
+}
+.bb-bg-F2A68F {
+  background-color: #f2a68f;
+}
+.bb-border-A5D6A7 {
+  border-color: #a5d6a7;
+}
+.bb-border-F2A68F-50 {
+  border-color: rgba(242, 166, 143, 0.5);
+}
+.bb-border-F5C7A9-60 {
+  border-color: rgba(245, 199, 169, 0.6);
+}
+.bb-border-5E9E64 {
+  border-color: #5e9e64;
+}
+.bb-text-3F7445 {
+  color: #3f7445;
+}
+.bb-border-C8E6C9 {
+  border-color: #c8e6c9;
+}
+.bb-bg-FFD8CC-30 {
+  background-color: rgba(255, 216, 204, 0.3);
+}
+.bb-bg-A5D6A7-40 {
+  background-color: rgba(165, 214, 167, 0.4);
+}
+.bb-bg-81C784-40 {
+  background-color: rgba(129, 199, 132, 0.4);
+}
+.bb-shadow-81C784-40 {
+  box-shadow:
+    0 20px 25px -5px rgba(129, 199, 132, 0.4),
+    0 8px 10px -6px rgba(129, 199, 132, 0.4);
+}
+.bb-border-81C784 {
+  border-color: #81c784;
+}
+.bb-bg-E8F5E9-50 {
+  background-color: rgba(232, 245, 233, 0.5);
+}
+.bb-bg-FAF8F5-85 {
+  background-color: rgba(250, 248, 245, 0.85);
+}
+.bb-hover-border-81C784:hover {
+  border-color: #81c784;
+}
+.group:hover .bb-group-hover-text-4F8A55 {
+  color: #4f8a55;
+}
+.bb-hover-border-F2A68F:hover {
+  border-color: #f2a68f;
+}
+.group:hover .bb-group-hover-text-C2674F {
+  color: #c2674f;
+}
+.bb-focus-border-81C784:focus {
+  border-color: #81c784;
+}
+.bb-focus-within-border-81C784:focus-within {
+  border-color: #81c784;
+}
+.bb-disabled-bg-C8E6C9:disabled {
+  background-color: #c8e6c9;
+}
+.bb-hover-border-FFD8CC:hover {
+  border-color: #ffd8cc;
+}
+.bb-hover-text-C2674F:hover {
+  color: #c2674f;
+}
+.bb-hover-border-A5D6A7:hover {
+  border-color: #a5d6a7;
+}
+.bb-disabled-bg-E8F5E9:disabled {
+  background-color: #e8f5e9;
+}
+.bb-disabled-text-4F8A55:disabled {
+  color: #4f8a55;
+}
+.bloom-fade {
+  animation: bloomFade 0.4s ease both;
+}
+.bloom-pop {
+  animation: bloomPop 0.3s ease both;
+}
+.bloom-slide {
+  animation: bloomSlide 0.35s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+.bloom-float {
+  animation: bloomFloat 4s ease-in-out infinite;
+}
+.bloom-wiggle {
+  animation: bloomWiggle 1.2s ease-in-out infinite;
+}
