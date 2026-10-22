@@ -100,7 +100,7 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
--- ---------- Гэр бүл үүсгэх (ээж) ----------
+-- ---------- Гэр бүл үүсгэх (охин) ----------
 
 create or replace function public.create_family()
 returns text language plpgsql security definer set search_path = public as $$
@@ -135,7 +135,7 @@ begin
 end;
 $$;
 
--- ---------- Гэр бүлд нэгдэх (охин) ----------
+-- ---------- Гэр бүлд нэгдэх (асран хамгаалагч) ----------
 
 create or replace function public.join_family(p_code text)
 returns uuid language plpgsql security definer set search_path = public as $$
