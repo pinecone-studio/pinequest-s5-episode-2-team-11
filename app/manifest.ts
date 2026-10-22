@@ -3,8 +3,8 @@ import type { MetadataRoute } from "next";
 // Утсан дээр «Add to Home Screen» хийхэд апп шиг суулгагдана (PWA)
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Bloom Family",
-    short_name: "Bloom",
+    name: "Bloomy",
+    short_name: "Bloomy",
     description: "Өсвөр насны охид болон ээжүүдэд зориулсан мөчлөг, халамжийн апп",
     lang: "mn",
     start_url: "/",

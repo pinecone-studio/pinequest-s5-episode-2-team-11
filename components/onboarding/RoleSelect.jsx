@@ -1,6 +1,6 @@
 "use client";
 
-import { Leaf, ChevronRight, ShieldCheck, Heart } from "lucide-react";
+import { Leaf, ChevronRight, ShieldCheck, Heart, Sprout, HeartHandshake } from "lucide-react";
 
 export default function RoleSelect({ onPick, onLogin }) {
   return (
@@ -14,7 +14,7 @@ export default function RoleSelect({ onPick, onLogin }) {
             <Heart className="w-4 h-4 bb-text-C2674F bb-fill-C2674F-40" />
           </span>
         </div>
-        <h1 className="mt-6 text-3xl font-black text-slate-700">Bloom Family</h1>
+        <h1 className="mt-6 text-3xl font-black text-slate-700">Bloomy</h1>
         <p className="mt-2 text-slate-500 font-semibold max-w-xs">
           Өсөж торниход тань хамт байх, аюулгүй, хувийн орон зай 🌿
         </p>
@@ -30,7 +30,7 @@ export default function RoleSelect({ onPick, onLogin }) {
           className="w-full text-left bg-white rounded-3xl p-5 border-2 bb-border-E8F5E9 bb-hover-border-81C784 active:scale-95 transition-all shadow-sm flex items-center gap-4 group"
         >
           <span className="w-14 h-14 rounded-2xl bb-bg-E8F5E9 flex items-center justify-center text-3xl">
-            👧
+                        <Sprout className="w-7 h-7 bb-text-4F8A55" />
           </span>
           <span className="flex-1">
             <span className="block font-extrabold text-slate-700 text-lg">Охин / Өсвөр насныхан</span>
@@ -46,10 +46,10 @@ export default function RoleSelect({ onPick, onLogin }) {
           className="w-full text-left bg-white rounded-3xl p-5 border-2 bb-border-FFD8CC-70 bb-hover-border-F2A68F active:scale-95 transition-all shadow-sm flex items-center gap-4 group"
         >
           <span className="w-14 h-14 rounded-2xl bb-bg-FFD8CC-50 flex items-center justify-center text-3xl">
-            👩
+                        <HeartHandshake className="w-7 h-7 bb-text-C2674F" />
           </span>
           <span className="flex-1">
-            <span className="block font-extrabold text-slate-700 text-lg">Ээж / Асран хамгаалагч</span>
+            <span className="block font-extrabold text-slate-700 text-lg">Асран хамгаалагч</span>
             <span className="block text-sm text-slate-500 font-medium">
               Охиноо зөөлөн, ухаалгаар дэмжээрэй
             </span>

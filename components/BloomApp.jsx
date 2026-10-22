@@ -176,7 +176,7 @@ function AppShell() {
               <span className="w-8 h-8 rounded-xl bb-grad-12 flex items-center justify-center shrink-0">
                 <Leaf className="w-4 h-4 text-white" />
               </span>
-              <span className="font-black text-slate-700">Bloom Family</span>
+              <span className="font-black text-slate-700">Bloomy</span>
             </div>
             {showNav && (
               <span

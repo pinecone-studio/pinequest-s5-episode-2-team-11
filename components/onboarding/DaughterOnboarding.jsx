@@ -63,7 +63,7 @@ export default function DaughterOnboarding() {
 
       <div className="mt-4 rounded-2xl bb-bg-FFD8CC-40 p-4">
         <p className="text-sm font-semibold text-slate-600 leading-relaxed">
-          💡 Ээж тань Bloom Family-д <b>ээжийн бүртгэлээр</b> бүртгүүлэхэд код автоматаар гарч ирнэ.
+          💡 Ээж тань Bloomy-д <b>ээжийн бүртгэлээр</b> бүртгүүлэхэд код автоматаар гарч ирнэ.
         </p>
       </div>
 

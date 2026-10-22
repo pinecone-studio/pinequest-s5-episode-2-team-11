@@ -16,7 +16,7 @@ export default function MotherOnboarding() {
         Сайн байна уу{profile?.display_name ? `, ${profile.display_name}` : ""} 🤍
       </h2>
       <p className="mt-2 text-slate-500 font-semibold">
-        Таны гэр бүлийн хаалттай бүлэг бэлэн боллоо. Энэ кодыг охиндоо илгээгээрэй — тэр Bloom Family-д охины
+        Таны гэр бүлийн хаалттай бүлэг бэлэн боллоо. Энэ кодыг охиндоо илгээгээрэй — тэр Bloomy-д охины
         бүртгэлээр бүртгүүлээд кодоо оруулна.
       </p>
 

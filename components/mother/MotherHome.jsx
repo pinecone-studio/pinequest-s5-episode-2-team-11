@@ -85,7 +85,7 @@ export default function MotherHome() {
             </button>
           </div>
           <p className="mt-3 text-xs font-semibold text-slate-500">
-            Охин тань Bloom Family-д охины бүртгэлээр бүртгүүлээд энэ кодыг оруулна. Холбогдмогц энд шууд
+            Охин тань Bloomy-д охины бүртгэлээр бүртгүүлээд энэ кодыг оруулна. Холбогдмогц энд шууд
             харагдана.
           </p>
         </Card>
