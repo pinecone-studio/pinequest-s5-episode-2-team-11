@@ -39,6 +39,7 @@ export function FamilyProvider({ children }) {
   const [members, setMembers] = useState([]); // гэр бүлийн бүх профайл
   const [dataLoading, setDataLoading] = useState(false);
   const [ready, setReady] = useState(false); // эхний бүрэн ачаалалт дууссан эсэх
+  const [loadError, setLoadError] = useState(null); // "no_profile" | "network"
 
   /* ================= Гэр бүлийн өгөгдөл ================= */
   const [supplyRows, setSupplyRows] = useState([]);
@@ -165,10 +166,20 @@ export function FamilyProvider({ children }) {
         setProfile(data);
         return data;
       }
+      // 2 удаа олдохгүй бол (schema-аас өмнө бүртгүүлсэн гэх мэт) өөрөө нөхөж үүсгэнэ
+      if (i === 1) {
+        const meta = session?.user?.user_metadata ?? {};
+        await supabase.from("profiles").insert({
+          id: userId,
+          role: meta.role === "mother" ? "mother" : "daughter",
+          display_name: meta.display_name ?? "",
+        });
+        continue;
+      }
       await new Promise((r) => setTimeout(r, 400));
     }
     return null;
-  }, [userId]);
+  }, [userId, session?.user?.user_metadata]);
 
   const loadFamily = useCallback(async (fid) => {
     if (!fid) {
@@ -211,7 +222,25 @@ export function FamilyProvider({ children }) {
   const loadAll = useCallback(async () => {
     if (!userId) return;
     setDataLoading(true);
+    setLoadError(null);
+    try {
+      await loadAllInner();
+    } catch (e) {
+      console.error("Bloom load error:", e);
+      setLoadError("network");
+    } finally {
+      setDataLoading(false);
+      setReady(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, loadProfile, loadFamily, loadSupplies, loadKit, loadNotifications, loadMoods]);
+
+  const loadAllInner = async () => {
     const p = await loadProfile();
+    if (!p) {
+      setLoadError("no_profile");
+      return;
+    }
     let fid = p?.family_id ?? null;
     // Ээж анх нэвтрэхэд гэр бүлийг автоматаар үүсгэнэ
     if (p?.role === "mother" && !fid) {
@@ -225,9 +254,7 @@ export function FamilyProvider({ children }) {
       loadNotifications(),
       loadMoods(),
     ]);
-    setDataLoading(false);
-    setReady(true);
-  }, [userId, loadProfile, loadFamily, loadSupplies, loadKit, loadNotifications, loadMoods]);
+  };
 
   useEffect(() => {
     setReady(false);
@@ -679,6 +706,8 @@ export function FamilyProvider({ children }) {
     authLoading,
     dataLoading,
     ready,
+    loadError,
+    reload: () => loadAll(),
     profile,
     signUp,
     signIn,
