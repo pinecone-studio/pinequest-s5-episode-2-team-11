@@ -57,189 +57,189 @@
   }
 }
 .bb-grad-1 {
-  background-image: linear-gradient(to bottom right, #a5d6a7, #81c784);
+  background-image: linear-gradient(to bottom right, #CDB4F5, #F48FB1);
 }
 .bb-grad-2 {
-  background-image: linear-gradient(to bottom right, #81c784, #5e9e64);
+  background-image: linear-gradient(to bottom right, #F48FB1, #E0679F);
 }
 .bb-grad-3 {
-  background-image: linear-gradient(to right, #f2a68f, #ffd8cc);
+  background-image: linear-gradient(to right, #B794F4, #E9DDFC);
 }
 .bb-grad-4 {
-  background-image: linear-gradient(to bottom right, #ffffff, rgba(232, 245, 233, 0.6));
+  background-image: linear-gradient(to bottom right, #ffffff, rgba(253,231,241, 0.6));
 }
 .bb-grad-5 {
-  background-image: linear-gradient(to bottom right, rgba(232, 245, 233, 0.6), #ffffff);
+  background-image: linear-gradient(to bottom right, rgba(253,231,241, 0.6), #ffffff);
 }
 .bb-grad-6 {
-  background-image: linear-gradient(to bottom right, #81c784, #5e9e64);
+  background-image: linear-gradient(to bottom right, #F48FB1, #E0679F);
 }
 .bb-grad-7 {
-  background-image: linear-gradient(to bottom right, #ffffff, rgba(255, 216, 204, 0.3));
+  background-image: linear-gradient(to bottom right, #ffffff, rgba(233,221,252, 0.3));
 }
 .bb-grad-8 {
-  background-image: linear-gradient(to right, #a5d6a7, #81c784);
+  background-image: linear-gradient(to right, #CDB4F5, #F48FB1);
 }
 .bb-grad-9 {
-  background-image: linear-gradient(to bottom right, #e8f5e9, rgba(255, 216, 204, 0.6));
+  background-image: linear-gradient(to bottom right, #FDE7F1, rgba(233,221,252, 0.6));
 }
 .bb-grad-10 {
-  background-image: linear-gradient(to bottom right, #81c784, #5e9e64);
+  background-image: linear-gradient(to bottom right, #F48FB1, #E0679F);
 }
 .bb-grad-11 {
-  background-image: linear-gradient(to bottom right, #e8f5e9, #faf8f5, rgba(255, 216, 204, 0.4));
+  background-image: linear-gradient(to bottom right, #FDE7F1, #FFF7FB, rgba(233,221,252, 0.4));
 }
 .bb-grad-12 {
-  background-image: linear-gradient(to bottom right, #a5d6a7, #81c784);
+  background-image: linear-gradient(to bottom right, #CDB4F5, #F48FB1);
 }
-.bb-bg-FFD8CC-60 {
-  background-color: rgba(255, 216, 204, 0.6);
+.bb-bg-E9DDFC-60 {
+  background-color: rgba(233,221,252, 0.6);
 }
-.bb-bg-E8F5E9 {
-  background-color: #e8f5e9;
+.bb-bg-FDE7F1 {
+  background-color: #FDE7F1;
 }
-.bb-text-C2674F {
-  color: #c2674f;
+.bb-text-7C4DCC {
+  color: #7C4DCC;
 }
-.bb-text-4F8A55 {
-  color: #4f8a55;
+.bb-text-B83B7E {
+  color: #B83B7E;
 }
-.bb-bg-81C784 {
-  background-color: #81c784;
+.bb-bg-F48FB1 {
+  background-color: #F48FB1;
 }
-.bb-shadow-81C784-30 {
+.bb-shadow-F48FB1-30 {
   box-shadow:
-    0 20px 25px -5px rgba(129, 199, 132, 0.3),
-    0 8px 10px -6px rgba(129, 199, 132, 0.3);
+    0 20px 25px -5px rgba(244,143,177, 0.3),
+    0 8px 10px -6px rgba(244,143,177, 0.3);
 }
-.bb-bg-FFD8CC {
-  background-color: #ffd8cc;
+.bb-bg-E9DDFC {
+  background-color: #E9DDFC;
 }
-.bb-fill-C2674F-40 {
-  fill: rgba(194, 103, 79, 0.4);
+.bb-fill-7C4DCC-40 {
+  fill: rgba(124,77,204, 0.4);
 }
-.bb-border-E8F5E9 {
-  border-color: #e8f5e9;
+.bb-border-FDE7F1 {
+  border-color: #FDE7F1;
 }
-.bb-border-FFD8CC-70 {
-  border-color: rgba(255, 216, 204, 0.7);
+.bb-border-E9DDFC-70 {
+  border-color: rgba(233,221,252, 0.7);
 }
-.bb-bg-FFD8CC-50 {
-  background-color: rgba(255, 216, 204, 0.5);
+.bb-bg-E9DDFC-50 {
+  background-color: rgba(233,221,252, 0.5);
 }
-.bb-bg-E8F5E9-70 {
-  background-color: rgba(232, 245, 233, 0.7);
+.bb-bg-FDE7F1-70 {
+  background-color: rgba(253,231,241, 0.7);
 }
-.bb-text-81C784 {
-  color: #81c784;
+.bb-text-F48FB1 {
+  color: #F48FB1;
 }
-.bb-bg-5E9E64 {
-  background-color: #5e9e64;
+.bb-bg-E0679F {
+  background-color: #E0679F;
 }
-.bb-bg-FFD8CC-40 {
-  background-color: rgba(255, 216, 204, 0.4);
+.bb-bg-E9DDFC-40 {
+  background-color: rgba(233,221,252, 0.4);
 }
-.bb-shadow-F2A68F-30 {
+.bb-shadow-B794F4-30 {
   box-shadow:
-    0 20px 25px -5px rgba(242, 166, 143, 0.3),
-    0 8px 10px -6px rgba(242, 166, 143, 0.3);
+    0 20px 25px -5px rgba(183,148,244, 0.3),
+    0 8px 10px -6px rgba(183,148,244, 0.3);
 }
-.bb-text-B4553C {
-  color: #b4553c;
+.bb-text-6A3BB8 {
+  color: #6A3BB8;
 }
-.bb-border-F2A68F {
-  border-color: #f2a68f;
+.bb-border-B794F4 {
+  border-color: #B794F4;
 }
-.bb-shadow-F2A68F-20 {
+.bb-shadow-B794F4-20 {
   box-shadow:
-    0 20px 25px -5px rgba(242, 166, 143, 0.2),
-    0 8px 10px -6px rgba(242, 166, 143, 0.2);
+    0 20px 25px -5px rgba(183,148,244, 0.2),
+    0 8px 10px -6px rgba(183,148,244, 0.2);
 }
-.bb-bg-FAF8F5 {
-  background-color: #faf8f5;
+.bb-bg-FFF7FB {
+  background-color: #FFF7FB;
 }
-.bb-border-FFD8CC {
-  border-color: #ffd8cc;
+.bb-border-E9DDFC {
+  border-color: #E9DDFC;
 }
-.bb-bg-F2A68F {
-  background-color: #f2a68f;
+.bb-bg-B794F4 {
+  background-color: #B794F4;
 }
-.bb-border-A5D6A7 {
-  border-color: #a5d6a7;
+.bb-border-CDB4F5 {
+  border-color: #CDB4F5;
 }
-.bb-border-F2A68F-50 {
-  border-color: rgba(242, 166, 143, 0.5);
+.bb-border-B794F4-50 {
+  border-color: rgba(183,148,244, 0.5);
 }
-.bb-border-F5C7A9-60 {
-  border-color: rgba(245, 199, 169, 0.6);
+.bb-border-D8C4F7-60 {
+  border-color: rgba(216,196,247, 0.6);
 }
-.bb-border-5E9E64 {
-  border-color: #5e9e64;
+.bb-border-E0679F {
+  border-color: #E0679F;
 }
-.bb-text-3F7445 {
-  color: #3f7445;
+.bb-text-962D66 {
+  color: #962D66;
 }
-.bb-border-C8E6C9 {
-  border-color: #c8e6c9;
+.bb-border-F8D3E6 {
+  border-color: #F8D3E6;
 }
-.bb-bg-FFD8CC-30 {
-  background-color: rgba(255, 216, 204, 0.3);
+.bb-bg-E9DDFC-30 {
+  background-color: rgba(233,221,252, 0.3);
 }
-.bb-bg-A5D6A7-40 {
-  background-color: rgba(165, 214, 167, 0.4);
+.bb-bg-CDB4F5-40 {
+  background-color: rgba(205,180,245, 0.4);
 }
-.bb-bg-81C784-40 {
-  background-color: rgba(129, 199, 132, 0.4);
+.bb-bg-F48FB1-40 {
+  background-color: rgba(244,143,177, 0.4);
 }
-.bb-shadow-81C784-40 {
+.bb-shadow-F48FB1-40 {
   box-shadow:
-    0 20px 25px -5px rgba(129, 199, 132, 0.4),
-    0 8px 10px -6px rgba(129, 199, 132, 0.4);
+    0 20px 25px -5px rgba(244,143,177, 0.4),
+    0 8px 10px -6px rgba(244,143,177, 0.4);
 }
-.bb-border-81C784 {
-  border-color: #81c784;
+.bb-border-F48FB1 {
+  border-color: #F48FB1;
 }
-.bb-bg-E8F5E9-50 {
-  background-color: rgba(232, 245, 233, 0.5);
+.bb-bg-FDE7F1-50 {
+  background-color: rgba(253,231,241, 0.5);
 }
-.bb-bg-FAF8F5-85 {
-  background-color: rgba(250, 248, 245, 0.85);
+.bb-bg-FFF7FB-85 {
+  background-color: rgba(255,247,251, 0.85);
 }
-.bb-hover-border-81C784:hover {
-  border-color: #81c784;
+.bb-hover-border-F48FB1:hover {
+  border-color: #F48FB1;
 }
-.group:hover .bb-group-hover-text-4F8A55 {
-  color: #4f8a55;
+.group:hover .bb-group-hover-text-B83B7E {
+  color: #B83B7E;
 }
-.bb-hover-border-F2A68F:hover {
-  border-color: #f2a68f;
+.bb-hover-border-B794F4:hover {
+  border-color: #B794F4;
 }
-.group:hover .bb-group-hover-text-C2674F {
-  color: #c2674f;
+.group:hover .bb-group-hover-text-7C4DCC {
+  color: #7C4DCC;
 }
-.bb-focus-border-81C784:focus {
-  border-color: #81c784;
+.bb-focus-border-F48FB1:focus {
+  border-color: #F48FB1;
 }
-.bb-focus-within-border-81C784:focus-within {
-  border-color: #81c784;
+.bb-focus-within-border-F48FB1:focus-within {
+  border-color: #F48FB1;
 }
-.bb-disabled-bg-C8E6C9:disabled {
-  background-color: #c8e6c9;
+.bb-disabled-bg-F8D3E6:disabled {
+  background-color: #F8D3E6;
 }
-.bb-hover-border-FFD8CC:hover {
-  border-color: #ffd8cc;
+.bb-hover-border-E9DDFC:hover {
+  border-color: #E9DDFC;
 }
-.bb-hover-text-C2674F:hover {
-  color: #c2674f;
+.bb-hover-text-7C4DCC:hover {
+  color: #7C4DCC;
 }
-.bb-hover-border-A5D6A7:hover {
-  border-color: #a5d6a7;
+.bb-hover-border-CDB4F5:hover {
+  border-color: #CDB4F5;
 }
-.bb-disabled-bg-E8F5E9:disabled {
-  background-color: #e8f5e9;
+.bb-disabled-bg-FDE7F1:disabled {
+  background-color: #FDE7F1;
 }
-.bb-disabled-text-4F8A55:disabled {
-  color: #4f8a55;
+.bb-disabled-text-B83B7E:disabled {
+  color: #B83B7E;
 }
 .bloom-fade {
   animation: bloomFade 0.4s ease both;
@@ -255,4 +255,29 @@
 }
 .bloom-wiggle {
   animation: bloomWiggle 1.2s ease-in-out infinite;
+}
+
+/* ---------- Пад SOS / найзууд / пад заавар ---------- */
+.bb-grad-sos {
+  background-image: linear-gradient(135deg, #ff9ec4, #e0679f);
+}
+.bb-grad-sos-soft {
+  background-image: linear-gradient(135deg, #ffffff, #fde7f1 60%, #f1e8fe);
+}
+.bx-halo {
+  background: rgba(244, 143, 177, 0.28);
+}
+.bx-shadow-sos {
+  box-shadow: 0 14px 28px -8px rgba(224, 103, 159, 0.55);
+}
+.bx-lock {
+  background-image: linear-gradient(160deg, #c9a8f2, #f48fb1);
+}
+.bx-tap {
+  min-height: 44px;
+}
+.bx-trunc {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

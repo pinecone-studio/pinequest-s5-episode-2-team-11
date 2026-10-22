@@ -17,18 +17,18 @@ export default function MotherMessages() {
       <Card>
         <SectionTitle icon={Bell} title="Ирсэн мэдэгдэл" />
         {momInbox.length === 0 ? (
-          <p className="text-sm text-slate-400 font-semibold py-6 text-center">Одоогоор мэдэгдэл алга 🌿</p>
+          <p className="text-sm text-slate-400 font-semibold py-6 text-center">Одоогоор мэдэгдэл алга 🌸</p>
         ) : (
           <div className="space-y-2">
             {momInbox.map((n) => (
               <div
                 key={n.id}
                 className={`flex items-start gap-3 rounded-2xl px-3 py-3 ${
-                  n.kind === "sos" ? "bb-bg-FFD8CC-50" : "bb-bg-FAF8F5"
+                  n.kind === "sos" ? "bb-bg-E9DDFC-50" : "bb-bg-FFF7FB"
                 }`}
               >
                 <span className="text-xl">
-                  {n.kind === "sos" ? "🆘" : n.kind === "supply" ? "🛍️" : n.kind === "period" ? "🩸" : "🌿"}
+                  {n.kind === "sos" ? "🆘" : n.kind === "supply" ? "🛍️" : n.kind === "period" ? "🩸" : "🌸"}
                 </span>
                 <div className="flex-1">
                   <p className="text-sm font-bold text-slate-700 leading-snug">{n.text}</p>
@@ -51,7 +51,7 @@ export default function MotherMessages() {
                   sendToTeen(q);
                   setToast(`${daughterName}-д илгээлээ 💌`);
                 }}
-                className="rounded-full bb-bg-FAF8F5 border-2 border-slate-100 text-slate-700 text-xs font-extrabold px-3 py-2 bb-hover-border-A5D6A7 active:scale-95 transition"
+                className="rounded-full bb-bg-FFF7FB border-2 border-slate-100 text-slate-700 text-xs font-extrabold px-3 py-2 bb-hover-border-CDB4F5 active:scale-95 transition"
               >
                 {q}
               </button>
@@ -63,12 +63,12 @@ export default function MotherMessages() {
       <Card>
         <SectionTitle icon={Users} title="Гэр бүлийн код" />
         <div className="flex items-center gap-2">
-          <span className="flex-1 rounded-2xl bb-bg-FAF8F5 py-3 text-center text-lg font-black tracking-wider text-slate-600">
+          <span className="flex-1 rounded-2xl bb-bg-FFF7FB py-3 text-center text-lg font-black tracking-wider text-slate-600">
             {familyCode}
           </span>
           <button
             onClick={copyCode}
-            className="w-12 h-12 rounded-2xl bb-bg-E8F5E9 bb-text-4F8A55 flex items-center justify-center active:scale-90"
+            className="w-12 h-12 rounded-2xl bb-bg-FDE7F1 bb-text-B83B7E flex items-center justify-center active:scale-90"
             aria-label="Кодыг хуулах"
           >
             {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}

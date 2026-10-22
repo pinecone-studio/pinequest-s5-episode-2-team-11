@@ -82,11 +82,11 @@ export default function SettingsScreen() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={40}
-              className="flex-1 min-w-0 rounded-2xl border-2 border-slate-100 bb-focus-border-81C784 outline-none px-4 py-2.5 font-bold text-slate-700"
+              className="flex-1 min-w-0 rounded-2xl border-2 border-slate-100 bb-focus-border-F48FB1 outline-none px-4 py-2.5 font-bold text-slate-700"
               aria-label="Нэр"
               autoFocus
             />
-            <button className="px-4 rounded-2xl bb-bg-5E9E64 text-white font-extrabold text-sm">
+            <button className="px-4 rounded-2xl bb-bg-E0679F text-white font-extrabold text-sm">
               Хадгалах
             </button>
           </form>
@@ -119,19 +119,19 @@ export default function SettingsScreen() {
         {isMother ? (
           <>
             <div className="flex items-center gap-2">
-              <span className="flex-1 rounded-2xl bb-bg-FAF8F5 py-3 text-center text-lg font-black tracking-wider text-slate-600">
+              <span className="flex-1 rounded-2xl bb-bg-FFF7FB py-3 text-center text-lg font-black tracking-wider text-slate-600">
                 {familyCode || "…"}
               </span>
               <button
                 onClick={copyCode}
-                className="w-12 h-12 rounded-2xl bb-bg-E8F5E9 bb-text-4F8A55 flex items-center justify-center active:scale-90"
+                className="w-12 h-12 rounded-2xl bb-bg-FDE7F1 bb-text-B83B7E flex items-center justify-center active:scale-90"
                 aria-label="Кодыг хуулах"
               >
                 {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
               </button>
               <button
                 onClick={shareCode}
-                className="w-12 h-12 rounded-2xl bg-white border-2 border-slate-100 bb-text-4F8A55 flex items-center justify-center active:scale-90"
+                className="w-12 h-12 rounded-2xl bg-white border-2 border-slate-100 bb-text-B83B7E flex items-center justify-center active:scale-90"
                 aria-label="Кодыг хуваалцах"
               >
                 <Share2 className="w-5 h-5" />
@@ -142,14 +142,14 @@ export default function SettingsScreen() {
             </p>
           </>
         ) : linked ? (
-          <p className="text-sm font-bold bb-text-4F8A55">✓ Ээжтэйгээ холбогдсон</p>
+          <p className="text-sm font-bold bb-text-B83B7E">✓ Ээжтэйгээ холбогдсон</p>
         ) : (
           <button
             onClick={() => {
               setTeenSkippedJoin(true);
               setJoiningFamily(true);
             }}
-            className="w-full flex items-center justify-between rounded-2xl bb-bg-E8F5E9 px-4 py-3 font-extrabold bb-text-4F8A55"
+            className="w-full flex items-center justify-between rounded-2xl bb-bg-FDE7F1 px-4 py-3 font-extrabold bb-text-B83B7E"
           >
             Ээжийн кодоор холбогдох <ChevronRight className="w-4 h-4" />
           </button>
@@ -167,7 +167,7 @@ export default function SettingsScreen() {
                   ["Мөчлөг", `${cycleLength} хоног`],
                   ["Үргэлжлэх", `${periodLength} хоног`],
                 ].map(([k, v]) => (
-                  <div key={k} className="rounded-2xl bb-bg-FAF8F5 py-3 px-1">
+                  <div key={k} className="rounded-2xl bb-bg-FFF7FB py-3 px-1">
                     <dt className="text-xs font-bold text-slate-400">{k}</dt>
                     <dd className="mt-1 font-black text-slate-700">{v}</dd>
                   </div>
@@ -201,7 +201,7 @@ export default function SettingsScreen() {
                 </span>
               </span>
               <span
-                className={`w-12 h-7 rounded-full p-1 transition-colors shrink-0 ${shareWithMom ? "bb-bg-5E9E64" : "bg-slate-200"}`}
+                className={`w-12 h-7 rounded-full p-1 transition-colors shrink-0 ${shareWithMom ? "bb-bg-E0679F" : "bg-slate-200"}`}
               >
                 <span
                   className={`block w-5 h-5 rounded-full bg-white shadow transition-transform ${shareWithMom ? "translate-x-5" : ""}`}
@@ -212,8 +212,8 @@ export default function SettingsScreen() {
         </>
       )}
 
-      <div className="flex items-start gap-3 bb-bg-E8F5E9-70 rounded-2xl p-4">
-        <ShieldCheck className="w-5 h-5 bb-text-4F8A55 shrink-0 mt-0.5" />
+      <div className="flex items-start gap-3 bb-bg-FDE7F1-70 rounded-2xl p-4">
+        <ShieldCheck className="w-5 h-5 bb-text-B83B7E shrink-0 mt-0.5" />
         <p className="text-xs text-slate-600 font-semibold leading-relaxed">
           Таны мэдээлэл зөвхөн таны гэр бүлийн бүлэгт харагдана. Bloomy эмчийн зөвлөгөөг орлохгүй.
         </p>
@@ -221,7 +221,7 @@ export default function SettingsScreen() {
 
       <button
         onClick={signOut}
-        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-white border-2 border-slate-100 py-4 font-extrabold bb-text-C2674F active:scale-95 transition"
+        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-white border-2 border-slate-100 py-4 font-extrabold bb-text-7C4DCC active:scale-95 transition"
       >
         <LogOut className="w-4 h-4" /> Гарах
       </button>
