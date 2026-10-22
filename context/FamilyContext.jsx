@@ -56,25 +56,6 @@ export function FamilyProvider({ children }) {
   const [codeError, setCodeError] = useState("");
   const [joining, setJoining] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [momReady, setMomReady] = useState(false);
-  const [teenSkippedJoin, setTeenSkippedJoinState] = useState(false);
-  // «Одоохондоо алгасах» сонголтыг утсанд санана — эс тэгвэл апп нээх бүрт кодын дэлгэц гарна
-  useEffect(() => {
-    try {
-      if (localStorage.getItem("bloomy:skipJoin") === "1") setTeenSkippedJoinState(true);
-    } catch {
-      /* localStorage боломжгүй */
-    }
-  }, []);
-  const setTeenSkippedJoin = (value) => {
-    setTeenSkippedJoinState(value);
-    try {
-      if (value) localStorage.setItem("bloomy:skipJoin", "1");
-      else localStorage.removeItem("bloomy:skipJoin");
-    } catch {
-      /* ignore */
-    }
-  };
   const [flippedMyths, setFlippedMyths] = useState([]);
   const [toast, setToast] = useState(null);
   const [syncTick, setSyncTick] = useState(0);
@@ -106,7 +87,10 @@ export function FamilyProvider({ children }) {
   const view = profile?.role ?? null; // "mother" | "daughter"
   const daughterProfile =
     view === "daughter" ? profile : (members.find((m) => m.role === "daughter" && m.id !== userId) ?? null);
-  const linked = view === "daughter" ? Boolean(familyId) : Boolean(daughterProfile);
+  const linked =
+    view === "daughter"
+      ? members.some((member) => member.role === "mother" && member.id !== userId)
+      : Boolean(daughterProfile);
   const daughterName = daughterProfile?.display_name || (view === "mother" ? "Охин тань" : "");
   const nameGen = daughterProfile?.display_name ? genitive(daughterProfile.display_name) : "Охины тань";
 
@@ -156,11 +140,10 @@ export function FamilyProvider({ children }) {
   const sosStep = Math.min(SOS_STEPS.length - 1, Math.floor((SOS_TOTAL - sosSeconds) / 60));
 
   // Аль дэлгэцийг харуулах вэ
-  const needsJoin = view === "daughter" && !familyId && !teenSkippedJoin;
   const noPeriodYet = Boolean(daughterProfile?.no_period_yet) && !lastPeriodStart;
-  const needsCycleSetup = view === "daughter" && !needsJoin && !lastPeriodStart && !profile?.no_period_yet;
-  const showMomCode = view === "mother" && Boolean(familyId) && !linked && !momReady;
-  const showOnboarding = !session || !profile || !ready || needsJoin || needsCycleSetup || showMomCode;
+  const needsCycleSetup = view === "daughter" && !lastPeriodStart && !profile?.no_period_yet;
+  const needsMotherCode = view === "mother" && !linked;
+  const showOnboarding = !session || !profile || !ready || needsCycleSetup;
 
   /* ================= Нэвтрэлтийг сонсох ================= */
   useEffect(() => {
@@ -259,8 +242,8 @@ export function FamilyProvider({ children }) {
       return;
     }
     let fid = p?.family_id ?? null;
-    // Ээж анх нэвтрэхэд гэр бүлийг автоматаар үүсгэнэ
-    if (p?.role === "mother" && !fid) {
+    // Охин өөрийн бүлгийг үүсгээд асран хамгаалагчдаа урилгын код өгнө.
+    if (p?.role === "daughter" && !fid) {
       const { error } = await supabase.rpc("create_family");
       if (!error) fid = (await loadProfile())?.family_id ?? null;
     }
@@ -428,8 +411,6 @@ export function FamilyProvider({ children }) {
   const signOut = async () => {
     await supabase.auth.signOut();
     setTab("home");
-    setMomReady(false);
-    setTeenSkippedJoin(false);
     setAiTips(null);
     setAiNudge(null);
     setMoodCard(null);
@@ -448,7 +429,7 @@ export function FamilyProvider({ children }) {
   };
 
   const shareCode = async () => {
-    const text = `Bloomy-д нэгдээрэй 🌿 Апп-аа нээгээд энэ кодыг оруулаарай: ${family?.code}`;
+    const text = `Bloomy 🌿 Энэ урилгын кодыг оруулаад охинтойгоо холбоорой: ${family?.code}`;
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
         await navigator.share({ title: "Bloomy", text, url: window.location.origin });
@@ -469,7 +450,7 @@ export function FamilyProvider({ children }) {
     if (error) {
       setCodeError(
         error.message?.includes("invalid_code")
-          ? "Ийм код олдсонгүй. Ээжээсээ кодоо дахин шалгуулаарай."
+          ? "Ийм код олдсонгүй. Кодоо дахин шалгаарай."
           : "Холбогдож чадсангүй. Интернэтээ шалгаад дахин оролдоно уу.",
       );
       return;
@@ -477,7 +458,7 @@ export function FamilyProvider({ children }) {
     setCodeError("");
     setCodeInput("");
     await loadAll();
-    setToast("Ээжтэйгээ амжилттай холбогдлоо 💗");
+    setToast(view === "mother" ? "Охинтойгоо амжилттай холбогдлоо 💗" : "Ээжтэйгээ амжилттай холбогдлоо 💗");
   };
 
   /* ================= Мөчлөг ================= */
@@ -746,12 +727,8 @@ export function FamilyProvider({ children }) {
     copied,
     copyCode,
     shareCode,
-    momReady,
-    setMomReady,
-    setTeenSkippedJoin,
-    needsJoin,
+    needsMotherCode,
     needsCycleSetup,
-    showMomCode,
     showOnboarding,
     // навигаци
     tab,
