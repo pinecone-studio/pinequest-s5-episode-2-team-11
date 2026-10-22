@@ -59,7 +59,7 @@ export default function AuthScreen() {
         <ChevronLeft className="w-4 h-4" /> Буцах
       </button>
 
-      <div className="text-5xl mb-3">{isSignup ? (role === "mother" ? "🤝" : "🌱") : "🌸"}</div>
+      <div className="text-5xl mb-3">{isSignup ? (role === "mother" ? "🤝" : "🌱") : "🌿"}</div>
       <h2 className="text-2xl font-black text-slate-700">
         {isSignup ? (role === "mother" ? "Асран хамгаалагчийн бүртгэл" : "Өсвөр насны охины бүртгэл") : "Тавтай морил"}
       </h2>

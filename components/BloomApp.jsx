@@ -82,7 +82,7 @@ function LoadError({ kind, onRetry, onSignOut }) {
       </p>
       <button
         onClick={onRetry}
-        className="w-full bb-bg-E0679F text-white font-extrabold rounded-2xl py-4 active:scale-95 transition"
+        className="w-full bb-bg-5E9E64 text-white font-extrabold rounded-2xl py-4 active:scale-95 transition"
       >
         Дахин оролдох
       </button>

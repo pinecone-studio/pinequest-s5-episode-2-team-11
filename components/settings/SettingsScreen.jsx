@@ -64,7 +64,7 @@ export default function SettingsScreen() {
 
   return (
     <div className="space-y-4">
-      <PageHeader sub={isMother ? "Асран хамгаалагчийн бүртгэл" : "Миний бүртгэл"} title="Би 🌸" />
+      <PageHeader sub={isMother ? "Асран хамгаалагчийн бүртгэл" : "Миний бүртгэл"} title="Би 🌿" />
 
       <Card>
         <SectionTitle icon={User} title="Профайл" />
@@ -98,7 +98,7 @@ export default function SettingsScreen() {
             }}
             className="w-full flex items-center gap-3 text-left"
           >
-            <span className="w-12 h-12 rounded-2xl bb-bg-FDE7F1 flex items-center justify-center text-2xl">
+            <span className="w-12 h-12 rounded-2xl bb-bg-E8F5E9 flex items-center justify-center text-2xl">
               {isMother ? "🤝" : "🌱"}
             </span>
             <span className="flex-1 min-w-0">

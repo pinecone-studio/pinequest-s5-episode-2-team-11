@@ -29,8 +29,8 @@ export default function RoleSelect({ onPick, onLogin }) {
           onClick={() => onPick("daughter")}
           className="w-full text-left bg-white rounded-3xl p-5 border-2 bb-border-FDE7F1 bb-hover-border-F48FB1 active:scale-95 transition-all shadow-sm flex items-center gap-4 group"
         >
-          <span className="w-14 h-14 rounded-2xl bb-bg-FDE7F1 flex items-center justify-center text-3xl">
-                        <Sprout className="w-7 h-7 bb-text-B83B7E" />
+          <span className="w-14 h-14 rounded-2xl bb-bg-E8F5E9 flex items-center justify-center text-3xl">
+                        <Sprout className="w-7 h-7 bb-text-4F8A55" />
           </span>
           <span className="flex-1">
             <span className="block font-extrabold text-slate-700 text-lg">Охин / Өсвөр насныхан</span>
@@ -45,8 +45,8 @@ export default function RoleSelect({ onPick, onLogin }) {
           onClick={() => onPick("mother")}
           className="w-full text-left bg-white rounded-3xl p-5 border-2 bb-border-E9DDFC-70 bb-hover-border-B794F4 active:scale-95 transition-all shadow-sm flex items-center gap-4 group"
         >
-          <span className="w-14 h-14 rounded-2xl bb-bg-E9DDFC-50 flex items-center justify-center text-3xl">
-                        <HeartHandshake className="w-7 h-7 bb-text-7C4DCC" />
+          <span className="w-14 h-14 rounded-2xl bb-bg-FFD8CC-50 flex items-center justify-center text-3xl">
+                        <HeartHandshake className="w-7 h-7 bb-text-C2674F" />
           </span>
           <span className="flex-1">
             <span className="block font-extrabold text-slate-700 text-lg">Асран хамгаалагч</span>
