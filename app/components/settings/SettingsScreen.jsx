@@ -58,7 +58,7 @@ export default function SettingsScreen() {
 
   return (
     <div className="space-y-4">
-      <PageHeader sub={isMother ? "Асран хамгаалагчийн бүртгэл" : "Миний бүртгэл"} title="Би 🌿" />
+      <PageHeader sub={isMother ? "Асран хамгаалагчийн бүртгэл" : "Миний бүртгэл"} title="Миний бүртгэл" />
 
       <Card>
         <SectionTitle icon={User} title="Профайл" />

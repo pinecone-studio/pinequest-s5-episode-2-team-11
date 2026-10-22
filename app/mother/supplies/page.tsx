@@ -1,5 +1,5 @@
-import BloomApp from "../../components/BloomApp";
+import Application from "../../components/Application";
 
 export default function MotherSuppliesPage() {
-  return <BloomApp initialTab="supplies" />;
+  return <Application initialTab="supplies" />;
 }

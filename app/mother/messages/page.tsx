@@ -1,5 +1,5 @@
-import BloomApp from "../../components/BloomApp";
+import Application from "../../components/Application";
 
 export default function MotherMessagesPage() {
-  return <BloomApp initialTab="messages" />;
+  return <Application initialTab="messages" />;
 }

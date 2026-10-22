@@ -1,5 +1,5 @@
-import BloomApp from "../components/BloomApp";
+import Application from "../components/Application";
 
 export default function DaughterPage() {
-  return <BloomApp initialTab="home" />;
+  return <Application initialTab="home" />;
 }

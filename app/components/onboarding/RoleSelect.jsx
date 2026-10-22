@@ -1,7 +1,8 @@
 "use client";
 
-import { Leaf, ChevronRight, ShieldCheck, Heart, Sprout, HeartHandshake } from "lucide-react";
+import { ChevronRight, ShieldCheck, Heart, Sprout, HeartHandshake } from "lucide-react";
 import InstallAppButton from "../ui/InstallAppButton";
+import BloomyLogo from "../ui/BloomyLogo";
 
 export default function RoleSelect({ onPick, onLogin }) {
   return (
@@ -9,7 +10,7 @@ export default function RoleSelect({ onPick, onLogin }) {
       <div className="flex flex-col items-center text-center">
         <div className="relative">
           <div className="w-24 h-24 rounded-3xl bb-grad-1 flex items-center justify-center shadow-xl bb-shadow-F48FB1-30 bloom-float">
-            <Leaf className="w-12 h-12 text-white" />
+            <BloomyLogo className="w-20 h-20" />
           </div>
           <span className="absolute -right-2 -top-2 w-9 h-9 rounded-full bb-bg-E9DDFC flex items-center justify-center shadow">
             <Heart className="w-4 h-4 bb-text-7C4DCC bb-fill-7C4DCC-40" />
