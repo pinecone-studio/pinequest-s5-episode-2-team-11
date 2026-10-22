@@ -1,0 +1,37 @@
+"use client";
+
+import { ChevronRight } from "lucide-react";
+import { useFriends } from "../../context/FriendsContext";
+import SosCallButton from "./SosCallButton";
+
+/** «Өнөөдөр» дэлгэцэн дээрх «Пад дууссан уу?» товч карт */
+export default function FriendsQuickCard({ onOpen }) {
+  const { active, activeGroup, sosStage, outgoing, sendSos, replyText } = useFriends();
+  if (!active) return null;
+  const first = outgoing?.responses?.[0];
+
+  return (
+    <div className="flex items-center gap-4 rounded-3xl p-4 bb-grad-sos-soft border bb-border-F8D3E6 shadow-sm bloom-fade">
+      <SosCallButton size={68} stage={sosStage} onClick={sendSos} />
+      <button onClick={onOpen} className="flex-1 min-w-0 text-left flex items-center gap-2">
+        <div className="flex-1 min-w-0">
+          <p className="font-black text-slate-700">
+            {sosStage === "ringing"
+              ? "Дохио илгээж байна…"
+              : sosStage === "sent"
+                ? "Найзуудад дохио очлоо 📣"
+                : "Пад дууссан уу? 🆘"}
+          </p>
+          <p className="text-xs font-semibold text-slate-500 leading-snug mt-0.5">
+            {first
+              ? `${first.responder_name}: ${replyText(first.reply)}`
+              : activeGroup
+                ? `Товчийг дарахад «${activeGroup.name}» бүлэгт мэдэгдэл очно`
+                : "Бүлэг үүсгээд найзуудаа нэмээрэй"}
+          </p>
+        </div>
+        <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+      </button>
+    </div>
+  );
+}

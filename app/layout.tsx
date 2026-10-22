@@ -2,9 +2,9 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Bloom Family",
+  title: "Bloomy",
   description: "Өсвөр насны охид болон ээжүүдэд зориулсан мөчлөг, халамжийн апп",
-  applicationName: "Bloom Family",
+  applicationName: "Bloomy",
   appleWebApp: { capable: true, title: "Bloom", statusBarStyle: "default" },
   icons: {
     icon: [{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
@@ -17,7 +17,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#FAF8F5",
+  themeColor: "#FFF7FB",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

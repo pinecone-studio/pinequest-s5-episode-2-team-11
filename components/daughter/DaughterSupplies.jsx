@@ -29,14 +29,14 @@ export default function DaughterSupplies() {
                     className="h-full rounded-full transition-all duration-500"
                     style={{
                       width: `${pct * 100}%`,
-                      background: pct <= 0.3 ? "#F2A68F" : pct <= 0.6 ? "#F5C7A9" : "#81C784",
+                      background: pct <= 0.3 ? "#B794F4" : pct <= 0.6 ? "#D8C4F7" : "#F48FB1",
                     }}
                   />
                 </div>
                 <span className="text-xs font-extrabold text-slate-500 w-6 text-right">{s.count}</span>
                 <button
                   onClick={() => updateSupply(key, -1)}
-                  className="text-xs font-extrabold text-slate-400 bb-hover-text-C2674F px-1"
+                  className="text-xs font-extrabold text-slate-400 bb-hover-text-7C4DCC px-1"
                   title="Нэгийг хэрэглэсэн"
                 >
                   −1
@@ -48,7 +48,7 @@ export default function DaughterSupplies() {
         <button
           onClick={requestSupplies}
           disabled={!linked}
-          className="mt-4 w-full rounded-2xl bb-bg-E8F5E9 bb-text-4F8A55 disabled:text-slate-300 disabled:bg-slate-50 font-extrabold py-3 text-sm active:scale-95 transition flex items-center justify-center gap-2"
+          className="mt-4 w-full rounded-2xl bb-bg-FDE7F1 bb-text-B83B7E disabled:text-slate-300 disabled:bg-slate-50 font-extrabold py-3 text-sm active:scale-95 transition flex items-center justify-center gap-2"
         >
           <Send className="w-4 h-4" />{" "}
           {linked ? "Дуусах дөхсөн үү? Ээждээ хэлэх" : "Хүсэлт илгээхийн тулд ээжтэйгээ холбогдоорой"}
@@ -62,8 +62,8 @@ export default function DaughterSupplies() {
         }}
         className="w-full flex items-center gap-3 bg-white rounded-3xl p-4 border border-slate-100 shadow-sm active:scale-95 transition text-left"
       >
-        <span className="w-10 h-10 rounded-xl bb-bg-E8F5E9 flex items-center justify-center">
-          <Backpack className="w-5 h-5 bb-text-4F8A55" />
+        <span className="w-10 h-10 rounded-xl bb-bg-FDE7F1 flex items-center justify-center">
+          <Backpack className="w-5 h-5 bb-text-B83B7E" />
         </span>
         <span className="flex-1">
           <span className="block text-sm font-extrabold text-slate-700">Сургуулийн яаралтай цүнх</span>

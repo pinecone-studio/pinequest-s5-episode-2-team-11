@@ -21,7 +21,7 @@ export default function CycleRing({ day, cycleLength, periodLength, phaseKey, da
   return (
     <div className="relative mx-auto" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="overflow-visible">
-        <circle cx={size / 2} cy={size / 2} r={r - 22} fill="#FAF8F5" />
+        <circle cx={size / 2} cy={size / 2} r={r - 22} fill="#FFF7FB" />
         <g transform={`rotate(-90 ${size / 2} ${size / 2})`}>
           {segments.map((s) => {
             const len = ((s.to - s.from + 1) / cycleLength) * C - gap;
