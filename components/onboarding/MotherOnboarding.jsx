@@ -9,8 +9,8 @@ export default function MotherOnboarding() {
 
   return (
     <div className="px-2 pt-4 pb-10 bloom-fade">
-      <div className="w-16 h-16 rounded-2xl bb-bg-FFD8CC-60 flex items-center justify-center mb-4">
-        <Users className="w-8 h-8 bb-text-C2674F" />
+      <div className="w-16 h-16 rounded-2xl bb-bg-E9DDFC-60 flex items-center justify-center mb-4">
+        <Users className="w-8 h-8 bb-text-7C4DCC" />
       </div>
       <h2 className="text-2xl font-black text-slate-700">
         Сайн байна уу{profile?.display_name ? `, ${profile.display_name}` : ""} 🤍
@@ -20,7 +20,7 @@ export default function MotherOnboarding() {
         бүртгэлээр бүртгүүлээд кодоо оруулна.
       </p>
 
-      <div className="mt-6 rounded-3xl bb-grad-2 p-6 text-center text-white shadow-xl bb-shadow-81C784-30 relative overflow-hidden">
+      <div className="mt-6 rounded-3xl bb-grad-2 p-6 text-center text-white shadow-xl bb-shadow-F48FB1-30 relative overflow-hidden">
         <div className="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-white/10" />
         <div className="absolute -left-8 -bottom-10 w-32 h-32 rounded-full bg-white/10" />
         <p className="text-xs font-extrabold uppercase tracking-widest text-white/80">Гэр бүлийн код</p>
@@ -28,7 +28,7 @@ export default function MotherOnboarding() {
         <div className="mt-5 grid grid-cols-2 gap-3 relative">
           <button
             onClick={copyCode}
-            className="flex items-center justify-center gap-2 bg-white bb-text-4F8A55 font-extrabold rounded-2xl py-3 active:scale-95 transition"
+            className="flex items-center justify-center gap-2 bg-white bb-text-B83B7E font-extrabold rounded-2xl py-3 active:scale-95 transition"
           >
             {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
             {copied ? "Хуулсан" : "Хуулах"}
@@ -43,12 +43,12 @@ export default function MotherOnboarding() {
       </div>
 
       <div
-        className={`mt-4 flex items-center gap-3 rounded-2xl p-4 ${linked ? "bb-bg-E8F5E9" : "bg-slate-100"}`}
+        className={`mt-4 flex items-center gap-3 rounded-2xl p-4 ${linked ? "bb-bg-FDE7F1" : "bg-slate-100"}`}
       >
         {linked ? (
           <>
-            <Check className="w-5 h-5 bb-text-4F8A55" />
-            <p className="text-sm font-bold bb-text-4F8A55">{daughterName} таны бүлэгт нэгдлээ!</p>
+            <Check className="w-5 h-5 bb-text-B83B7E" />
+            <p className="text-sm font-bold bb-text-B83B7E">{daughterName} таны бүлэгт нэгдлээ!</p>
           </>
         ) : (
           <>

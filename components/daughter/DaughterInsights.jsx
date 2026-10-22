@@ -58,7 +58,7 @@ export default function DaughterInsights() {
                 className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center active:scale-90"
                 aria-label="Шинэчлэх"
               >
-                <RefreshCw className={`w-4 h-4 bb-text-4F8A55 ${insightLoading ? "animate-spin" : ""}`} />
+                <RefreshCw className={`w-4 h-4 bb-text-B83B7E ${insightLoading ? "animate-spin" : ""}`} />
               </button>
             </div>
           }
@@ -67,8 +67,8 @@ export default function DaughterInsights() {
 
         <div className="mt-4 grid grid-cols-2 gap-3">
           {[
-            ["Эстроген", phase.estrogen, "#81C784"],
-            ["Прогестерон", phase.progesterone, "#F2A68F"],
+            ["Эстроген", phase.estrogen, "#F48FB1"],
+            ["Прогестерон", phase.progesterone, "#B794F4"],
           ].map(([label, val, color]) => (
             <div key={label} className="bg-white rounded-2xl p-3 border border-slate-100">
               <div className="flex items-center justify-between text-xs font-extrabold text-slate-500">
@@ -115,7 +115,7 @@ export default function DaughterInsights() {
                 pulseSync();
               }}
               className={`flex items-center gap-1 text-xs font-extrabold px-2.5 py-1.5 rounded-full transition ${
-                shareWithMom ? "bb-bg-E8F5E9 bb-text-4F8A55" : "bg-slate-100 text-slate-500"
+                shareWithMom ? "bb-bg-FDE7F1 bb-text-B83B7E" : "bg-slate-100 text-slate-500"
               }`}
             >
               {shareWithMom ? <Unlock className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
@@ -135,8 +135,8 @@ export default function DaughterInsights() {
                 onClick={() => pickMood(m.id)}
                 className={`flex flex-col items-center gap-1 rounded-2xl py-3 border-2 transition-all active:scale-95 ${
                   on
-                    ? "bb-bg-FFD8CC-60 bb-border-F2A68F scale-105 shadow-md bb-shadow-F2A68F-20"
-                    : "bb-bg-FAF8F5 border-transparent bb-hover-border-FFD8CC"
+                    ? "bb-bg-E9DDFC-60 bb-border-B794F4 scale-105 shadow-md bb-shadow-B794F4-20"
+                    : "bb-bg-FFF7FB border-transparent bb-hover-border-E9DDFC"
                 }`}
               >
                 <span className={`text-3xl transition-transform ${on ? "scale-110" : ""}`}>{m.emoji}</span>
@@ -150,7 +150,7 @@ export default function DaughterInsights() {
           (moodLoading ? (
             <ThinkingDots label="Таны мэдрэмжид тохирох шийдэл хайж байна…" />
           ) : (
-            <div className="mt-4 rounded-3xl bb-bg-FAF8F5 border bb-border-FFD8CC p-4 bloom-pop">
+            <div className="mt-4 rounded-3xl bb-bg-FFF7FB border bb-border-E9DDFC p-4 bloom-pop">
               <div className="flex items-center justify-between gap-2">
                 <p className="font-black text-slate-700">{selectedMood.title}</p>
                 <AiBadge />
@@ -163,8 +163,8 @@ export default function DaughterInsights() {
                   [Zap, "2 минутын үйлдэл", selectedMood.action],
                 ].map(([Icon, label, text]) => (
                   <div key={label} className="flex items-start gap-3 bg-white rounded-2xl p-3">
-                    <span className="w-8 h-8 rounded-xl bb-bg-E8F5E9 flex items-center justify-center shrink-0">
-                      <Icon className="w-4 h-4 bb-text-4F8A55" />
+                    <span className="w-8 h-8 rounded-xl bb-bg-FDE7F1 flex items-center justify-center shrink-0">
+                      <Icon className="w-4 h-4 bb-text-B83B7E" />
                     </span>
                     <div>
                       <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
@@ -181,7 +181,7 @@ export default function DaughterInsights() {
                   setMoodTimerRunning((r) => !r);
                 }}
                 className={`mt-3 w-full rounded-2xl py-3 font-extrabold text-sm flex items-center justify-center gap-2 transition active:scale-95 ${
-                  moodTimer === 0 ? "bb-bg-E8F5E9 bb-text-4F8A55" : "bb-bg-5E9E64 text-white"
+                  moodTimer === 0 ? "bb-bg-FDE7F1 bb-text-B83B7E" : "bb-bg-E0679F text-white"
                 }`}
               >
                 {moodTimer === 0 ? (

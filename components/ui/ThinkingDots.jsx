@@ -4,7 +4,7 @@ export default function ThinkingDots({ label = "AI бодож байна…" }) 
       {[0, 150, 300].map((d) => (
         <span
           key={d}
-          className="w-2 h-2 rounded-full bb-bg-81C784 animate-bounce"
+          className="w-2 h-2 rounded-full bb-bg-F48FB1 animate-bounce"
           style={{ animationDelay: `${d}ms` }}
         />
       ))}

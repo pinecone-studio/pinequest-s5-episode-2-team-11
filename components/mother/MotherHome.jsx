@@ -53,7 +53,7 @@ export default function MotherHome() {
             {momUnread > 0 && (
               <span
                 style={{ minWidth: 20 }}
-                className="absolute -top-1 -right-1 h-5 px-1 rounded-full bb-bg-F2A68F text-white text-xs font-black flex items-center justify-center"
+                className="absolute -top-1 -right-1 h-5 px-1 rounded-full bb-bg-B794F4 text-white text-xs font-black flex items-center justify-center"
               >
                 {momUnread}
               </span>
@@ -66,19 +66,19 @@ export default function MotherHome() {
         <Card className="bb-grad-5">
           <SectionTitle icon={Users} title="Охиноо урих" />
           <div className="flex items-center gap-2">
-            <span className="flex-1 rounded-2xl bg-white border-2 border-dashed bb-border-A5D6A7 py-3 text-center text-lg font-black tracking-wider bb-text-4F8A55">
+            <span className="flex-1 rounded-2xl bg-white border-2 border-dashed bb-border-CDB4F5 py-3 text-center text-lg font-black tracking-wider bb-text-B83B7E">
               {familyCode}
             </span>
             <button
               onClick={copyCode}
-              className="w-12 h-12 rounded-2xl bb-bg-5E9E64 text-white flex items-center justify-center active:scale-90"
+              className="w-12 h-12 rounded-2xl bb-bg-E0679F text-white flex items-center justify-center active:scale-90"
               aria-label="Кодыг хуулах"
             >
               {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
             </button>
             <button
               onClick={shareCode}
-              className="w-12 h-12 rounded-2xl bg-white border-2 bb-border-A5D6A7 bb-text-4F8A55 flex items-center justify-center active:scale-90"
+              className="w-12 h-12 rounded-2xl bg-white border-2 bb-border-CDB4F5 bb-text-B83B7E flex items-center justify-center active:scale-90"
               aria-label="Кодыг хуваалцах"
             >
               <Share2 className="w-5 h-5" />
@@ -92,7 +92,7 @@ export default function MotherHome() {
       )}
 
       {/* Халамжийн статус */}
-      <div className="rounded-3xl p-5 bb-grad-6 text-white shadow-xl bb-shadow-81C784-30 relative overflow-hidden bloom-fade">
+      <div className="rounded-3xl p-5 bb-grad-6 text-white shadow-xl bb-shadow-F48FB1-30 relative overflow-hidden bloom-fade">
         <span className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-white/10" />
         <span className="absolute right-10 -bottom-16 w-32 h-32 rounded-full bg-white/10" />
         <div className="relative flex items-start gap-4">
@@ -145,7 +145,7 @@ export default function MotherHome() {
             ) : (
               <p className="text-xs font-bold text-white/90 flex items-center gap-1.5">
                 <Lock className="w-3.5 h-3.5" /> {daughterName} өнөөдрийн мэдрэмжээ хувьдаа хадгалсан. Энэ бол
-                хэвийн 🌿
+                хэвийн 🌸
               </p>
             )}
           </div>
@@ -159,7 +159,7 @@ export default function MotherHome() {
           <div
             key={n.id}
             className={`flex items-start gap-3 rounded-2xl p-4 bloom-pop border-2 ${
-              n.kind === "sos" ? "bb-bg-FFD8CC-50 bb-border-F2A68F-50" : "bb-bg-FAF8F5 bb-border-F5C7A9-60"
+              n.kind === "sos" ? "bb-bg-E9DDFC-50 bb-border-B794F4-50" : "bb-bg-FFF7FB bb-border-D8C4F7-60"
             }`}
           >
             <span className="text-2xl">{n.kind === "sos" ? "🆘" : "🛍️"}</span>
@@ -182,7 +182,7 @@ export default function MotherHome() {
               className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center active:scale-90"
               aria-label="Өөр санаа"
             >
-              <RefreshCw className={`w-4 h-4 bb-text-C2674F ${nudgeLoading ? "animate-spin" : ""}`} />
+              <RefreshCw className={`w-4 h-4 bb-text-7C4DCC ${nudgeLoading ? "animate-spin" : ""}`} />
             </button>
           }
         />
@@ -195,7 +195,7 @@ export default function MotherHome() {
               <button
                 onClick={markNudgeDone}
                 disabled={!linked}
-                className="flex-1 rounded-2xl bb-bg-5E9E64 disabled:bg-slate-200 text-white font-extrabold py-3 text-sm active:scale-95 transition flex items-center justify-center gap-2"
+                className="flex-1 rounded-2xl bb-bg-E0679F disabled:bg-slate-200 text-white font-extrabold py-3 text-sm active:scale-95 transition flex items-center justify-center gap-2"
               >
                 <Check className="w-4 h-4" /> Хийлээ
               </button>
@@ -209,7 +209,7 @@ export default function MotherHome() {
           </div>
         )}
         {nudgesDone.length > 0 && (
-          <p className="mt-3 text-xs font-bold bb-text-4F8A55">
+          <p className="mt-3 text-xs font-bold bb-text-B83B7E">
             ✓ Өнөөдөр {nudgesDone.length} халамж үзүүлсэн байна
           </p>
         )}

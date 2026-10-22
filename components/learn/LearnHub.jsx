@@ -5,9 +5,12 @@ import { Check, Backpack, Info, RefreshCw } from "lucide-react";
 import { KIT_ITEMS, MYTHS } from "../../lib/data";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
+import PadGuide, { usePadGuideFinished } from "./PadGuide";
 
 export default function LearnHub() {
-  const { learnTab, setLearnTab, kitChecked, flippedMyths, toggleKit, toggleMyth } = useFamily();
+  const { learnTab, setLearnTab, kitChecked, flippedMyths, toggleKit, toggleMyth, view, setTab } =
+    useFamily();
+  const padDone = usePadGuideFinished();
 
   return (
     <div className="space-y-4 bloom-fade">
@@ -16,8 +19,9 @@ export default function LearnHub() {
         <h2 className="text-2xl font-black text-slate-700">Анхны сарын тэмдэг ба боловсрол 📖</h2>
       </div>
 
-      <div className="grid grid-cols-2 gap-1 bb-bg-E8F5E9 rounded-2xl p-1">
+      <div className="grid grid-cols-3 gap-1 bb-bg-FDE7F1 rounded-2xl p-1">
         {[
+          ["pad", padDone ? "Пад заавар ✓" : "Пад заавар 🌸"],
           ["kit", "Сургуулийн цүнх"],
           ["myths", "Домог ба үнэн"],
         ].map(([id, label]) => (
@@ -25,7 +29,7 @@ export default function LearnHub() {
             key={id}
             onClick={() => setLearnTab(id)}
             className={`rounded-xl py-2.5 text-xs font-extrabold transition-all ${
-              learnTab === id ? "bg-white bb-text-4F8A55 shadow-sm" : "text-slate-500"
+              learnTab === id ? "bg-white bb-text-B83B7E shadow-sm" : "text-slate-500"
             }`}
           >
             {label}
@@ -33,13 +37,15 @@ export default function LearnHub() {
         ))}
       </div>
 
+      {learnTab === "pad" && <PadGuide role={view} onAskFriends={() => setTab("friends")} />}
+
       {learnTab === "kit" && (
         <Card>
           <SectionTitle
             icon={Backpack}
             title="ЕБС-ийн яаралтай цүнх"
             right={
-              <span className="text-xs font-extrabold bb-text-4F8A55">
+              <span className="text-xs font-extrabold bb-text-B83B7E">
                 {kitChecked.length}/{KIT_ITEMS.length}
               </span>
             }
@@ -58,18 +64,18 @@ export default function LearnHub() {
                   key={k.id}
                   onClick={() => toggleKit(k.id)}
                   className={`w-full flex items-center gap-3 rounded-2xl px-3 py-3 text-left transition active:scale-95 ${
-                    on ? "bb-bg-E8F5E9" : "bb-bg-FAF8F5"
+                    on ? "bb-bg-FDE7F1" : "bb-bg-FFF7FB"
                   }`}
                 >
                   <span
                     className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition shrink-0 ${
-                      on ? "bb-bg-5E9E64 bb-border-5E9E64" : "border-slate-300 bg-white"
+                      on ? "bb-bg-E0679F bb-border-E0679F" : "border-slate-300 bg-white"
                     }`}
                   >
                     {on && <Check className="w-4 h-4 text-white" />}
                   </span>
                   <span className="text-lg">{k.emoji}</span>
-                  <span className={`text-sm font-bold ${on ? "bb-text-3F7445" : "text-slate-600"}`}>
+                  <span className={`text-sm font-bold ${on ? "bb-text-962D66" : "text-slate-600"}`}>
                     {k.label}
                   </span>
                 </button>
@@ -77,7 +83,7 @@ export default function LearnHub() {
             })}
           </div>
           {kitChecked.length === KIT_ITEMS.length && (
-            <p className="mt-4 text-center text-sm font-extrabold bb-text-4F8A55 bb-bg-E8F5E9 rounded-2xl py-3 bloom-pop">
+            <p className="mt-4 text-center text-sm font-extrabold bb-text-B83B7E bb-bg-FDE7F1 rounded-2xl py-3 bloom-pop">
               🎉 Цүнх бэлэн боллоо — чи юунд ч бэлэн!
             </p>
           )}
@@ -97,19 +103,19 @@ export default function LearnHub() {
                 key={m.id}
                 onClick={() => toggleMyth(m.id)}
                 className={`w-full text-left rounded-3xl p-5 transition-all duration-300 active:scale-95 border-2 ${
-                  flipped ? "bb-bg-E8F5E9 bb-border-C8E6C9" : "bg-white border-slate-100 shadow-sm"
+                  flipped ? "bb-bg-FDE7F1 bb-border-F8D3E6" : "bg-white border-slate-100 shadow-sm"
                 }`}
               >
                 <span
                   className={`inline-block text-xs font-black uppercase tracking-widest rounded-full px-2.5 py-1 ${
-                    flipped ? "bb-bg-5E9E64 text-white" : "bb-bg-FFD8CC bb-text-B4553C"
+                    flipped ? "bb-bg-E0679F text-white" : "bb-bg-E9DDFC bb-text-6A3BB8"
                   }`}
                 >
                   {flipped ? "✓ Үнэн" : "✗ Домог"}
                 </span>
                 <p
                   key={flipped ? "fact" : "myth"}
-                  className={`mt-2 font-extrabold leading-snug bloom-pop ${flipped ? "bb-text-3F7445" : "text-slate-700"}`}
+                  className={`mt-2 font-extrabold leading-snug bloom-pop ${flipped ? "bb-text-962D66" : "text-slate-700"}`}
                 >
                   {flipped ? m.fact : `«${m.myth}»`}
                 </p>
@@ -124,8 +130,8 @@ export default function LearnHub() {
         </div>
       )}
 
-      <div className="flex items-start gap-3 rounded-2xl bb-bg-FFD8CC-30 p-4">
-        <Info className="w-5 h-5 bb-text-C2674F shrink-0 mt-0.5" />
+      <div className="flex items-start gap-3 rounded-2xl bb-bg-E9DDFC-30 p-4">
+        <Info className="w-5 h-5 bb-text-7C4DCC shrink-0 mt-0.5" />
         <p className="text-xs font-semibold text-slate-600 leading-relaxed">
           Энэ апп эмчийн зөвлөгөөг орлохгүй. Хүчтэй өвдөлт, хэт их цус алдалт эсвэл санаа зовох зүйл байвал
           эмчдээ хандаарай.
