@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import BloomApp from "../components/BloomApp";
+import Application from "../components/Application";
 import { supabase, supabaseConfigured } from "../../lib/supabase";
 
 export default function SettingsPage() {
@@ -29,5 +29,5 @@ export default function SettingsPage() {
     };
   }, [router]);
 
-  return authenticated ? <BloomApp initialTab="me" /> : null;
+  return authenticated ? <Application initialTab="me" /> : null;
 }
