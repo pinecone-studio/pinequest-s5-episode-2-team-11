@@ -1,5 +1,5 @@
-import BloomApp from "../components/BloomApp";
+import Application from "../components/Application";
 
 export default function LearnPage() {
-  return <BloomApp initialTab="learn" />;
+  return <Application initialTab="learn" />;
 }

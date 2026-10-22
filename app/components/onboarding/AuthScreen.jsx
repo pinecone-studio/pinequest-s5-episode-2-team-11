@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ChevronLeft, AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import RoleSelect from "./RoleSelect";
+import BloomyLogo from "../ui/BloomyLogo";
 
 /** Нэвтрэх / бүртгүүлэх. stage: "role" → "signup" | "login" */
 export default function AuthScreen() {
@@ -59,7 +60,13 @@ export default function AuthScreen() {
         <ChevronLeft className="w-4 h-4" /> Буцах
       </button>
 
-      <div className="text-5xl mb-3">{isSignup ? (role === "mother" ? "🤝" : "🌱") : "🌿"}</div>
+      <div className="mb-3">
+        {isSignup ? (
+          <span className="text-5xl">{role === "mother" ? "🤝" : "🌱"}</span>
+        ) : (
+          <BloomyLogo className="w-16 h-16" />
+        )}
+      </div>
       <h2 className="text-2xl font-black text-slate-700">
         {isSignup ? (role === "mother" ? "Асран хамгаалагчийн бүртгэл" : "Өсвөр насны охины бүртгэл") : "Тавтай морил"}
       </h2>

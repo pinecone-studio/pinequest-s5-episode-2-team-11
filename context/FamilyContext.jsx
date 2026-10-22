@@ -429,7 +429,7 @@ export function FamilyProvider({ children }) {
   };
 
   const shareCode = async () => {
-    const text = `Bloomy 🌿 Энэ урилгын кодыг оруулаад охинтойгоо холбоорой: ${family?.code}`;
+    const text = `Bloomy 🌸 Энэ урилгын кодыг оруулаад охинтойгоо холбоорой: ${family?.code}`;
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
         await navigator.share({ title: "Bloomy", text, url: window.location.origin });

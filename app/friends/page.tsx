@@ -1,5 +1,5 @@
-import BloomApp from "../components/BloomApp";
+import Application from "../components/Application";
 
 export default function FriendsPage() {
-  return <BloomApp initialTab="friends" />;
+  return <Application initialTab="friends" />;
 }

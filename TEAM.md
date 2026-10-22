@@ -4,11 +4,14 @@
 
 ```
 app/
-  page.tsx                  → зөвхөн <BloomApp /> дууддаг
+  page.tsx                  → Application бүрхүүлийг дууддаг
   layout.tsx, manifest.ts   → апп-ын нэр, дүрс, PWA тохиргоо
   api/ai/route.ts           → AI (Claude API) — СЕРВЕР дээр ажиллана, API key энд
 components/
-  BloomApp.jsx              → бүрхүүл: дээд гарчиг, доод навигаци, аль дэлгэцийг харуулах
+  Application.jsx           → контекст provider болон аппын бүрхүүлийг холбодог
+  AppProviders.jsx          → Family, Friends provider-ууд
+  layout/                   → үндсэн бүрхүүл, толгой, доод навигаци, дэлгэц сонголт
+  system/                   → ачаалал, тохиргооны алдаа, өгөгдөл татах алдааны дэлгэц
   ui/                       → дахин ашиглах жижиг хэсгүүд (Card, SectionTitle, PageHeader…)
   onboarding/               → нэвтрэх/бүртгүүлэх, ээжийн код, охин код оруулах, мөчлөг тохируулах
   daughter/                 → охины дэлгэцүүд (Өнөөдөр, Зөвлөмж, Хэрэгсэл, мөчлөгийн тойрог)
@@ -40,7 +43,7 @@ styles/bloom.css            → өнгө (bb-*), анимейшн (bloom-*)
 | 4 | `components/onboarding/`, `components/settings/`, `components/sos/` | `fix/sos-timer` |
 | 5 | `app/api/ai/route.ts` (AI-ийн prompt) | `feature/ai-prompts` |
 
-**`context/FamilyContext.jsx`, `components/BloomApp.jsx`, `supabase/schema.sql`-ийг нэг удаад зөвхөн нэг хүн засна.** Бүх дэлгэц эдгээрээс хамаардаг тул хоёр хүн зэрэг засвал conflict гарна. Эдгээрт өөрчлөлт хэрэгтэй бол issue дээр бичээд, нэг хүн хариуцна.
+**`context/FamilyContext.jsx`, `components/layout/AppShell.jsx`, `supabase/schema.sql`-ийг нэг удаад зөвхөн нэг хүн засна.** Бүх дэлгэц эдгээрээс хамаардаг тул хоёр хүн зэрэг засвал conflict гарна. Эдгээрт өөрчлөлт хэрэгтэй бол issue дээр бичээд, нэг хүн хариуцна.
 
 ## Шинэ state эсвэл үйлдэл нэмэх
 
@@ -51,7 +54,7 @@ styles/bloom.css            → өнгө (bb-*), анимейшн (bloom-*)
 ## Шинэ таб (дэлгэц) нэмэх
 
 1. `components/<хэсэг>/ШинэДэлгэц.jsx` үүсгэнэ (одоо байгаа дэлгэцүүдийн аль нэгийг загвар болгон хуулж болно).
-2. `components/BloomApp.jsx` дотор `navItems`-д таб нэмээд `<main>` дотор `{tab === "шинэ" && <ШинэДэлгэц />}` гэж холбоно.
+2. `components/layout/BottomNavigation.jsx` дотор таб, `components/layout/CurrentScreen.jsx` дотор дэлгэцээ холбоно.
 
 ## Git урсгал
 
