@@ -1,5 +1,5 @@
 -- =====================================================================
---  Bloom Family — Supabase схем
+--  Bloomy — Supabase схем
 --  Supabase → SQL Editor → New query → энэ файлыг бүтнээр нь хуулж → Run
 -- =====================================================================
 
@@ -185,6 +185,12 @@ create policy "profiles: read self and family" on public.profiles
   for select to authenticated
   using (id = auth.uid() or (family_id is not null and family_id = public.my_family_id()));
 
+-- Профайл дутуу бол (schema-аас өмнө бүртгүүлсэн) апп өөрөө нөхөж үүсгэнэ
+drop policy if exists "profiles: insert self" on public.profiles;
+create policy "profiles: insert self" on public.profiles
+  for insert to authenticated
+  with check (id = auth.uid() and family_id is null);
+
 drop policy if exists "profiles: update self" on public.profiles;
 create policy "profiles: update self" on public.profiles
   for update to authenticated
@@ -282,3 +288,11 @@ begin
     end if;
   end loop;
 end $$;
+
+-- ---------- Schema-аас өмнө бүртгүүлсэн хэрэглэгчдэд профайл нөхөх ----------
+insert into public.profiles (id, role, display_name)
+select id,
+       case when raw_user_meta_data ->> 'role' = 'mother' then 'mother' else 'daughter' end,
+       coalesce(raw_user_meta_data ->> 'display_name', '')
+from auth.users
+on conflict (id) do nothing;

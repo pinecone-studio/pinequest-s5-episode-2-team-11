@@ -448,7 +448,7 @@ export function FamilyProvider({ children }) {
   };
 
   const shareCode = async () => {
-    const text = `Bloomy-д нэгдээрэй 🌸 Апп-аа нээгээд энэ кодыг оруулаарай: ${family?.code}`;
+    const text = `Bloomy-д нэгдээрэй 🌿 Апп-аа нээгээд энэ кодыг оруулаарай: ${family?.code}`;
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
         await navigator.share({ title: "Bloomy", text, url: window.location.origin });

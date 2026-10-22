@@ -1,8 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap");
 
-/* Bloomy — өнгө (bb-*), анимейшн (bloom-*)
-   Өнгөний загвар: ягаан / лаванда.
-   bb-bg-FDE7F1 гэх мэт классын нэр нь өнгөний hex кодоо харуулдаг. */
+/* Bloomy — өнгө (bb-*), анимейшн (bloom-*) */
 @keyframes bloomFade {
   from {
     opacity: 0;
