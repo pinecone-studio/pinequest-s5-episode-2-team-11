@@ -47,7 +47,7 @@ export default function AuthScreen() {
   };
 
   const inputCls =
-    "w-full rounded-2xl border-2 border-slate-100 bb-focus-border-81C784 outline-none px-4 py-3 font-bold text-slate-700 bg-white";
+    "w-full rounded-2xl border-2 border-slate-100 bb-focus-border-F48FB1 outline-none px-4 py-3 font-bold text-slate-700 bg-white";
 
   return (
     <form onSubmit={submit} className="px-2 pt-4 pb-10 bloom-fade">
@@ -59,9 +59,9 @@ export default function AuthScreen() {
         <ChevronLeft className="w-4 h-4" /> Буцах
       </button>
 
-      <div className="text-5xl mb-3">{isSignup ? (role === "mother" ? "👩" : "👧") : "🌿"}</div>
+      <div className="text-5xl mb-3">{isSignup ? (role === "mother" ? "🤝" : "🌱") : "🌸"}</div>
       <h2 className="text-2xl font-black text-slate-700">
-        {isSignup ? (role === "mother" ? "Ээжийн бүртгэл" : "Охины бүртгэл") : "Тавтай морил"}
+        {isSignup ? (role === "mother" ? "Асран хамгаалагчийн бүртгэл" : "Өсвөр насны охины бүртгэл") : "Тавтай морил"}
       </h2>
       <p className="mt-1 text-slate-500 font-semibold">
         {isSignup ? "Хэдхэн секундэд бүртгүүлээрэй." : "Имэйл, нууц үгээрээ нэвтэрнэ үү."}
@@ -135,7 +135,7 @@ export default function AuthScreen() {
       </div>
 
       {message && (
-        <p className="mt-4 text-sm font-semibold bb-text-C2674F flex items-start gap-1.5 bloom-pop">
+        <p className="mt-4 text-sm font-semibold bb-text-7C4DCC flex items-start gap-1.5 bloom-pop">
           <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" /> {message}
         </p>
       )}
@@ -143,7 +143,7 @@ export default function AuthScreen() {
       <button
         type="submit"
         disabled={!canSubmit || busy}
-        className="mt-6 w-full bb-bg-5E9E64 bb-disabled-bg-C8E6C9 text-white font-extrabold rounded-2xl py-4 active:scale-95 transition shadow-lg bb-shadow-81C784-30 flex items-center justify-center gap-2"
+        className="mt-6 w-full bb-bg-E0679F bb-disabled-bg-F8D3E6 text-white font-extrabold rounded-2xl py-4 active:scale-95 transition shadow-lg bb-shadow-F48FB1-30 flex items-center justify-center gap-2"
       >
         {busy && <Loader2 className="w-5 h-5 animate-spin" />}
         {isSignup ? "Бүртгүүлэх" : "Нэвтрэх"}

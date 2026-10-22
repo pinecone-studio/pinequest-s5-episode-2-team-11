@@ -26,7 +26,7 @@ export default function MotherSupplies() {
                   <span className="flex items-center gap-2 font-extrabold text-slate-700 text-sm">
                     <span className="text-lg">{s.emoji}</span> {s.label}
                     {low && (
-                      <span className="text-xs font-black bb-bg-FFD8CC bb-text-B4553C rounded-full px-2 py-0.5">
+                      <span className="text-xs font-black bb-bg-E9DDFC bb-text-6A3BB8 rounded-full px-2 py-0.5">
                         Дуусах дөхсөн
                       </span>
                     )}
@@ -43,7 +43,7 @@ export default function MotherSupplies() {
                       style={{
                         minWidth: 8,
                         maxWidth: 22,
-                        background: i < s.count ? (low ? "#F2A68F" : "#A5D6A7") : "#F1F5F9",
+                        background: i < s.count ? (low ? "#B794F4" : "#CDB4F5") : "#F1F5F9",
                       }}
                     />
                   ))}
@@ -66,7 +66,7 @@ export default function MotherSupplies() {
                   <button
                     onClick={() => restock(key)}
                     disabled={s.count === s.max}
-                    className="flex-1 h-9 rounded-xl bb-bg-5E9E64 bb-disabled-bg-E8F5E9 bb-disabled-text-4F8A55 text-white text-xs font-extrabold active:scale-95 transition flex items-center justify-center gap-1"
+                    className="flex-1 h-9 rounded-xl bb-bg-E0679F bb-disabled-bg-FDE7F1 bb-disabled-text-B83B7E text-white text-xs font-extrabold active:scale-95 transition flex items-center justify-center gap-1"
                   >
                     {s.count === s.max ? (
                       <>

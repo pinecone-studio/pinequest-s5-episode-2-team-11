@@ -3,16 +3,16 @@ import type { MetadataRoute } from "next";
 // Утсан дээр «Add to Home Screen» хийхэд апп шиг суулгагдана (PWA)
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Bloom Family",
-    short_name: "Bloom",
+    name: "Bloomy",
+    short_name: "Bloomy",
     description: "Өсвөр насны охид болон ээжүүдэд зориулсан мөчлөг, халамжийн апп",
     lang: "mn",
     start_url: "/",
     scope: "/",
     display: "standalone",
     orientation: "portrait",
-    background_color: "#FAF8F5",
-    theme_color: "#81C784",
+    background_color: "#FFF7FB",
+    theme_color: "#F48FB1",
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
       { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },

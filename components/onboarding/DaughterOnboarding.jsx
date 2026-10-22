@@ -18,18 +18,18 @@ export default function DaughterOnboarding() {
 
   return (
     <div className="px-2 pt-4 pb-10 bloom-fade">
-      <div className="w-16 h-16 rounded-2xl bb-bg-E8F5E9 flex items-center justify-center mb-4">
-        <KeyRound className="w-8 h-8 bb-text-4F8A55" />
+      <div className="w-16 h-16 rounded-2xl bb-bg-FDE7F1 flex items-center justify-center mb-4">
+        <KeyRound className="w-8 h-8 bb-text-B83B7E" />
       </div>
       <h2 className="text-2xl font-black text-slate-700">
-        Сайн уу{profile?.display_name ? `, ${profile.display_name}` : ""} 🌿
+        Сайн уу{profile?.display_name ? `, ${profile.display_name}` : ""} 🌸
       </h2>
       <p className="mt-2 text-slate-500 font-semibold">
         Ээж (эсвэл асран хамгаалагч)-ийнхаа өгсөн 6 оронтой кодыг оруулж гэр бүлдээ нэгдээрэй.
       </p>
 
-      <div className="mt-6 flex items-center rounded-2xl border-2 border-slate-100 bb-focus-within-border-81C784 bg-white overflow-hidden">
-        <span className="pl-4 font-black bb-text-81C784">BLOOM-</span>
+      <div className="mt-6 flex items-center rounded-2xl border-2 border-slate-100 bb-focus-within-border-F48FB1 bg-white overflow-hidden">
+        <span className="pl-4 font-black bb-text-F48FB1">BLOOM-</span>
         <input
           id="family-code"
           inputMode="numeric"
@@ -47,7 +47,7 @@ export default function DaughterOnboarding() {
         />
       </div>
       {codeError && (
-        <p className="mt-2 text-sm font-semibold bb-text-C2674F flex items-center gap-1">
+        <p className="mt-2 text-sm font-semibold bb-text-7C4DCC flex items-center gap-1">
           <AlertCircle className="w-4 h-4" /> {codeError}
         </p>
       )}
@@ -55,15 +55,15 @@ export default function DaughterOnboarding() {
       <button
         onClick={joinFamily}
         disabled={codeInput.length !== 6 || joining}
-        className="mt-5 w-full bb-bg-5E9E64 bb-disabled-bg-C8E6C9 text-white font-extrabold rounded-2xl py-4 active:scale-95 transition shadow-lg bb-shadow-81C784-30 flex items-center justify-center gap-2"
+        className="mt-5 w-full bb-bg-E0679F bb-disabled-bg-F8D3E6 text-white font-extrabold rounded-2xl py-4 active:scale-95 transition shadow-lg bb-shadow-F48FB1-30 flex items-center justify-center gap-2"
       >
         {joining && <Loader2 className="w-5 h-5 animate-spin" />}
         Ээжтэйгээ холбогдох
       </button>
 
-      <div className="mt-4 rounded-2xl bb-bg-FFD8CC-40 p-4">
+      <div className="mt-4 rounded-2xl bb-bg-E9DDFC-40 p-4">
         <p className="text-sm font-semibold text-slate-600 leading-relaxed">
-          💡 Ээж тань Bloom Family-д <b>ээжийн бүртгэлээр</b> бүртгүүлэхэд код автоматаар гарч ирнэ.
+          💡 Ээж тань Bloomy-д <b>ээжийн бүртгэлээр</b> бүртгүүлэхэд код автоматаар гарч ирнэ.
         </p>
       </div>
 

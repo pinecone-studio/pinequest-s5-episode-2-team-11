@@ -62,8 +62,8 @@ export default function CycleSetup({ onDone }) {
   return (
     <div className="px-2 pt-4 pb-10 bloom-fade space-y-6">
       <div>
-        <div className="w-16 h-16 rounded-2xl bb-bg-FFD8CC-60 flex items-center justify-center mb-4">
-          <CalendarHeart className="w-8 h-8 bb-text-C2674F" />
+        <div className="w-16 h-16 rounded-2xl bb-bg-E9DDFC-60 flex items-center justify-center mb-4">
+          <CalendarHeart className="w-8 h-8 bb-text-7C4DCC" />
         </div>
         <h2 className="text-2xl font-black text-slate-700">Мөчлөгөө тохируулъя</h2>
         <p className="mt-2 text-slate-500 font-semibold">
@@ -85,7 +85,7 @@ export default function CycleSetup({ onDone }) {
           max={today}
           min={addDays(today, -90)}
           onChange={(e) => e.target.value && setStart(e.target.value)}
-          className="w-full rounded-2xl border-2 border-slate-100 bb-focus-border-81C784 outline-none px-4 py-3 font-bold text-slate-700 bg-white"
+          className="w-full rounded-2xl border-2 border-slate-100 bb-focus-border-F48FB1 outline-none px-4 py-3 font-bold text-slate-700 bg-white"
         />
       </div>
 
@@ -111,7 +111,7 @@ export default function CycleSetup({ onDone }) {
       <button
         onClick={save}
         disabled={busy}
-        className="w-full bb-bg-5E9E64 text-white font-extrabold rounded-2xl py-4 active:scale-95 transition shadow-lg bb-shadow-81C784-30 flex items-center justify-center gap-2"
+        className="w-full bb-bg-E0679F text-white font-extrabold rounded-2xl py-4 active:scale-95 transition shadow-lg bb-shadow-F48FB1-30 flex items-center justify-center gap-2"
       >
         {busy && <Loader2 className="w-5 h-5 animate-spin" />}
         Хадгалах
@@ -120,7 +120,7 @@ export default function CycleSetup({ onDone }) {
       {!onDone && (
         <button
           onClick={markNoPeriodYet}
-          className="w-full rounded-2xl bb-bg-E8F5E9 bb-text-4F8A55 font-extrabold py-4 active:scale-95 transition"
+          className="w-full rounded-2xl bb-bg-FDE7F1 bb-text-B83B7E font-extrabold py-4 active:scale-95 transition"
         >
           🌱 Анхны сарын тэмдэг маань хараахан ирээгүй
         </button>

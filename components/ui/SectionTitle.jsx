@@ -1,6 +1,6 @@
 export default function SectionTitle({ icon: Icon, title, right, tone = "sage" }) {
-  const bg = tone === "peach" ? "bb-bg-FFD8CC-60" : "bb-bg-E8F5E9";
-  const fg = tone === "peach" ? "bb-text-C2674F" : "bb-text-4F8A55";
+  const bg = tone === "peach" ? "bb-bg-E9DDFC-60" : "bb-bg-FDE7F1";
+  const fg = tone === "peach" ? "bb-text-7C4DCC" : "bb-text-B83B7E";
   return (
     <div className="flex items-center justify-between mb-3 gap-2">
       <div className="flex items-center gap-2">

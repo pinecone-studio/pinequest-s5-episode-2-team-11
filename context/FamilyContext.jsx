@@ -39,6 +39,7 @@ export function FamilyProvider({ children }) {
   const [members, setMembers] = useState([]); // гэр бүлийн бүх профайл
   const [dataLoading, setDataLoading] = useState(false);
   const [ready, setReady] = useState(false); // эхний бүрэн ачаалалт дууссан эсэх
+  const [loadError, setLoadError] = useState(null); // "no_profile" | "network"
 
   /* ================= Гэр бүлийн өгөгдөл ================= */
   const [supplyRows, setSupplyRows] = useState([]);
@@ -50,13 +51,30 @@ export function FamilyProvider({ children }) {
 
   /* ================= Дэлгэцийн төлөв ================= */
   const [tab, setTab] = useState("home");
-  const [learnTab, setLearnTab] = useState("kit");
+  const [learnTab, setLearnTab] = useState("pad");
   const [codeInput, setCodeInput] = useState("");
   const [codeError, setCodeError] = useState("");
   const [joining, setJoining] = useState(false);
   const [copied, setCopied] = useState(false);
   const [momReady, setMomReady] = useState(false);
-  const [teenSkippedJoin, setTeenSkippedJoin] = useState(false);
+  const [teenSkippedJoin, setTeenSkippedJoinState] = useState(false);
+  // «Одоохондоо алгасах» сонголтыг утсанд санана — эс тэгвэл апп нээх бүрт кодын дэлгэц гарна
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("bloomy:skipJoin") === "1") setTeenSkippedJoinState(true);
+    } catch {
+      /* localStorage боломжгүй */
+    }
+  }, []);
+  const setTeenSkippedJoin = (value) => {
+    setTeenSkippedJoinState(value);
+    try {
+      if (value) localStorage.setItem("bloomy:skipJoin", "1");
+      else localStorage.removeItem("bloomy:skipJoin");
+    } catch {
+      /* ignore */
+    }
+  };
   const [flippedMyths, setFlippedMyths] = useState([]);
   const [toast, setToast] = useState(null);
   const [syncTick, setSyncTick] = useState(0);
@@ -165,10 +183,20 @@ export function FamilyProvider({ children }) {
         setProfile(data);
         return data;
       }
+      // 2 удаа олдохгүй бол (schema-аас өмнө бүртгүүлсэн гэх мэт) өөрөө нөхөж үүсгэнэ
+      if (i === 1) {
+        const meta = session?.user?.user_metadata ?? {};
+        await supabase.from("profiles").insert({
+          id: userId,
+          role: meta.role === "mother" ? "mother" : "daughter",
+          display_name: meta.display_name ?? "",
+        });
+        continue;
+      }
       await new Promise((r) => setTimeout(r, 400));
     }
     return null;
-  }, [userId]);
+  }, [userId, session?.user?.user_metadata]);
 
   const loadFamily = useCallback(async (fid) => {
     if (!fid) {
@@ -211,7 +239,25 @@ export function FamilyProvider({ children }) {
   const loadAll = useCallback(async () => {
     if (!userId) return;
     setDataLoading(true);
+    setLoadError(null);
+    try {
+      await loadAllInner();
+    } catch (e) {
+      console.error("Bloom load error:", e);
+      setLoadError("network");
+    } finally {
+      setDataLoading(false);
+      setReady(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, loadProfile, loadFamily, loadSupplies, loadKit, loadNotifications, loadMoods]);
+
+  const loadAllInner = async () => {
     const p = await loadProfile();
+    if (!p) {
+      setLoadError("no_profile");
+      return;
+    }
     let fid = p?.family_id ?? null;
     // Ээж анх нэвтрэхэд гэр бүлийг автоматаар үүсгэнэ
     if (p?.role === "mother" && !fid) {
@@ -225,9 +271,7 @@ export function FamilyProvider({ children }) {
       loadNotifications(),
       loadMoods(),
     ]);
-    setDataLoading(false);
-    setReady(true);
-  }, [userId, loadProfile, loadFamily, loadSupplies, loadKit, loadNotifications, loadMoods]);
+  };
 
   useEffect(() => {
     setReady(false);
@@ -404,10 +448,10 @@ export function FamilyProvider({ children }) {
   };
 
   const shareCode = async () => {
-    const text = `Bloom Family-д нэгдээрэй 🌿 Апп-аа нээгээд энэ кодыг оруулаарай: ${family?.code}`;
+    const text = `Bloomy-д нэгдээрэй 🌸 Апп-аа нээгээд энэ кодыг оруулаарай: ${family?.code}`;
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
-        await navigator.share({ title: "Bloom Family", text, url: window.location.origin });
+        await navigator.share({ title: "Bloomy", text, url: window.location.origin });
       } catch {
         /* хэрэглэгч цуцалсан */
       }
@@ -433,7 +477,7 @@ export function FamilyProvider({ children }) {
     setCodeError("");
     setCodeInput("");
     await loadAll();
-    setToast("Ээжтэйгээ амжилттай холбогдлоо 💚");
+    setToast("Ээжтэйгээ амжилттай холбогдлоо 💗");
   };
 
   /* ================= Мөчлөг ================= */
@@ -450,9 +494,9 @@ export function FamilyProvider({ children }) {
     const ok = await saveCycle({ lastPeriodStart: today, cycleLength, periodLength });
     if (!ok) return;
     if (linked) {
-      await sendToMom(`${nameGen} сарын тэмдэг өнөөдөр ирлээ. Бага зэрэг илүү халамж хэрэгтэй 💚`, "period");
-      setToast("Тэмдэглэлээ! Ээжид зөөлөн мэдэгдэл очлоо 🌿");
-    } else setToast("Тэмдэглэлээ 🌿");
+      await sendToMom(`${nameGen} сарын тэмдэг өнөөдөр ирлээ. Бага зэрэг илүү халамж хэрэгтэй 💗`, "period");
+      setToast("Тэмдэглэлээ! Ээжид зөөлөн мэдэгдэл очлоо 🌸");
+    } else setToast("Тэмдэглэлээ 🌸");
   };
 
   const markNoPeriodYet = async () => {
@@ -564,8 +608,8 @@ export function FamilyProvider({ children }) {
 
   const markNudgeDone = async () => {
     setNudgesDone((p) => [...p, currentNudge]);
-    await sendToTeen("Ээж чамд зориулж жаахан халамж бэлдлээ 💚", "care");
-    setToast("Сайхан байна! Охиндоо мэдэгдэл очлоо 🌿");
+    await sendToTeen("Ээж чамд зориулж жаахан халамж бэлдлээ 💗", "care");
+    setToast("Сайхан байна! Охиндоо мэдэгдэл очлоо 🌸");
     setTimeout(fetchNudge, 500);
   };
 
@@ -669,7 +713,7 @@ export function FamilyProvider({ children }) {
       return `${nameGen} сарын тэмдэг ${daysUntil} хоногийн дараа ирэх магадлалтай. Бэлтгэл хангахад туслаарай.`;
     if (daysUntil <= 7)
       return `${nameGen} сарын тэмдэг 1 долоо хоногийн дотор ирэх магадлалтай. Хэрэгслээ шалгах сайхан үе.`;
-    return `${daughterName} одоо «${phase.name}»-д байна. Онцгой бэлтгэл хэрэггүй — зүгээр л дэргэд нь байгаарай 🌿`;
+    return `${daughterName} одоо «${phase.name}»-д байна. Онцгой бэлтгэл хэрэггүй — зүгээр л дэргэд нь байгаарай 🌸`;
   })();
 
   const value = {
@@ -679,6 +723,8 @@ export function FamilyProvider({ children }) {
     authLoading,
     dataLoading,
     ready,
+    loadError,
+    reload: () => loadAll(),
     profile,
     signUp,
     signIn,

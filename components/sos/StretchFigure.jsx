@@ -1,9 +1,9 @@
 export default function StretchFigure({ type, active }) {
-  const stroke = active ? "#4F8A55" : "#94A3B8";
+  const stroke = active ? "#B83B7E" : "#94A3B8";
   const common = { stroke, strokeWidth: 5, strokeLinecap: "round", strokeLinejoin: "round", fill: "none" };
   return (
     <svg viewBox="0 0 120 80" className="w-full h-full">
-      <rect x="4" y="70" width="112" height="6" rx="3" fill={active ? "#E8F5E9" : "#F1F5F9"} />
+      <rect x="4" y="70" width="112" height="6" rx="3" fill={active ? "#FDE7F1" : "#F1F5F9"} />
       {type === "child" && (
         <g>
           <circle cx="30" cy="61" r="7" fill={stroke} />
