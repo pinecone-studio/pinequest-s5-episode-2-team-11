@@ -1,6 +1,7 @@
 "use client";
 
 import { Leaf, ChevronRight, ShieldCheck, Heart, Sprout, HeartHandshake } from "lucide-react";
+import InstallAppButton from "../ui/InstallAppButton";
 
 export default function RoleSelect({ onPick, onLogin }) {
   return (
@@ -57,6 +58,8 @@ export default function RoleSelect({ onPick, onLogin }) {
           <ChevronRight className="w-5 h-5 text-slate-300 bb-group-hover-text-7C4DCC transition" />
         </button>
       </div>
+
+      <InstallAppButton />
 
       <button
         onClick={onLogin}

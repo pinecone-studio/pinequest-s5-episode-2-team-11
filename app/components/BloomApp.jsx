@@ -169,6 +169,7 @@ function AppShell({ initialTab }) {
   let screen;
   if (!supabaseConfigured) screen = <NotConfigured />;
   else if (authLoading) screen = <Splash text="Ачаалж байна…" />;
+  else if (!session && pathname !== "/") screen = <Splash text="Нүүр хуудас руу шилжиж байна…" />;
   else if (!session) screen = <AuthScreen />;
   else if (!ready) screen = <Splash text="Мэдээллээ татаж байна…" />;
   else if (!profile || loadError === "no_profile")
@@ -213,7 +214,7 @@ function AppShell({ initialTab }) {
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <span className="w-8 h-8 rounded-xl bb-grad-12 flex items-center justify-center shrink-0">
-                <Leaf className="w-4 h-4 text-white" />
+                <Leaf className="w-4 h-4 text-amber-100" />
               </span>
               <span className="font-black text-slate-700">Bloomy</span>
             </div>
