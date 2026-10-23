@@ -12,7 +12,7 @@
  */
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { DEFAULT_SUPPLIES, MOOD_OPTIONS, PHASES, SOS_STEPS, SOS_TOTAL } from "../lib/data";
+import { DEFAULT_SUPPLIES, MOOD_FALLBACK, MOOD_OPTIONS, PHASES, SOS_STEPS, SOS_TOTAL } from "../lib/data";
 import { genitive, getMomNudges, getPhaseKey } from "../lib/helpers";
 import { cycleStatus, formatTime, toDateStr } from "../lib/dates";
 import { supabase, supabaseConfigured } from "../lib/supabase";
@@ -112,7 +112,10 @@ export function FamilyProvider({ children }) {
   const mood = daughterMoodRow?.mood ?? null;
   const shareWithMom = daughterProfile?.share_mood ?? true;
   const baseMood = MOOD_OPTIONS.find((m) => m.id === mood);
-  const selectedMood = baseMood ? { ...baseMood, ...(moodCard?.id === mood ? moodCard : {}) } : null;
+  // mood нь хуучин id (sad, angry…) эсвэл охины өөрөө бичсэн эможи байж болно
+  const selectedMood = mood
+    ? { ...(baseMood ?? { ...MOOD_FALLBACK, emoji: mood }), ...(moodCard?.id === mood ? moodCard : {}) }
+    : null;
   const sharedMood = view === "mother" ? mood : linked && shareWithMom ? mood : null;
 
   const supplies = useMemo(() => {
@@ -515,28 +518,61 @@ export function FamilyProvider({ children }) {
   };
 
   /* ================= Сэтгэл санаа + AI ================= */
-  const pickMood = async (id) => {
-    if (mood === id) {
-      setMoodRows((p) => p.filter((r) => !(r.user_id === userId && r.log_date === today)));
-      setMoodTimerRunning(false);
-      await supabase.from("mood_logs").delete().eq("user_id", userId).eq("log_date", today);
-      return;
-    }
-    const row = { user_id: userId, family_id: familyId, log_date: today, mood: id };
-    setMoodRows((p) => [...p.filter((r) => !(r.user_id === userId && r.log_date === today)), row]);
+  const moodCacheKey = `bloom:mood:${today}`;
+
+  const loadMoodCard = async (value) => {
     setMoodLoading(true);
+    const ai = await askAi(
+      session,
+      { type: "mood", emoji: value, phase: phaseKey, day: cycle?.day ?? null },
+      30000
+    );
+    const card = ai?.title ? { id: value, ...ai } : null;
+    setMoodCard(card);
+    try {
+      if (card) localStorage.setItem(moodCacheKey, JSON.stringify(card));
+    } catch {
+      /* localStorage боломжгүй */
+    }
+    setMoodLoading(false);
+  };
+
+  const pickMood = async (value) => {
+    const row = { user_id: userId, family_id: familyId, log_date: today, mood: value };
+    setMoodRows((p) => [...p.filter((r) => !(r.user_id === userId && r.log_date === today)), row]);
     setMoodTimer(120);
     setMoodTimerRunning(false);
     supabase
       .from("mood_logs")
       .upsert(row, { onConflict: "user_id,log_date" })
       .then(({ error }) => error && setToast("Хадгалж чадсангүй."));
-
-    const ai = await askAi(session, { type: "mood", mood: id, phase: phaseKey, day: cycle?.day ?? null });
-    if (ai?.title) setMoodCard({ id, ...ai });
-    else setMoodCard(null);
-    setMoodLoading(false);
+    await loadMoodCard(value);
   };
+
+  const clearMood = async () => {
+    setMoodRows((p) => p.filter((r) => !(r.user_id === userId && r.log_date === today)));
+    setMoodTimerRunning(false);
+    setMoodCard(null);
+    try {
+      localStorage.removeItem(moodCacheKey);
+    } catch {
+      /* localStorage боломжгүй */
+    }
+    await supabase.from("mood_logs").delete().eq("user_id", userId).eq("log_date", today);
+  };
+
+  // Апп дахин ачаалагдахад өнөөдрийн мэдрэмжийн картыг сэргээнэ
+  useEffect(() => {
+    if (view !== "daughter" || !session || !mood || moodLoading || moodCard?.id === mood) return;
+    try {
+      const cached = JSON.parse(localStorage.getItem(moodCacheKey) ?? "null");
+      if (cached?.id === mood) return setMoodCard(cached);
+    } catch {
+      /* localStorage боломжгүй */
+    }
+    loadMoodCard(mood);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, session, mood]);
 
   const fetchInsight = useCallback(
     async (force = false) => {
@@ -781,6 +817,7 @@ export function FamilyProvider({ children }) {
     shareWithMom,
     setShareWithMom,
     pickMood,
+    clearMood,
     moodLoading,
     moodTimer,
     setMoodTimer,
@@ -809,6 +846,7 @@ export function FamilyProvider({ children }) {
     latestTeenMsg,
     markRead,
     sendToTeen,
+    sendToMom,
     openBell,
     // SOS
     sosOpen,
