@@ -7,11 +7,9 @@ import {
   Lock,
   Unlock,
   Pause,
-  RefreshCw,
   Music,
   Cookie,
   Zap,
-  Brain,
   Activity,
 } from "lucide-react";
 import { MOOD_OPTIONS } from "../../../lib/data";
@@ -27,80 +25,19 @@ export default function DaughterInsights() {
     mood,
     shareWithMom,
     setShareWithMom,
-    insightLoading,
     moodLoading,
     moodTimer,
     setMoodTimer,
     moodTimerRunning,
     setMoodTimerRunning,
-    phase,
     selectedMood,
-    insightTips,
     pulseSync,
-    refreshInsight,
     pickMood,
   } = useFamily();
 
   return (
     <div className="space-y-4">
-      <PageHeader sub="Таны мөчлөгт тааруулсан" title="Өдрийн зөвлөмж ✨" />
-
-      {/* AI өдрийн зөвлөмж */}
-      <Card className="bb-grad-4">
-        <SectionTitle
-          icon={Brain}
-          title="Өдрийн ухаалаг зөвлөмж"
-          right={
-            <div className="flex items-center gap-2">
-              <AiBadge />
-              <button
-                onClick={refreshInsight}
-                className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center active:scale-90"
-                aria-label="Шинэчлэх"
-              >
-                <RefreshCw className={`w-4 h-4 bb-text-B83B7E ${insightLoading ? "animate-spin" : ""}`} />
-              </button>
-            </div>
-          }
-        />
-        <p className="text-sm font-semibold text-slate-600 leading-relaxed">{phase.hormoneText}</p>
-
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          {[
-            ["Эстроген", phase.estrogen, "#F48FB1"],
-            ["Прогестерон", phase.progesterone, "#B794F4"],
-          ].map(([label, val, color]) => (
-            <div key={label} className="bg-white rounded-2xl p-3 border border-slate-100">
-              <div className="flex items-center justify-between text-xs font-extrabold text-slate-500">
-                <span>{label}</span>
-                <span>{val >= 70 ? "Өндөр" : val >= 35 ? "Дунд" : "Бага"}</span>
-              </div>
-              <div className="mt-2 h-2 rounded-full bg-slate-100 overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${val}%`, background: color }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {insightLoading ? (
-          <ThinkingDots label="Шинэ зөвлөмж бэлдэж байна…" />
-        ) : (
-          <ul className="mt-4 space-y-2">
-            {insightTips.map((t, i) => (
-              <li
-                key={`${i}-${t}`}
-                className="bg-white rounded-2xl px-4 py-3 text-sm font-bold text-slate-700 border border-slate-100 bloom-pop"
-                style={{ animationDelay: `${i * 80}ms` }}
-              >
-                {t}
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
+      <PageHeader sub="Таны мөчлөгт тааруулсан" title="Сэтгэл санаа ✨" />
 
       {/* Сэтгэл санаа таамаглагч */}
       <Card>
