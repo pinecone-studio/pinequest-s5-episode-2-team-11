@@ -16,7 +16,6 @@ export default function LearnHub() {
   return (
     <div className="space-y-4 bloom-fade">
       <div>
-        <p className="text-sm font-bold text-slate-400">Охид болон эцэг эхчүүдэд</p>
         <h2 className="text-2xl font-black text-slate-700">Анхны сарын тэмдэг ба боловсрол 📖</h2>
       </div>
 
