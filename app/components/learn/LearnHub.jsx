@@ -133,8 +133,8 @@ export default function LearnHub() {
       <div className="flex items-start gap-3 rounded-2xl bb-bg-E9DDFC-30 p-4">
         <Info className="w-5 h-5 bb-text-7C4DCC shrink-0 mt-0.5" />
         <p className="text-xs font-semibold text-slate-600 leading-relaxed">
-          Энэ апп эмчийн зөвлөгөөг орлохгүй. Хүчтэй өвдөлт, хэт их цус алдалт эсвэл санаа зовох зүйл байвал
-          эмчдээ хандаарай.
+          Энэ аппын мэдээлэл эмчийн зөвлөгөөг орлохгүй шүү. Өвдөлт ихтэй эсвэл цус их гарвал санаа
+          зоволгүйгээр ээждээ эсвэл итгэдэг том хүндээ хэлж, эмчид хандаарай.
         </p>
       </div>
     </div>
