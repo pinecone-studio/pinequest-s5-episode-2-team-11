@@ -18,7 +18,7 @@ export default function RoleSelect({ onPick, onLogin }) {
         </div>
         <h1 className="mt-6 text-3xl font-black text-slate-700">Bloomy</h1>
         <p className="mt-2 text-slate-500 font-semibold max-w-xs">
-          Өсөж торниход тань хамт байх, аюулгүй, хувийн орон зай 🌸
+          Өсөж торниход тань хамт байх, аюулгүй, хувийн орон зай 
         </p>
       </div>
 
