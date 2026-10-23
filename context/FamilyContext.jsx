@@ -97,6 +97,7 @@ export function FamilyProvider({ children }) {
   const cycleLength = daughterProfile?.cycle_length ?? 28;
   const periodLength = daughterProfile?.period_length ?? 5;
   const lastPeriodStart = daughterProfile?.last_period_start ?? null;
+  const birthDate = daughterProfile?.birth_date ?? null;
   const cycle = cycleStatus(lastPeriodStart, cycleLength);
   const hasCycle = Boolean(cycle);
   const day = cycle?.displayDay ?? 1;
@@ -163,6 +164,12 @@ export function FamilyProvider({ children }) {
     for (let i = 0; i < 5; i++) {
       const { data } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
       if (data) {
+        // Бүртгүүлэхдээ оруулсан төрсөн өдөр профайлд ороогүй бол нөхөж хадгална
+        const metaBirth = session?.user?.user_metadata?.birth_date;
+        if (!data.birth_date && metaBirth) {
+          data.birth_date = metaBirth;
+          await supabase.from("profiles").update({ birth_date: metaBirth }).eq("id", userId);
+        }
         setProfile(data);
         return data;
       }
@@ -173,6 +180,7 @@ export function FamilyProvider({ children }) {
           id: userId,
           role: meta.role === "mother" ? "mother" : "daughter",
           display_name: meta.display_name ?? "",
+          birth_date: meta.birth_date || null,
         });
         continue;
       }
@@ -392,11 +400,11 @@ export function FamilyProvider({ children }) {
   }, [view, tab, momUnread, notifications]);
 
   /* ================= Нэвтрэлтийн үйлдлүүд ================= */
-  const signUp = async ({ role, name, email, password }) => {
+  const signUp = async ({ role, name, birthDate, email, password }) => {
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      options: { data: { role, display_name: name.trim() } },
+      options: { data: { role, display_name: name.trim(), birth_date: birthDate || null } },
     });
     if (error) return authMessage(error);
     if (!data.session) return "Бүртгэл үүслээ! Имэйлээ шалгаж баталгаажуулаад нэвтэрнэ үү.";
@@ -483,6 +491,13 @@ export function FamilyProvider({ children }) {
   const markNoPeriodYet = async () => {
     setProfile((p) => ({ ...p, no_period_yet: true }));
     await supabase.from("profiles").update({ no_period_yet: true }).eq("id", userId);
+  };
+
+  const saveBirthDate = async (birth_date) => {
+    setProfile((p) => ({ ...p, birth_date }));
+    const { error } = await supabase.from("profiles").update({ birth_date }).eq("id", userId);
+    if (error) setToast("Хадгалж чадсангүй. Дахин оролдоно уу.");
+    return !error;
   };
 
   const setShareWithMom = async (next) => {
@@ -711,6 +726,8 @@ export function FamilyProvider({ children }) {
     signIn,
     signOut,
     updateName,
+    birthDate,
+    saveBirthDate,
     // гэр бүл
     view,
     family,

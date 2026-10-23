@@ -22,6 +22,7 @@ create table if not exists public.profiles (
   last_period_start date,
   share_mood        boolean not null default true,
   no_period_yet     boolean not null default false,  -- анхны сарын тэмдэг хараахан ирээгүй
+  birth_date        date,                            -- ордын зурхайд ашиглана
   created_at        timestamptz not null default now()
 );
 
@@ -62,6 +63,7 @@ create table if not exists public.kit_checks (
 );
 
 alter table public.profiles add column if not exists no_period_yet boolean not null default false;
+alter table public.profiles add column if not exists birth_date date;
 
 create index if not exists profiles_family_idx      on public.profiles (family_id);
 create index if not exists notifications_family_idx on public.notifications (family_id, recipient_role, created_at desc);
@@ -84,11 +86,12 @@ $$;
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
-  insert into public.profiles (id, role, display_name)
+  insert into public.profiles (id, role, display_name, birth_date)
   values (
     new.id,
     coalesce(new.raw_user_meta_data ->> 'role', 'daughter'),
-    coalesce(new.raw_user_meta_data ->> 'display_name', '')
+    coalesce(new.raw_user_meta_data ->> 'display_name', ''),
+    nullif(new.raw_user_meta_data ->> 'birth_date', '')::date
   )
   on conflict (id) do nothing;
   return new;
