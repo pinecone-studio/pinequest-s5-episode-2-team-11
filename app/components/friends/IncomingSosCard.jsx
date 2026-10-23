@@ -12,15 +12,20 @@ export default function IncomingSosCard() {
   return (
     <div className="space-y-3">
       {incoming.map((r) => (
-        <div key={r.id} className="rounded-3xl p-4 border-2 bb-border-F48FB1 bb-bg-FDE7F1-50 bloom-pop">
-          <p className="text-sm font-black text-slate-800 leading-snug">
-            🆘 {r.sender_name}: Яг одоо пад хэрэгтэй байна
-          </p>
-          <p className="text-xs font-semibold text-slate-500 mt-0.5">
-            📍 {placeOf(r.place).short} · {formatTime(r.created_at)}
-          </p>
+        <div key={r.id} className="relative overflow-hidden rounded-3xl p-4 border bb-border-F48FB1 bb-grad-9 shadow-sm bloom-pop">
+          <div className="flex items-start gap-3">
+            <span className="w-10 h-10 rounded-2xl bg-white/80 flex items-center justify-center text-xl shrink-0 shadow-sm">🆘</span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-black text-slate-800 leading-snug">
+                {r.sender_name}: Яг одоо пад хэрэгтэй байна
+              </p>
+              <p className="text-xs font-semibold text-slate-500 mt-0.5">
+                📍 {placeOf(r.place).short} · {formatTime(r.created_at)}
+              </p>
+            </div>
+          </div>
           {r.myReply ? (
-            <p className="mt-3 text-xs font-extrabold bb-text-B83B7E">
+            <p className="mt-3 rounded-2xl bg-white/75 px-3 py-2 text-xs font-extrabold bb-text-B83B7E">
               ✓ Чиний хариу: {replyText(r.myReply)}
             </p>
           ) : (

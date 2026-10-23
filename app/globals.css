@@ -6,3 +6,60 @@ html,
 body {
   background: #fff7fb;
 }
+
+/* Dark mode is scoped to the app shell so the selected theme covers every tab. */
+.theme-dark {
+  color: #f1e8f4;
+  background-image: linear-gradient(135deg, #17131d, #241a28 55%, #1d1828);
+}
+.theme-dark .bb-bg-FFF7FB,
+.theme-dark .bb-bg-FFF7FB-85,
+.theme-dark .bg-white {
+  background-color: #251f2b;
+}
+.theme-dark .theme-switch-thumb { background-color: #fff; }
+.theme-dark .bg-white\/95 { background-color: rgb(37 31 43 / 95%); }
+.theme-dark .bg-white\/80 { background-color: rgb(37 31 43 / 80%); }
+.theme-dark .bg-white\/75 { background-color: rgb(37 31 43 / 75%); }
+.theme-dark .bg-white\/50 { background-color: rgb(37 31 43 / 50%); }
+.theme-dark .bg-white\/40 { background-color: rgb(37 31 43 / 40%); }
+.theme-dark .bg-slate-50,
+.theme-dark .bg-slate-100 { background-color: #302938; }
+.theme-dark .bg-slate-200 { background-color: #453b4d; }
+.theme-dark .border-slate-100,
+.theme-dark .border-slate-200 { border-color: #403647; }
+.theme-dark .text-slate-800,
+.theme-dark .text-slate-700 { color: #f4edf6; }
+.theme-dark .text-slate-600 { color: #ddd2e2; }
+.theme-dark .text-slate-500 { color: #c1b4c8; }
+.theme-dark .text-slate-400 { color: #a99aaf; }
+.theme-dark .text-slate-300 { color: #918298; }
+.theme-dark .bb-text-B83B7E { color: #f2a5c9; }
+.theme-dark .bb-text-7C4DCC,
+.theme-dark .bb-text-6A3BB8 { color: #c9adff; }
+.theme-dark .bb-bg-FFF7FB-85 { border-color: #403647; }
+.theme-dark .bb-bg-FFF7FB { color: #f1e8f4; }
+.theme-dark .bb-bg-FDE7F1,
+.theme-dark .bb-bg-FDE7F1-50,
+.theme-dark .bb-bg-FDE7F1-70 { background-color: #422a3c; }
+.theme-dark .bb-bg-E9DDFC,
+.theme-dark .bb-bg-E9DDFC-50,
+.theme-dark .bb-bg-E9DDFC-60,
+.theme-dark .bb-bg-E9DDFC-40,
+.theme-dark .bb-bg-E9DDFC-30 { background-color: #332b42; }
+.theme-dark .bb-grad-4,
+.theme-dark .bb-grad-5,
+.theme-dark .bb-grad-7,
+.theme-dark .bb-grad-9,
+.theme-dark .bb-grad-11,
+.theme-dark .bb-grad-sos-soft {
+  background-image: linear-gradient(135deg, #2d2432, #322a3d);
+}
+.theme-dark .bb-grad-sos-soft { background-color: #2d2432; }
+.theme-dark .bb-border-F8D3E6,
+.theme-dark .bb-border-FDE7F1 { border-color: #68445e; }
+.theme-dark .bb-border-F48FB1 { border-color: #9e557b; }
+.theme-dark input,
+.theme-dark textarea,
+.theme-dark select { color: #f4edf6; }
+.theme-dark ::placeholder { color: #a99aaf; }

@@ -11,9 +11,10 @@ export default function FriendsQuickCard({ onOpen }) {
   const first = outgoing?.responses?.[0];
 
   return (
-    <div className="flex items-center gap-4 rounded-3xl p-4 bb-grad-sos-soft border bb-border-F8D3E6 shadow-sm bloom-fade">
+    <div className="relative overflow-hidden flex items-center gap-4 rounded-3xl p-4 bb-grad-sos-soft border bb-border-F8D3E6 shadow-sm bloom-fade">
+      <span className="absolute -right-7 -top-10 w-28 h-28 rounded-full bg-white/40 pointer-events-none" />
       <SosCallButton size={68} stage={sosStage} onClick={sendSos} />
-      <button onClick={onOpen} className="flex-1 min-w-0 text-left flex items-center gap-2">
+      <button onClick={onOpen} className="relative flex-1 min-w-0 text-left flex items-center gap-2">
         <div className="flex-1 min-w-0">
           <p className="font-black text-slate-700">
             {sosStage === "ringing"

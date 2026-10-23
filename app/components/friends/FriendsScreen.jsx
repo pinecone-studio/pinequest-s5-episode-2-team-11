@@ -6,13 +6,12 @@
  */
 
 import { useState } from "react";
-import { Bell, Users, Plus, Lock, Copy, Check, UserPlus, Loader2 } from "lucide-react";
+import { Bell, Users, Plus, Lock, Copy, Check, UserPlus, Loader2, Heart, ShieldCheck } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import { useFriends } from "../../../context/FriendsContext";
 import { GROUP_EMOJIS, SOS_PLACES } from "../../../lib/friends";
 import Card from "../ui/Card";
 import SectionTitle from "../ui/SectionTitle";
-import PageHeader from "../ui/PageHeader";
 import SosCallButton from "./SosCallButton";
 import FriendReplies from "./FriendReplies";
 import IncomingSosCard from "./IncomingSosCard";
@@ -31,13 +30,30 @@ export default function FriendsScreen() {
   const nameOf = (id) => friends.find((f) => f.id === id)?.display_name ?? "…";
 
   return (
-    <div className="space-y-4">
-      <PageHeader sub="Найзууд · SOS" title="Пад хэрэгтэй юу?" />
+    <div className="space-y-5 pb-2">
+      <section className="relative overflow-hidden rounded-[2rem] bb-grad-sos-soft border bb-border-F8D3E6 px-5 py-5 shadow-sm bloom-fade">
+        <span className="absolute -right-7 -top-10 h-36 w-36 rounded-full bg-white/50" />
+        <span className="absolute right-16 -bottom-10 h-24 w-24 rounded-full bb-bg-E9DDFC-60" />
+        <div className="relative flex items-start gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-white/80 shadow-sm flex items-center justify-center shrink-0">
+            <Heart className="w-6 h-6 bb-text-B83B7E fill-current" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-black uppercase tracking-[0.16em] bb-text-B83B7E">Найзууд · SOS</p>
+            <h2 className="mt-1 text-2xl leading-tight font-black text-slate-800">Бие биедээ тусалъя</h2>
+            <p className="mt-1 text-sm font-semibold text-slate-600 leading-snug">Пад хэрэгтэй үедээ итгэдэг найзууддаа дохио илгээгээрэй.</p>
+          </div>
+        </div>
+        <div className="relative mt-4 flex flex-wrap gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1.5 text-xs font-extrabold text-slate-600"><Users className="w-3.5 h-3.5 bb-text-7C4DCC" /> {friends.length} найз</span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1.5 text-xs font-extrabold text-slate-600"><ShieldCheck className="w-3.5 h-3.5 bb-text-B83B7E" /> Зөвхөн бүлэгт</span>
+        </div>
+      </section>
 
       <IncomingSosCard />
 
       {/* ---------- SOS илгээх ---------- */}
-      <Card>
+      <Card className="!p-5 bb-grad-7">
         <Label>Хэнд илгээх вэ?</Label>
         {groups.length ? (
           <div className="flex flex-wrap gap-2">
@@ -78,9 +94,9 @@ export default function FriendsScreen() {
           ))}
         </div>
 
-        <div className="flex flex-col items-center pt-8 pb-4">
+        <div className="flex flex-col items-center pt-7 pb-4">
           <SosCallButton size={140} stage={sosStage} onClick={F.sendSos} />
-          <p className="mt-5 text-xl font-black text-slate-700">
+          <p className="mt-5 text-xl font-black text-slate-800">
             {sosStage === "ringing"
               ? "Дохио илгээж байна…"
               : sosStage === "sent"
@@ -110,7 +126,7 @@ export default function FriendsScreen() {
       {/* ---------- Найзын утсанд хэрхэн харагдах ---------- */}
       <Card>
         <SectionTitle icon={Bell} title="Найзын утсанд ингэж очно" />
-        <div className="rounded-2xl bx-lock p-3">
+        <div className="rounded-[1.5rem] bb-grad-9 p-3 border bb-border-F8D3E6">
           <div className="rounded-xl bg-white/95 p-3 flex gap-3 items-start shadow-lg">
             <span className="w-9 h-9 rounded-xl bb-grad-sos flex items-center justify-center shrink-0 text-white text-lg">
               🌸
@@ -137,9 +153,8 @@ export default function FriendsScreen() {
             </div>
           </div>
         </div>
-        <p className="mt-3 text-xs font-semibold text-slate-400 text-center leading-relaxed">
-          Найз чинь Bloomy апп дээрээ нэг товшилтоор хариулна. Ээж болон бусад хүнд харагдахгүй, зөвхөн
-          бүлгийн гишүүдэд очно.
+        <p className="mt-3 flex items-start justify-center gap-1.5 text-xs font-semibold text-slate-400 text-center leading-relaxed">
+          <Lock className="w-3.5 h-3.5 shrink-0 mt-0.5" /> Найз чинь Bloomy дээр нэг товшилтоор хариулна. Дохио зөвхөн бүлгийн гишүүдэд очно.
         </p>
       </Card>
 
