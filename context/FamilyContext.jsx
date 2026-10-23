@@ -152,23 +152,29 @@ export function FamilyProvider({ children }) {
   /* ================= Нэвтрэлтийг сонсох ================= */
   useEffect(() => {
     if (!supabase) return;
-        supabase.auth.getSession().then(async ({ data }) => {
-      // Аккаунт нь устгагдсан бол утсан дээрх хуучин нэвтрэлтийг цэвэрлэнэ
-      if (data.session) {
-        const { error } = await supabase.auth.getUser();
-        if (error) {
-          await supabase.auth.signOut({ scope: "local" });
-          data = { session: null };
-        }
-      }
+    supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setAuthLoading(false);
+      // Аккаунт нь устгагдсан бол утсан дээрх хуучин нэвтрэлтийг цэвэрлэнэ.
+      // (Ачааллыг саатуулахгүйн тулд арын дэвсгэрт шалгана)
+      if (data.session) {
+        supabase.auth.getUser().then(({ error }) => {
+          if (error?.status === 401 || error?.status === 403 || /not.*found|does not exist/i.test(error?.message ?? "")) {
+            supabase.auth.signOut({ scope: "local" });
+          }
+        });
+      }
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
     return () => sub.subscription.unsubscribe();
   }, []);
 
   /* ================= Өгөгдөл татах ================= */
+  // Token шинэчлэгдэх бүрт session объект солигддог. Metadata-г ref-д хадгалснаар
+  // бүх өгөгдлийг дахин татаж «Ачаалж байна» гаргахаас сэргийлнэ.
+  const metaRef = useRef({});
+  metaRef.current = session?.user?.user_metadata ?? {};
+
   const loadProfile = useCallback(async () => {
     if (!userId) return null;
     // Trigger профайлыг үүсгэхэд хэдэн мс шаардагдаж магадгүй тул хэд дахин оролдоно
@@ -176,7 +182,7 @@ export function FamilyProvider({ children }) {
       const { data } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
       if (data) {
         // Бүртгүүлэхдээ оруулсан төрсөн өдөр профайлд ороогүй бол нөхөж хадгална
-        const metaBirth = session?.user?.user_metadata?.birth_date;
+        const metaBirth = metaRef.current.birth_date;
         if (!data.birth_date && metaBirth) {
           data.birth_date = metaBirth;
           await supabase.from("profiles").update({ birth_date: metaBirth }).eq("id", userId);
@@ -186,7 +192,7 @@ export function FamilyProvider({ children }) {
       }
       // 2 удаа олдохгүй бол (schema-аас өмнө бүртгүүлсэн гэх мэт) өөрөө нөхөж үүсгэнэ
       if (i === 1) {
-        const meta = session?.user?.user_metadata ?? {};
+        const meta = metaRef.current;
         await supabase.from("profiles").insert({
           id: userId,
           role: meta.role === "mother" ? "mother" : "daughter",
@@ -198,7 +204,7 @@ export function FamilyProvider({ children }) {
       await new Promise((r) => setTimeout(r, 400));
     }
     return null;
-  }, [userId, session?.user?.user_metadata]);
+  }, [userId]);
 
   const loadFamily = useCallback(async (fid) => {
     if (!fid) {

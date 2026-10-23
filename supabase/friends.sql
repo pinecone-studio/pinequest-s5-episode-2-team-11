@@ -80,7 +80,7 @@ create table if not exists public.pad_requests (
   sender_name text not null default '',
   group_id    uuid references public.friend_groups (id) on delete set null,
   group_name  text not null default '',
-  place       text not null check (place in ('class', 'wc', 'hall', 'gym')),
+  place       text not null check (char_length(place) <= 40),
   resolved    boolean not null default false,
   created_at  timestamptz not null default now()
 );
