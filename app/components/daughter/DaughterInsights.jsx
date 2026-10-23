@@ -23,6 +23,7 @@ import Card from "../ui/Card";
 import PageHeader from "../ui/PageHeader";
 import AiBadge from "../ui/AiBadge";
 import ThinkingDots from "../ui/ThinkingDots";
+import AiChat from "./AiChat";
 
 export default function DaughterInsights() {
   const {
@@ -223,6 +224,8 @@ export default function DaughterInsights() {
             </div>
           ))}
       </Card>
+
+      <AiChat />
     </div>
   );
 }
