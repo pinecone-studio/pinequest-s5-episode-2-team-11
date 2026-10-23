@@ -4,7 +4,7 @@ import { ChevronRight } from "lucide-react";
 import { useFriends } from "../../../context/FriendsContext";
 import SosCallButton from "./SosCallButton";
 
-/** «Өнөөдөр» дэлгэцэн дээрх «Пад дууссан уу?» товч карт */
+/** «Өнөөдөр» дэлгэцэн дээрх «Хэрэглэл дууссан уу?» товч карт */
 export default function FriendsQuickCard({ onOpen }) {
   const { active, activeGroup, sosStage, outgoing, sendSos, replyText } = useFriends();
   if (!active) return null;
@@ -21,7 +21,7 @@ export default function FriendsQuickCard({ onOpen }) {
               ? "Дохио илгээж байна…"
               : sosStage === "sent"
                 ? "Найзуудад дохио очлоо 📣"
-                : "Пад дууссан уу? 🆘"}
+                : "Хэрэглэл дууссан уу?"}
           </p>
           <p className="text-xs font-semibold text-slate-500 leading-snug mt-0.5">
             {first

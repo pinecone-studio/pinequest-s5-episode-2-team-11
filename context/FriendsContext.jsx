@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * FriendsContext — Найзууд · Пад SOS (зөвхөн охидод).
+ * FriendsContext — Найзууд · Хэрэглэлийн SOS (зөвхөн охидод).
  *
  * FamilyContext-ээс тусдаа: найзуудын хэсэг дээр ажиллах хүн гэр бүлийн кодыг огт өөрчлөхгүй.
  * Database: supabase/friends.sql
@@ -25,7 +25,7 @@ export function FriendsProvider({ children }) {
   const [friends, setFriends] = useState([]); // [{ id, display_name }]
   const [groups, setGroups] = useState([]); // [{ id, name, emoji, members: [id] }]
   const [activeGroupId, setActiveGroupId] = useState(null);
-  const [place, setPlace] = useState("wc");
+  const [place, setPlace] = useState("");
   const [outgoing, setOutgoing] = useState(null); // { id, group_name, place, responses: [] }
   const [sending, setSending] = useState(false);
   const [incoming, setIncoming] = useState([]); // [{ id, sender_name, place, created_at, myReply }]
@@ -130,7 +130,7 @@ export function FriendsProvider({ children }) {
         },
         async () => {
           await loadIncoming();
-          setToast("🆘 Найз чинь пад хэрэгтэй байна!");
+          setToast("🆘 Найз чинь хэрэглэл хэрэгтэй байна!");
           try {
             navigator.vibrate?.([200, 100, 200]);
           } catch {
@@ -230,7 +230,7 @@ export function FriendsProvider({ children }) {
     if (!activeGroup) return setToast("Эхлээд бүлэг үүсгээрэй 💗");
     setSending(true);
     const started = Date.now();
-    const { error } = await supabase.rpc("send_pad_request", { p_group: activeGroup.id, p_place: place });
+    const { error } = await supabase.rpc("send_pad_request", { p_group: activeGroup.id, p_place: place.trim().slice(0, 40) });
     // Дуудлагын анимейшн хэтэрхий богино харагдахгүйн тулд
     await new Promise((r) => setTimeout(r, Math.max(0, 1200 - (Date.now() - started))));
     setSending(false);
