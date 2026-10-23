@@ -10,7 +10,7 @@ export default function FriendReplies() {
 
   if (!list.length) {
     return (
-      <p className="text-xs font-bold text-slate-400 text-center py-1">Найзуудын хариуг хүлээж байна…</p>
+      <div className="flex items-center justify-center gap-2 rounded-2xl bb-bg-FFF7FB px-3 py-3 text-xs font-bold text-slate-400"><span className="w-2 h-2 rounded-full bb-bg-F48FB1 animate-pulse" /> Найзуудын хариуг хүлээж байна…</div>
     );
   }
   return (
@@ -18,7 +18,7 @@ export default function FriendReplies() {
       {list.map((r) => (
         <div
           key={r.responder_name + r.created_at}
-          className={`flex items-center gap-3 rounded-2xl p-3 bloom-pop ${r.reply === "no" ? "bg-slate-50" : "bb-bg-FDE7F1"}`}
+          className={`flex items-center gap-3 rounded-2xl border p-3 bloom-pop ${r.reply === "no" ? "bg-slate-50 border-slate-100" : "bb-bg-FDE7F1 border-transparent"}`}
         >
           <span className="w-9 h-9 rounded-full bb-bg-E9DDFC bb-text-7C4DCC font-black flex items-center justify-center shrink-0">
             {r.responder_name.charAt(0)}
