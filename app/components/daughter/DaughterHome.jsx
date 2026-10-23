@@ -142,7 +142,6 @@ export default function DaughterHome() {
         onClick={openSos}
         className="w-full rounded-3xl bg-gradient-to-r from-[#7c2d74] to-[#5b3ca6] p-5 text-left text-white shadow-xl bb-shadow-B794F4-30 active:scale-95 transition flex items-center gap-4 relative overflow-hidden bloom-fade"
       >
-        <span className="absolute right-0 top-0 w-32 h-32 rounded-full bg-white/10 translate-x-10 -translate-y-10" />
         <span className="relative w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center">
           <span className="absolute inset-0 rounded-2xl bg-white/10 animate-ping" />
           <AlertCircle className="w-7 h-7 text-white" />
