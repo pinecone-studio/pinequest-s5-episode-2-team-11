@@ -1,5 +1,5 @@
 -- =====================================================================
---  Bloomy — Найзууд · Пад SOS
+--  Bloomy — Найзууд · Хэрэглэлийн SOS
 --  schema.sql-ийн ДАРАА ажиллуулна:
 --  Supabase → SQL Editor → New query → энэ файлыг бүтнээр нь хуулж → Run
 --  Дахин ажиллуулахад аюулгүй (өгөгдөл устахгүй).
@@ -172,7 +172,7 @@ returns table (id uuid, display_name text) language sql stable security definer 
   order by p.display_name
 $$;
 
--- ---------- Пад SOS ----------
+-- ---------- Хэрэглэлийн SOS ----------
 
 create or replace function public.send_pad_request(p_group uuid, p_place text)
 returns bigint language plpgsql security definer set search_path = public as $$
