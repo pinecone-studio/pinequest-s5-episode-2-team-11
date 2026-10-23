@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Найзууд · Пад SOS — пад дуусахад бүлгийн найзууддаа нэг товшилтоор дохио илгээнэ.
+ * Найзууд · Хэрэглэлийн SOS — хэрэглэл дуусахад бүлгийн найзууддаа нэг товшилтоор дохио илгээнэ.
  * Өгөгдөл: context/FriendsContext.jsx · Database: supabase/friends.sql
  */
 
@@ -41,7 +41,7 @@ export default function FriendsScreen() {
           <div className="min-w-0">
             <p className="text-xs font-black uppercase tracking-[0.16em] bb-text-B83B7E">Найзууд · SOS</p>
             <h2 className="mt-1 text-2xl leading-tight font-black text-slate-800">Бие биедээ тусалъя</h2>
-            <p className="mt-1 text-sm font-semibold text-slate-600 leading-snug">Пад хэрэгтэй үедээ итгэдэг найзууддаа дохио илгээгээрэй.</p>
+            <p className="mt-1 text-sm font-semibold text-slate-600 leading-snug">Хэрэглэл хэрэгтэй үедээ итгэдэг найзууддаа дохио илгээгээрэй.</p>
           </div>
         </div>
         <div className="relative mt-4 flex flex-wrap gap-2">
@@ -101,7 +101,7 @@ export default function FriendsScreen() {
               ? "Дохио илгээж байна…"
               : sosStage === "sent"
                 ? "Дохио очлоо 📣"
-                : "Пад хэрэгтэй байна"}
+                : "Хэрэглэл хэрэгтэй байна"}
           </p>
           <p className="mt-1 text-sm font-semibold text-slate-500 text-center max-w-xs leading-snug">
             {sosStage === "idle"

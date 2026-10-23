@@ -47,7 +47,7 @@ export default function DaughterHome() {
             linked ? "bb-bg-FDE7F1 bb-text-B83B7E" : "bg-slate-100 text-slate-400"
           }`}
         >
-          <Users className="w-3 h-3" /> {linked ? "Ээжтэй холбоотой" : "Холбогдоогүй"}
+          <Users className="w-3 h-3" /> {linked ? "Асран хамгаалагчтай холбоотой" : "Холбогдоогүй"}
         </span>
       </div>
 
@@ -56,7 +56,7 @@ export default function DaughterHome() {
           <span className="text-2xl">👩</span>
           <div className="flex-1">
             <p className="text-xs font-extrabold uppercase tracking-widest bb-text-7C4DCC">
-              Ээжээс · {latestTeenMsg.time}
+              Асран хамгаалагчаас · {latestTeenMsg.time}
             </p>
             <p className="font-bold text-slate-700">{latestTeenMsg.text}</p>
           </div>
@@ -97,7 +97,7 @@ export default function DaughterHome() {
           {daysLate > 0 && (
             <p className="mt-4 text-xs font-semibold text-slate-500 bb-bg-FFF7FB rounded-2xl px-4 py-3 leading-relaxed">
               Өсвөр насанд мөчлөг хэдэн хоногоор зөрөх нь хэвийн. Ирэхээр нь доорх товчийг дараарай. 3 сараас
-              удаан ирэхгүй бол ээждээ хэлээд эмчид үзүүлээрэй.
+              удаан ирэхгүй бол асран хамгаалагчдаа хэлээд эмчид үзүүлээрэй.
             </p>
           )}
           {!isPeriod && (

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * FriendsContext — Найзууд · Пад SOS (зөвхөн охидод).
+ * FriendsContext — Найзууд · Хэрэглэлийн SOS (зөвхөн охидод).
  *
  * FamilyContext-ээс тусдаа: найзуудын хэсэг дээр ажиллах хүн гэр бүлийн кодыг огт өөрчлөхгүй.
  * Database: supabase/friends.sql
@@ -130,7 +130,7 @@ export function FriendsProvider({ children }) {
         },
         async () => {
           await loadIncoming();
-          setToast("🆘 Найз чинь пад хэрэгтэй байна!");
+          setToast("🆘 Найз чинь хэрэглэл хэрэгтэй байна!");
           try {
             navigator.vibrate?.([200, 100, 200]);
           } catch {

@@ -22,7 +22,7 @@ export default function LearnHub() {
 
       <div className="grid grid-cols-3 gap-1 bb-bg-FDE7F1 rounded-2xl p-1">
         {[
-          ...(isDaughter ? [["pad", padDone ? "Пад заавар ✓" : "Пад заавар 🌸"],] : []),
+          ...(isDaughter ? [["pad", padDone ? "Хэрэглэлийн заавар ✓" : "Хэрэглэлийн заавар 🌸"],] : []),
           ["pad", padDone ? "Хэрэглэл ✓" : "Хэрэглэл 🌸"],
           ["kit", "Сургуулийн цүнх"],
           ["food", "Хооллолт"],
@@ -90,7 +90,7 @@ export default function LearnHub() {
             </p>
           )}
           <p className="mt-3 text-xs font-semibold text-slate-400 text-center">
-            Энэ жагсаалт ээж, охин хоёрын харагдацад зэрэг шинэчлэгдэнэ.
+            Энэ жагсаалт охин болон асран хамгаалагчийн харагдацад зэрэг шинэчлэгдэнэ.
           </p>
         </Card>
       )}
@@ -132,7 +132,7 @@ export default function LearnHub() {
         <Info className="w-5 h-5 bb-text-7C4DCC shrink-0 mt-0.5" />
         <p className="text-xs font-semibold text-slate-600 leading-relaxed">
           Энэ аппын мэдээлэл эмчийн зөвлөгөөг орлохгүй шүү. Өвдөлт ихтэй эсвэл цус их гарвал санаа
-          зоволгүйгээр ээждээ эсвэл итгэдэг том хүндээ хэлж, эмчид хандаарай.
+          зоволгүйгээр асран хамгаалагчдаа эсвэл итгэдэг том хүндээ хэлж, эмчид хандаарай.
         </p>
       </div>
     </div>

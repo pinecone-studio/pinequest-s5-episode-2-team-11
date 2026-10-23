@@ -9,7 +9,7 @@ export default function SosCallButton({ size, stage, onClick }) {
   return (
     <button
       onClick={onClick}
-      aria-label="Пад хэрэгтэй байна — найзууддаа дохио илгээх"
+      aria-label="Хэрэглэл хэрэгтэй байна — найзууддаа дохио илгээх"
       className="relative shrink-0 rounded-full flex items-center justify-center transition active:scale-95"
       style={{ width: size, height: size }}
     >

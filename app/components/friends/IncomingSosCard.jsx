@@ -4,7 +4,7 @@ import { useFriends } from "../../../context/FriendsContext";
 import { SOS_REPLIES, placeOf } from "../../../lib/friends";
 import { formatTime } from "../../../lib/dates";
 
-/** Найз маань пад хэрэгтэй байна — нэг товшилтоор хариулах карт */
+/** Найз маань хэрэглэл хэрэгтэй байна — нэг товшилтоор хариулах карт */
 export default function IncomingSosCard() {
   const { incoming, respond, replyText } = useFriends();
   if (!incoming.length) return null;
@@ -17,7 +17,7 @@ export default function IncomingSosCard() {
             <span className="w-10 h-10 rounded-2xl bg-white/80 flex items-center justify-center text-xl shrink-0 shadow-sm">🆘</span>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-black text-slate-800 leading-snug">
-                {r.sender_name}: Яг одоо пад хэрэгтэй байна
+                {r.sender_name}: Яг одоо хэрэглэл хэрэгтэй байна
               </p>
               <p className="text-xs font-semibold text-slate-500 mt-0.5">
                 📍 {placeOf(r.place).short} · {formatTime(r.created_at)}
