@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, ShieldCheck, Heart, Sprout, HeartHandshake } from "lucide-react";
+import { ChevronRight, Heart, Sprout, HeartHandshake } from "lucide-react";
 import InstallAppButton from "../ui/InstallAppButton";
 import BloomyLogo from "../ui/BloomyLogo";
 
@@ -23,7 +23,7 @@ export default function RoleSelect({ onPick, onLogin }) {
       </div>
 
       <p className="mt-10 mb-3 text-xs font-extrabold uppercase tracking-widest text-slate-400 text-center">
-        Шинээр бүртгүүлэх — үүргээ сонгоно уу
+        Шинээр бүртгүүлэх
       </p>
 
       <div className="space-y-4">
@@ -35,10 +35,7 @@ export default function RoleSelect({ onPick, onLogin }) {
                         <Sprout className="w-7 h-7 bb-text-4F8A55" />
           </span>
           <span className="flex-1">
-            <span className="block font-extrabold text-slate-700 text-lg">Охин / Өсвөр насныхан</span>
-            <span className="block text-sm text-slate-500 font-medium">
-              Мөчлөг, сэтгэл санаагаа хянаж, урилгын кодоо асран хамгаалагчдаа өгөөрэй
-            </span>
+            <span className="block font-extrabold text-slate-700 text-lg">Охин</span>
           </span>
           <ChevronRight className="w-5 h-5 text-slate-300 bb-group-hover-text-B83B7E transition" />
         </button>
@@ -52,9 +49,6 @@ export default function RoleSelect({ onPick, onLogin }) {
           </span>
           <span className="flex-1">
             <span className="block font-extrabold text-slate-700 text-lg">Асран хамгаалагч</span>
-            <span className="block text-sm text-slate-500 font-medium">
-              Охиноо зөөлөн, ухаалгаар дэмжээрэй
-            </span>
           </span>
           <ChevronRight className="w-5 h-5 text-slate-300 bb-group-hover-text-7C4DCC transition" />
         </button>
@@ -69,13 +63,6 @@ export default function RoleSelect({ onPick, onLogin }) {
         Бүртгэлтэй юу? <span className="bb-text-B83B7E">Нэвтрэх</span>
       </button>
 
-      <div className="mt-6 flex items-start gap-3 bb-bg-FDE7F1-70 rounded-2xl p-4">
-        <ShieldCheck className="w-5 h-5 bb-text-B83B7E shrink-0 mt-0.5" />
-        <p className="text-xs text-slate-600 font-semibold leading-relaxed">
-          Таны гэр бүлийн бүлэг хаалттай. Өөр хэн ч таны мэдээллийг харахгүй. Охин юуг ээжтэйгээ хуваалцахаа
-          үргэлж өөрөө шийднэ.
-        </p>
-      </div>
     </div>
   );
 }
