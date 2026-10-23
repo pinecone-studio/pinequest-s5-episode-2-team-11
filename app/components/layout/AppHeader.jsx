@@ -1,7 +1,9 @@
-import { User } from "lucide-react";
+import { User, Sun, Moon } from "lucide-react";
 import BloomyLogo from "../ui/BloomyLogo";
+import { useTheme } from "../../../context/ThemeContext";
 
-export default function AppHeader({ showNav, showSync, linked, tab, onOpenSettings }) {
+export default function AppHeader({ showNav, tab, onOpenSettings }) {
+  const { theme, setTheme } = useTheme();
   return (
     <header
       className="sticky top-0 z-40 bb-bg-FFF7FB-85 backdrop-blur-md border-b border-slate-100 px-4 pb-3"
@@ -14,18 +16,21 @@ export default function AppHeader({ showNav, showSync, linked, tab, onOpenSettin
         </div>
         <div className="flex items-center gap-2">
           {showNav && (
-            <span
-              className={`flex items-center gap-1.5 text-xs font-extrabold transition-colors ${
-                showSync ? "bb-text-B83B7E" : linked ? "text-slate-400" : "text-slate-300"
-              }`}
+            <button
+              type="button"
+              role="switch"
+              aria-label={theme === "dark" ? "Light mode" : "Dark mode"}
+              aria-checked={theme === "dark"}
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="flex items-center gap-2 rounded-full px-2 py-1.5 text-xs font-extrabold text-slate-500 active:scale-95 transition"
             >
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  showSync ? "bb-bg-F48FB1 animate-ping" : linked ? "bb-bg-F48FB1" : "bg-slate-300"
-                }`}
-              />
-              {showSync ? "Шинэчлэгдлээ" : linked ? "Гэр бүл холбоотой" : "Холбогдоогүй"}
-            </span>
+              <span className={`relative h-6 w-11 rounded-full p-0.5 transition-colors ${theme === "dark" ? "bb-bg-E0679F" : "bg-slate-200"}`}>
+                <span className={`theme-switch-thumb flex h-5 w-5 items-center justify-center rounded-full bg-white shadow-sm transition-transform ${theme === "dark" ? "translate-x-5" : "translate-x-0"}`}>
+                  {theme === "dark" ? <Moon className="h-3 w-3 bb-text-B83B7E" /> : <Sun className="h-3 w-3 text-slate-600" />}
+                </span>
+              </span>
+              {theme === "dark" ? "Dark" : "Light"}
+            </button>
           )}
           {showNav && (
             <button

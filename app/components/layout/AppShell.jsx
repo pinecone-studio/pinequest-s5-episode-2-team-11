@@ -8,11 +8,13 @@ import AppHeader from "./AppHeader";
 import BottomNavigation from "./BottomNavigation";
 import CurrentScreen from "./CurrentScreen";
 import SosModal from "../sos/SosModal";
+import { useTheme } from "../../../context/ThemeContext";
 
 export default function AppShell({ initialTab = "home" }) {
   const router = useRouter();
   const pathname = usePathname();
   const family = useFamily();
+  const { theme } = useTheme();
   const { unansweredIncoming } = useFriends();
   const {
     authLoading,
@@ -24,7 +26,6 @@ export default function AppShell({ initialTab = "home" }) {
     setTab,
     sosOpen,
     toast,
-    showSync,
     momUnread,
     lowSupplyCount,
     showOnboarding,
@@ -62,14 +63,12 @@ export default function AppShell({ initialTab = "home" }) {
 
   return (
     <div
-      className="min-h-screen bb-grad-11 text-slate-700"
+      className={`min-h-screen bb-grad-11 text-slate-700 ${theme === "dark" ? "theme-dark" : ""}`}
       style={{ fontFamily: "'Nunito', ui-rounded, 'SF Pro Rounded', system-ui, sans-serif" }}
     >
       <div className="relative mx-auto max-w-md min-h-screen bb-bg-FFF7FB sm:shadow-2xl sm:shadow-slate-300/40">
         <AppHeader
           showNav={showNav}
-          showSync={showSync}
-          linked={linked}
           tab={tab}
           onOpenSettings={() => navigateToTab("me")}
         />
