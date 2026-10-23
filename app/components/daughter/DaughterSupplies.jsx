@@ -12,7 +12,7 @@ export default function DaughterSupplies() {
 
   return (
     <div className="space-y-4">
-      <PageHeader sub="Дуусахаас нь өмнө ээждээ хэлээрэй" title="Миний хэрэгсэл 🎒" />
+      <PageHeader sub="Дуусахаас нь өмнө асран хамгаалагчдаа хэлээрэй" title="Миний хэрэгсэл 🎒" />
 
       {/* Хэрэгсэл */}
       <Card>
@@ -51,7 +51,7 @@ export default function DaughterSupplies() {
           className="mt-4 w-full rounded-2xl bb-bg-FDE7F1 bb-text-B83B7E disabled:text-slate-300 disabled:bg-slate-50 font-extrabold py-3 text-sm active:scale-95 transition flex items-center justify-center gap-2"
         >
           <Send className="w-4 h-4" />{" "}
-          {linked ? "Дуусах дөхсөн үү? Ээждээ хэлэх" : "Хүсэлт илгээхийн тулд ээжтэйгээ холбогдоорой"}
+          {linked ? "Дуусах дөхсөн үү? Асран хамгаалагчдаа хэлэх" : "Хүсэлт илгээхийн тулд асран хамгаалагчтайгаа холбогдоорой"}
         </button>
       </Card>
 

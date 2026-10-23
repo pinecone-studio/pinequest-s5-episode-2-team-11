@@ -72,7 +72,7 @@ export default function DaughterInsights() {
               }`}
             >
               {shareWithMom ? <Unlock className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
-              {shareWithMom ? "Ээжтэй хуваалцсан" : "Хувийн"}
+              {shareWithMom ? "Асран хамгаалагчтай хуваалцсан" : "Хувийн"}
             </button>
           }
         />

@@ -255,7 +255,7 @@
   animation: bloomWiggle 1.2s ease-in-out infinite;
 }
 
-/* ---------- Пад SOS / найзууд / пад заавар ---------- */
+/* ---------- Хэрэглэлийн SOS / найзууд / хэрэглэлийн заавар ---------- */
 .bb-grad-sos {
   background-image: linear-gradient(135deg, #ff9ec4, #e0679f);
 }

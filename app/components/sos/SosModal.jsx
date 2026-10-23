@@ -162,15 +162,15 @@ export default function SosModal() {
         >
           {sosSent ? (
             <>
-              <Check className="w-5 h-5" /> Ээжид зөөлөн мэдэгдэл очлоо
+              <Check className="w-5 h-5" /> Асран хамгаалагчид зөөлөн мэдэгдэл очлоо
             </>
           ) : linked ? (
             <>
-              <Heart className="w-5 h-5" /> Ээжид мэдэгдэх
+              <Heart className="w-5 h-5" /> Асран хамгаалагчид мэдэгдэх
             </>
           ) : (
             <>
-              <Lock className="w-5 h-5" /> Мэдэгдэхийн тулд ээжтэйгээ холбогдоорой
+              <Lock className="w-5 h-5" /> Мэдэгдэхийн тулд асран хамгаалагчтайгаа холбогдоорой
             </>
           )}
         </button>
