@@ -20,7 +20,7 @@ export default function IncomingSosCard() {
                 {r.sender_name}: Яг одоо пад хэрэгтэй байна
               </p>
               <p className="text-xs font-semibold text-slate-500 mt-0.5">
-                📍 {placeOf(r.place).short} · {formatTime(r.created_at)}
+                {placeOf(r.place).short ? `📍 ${placeOf(r.place).short} · ` : ""}{formatTime(r.created_at)}
               </p>
             </div>
           </div>
