@@ -149,7 +149,15 @@ export function FamilyProvider({ children }) {
   /* ================= Нэвтрэлтийг сонсох ================= */
   useEffect(() => {
     if (!supabase) return;
-    supabase.auth.getSession().then(({ data }) => {
+        supabase.auth.getSession().then(async ({ data }) => {
+      // Аккаунт нь устгагдсан бол утсан дээрх хуучин нэвтрэлтийг цэвэрлэнэ
+      if (data.session) {
+        const { error } = await supabase.auth.getUser();
+        if (error) {
+          await supabase.auth.signOut({ scope: "local" });
+          data = { session: null };
+        }
+      }
       setSession(data.session);
       setAuthLoading(false);
     });
