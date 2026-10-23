@@ -1,7 +1,7 @@
 "use client";
 
 import { useFamily } from "../../../context/FamilyContext";
-import { Check, Backpack, Info } from "lucide-react";
+import { Check, Backpack, Info, Apple } from "lucide-react";
 import { KIT_ITEMS } from "../../../lib/data";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
@@ -20,10 +20,11 @@ export default function LearnHub() {
         <h2 className="text-2xl font-black text-slate-700">Анхны сарын тэмдэг ба боловсрол 📖</h2>
       </div>
 
-      <div className="grid grid-cols-2 gap-1 bb-bg-FDE7F1 rounded-2xl p-1">
+      <div className="grid grid-cols-3 gap-1 bb-bg-FDE7F1 rounded-2xl p-1">
         {[
           ...(isDaughter ? [["pad", padDone ? "Пад заавар ✓" : "Пад заавар 🌸"],] : []),
           ["kit", "Сургуулийн цүнх"],
+          ["food", "Хооллолт"],
         ].map(([id, label]) => (
           <button
             key={id}
@@ -94,6 +95,38 @@ export default function LearnHub() {
       )}
 
 
+      {learnTab === "food" && (
+        <Card>
+          <SectionTitle icon={Apple} title="Сарын тэмдгийн үеийн хооллолт" />
+          <p className="mb-4 text-sm font-semibold leading-relaxed text-slate-600">
+            Заавал хориглох хүнс байхгүй. Өөрт таатай, тэнцвэртэй хоол сонгоорой.
+          </p>
+          <div className="space-y-3">
+            <div className="rounded-2xl bb-bg-FFF7FB p-4">
+              <p className="font-extrabold bb-text-962D66">Идвэл тохиромжтой санаанууд 🌿</p>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Овьёос, бүхэл үрийн талх, будаа; тараг, навчит ногоо; өндөг, шош, мах зэрэг төмөртэй хүнс; жимс, ногоо, ус.
+              </p>
+            </div>
+            <div className="rounded-2xl bb-bg-FFF7FB p-4">
+              <p className="font-extrabold bb-text-962D66">Амттан идмээр санагдвал 🍫</p>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Жимс, тарагтай овьёос эсвэл багахан шоколад идэж болно. Амттаныг бүрэн хорих шаардлагагүй.
+              </p>
+            </div>
+            <div className="rounded-2xl bb-bg-FFF7FB p-4">
+              <p className="font-extrabold bb-text-962D66">Биеэ ажиглаарай 💧</p>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Давс ихтэй зууш, кофеин зарим хүнд зовиур нэмэгдүүлж болно. Тийм бол хэмжээг нь багасгаад үзээрэй; хүнс бүрийг хорих шаардлагагүй.
+              </p>
+            </div>
+          </div>
+          <p className="mt-4 text-xs font-medium leading-relaxed text-slate-400">
+            Тэнцвэртэй хооллолт, кальци агуулсан хүнсийг зөвлөдөг. Хоол хүнс нь сарын тэмдгийн өвдөлтийг заавал арилгана гэсэн үг биш.
+            <a className="ml-1 underline" href="https://www.acog.org/womens-health/faqs/premenstrual-syndrome" target="_blank" rel="noreferrer">ACOG-ийн зөвлөмж</a>
+          </p>
+        </Card>
+      )}
       <div className="flex items-start gap-3 rounded-2xl bb-bg-E9DDFC-30 p-4">
         <Info className="w-5 h-5 bb-text-7C4DCC shrink-0 mt-0.5" />
         <p className="text-xs font-semibold text-slate-600 leading-relaxed">
