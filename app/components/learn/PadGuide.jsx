@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * «Пад заавар» — пад хэрэглэх, зөв хаях алхам алхмаар заавар.
+ * Ариун цэврийн хэрэглэл хэрэглэх, зөв хаях алхам алхмаар заавар.
  * Хуруугаараа шудрах эсвэл товчоор шилжинэ. Явц нь утсанд (localStorage) хадгалагдана.
  */
 
@@ -83,7 +83,7 @@ export default function PadGuide({ role, onAskFriends }) {
       <Card>
         <SectionTitle
           icon={BookOpen}
-          title="Пад хэрхэн хэрэглэх вэ?"
+          title="Ариун цэврийн хэрэглэлээ яаж хэрэглэх вэ?"
           right={
             T.finished && (
               <span className="text-xs font-extrabold rounded-full px-2.5 py-1 bb-bg-F48FB1 text-white whitespace-nowrap">
@@ -93,7 +93,7 @@ export default function PadGuide({ role, onAskFriends }) {
           }
         />
         <p className="text-sm font-semibold text-slate-500 leading-relaxed mb-4">
-          Эхний удаа бүгд л сурдаг. Энэ бол бүрэн хэвийн зүйл 🌸
+          Анх удаа хэрэглэж байгаа бол санаа зоволтгүй. Алхам алхмаар хамтдаа суръя 💗
         </p>
         <div className="grid grid-cols-2 gap-1 bb-bg-FDE7F1 rounded-2xl p-1">
           {PAD_GUIDE.map((p, i) => (
@@ -129,9 +129,9 @@ export default function PadGuide({ role, onAskFriends }) {
               {T.step + 1}/{total} алхам
             </span>
           </div>
-          <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden mb-4">
+          <div className="h-2.5 rounded-full bg-violet-100 overflow-hidden mb-4">
             <div
-              className="h-full bb-grad-sos rounded-full transition-all duration-500"
+              className="h-full bb-grad-guide rounded-full transition-all duration-500"
               style={{ width: `${((T.step + 1) / total) * 100}%` }}
             />
           </div>
@@ -159,19 +159,17 @@ export default function PadGuide({ role, onAskFriends }) {
             </button>
             <button
               onClick={next}
-              className="flex-1 bx-tap rounded-2xl font-extrabold text-white bb-grad-sos shadow-lg bx-shadow-sos flex items-center justify-center gap-1 active:scale-95 transition"
+              className="flex-1 bx-tap rounded-2xl font-extrabold text-white bb-grad-guide shadow-lg bx-shadow-guide flex items-center justify-center gap-1 active:scale-95 transition"
             >
               {nextLabel} <ChevronRight className="w-4 h-4" />
             </button>
           </div>
-          <p className="mt-3 text-xs font-bold text-slate-300 text-center">Хуруугаараа шудрах боломжтой ↔️</p>
-
           {T.part === 1 && T.step === total - 1 && role !== "mother" && onAskFriends && (
             <button
               onClick={onAskFriends}
               className="mt-4 w-full bx-tap rounded-2xl font-extrabold bb-bg-FDE7F1 bb-text-B83B7E border-2 bb-border-F8D3E6 active:scale-95 transition bloom-pop"
             >
-              Пад дууссан уу? Найзаасаа асуух →
+              Хэрэглэл дууссан уу? Найзаасаа асуух →
             </button>
           )}
         </div>

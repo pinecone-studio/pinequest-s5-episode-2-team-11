@@ -9,6 +9,7 @@ import CycleRing from "./CycleRing";
 import HoroscopeCard from "./HoroscopeCard";
 import FriendsQuickCard from "../friends/FriendsQuickCard";
 import IncomingSosCard from "../friends/IncomingSosCard";
+import TodayCheckin from "./TodayCheckin";
 
 export default function DaughterHome() {
   const {
@@ -147,8 +148,8 @@ export default function DaughterHome() {
           <AlertCircle className="w-7 h-7 text-white" />
         </span>
         <span className="flex-1 relative">
-          <span className="block text-xl font-black text-white">SOS (өвдсөн үед)</span>
-          <span className="block text-sm font-bold text-white/90">
+          <span className="block text-xl font-black text-slate-800">SOS</span>
+          <span className="block text-sm font-bold text-slate-700/80">
             3 минутын амьсгал ба сунгалтын дасгал
           </span>
         </span>
@@ -184,6 +185,8 @@ export default function DaughterHome() {
           </p>
         </button>
       </div>
+
+      <TodayCheckin />
     </div>
   );
 }
