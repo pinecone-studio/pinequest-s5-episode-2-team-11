@@ -9,6 +9,7 @@ import CycleRing from "./CycleRing";
 import HoroscopeCard from "./HoroscopeCard";
 import FriendsQuickCard from "../friends/FriendsQuickCard";
 import IncomingSosCard from "../friends/IncomingSosCard";
+import TodayCheckin from "./TodayCheckin";
 
 export default function DaughterHome() {
   const {
@@ -139,20 +140,19 @@ export default function DaughterHome() {
       {/* SOS */}
       <button
         onClick={openSos}
-        className="w-full rounded-3xl bb-grad-3 p-5 text-left text-slate-800 shadow-xl bb-shadow-B794F4-30 active:scale-95 transition flex items-center gap-4 relative overflow-hidden bloom-fade"
+        className="w-full rounded-3xl bg-gradient-to-r from-[#7c2d74] to-[#5b3ca6] p-5 text-left text-white shadow-xl bb-shadow-B794F4-30 active:scale-95 transition flex items-center gap-4 relative overflow-hidden bloom-fade"
       >
-        <span className="absolute right-0 top-0 w-32 h-32 rounded-full bg-white/20 translate-x-10 -translate-y-10" />
-        <span className="relative w-14 h-14 rounded-2xl bg-white/50 flex items-center justify-center">
-          <span className="absolute inset-0 rounded-2xl bg-white/50 animate-ping" />
-          <AlertCircle className="w-7 h-7 bb-text-6A3BB8" />
+        <span className="relative w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center">
+          <span className="absolute inset-0 rounded-2xl bg-white/10 animate-ping" />
+          <AlertCircle className="w-7 h-7 text-white" />
         </span>
         <span className="flex-1 relative">
-          <span className="block text-xl font-black text-slate-800">SOS — Өвдөөд байна</span>
+          <span className="block text-xl font-black text-slate-800">SOS</span>
           <span className="block text-sm font-bold text-slate-700/80">
             3 минутын амьсгал ба сунгалтын дасгал
           </span>
         </span>
-        <ChevronRight className="w-6 h-6 relative text-slate-700" />
+        <ChevronRight className="w-6 h-6 relative text-white" />
       </button>
 
       {/* Өнөөдрийн товч */}
@@ -184,6 +184,8 @@ export default function DaughterHome() {
           </p>
         </button>
       </div>
+
+      <TodayCheckin />
     </div>
   );
 }
