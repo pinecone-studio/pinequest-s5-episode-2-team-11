@@ -1,8 +1,8 @@
-import { User, Sun, Moon } from "lucide-react";
+import { User, Sun, Moon, ChevronLeft } from "lucide-react";
 import BloomyLogo from "../ui/BloomyLogo";
 import { useTheme } from "../../../context/ThemeContext";
 
-export default function AppHeader({ showNav, tab, onOpenSettings }) {
+export default function AppHeader({ showNav, tab, onOpenSettings, onLogoClick }) {
   const { theme, setTheme } = useTheme();
   return (
     <header
@@ -10,28 +10,27 @@ export default function AppHeader({ showNav, tab, onOpenSettings }) {
       style={{ paddingTop: "max(12px, env(safe-area-inset-top))" }}
     >
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
+        <button type="button" onClick={onLogoClick} aria-label="Bloomy руу буцах" className="flex items-center gap-1.5 rounded-xl text-left active:scale-95 transition">
+          {!showNav && <ChevronLeft className="h-5 w-5 text-slate-500" />}
           <BloomyLogo className="w-8 h-8 shrink-0" />
           <span className="font-black text-slate-700">Bloomy</span>
-        </div>
+        </button>
         <div className="flex items-center gap-2">
-          {showNav && (
-            <button
-              type="button"
-              role="switch"
-              aria-label={theme === "dark" ? "Light mode" : "Dark mode"}
-              aria-checked={theme === "dark"}
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="flex items-center gap-2 rounded-full px-2 py-1.5 text-xs font-extrabold text-slate-500 active:scale-95 transition"
-            >
-              <span className={`relative h-6 w-11 rounded-full p-0.5 transition-colors ${theme === "dark" ? "bb-bg-E0679F" : "bg-slate-200"}`}>
-                <span className={`theme-switch-thumb flex h-5 w-5 items-center justify-center rounded-full bg-white shadow-sm transition-transform ${theme === "dark" ? "translate-x-5" : "translate-x-0"}`}>
-                  {theme === "dark" ? <Moon className="h-3 w-3 bb-text-B83B7E" /> : <Sun className="h-3 w-3 text-slate-600" />}
-                </span>
+          <button
+            type="button"
+            role="switch"
+            aria-label={theme === "dark" ? "Light mode" : "Dark mode"}
+            aria-checked={theme === "dark"}
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="flex items-center gap-2 rounded-full px-2 py-1.5 text-xs font-extrabold text-slate-500 active:scale-95 transition"
+          >
+            <span className={`relative h-6 w-11 rounded-full p-0.5 transition-colors ${theme === "dark" ? "bb-bg-E0679F" : "bg-slate-200"}`}>
+              <span className={`theme-switch-thumb flex h-5 w-5 items-center justify-center rounded-full bg-white shadow-sm transition-transform ${theme === "dark" ? "translate-x-5" : "translate-x-0"}`}>
+                {theme === "dark" ? <Moon className="h-3 w-3 bb-text-B83B7E" /> : <Sun className="h-3 w-3 text-slate-600" />}
               </span>
-              {theme === "dark" ? "Dark" : "Light"}
-            </button>
-          )}
+            </span>
+            {theme === "dark" ? "Dark" : "Light"}
+          </button>
           {showNav && (
             <button
               onClick={onOpenSettings}
