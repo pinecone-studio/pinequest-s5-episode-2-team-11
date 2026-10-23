@@ -809,6 +809,7 @@ export function FamilyProvider({ children }) {
     latestTeenMsg,
     markRead,
     sendToTeen,
+    sendToMom,
     openBell,
     // SOS
     sosOpen,
