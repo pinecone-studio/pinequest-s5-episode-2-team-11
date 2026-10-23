@@ -1,4 +1,4 @@
-"use client";
++"use client";
 
 import { useFamily } from "../../../context/FamilyContext";
 import { Copy, Users, Bell, Check, HeartHandshake } from "lucide-react";

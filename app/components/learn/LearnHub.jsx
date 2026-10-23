@@ -1,16 +1,17 @@
 "use client";
 
 import { useFamily } from "../../../context/FamilyContext";
-import { Check, Backpack, Info, RefreshCw } from "lucide-react";
-import { KIT_ITEMS, MYTHS } from "../../../lib/data";
+import { Check, Backpack, Info, Apple } from "lucide-react";
+import { KIT_ITEMS } from "../../../lib/data";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
 import PadGuide, { usePadGuideFinished } from "./PadGuide";
 
 export default function LearnHub() {
-  const { learnTab, setLearnTab, kitChecked, flippedMyths, toggleKit, toggleMyth, view, setTab } =
+  const { learnTab, setLearnTab, kitChecked, toggleKit, view, setTab } =
     useFamily();
   const padDone = usePadGuideFinished();
+  const isDaughter = view === "daughter";
 
   return (
     <div className="space-y-4 bloom-fade">
@@ -21,9 +22,10 @@ export default function LearnHub() {
 
       <div className="grid grid-cols-3 gap-1 bb-bg-FDE7F1 rounded-2xl p-1">
         {[
+          ...(isDaughter ? [["pad", padDone ? "Пад заавар ✓" : "Пад заавар 🌸"],] : []),
           ["pad", padDone ? "Хэрэглэл ✓" : "Хэрэглэл 🌸"],
           ["kit", "Сургуулийн цүнх"],
-          ["myths", "Домог ба үнэн"],
+          ["food", "Хооллолт"],
         ].map(([id, label]) => (
           <button
             key={id}
@@ -37,7 +39,7 @@ export default function LearnHub() {
         ))}
       </div>
 
-      {learnTab === "pad" && <PadGuide role={view} onAskFriends={() => setTab("friends")} />}
+      {isDaughter && learnTab === "pad" && <PadGuide role={view} onAskFriends={() => setTab("friends")} />}
 
       {learnTab === "kit" && (
         <Card>
@@ -93,43 +95,39 @@ export default function LearnHub() {
         </Card>
       )}
 
-      {learnTab === "myths" && (
-        <div className="space-y-3">
-          <p className="text-xs font-bold text-slate-400 text-center">Карт дээр дарж үнэнийг мэдээрэй ✨</p>
-          {MYTHS.map((m) => {
-            const flipped = flippedMyths.includes(m.id);
-            return (
-              <button
-                key={m.id}
-                onClick={() => toggleMyth(m.id)}
-                className={`w-full text-left rounded-3xl p-5 transition-all duration-300 active:scale-95 border-2 ${
-                  flipped ? "bb-bg-FDE7F1 bb-border-F8D3E6" : "bg-white border-slate-100 shadow-sm"
-                }`}
-              >
-                <span
-                  className={`inline-block text-xs font-black uppercase tracking-widest rounded-full px-2.5 py-1 ${
-                    flipped ? "bb-bg-E0679F text-white" : "bb-bg-E9DDFC bb-text-6A3BB8"
-                  }`}
-                >
-                  {flipped ? "✓ Үнэн" : "✗ Домог"}
-                </span>
-                <p
-                  key={flipped ? "fact" : "myth"}
-                  className={`mt-2 font-extrabold leading-snug bloom-pop ${flipped ? "bb-text-962D66" : "text-slate-700"}`}
-                >
-                  {flipped ? m.fact : `«${m.myth}»`}
-                </p>
-                {!flipped && (
-                  <span className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-slate-400">
-                    <RefreshCw className="w-3 h-3" /> Эргүүлэх
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
 
+      {learnTab === "food" && (
+        <Card>
+          <SectionTitle icon={Apple} title="Сарын тэмдгийн үеийн хооллолт" />
+          <p className="mb-4 text-sm font-semibold leading-relaxed text-slate-600">
+            Заавал хориглох хүнс байхгүй. Өөрт таатай, тэнцвэртэй хоол сонгоорой.
+          </p>
+          <div className="space-y-3">
+            <div className="rounded-2xl bb-bg-FFF7FB p-4">
+              <p className="font-extrabold bb-text-962D66">Идвэл тохиромжтой санаанууд 🌿</p>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Овьёос, бүхэл үрийн талх, будаа; тараг, навчит ногоо; өндөг, шош, мах зэрэг төмөртэй хүнс; жимс, ногоо, ус.
+              </p>
+            </div>
+            <div className="rounded-2xl bb-bg-FFF7FB p-4">
+              <p className="font-extrabold bb-text-962D66">Амттан идмээр санагдвал 🍫</p>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Жимс, тарагтай овьёос эсвэл багахан шоколад идэж болно. Амттаныг бүрэн хорих шаардлагагүй.
+              </p>
+            </div>
+            <div className="rounded-2xl bb-bg-FFF7FB p-4">
+              <p className="font-extrabold bb-text-962D66">Биеэ ажиглаарай 💧</p>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Давс ихтэй зууш, кофеин зарим хүнд зовиур нэмэгдүүлж болно. Тийм бол хэмжээг нь багасгаад үзээрэй; хүнс бүрийг хорих шаардлагагүй.
+              </p>
+            </div>
+          </div>
+          <p className="mt-4 text-xs font-medium leading-relaxed text-slate-400">
+            Тэнцвэртэй хооллолт, кальци агуулсан хүнсийг зөвлөдөг. Хоол хүнс нь сарын тэмдгийн өвдөлтийг заавал арилгана гэсэн үг биш.
+            <a className="ml-1 underline" href="https://www.acog.org/womens-health/faqs/premenstrual-syndrome" target="_blank" rel="noreferrer">ACOG-ийн зөвлөмж</a>
+          </p>
+        </Card>
+      )}
       <div className="flex items-start gap-3 rounded-2xl bb-bg-E9DDFC-30 p-4">
         <Info className="w-5 h-5 bb-text-7C4DCC shrink-0 mt-0.5" />
         <p className="text-xs font-semibold text-slate-600 leading-relaxed">
