@@ -6,7 +6,7 @@
  */
 
 import { useState } from "react";
-import { Bell, Users, Plus, Lock, Copy, Check, UserPlus, Loader2, Heart, ShieldCheck } from "lucide-react";
+import { Users, Plus, Lock, Copy, Check, UserPlus, Loader2, Heart, ShieldCheck } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import { useFriends } from "../../../context/FriendsContext";
 import { GROUP_EMOJIS, SOS_PLACES } from "../../../lib/friends";
@@ -121,41 +121,6 @@ export default function FriendsScreen() {
             Болсон, баярлалаа 💗
           </button>
         )}
-      </Card>
-
-      {/* ---------- Найзын утсанд хэрхэн харагдах ---------- */}
-      <Card>
-        <SectionTitle icon={Bell} title="Найзын утсанд ингэж очно" />
-        <div className="rounded-[1.5rem] bb-grad-9 p-3 border bb-border-F8D3E6">
-          <div className="rounded-xl bg-white/95 p-3 flex gap-3 items-start shadow-lg">
-            <span className="w-9 h-9 rounded-xl bb-grad-sos flex items-center justify-center shrink-0 text-white text-lg">
-              🌸
-            </span>
-            <div className="flex-1 min-w-0">
-              <div className="flex justify-between gap-2 text-xs font-bold text-slate-400">
-                <span className="uppercase tracking-wider">Bloomy</span>
-                <span>одоо</span>
-              </div>
-              <p className="text-sm font-extrabold text-slate-800 leading-snug">
-                🆘 {profile?.display_name || "Чи"}: Яг одоо пад хэрэгтэй байна
-              </p>
-              <p className="text-xs font-semibold text-slate-500 mt-0.5">
-                📍 {placeInfo.short} · Нөөц байвал туслаарай
-              </p>
-              <div className="mt-2 flex gap-2">
-                <span className="text-xs font-extrabold rounded-full px-3 py-1 bb-bg-F48FB1 text-white">
-                  Надад байна
-                </span>
-                <span className="text-xs font-extrabold rounded-full px-3 py-1 bg-slate-100 text-slate-500">
-                  Байхгүй
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <p className="mt-3 flex items-start justify-center gap-1.5 text-xs font-semibold text-slate-400 text-center leading-relaxed">
-          <Lock className="w-3.5 h-3.5 shrink-0 mt-0.5" /> Найз чинь Bloomy дээр нэг товшилтоор хариулна. Дохио зөвхөн бүлгийн гишүүдэд очно.
-        </p>
       </Card>
 
       <MyFriends setToast={setToast} />
