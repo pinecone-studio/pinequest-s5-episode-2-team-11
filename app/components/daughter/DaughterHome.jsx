@@ -6,6 +6,7 @@ import { PHASE_COLORS, PHASES } from "../../../lib/data";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
 import CycleRing from "./CycleRing";
+import HoroscopeCard from "./HoroscopeCard";
 import FriendsQuickCard from "../friends/FriendsQuickCard";
 import IncomingSosCard from "../friends/IncomingSosCard";
 
@@ -70,6 +71,8 @@ export default function DaughterHome() {
 
       <IncomingSosCard />
       <FriendsQuickCard onOpen={() => setTab("friends")} />
+
+      <HoroscopeCard />
 
       {/* Мөчлөгийн тойрог */}
       {hasCycle ? (

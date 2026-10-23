@@ -5,6 +5,7 @@ import { ChevronLeft, AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import RoleSelect from "./RoleSelect";
 import BloomyLogo from "../ui/BloomyLogo";
+import { toDateStr } from "../../../lib/dates";
 
 /** Нэвтрэх / бүртгүүлэх. stage: "role" → "signup" | "login" */
 export default function AuthScreen() {
@@ -12,6 +13,7 @@ export default function AuthScreen() {
   const [stage, setStage] = useState("role");
   const [role, setRole] = useState(null);
   const [name, setName] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -35,14 +37,18 @@ export default function AuthScreen() {
   }
 
   const isSignup = stage === "signup";
-  const canSubmit = email.includes("@") && password.length >= 6 && (!isSignup || name.trim().length > 0);
+  const isDaughter = role === "daughter";
+  const canSubmit =
+    email.includes("@") &&
+    password.length >= 6 &&
+    (!isSignup || (name.trim().length > 0 && (!isDaughter || birthDate)));
 
   const submit = async (e) => {
     e.preventDefault();
     if (!canSubmit || busy) return;
     setBusy(true);
     setMessage("");
-    const err = isSignup ? await signUp({ role, name, email, password }) : await signIn({ email, password });
+    const err = isSignup ? await signUp({ role, name, birthDate: isDaughter ? birthDate : null, email, password }) : await signIn({ email, password });
     setBusy(false);
     if (err) setMessage(err);
   };
@@ -92,6 +98,27 @@ export default function AuthScreen() {
               autoComplete="given-name"
               maxLength={40}
             />
+          </div>
+        )}
+        {isSignup && isDaughter && (
+          <div>
+            <label
+              htmlFor="birth-date"
+              className="block text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2"
+            >
+              Төрсөн өдөр
+            </label>
+            <input
+              id="birth-date"
+              type="date"
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
+              className={inputCls}
+              max={toDateStr()}
+              min="1990-01-01"
+              autoComplete="bday"
+            />
+            <p className="mt-1.5 text-xs font-semibold text-slate-400">Ордын зурхайг чинь автоматаар харуулна ✨</p>
           </div>
         )}
         <div>
