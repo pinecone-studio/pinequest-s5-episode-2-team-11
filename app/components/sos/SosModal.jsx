@@ -125,10 +125,10 @@ export default function SosModal() {
                   <div className="h-14">
                     <StretchFigure type={s.figure} active={active || done} />
                   </div>
-                  <p className="mt-1 text-xs font-extrabold text-slate-400">{i + 1}-р минут</p>
+                  <p className="mt-1 text-xs font-extrabold text-slate-400">{i + 1} минут</p>
                   <p className="text-xs font-extrabold text-slate-700 leading-tight">
                     {done && !active ? "✓ " : ""}
-                    {s.title}
+                    {s.cardTitle || s.title}
                   </p>
                 </div>
               );

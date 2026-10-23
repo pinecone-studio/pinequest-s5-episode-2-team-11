@@ -1,16 +1,17 @@
 "use client";
 
 import { useFamily } from "../../../context/FamilyContext";
-import { Check, Backpack, Info, RefreshCw } from "lucide-react";
-import { KIT_ITEMS, MYTHS } from "../../../lib/data";
+import { Check, Backpack, Info, Apple } from "lucide-react";
+import { KIT_ITEMS } from "../../../lib/data";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
 import PadGuide, { usePadGuideFinished } from "./PadGuide";
 
 export default function LearnHub() {
-  const { learnTab, setLearnTab, kitChecked, flippedMyths, toggleKit, toggleMyth, view, setTab } =
+  const { learnTab, setLearnTab, kitChecked, toggleKit, view, setTab } =
     useFamily();
   const padDone = usePadGuideFinished();
+  const isDaughter = view === "daughter";
 
   return (
     <div className="space-y-4 bloom-fade">
@@ -23,7 +24,7 @@ export default function LearnHub() {
         {[
           ["pad", padDone ? "Хэрэглэл ✓" : "Хэрэглэл 🌸"],
           ["kit", "Сургуулийн цүнх"],
-          ["myths", "Домог ба үнэн"],
+          ["food", "Хооллолт"],
         ].map(([id, label]) => (
           <button
             key={id}
@@ -87,54 +88,46 @@ export default function LearnHub() {
               🎉 Цүнх бэлэн боллоо — чи юунд ч бэлэн!
             </p>
           )}
-          <p className="mt-3 text-xs font-semibold text-slate-400 text-center">
-            Энэ жагсаалт ээж, охин хоёрын харагдацад зэрэг шинэчлэгдэнэ.
-          </p>
         </Card>
       )}
 
-      {learnTab === "myths" && (
-        <div className="space-y-3">
-          <p className="text-xs font-bold text-slate-400 text-center">Карт дээр дарж үнэнийг мэдээрэй ✨</p>
-          {MYTHS.map((m) => {
-            const flipped = flippedMyths.includes(m.id);
-            return (
-              <button
-                key={m.id}
-                onClick={() => toggleMyth(m.id)}
-                className={`w-full text-left rounded-3xl p-5 transition-all duration-300 active:scale-95 border-2 ${
-                  flipped ? "bb-bg-FDE7F1 bb-border-F8D3E6" : "bg-white border-slate-100 shadow-sm"
-                }`}
-              >
-                <span
-                  className={`inline-block text-xs font-black uppercase tracking-widest rounded-full px-2.5 py-1 ${
-                    flipped ? "bb-bg-E0679F text-white" : "bb-bg-E9DDFC bb-text-6A3BB8"
-                  }`}
-                >
-                  {flipped ? "✓ Үнэн" : "✗ Домог"}
-                </span>
-                <p
-                  key={flipped ? "fact" : "myth"}
-                  className={`mt-2 font-extrabold leading-snug bloom-pop ${flipped ? "bb-text-962D66" : "text-slate-700"}`}
-                >
-                  {flipped ? m.fact : `«${m.myth}»`}
-                </p>
-                {!flipped && (
-                  <span className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-slate-400">
-                    <RefreshCw className="w-3 h-3" /> Эргүүлэх
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
 
+      {learnTab === "food" && (
+        <Card>
+          <SectionTitle icon={Apple} title="Сарын тэмдэг ирсэн үед юу идэх вэ?" />
+          <p className="mb-4 text-sm font-semibold leading-relaxed text-slate-600">
+            Дуртай хоолоо идэж болно шүү. Хоолыг бүр мөсөн хорих хэрэггүй 🌸
+          </p>
+          <div className="space-y-3">
+            <div className="rounded-2xl bb-bg-FFF7FB p-4">
+              <p className="font-extrabold bb-text-962D66">Тэжээлтэй хоол сонгоорой 🌿</p>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Овьёос, талх, будаа, тараг, өндөг, мах, жимс ногоо гээд дуртай тэжээлтэй хоолоо сонгоорой. Бүлээн ус уухаа мартав аа, хөөрхнөө 🌸
+              </p>
+            </div>
+            <div className="rounded-2xl bb-bg-FFF7FB p-4">
+              <p className="font-extrabold bb-text-962D66">Амттан идмээр санагдвал 🍫</p>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Амттан идмээр байвал жимс, тарагтай овьёос эсвэл жаахан шоколад идэж болно. Амттанаа бүр мөсөн хорих хэрэггүй шүү 🍫
+              </p>
+            </div>
+            <div className="rounded-2xl bb-bg-FFF7FB p-4">
+              <p className="font-extrabold bb-text-962D66">Биеэ сонсоорой 💗</p>
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                Чипс, кофе эсвэл өтгөн цай заримдаа гэдсийг эвгүйрхүүлдэг. Чамд тэгж санагдвал бага хэрэглээд үзээрэй. Өөртөө юу таатайг анзаараарай 💗
+              </p>
+            </div>
+          </div>
+          <p className="mt-4 text-xs font-medium leading-relaxed text-slate-400">
+            Гэдэс базалсан өдөр өөртөө жаахан амралт өгөөрэй. Бүлээн ус ууж, бүлээн жин тавиад биеэ амраагаарай. Жингээ хэт халуун байлгаж болохгүй шүү 💗
+          </p>
+        </Card>
+      )}
       <div className="flex items-start gap-3 rounded-2xl bb-bg-E9DDFC-30 p-4">
         <Info className="w-5 h-5 bb-text-7C4DCC shrink-0 mt-0.5" />
         <p className="text-xs font-semibold text-slate-600 leading-relaxed">
-          Энэ апп эмчийн зөвлөгөөг орлохгүй. Хүчтэй өвдөлт, хэт их цус алдалт эсвэл санаа зовох зүйл байвал
-          эмчдээ хандаарай.
+          Энэ аппын мэдээлэл эмчийн зөвлөгөөг орлохгүй. Их өвдөх, цус их гарах зэрэг санаа зовоосон зүйл
+          байвал ээждээ болон итгэдэг том хүндээ хандаарай. Шаардлагатай бол эмчид хандаарай.
         </p>
       </div>
     </div>

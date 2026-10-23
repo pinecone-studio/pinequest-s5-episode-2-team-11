@@ -6,7 +6,7 @@
  */
 
 import { useState } from "react";
-import { Users, Plus, Lock, Copy, Check, UserPlus, Loader2, Heart } from "lucide-react";
+import { Users, Plus, Lock, Copy, Check, UserPlus, Loader2, Heart, ShieldCheck } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import { useFriends } from "../../../context/FriendsContext";
 import { GROUP_EMOJIS, PLACE_MAX } from "../../../lib/friends";
@@ -124,15 +124,8 @@ export default function FriendsScreen() {
         )}
       </Card>
 
-      {/* ---------- Миний дүр · Алхалт · Дэлгүүр (демо) ---------- */}
-      <AvatarCard />
-
-      {/* ---------- Найзууд + бүлгүүд нэг дор ---------- */}
-      <Card>
-        <MyFriends setToast={setToast} />
-        <div className="my-5 border-t border-slate-100" />
-        <MyGroups nameOf={nameOf} />
-      </Card>
+      <MyFriends setToast={setToast} />
+      <MyGroups nameOf={nameOf} />
     </div>
   );
 }
