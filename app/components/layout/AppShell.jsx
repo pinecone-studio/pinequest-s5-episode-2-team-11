@@ -41,8 +41,11 @@ export default function AppShell({ initialTab = "home" }) {
       router.replace("/");
     } else if (session && ready && needsMotherCode && pathname !== "/settings") {
       router.replace("/settings");
+    } else if (session && ready && view && pathname === "/") {
+      // Нэвтэрсэн бол нүүр хуудас руу шууд оруулна
+      router.replace(view === "mother" ? "/mother" : "/daughter");
     }
-  }, [authLoading, session, ready, needsMotherCode, pathname, router]);
+  }, [authLoading, session, ready, needsMotherCode, view, pathname, router]);
 
   const navigateToTab = (nextTab) => {
     setTab(nextTab);
