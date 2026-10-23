@@ -4,7 +4,7 @@ import Application from "./components/Application";
 
 export const metadata: Metadata = {
   title: "Bloomy",
-  description: "Өсвөр насны охид болон ээжүүдэд зориулсан мөчлөг, халамжийн апп",
+  description: "Өсвөр насны охид болон асран хамгаалагчдад зориулсан мөчлөг, халамжийн апп",
   applicationName: "Bloomy",
   appleWebApp: { capable: true, title: "Bloom", statusBarStyle: "default" },
   icons: {

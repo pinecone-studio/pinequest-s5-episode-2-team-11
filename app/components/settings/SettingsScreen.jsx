@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   LogOut,
   User,
@@ -15,12 +15,21 @@ import {
   Pencil,
   AlertCircle,
   Loader2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import Card from "../ui/Card";
 import SectionTitle from "../ui/SectionTitle";
 import PageHeader from "../ui/PageHeader";
 import CycleSetup from "../onboarding/CycleSetup";
+
+const localDateKey = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 export default function SettingsScreen() {
   const {
@@ -51,10 +60,54 @@ export default function SettingsScreen() {
   const [editingCycle, setEditingCycle] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState(profile?.display_name ?? "");
+  const [journalNotes, setJournalNotes] = useState({});
+  const [journalDate, setJournalDate] = useState(() => localDateKey(new Date()));
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const date = new Date();
+    return new Date(date.getFullYear(), date.getMonth(), 1);
+  });
+  const [journalDraft, setJournalDraft] = useState("");
+  const [journalLoaded, setJournalLoaded] = useState(false);
+
+  useEffect(() => {
+    const prefix = "bloom:private-note:";
+    const entries = Object.keys(window.localStorage)
+      .filter((key) => key.startsWith(prefix))
+      .reduce((notes, key) => {
+        const value = window.localStorage.getItem(key);
+        if (value) notes[key.slice(prefix.length)] = value;
+        return notes;
+      }, {});
+    Object.keys(window.localStorage).filter((key) => key.startsWith("bloom:checkin:")).forEach((key) => {
+      const date = key.slice("bloom:checkin:".length);
+      try {
+        const checkin = JSON.parse(window.localStorage.getItem(key));
+        if (checkin?.reason && !entries[date]) {
+          entries[date] = `Яагаад ингэж мэдэрсэн бэ?\n${checkin.reason}`;
+          window.localStorage.setItem(`${prefix}${date}`, entries[date]);
+        }
+        if (checkin?.reason) {
+          delete checkin.reason;
+          window.localStorage.setItem(key, JSON.stringify(checkin));
+        }
+      } catch {
+        // Хуучин check-in өгөгдөл уншигдахгүй бол алгасна.
+      }
+    });
+    setJournalNotes(entries);
+    setJournalDraft(entries[journalDate] ?? "");
+    setJournalLoaded(true);
+  }, []);
 
   if (editingCycle) return <CycleSetup onDone={() => setEditingCycle(false)} />;
 
   const isMother = view === "mother";
+  const monthOffset = (calendarMonth.getDay() + 6) % 7;
+  const calendarCellCount = Math.ceil((monthOffset + new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 0).getDate()) / 7) * 7;
+  const calendarDates = Array.from({ length: calendarCellCount }, (_, i) =>
+    new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), i - monthOffset + 1),
+  );
+  const monthLabel = new Intl.DateTimeFormat("mn-MN", { year: "numeric", month: "long" }).format(calendarMonth);
 
   return (
     <div className="space-y-4">
@@ -150,7 +203,7 @@ export default function SettingsScreen() {
             </button>
           </>
         )) : linked ? (
-          <p className="text-sm font-bold bb-text-B83B7E">✓ Ээжтэйгээ холбогдсон</p>
+          <p className="text-sm font-bold bb-text-B83B7E">✓ Асран хамгаалагчтайгаа холбогдсон</p>
         ) : (
           <>
             <p className="text-sm font-semibold text-slate-500">Асран хамгаалагчдаа энэ кодыг оруулуулж холбогдоорой.</p>
@@ -206,6 +259,68 @@ export default function SettingsScreen() {
           </Card>
 
           <Card>
+            <SectionTitle icon={Pencil} title="Миний өдрийн тэмдэглэл" />
+            <div className="flex items-center justify-between">
+              <button type="button" aria-label="Өмнөх сар" onClick={() => setCalendarMonth((month) => new Date(month.getFullYear(), month.getMonth() - 1, 1))}
+                className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-50 text-slate-600">
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <p className="font-extrabold capitalize text-slate-700">{monthLabel}</p>
+              <button type="button" aria-label="Дараагийн сар" onClick={() => setCalendarMonth((month) => new Date(month.getFullYear(), month.getMonth() + 1, 1))}
+                className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-50 text-slate-600">
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="mt-3 grid grid-cols-7 text-center text-[11px] font-extrabold text-slate-400">
+              {["Да", "Мя", "Лх", "Пү", "Ба", "Бя", "Ня"].map((day) => <span key={day} className="py-2">{day}</span>)}
+            </div>
+            <div className="grid grid-cols-7 gap-y-1 text-center">
+              {calendarDates.map((date) => {
+                const key = localDateKey(date);
+                const inMonth = date.getMonth() === calendarMonth.getMonth();
+                const selected = key === journalDate;
+                const hasNote = Boolean(journalNotes[key]);
+                const isToday = key === localDateKey(new Date());
+                return (
+                  <button key={key} type="button" onClick={() => {
+                    setJournalDate(key);
+                    setJournalDraft(journalNotes[key] ?? "");
+                    if (!inMonth) setCalendarMonth(new Date(date.getFullYear(), date.getMonth(), 1));
+                  }}
+                    className={`relative mx-auto flex h-10 w-10 flex-col items-center justify-center rounded-full text-sm font-bold ${
+                      selected ? "bb-bg-FDE7F1 bb-text-B83B7E" : inMonth ? "text-slate-700 hover:bg-slate-50" : "text-slate-300"
+                    } ${isToday && !selected ? "ring-1 ring-purple-300" : ""}`}>
+                    <span>{date.getDate()}</span>
+                    {hasNote && <span className={`absolute bottom-1 h-1 w-1 rounded-full ${selected ? "bg-pink-600" : "bg-purple-400"}`} />}
+                  </button>
+                );
+              })}
+            </div>
+            <textarea
+              value={journalDraft}
+              onChange={(event) => setJournalDraft(event.target.value)}
+              rows={4}
+              placeholder="Өнөөдөр юу болсон, юу мэдэрч байгаагаа бичээрэй…"
+              className="mt-3 w-full rounded-2xl border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-700 placeholder:text-slate-400"
+            />
+            <button
+              type="button"
+              disabled={!journalLoaded}
+              onClick={() => {
+                const next = { ...journalNotes };
+                if (journalDraft.trim()) next[journalDate] = journalDraft.trim();
+                else delete next[journalDate];
+                window.localStorage.setItem(`bloom:private-note:${journalDate}`, next[journalDate] ?? "");
+                if (!next[journalDate]) window.localStorage.removeItem(`bloom:private-note:${journalDate}`);
+                setJournalNotes(next);
+              }}
+              className="mt-2 w-full rounded-2xl bg-slate-100 py-3 text-sm font-extrabold text-slate-600 disabled:opacity-50"
+            >
+              Тэмдэглэлээ хадгалах
+            </button>
+          </Card>
+
+          <Card>
             <SectionTitle icon={shareWithMom ? Unlock : Lock} title="Нууцлал" />
             <button
               onClick={() => setShareWithMom((s) => !s)}
@@ -215,10 +330,10 @@ export default function SettingsScreen() {
             >
               <span>
                 <span className="block font-extrabold text-slate-700 text-sm">
-                  Сэтгэл санаагаа ээжтэй хуваалцах
+                  Сэтгэл санаагаа асран хамгаалагчтай хуваалцах
                 </span>
                 <span className="block text-xs font-semibold text-slate-500">
-                  Унтраавал ээж чинь таны сэтгэл санааг харахгүй.
+                  Унтраавал асран хамгаалагч тань таны сэтгэл санааг харахгүй.
                 </span>
               </span>
               <span
