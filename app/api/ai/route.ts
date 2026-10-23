@@ -47,11 +47,15 @@ JSON: {"tips": ["...", "...", "..."]}`,
     };
   }
   if (body.type === "mood") {
+    const emoji = String(body.emoji ?? "").slice(0, 16);
+    const feeling = emoji || MOOD_MN[body.mood] || String(body.mood ?? "").slice(0, 16);
     return {
-      maxTokens: 450,
-      prompt: `Охин одоо ${MOOD_MN[body.mood] ?? body.mood} байна (${phase}).
-Түүнд 2 минутын дотор хийж болох тайвшруулах шийдэл санал болго.
-JSON: {"title": "дулаан богино гарчиг + 1 эможи", "why": "яагаад ийм мэдрэмж төрж болох тухай 1-2 өгүүлбэр", "snack": "хөнгөн, эрүүл зууш", "music": "хөгжмийн санаа", "action": "2 минутын энгийн үйлдэл"}`,
+      maxTokens: 900,
+      prompt: `Охиноос "Өнөөдөр сэтгэл санаа чинь ямар байна?" гэж асуухад тэр ${feeling} гэж хариулсан (${phase}).
+Эможиг нь уншиж мэдрэмжийг нь ойлгоод, 2 минутын дотор хийж болох шийдэл санал болго.
+Мөн тэр мэдрэмжид тохирох, сэтгэл сэргээх 3 кино эсвэл анимэйшн санал болго: 10–18 насны охинд тохирох (G/PG), бодит, алдартай, кино театрт гарсан бүтээл байх.
+"title" нь Википедиа дээрх албан ёсны англи нэр, "year" нь гарсан он.
+JSON: {"label": "мэдрэмжийн 1-2 үгтэй нэр", "title": "дулаан богино гарчиг + 1 эможи", "why": "яагаад ийм мэдрэмж төрж болох тухай 1-2 өгүүлбэр", "snack": "хөнгөн, эрүүл зууш", "music": "хөгжмийн санаа", "action": "2 минутын энгийн үйлдэл", "movies": [{"title": "...", "year": 2015, "note": "яагаад тохирох тухай богино 1 өгүүлбэр"}]}`,
     };
   }
   if (body.type === "nudge") {
@@ -66,6 +70,36 @@ JSON: {"nudge": "..."}`,
     };
   }
   return null;
+}
+
+// Википедиагаас киноны албан ёсны постерыг хайна (API түлхүүр шаардлагагүй)
+async function findPoster(title: string, year?: number | string): Promise<string | null> {
+  const candidates = [year ? `${title} (${year} film)` : null, `${title} (film)`, title].filter(Boolean) as string[];
+  for (const name of candidates) {
+    try {
+      const res = await fetch(
+        `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name.replace(/ /g, "_"))}`,
+        { headers: { "User-Agent": "Bloomy/1.0 (family wellbeing app)" }, signal: AbortSignal.timeout(4000) }
+      );
+      if (!res.ok) continue;
+      const d = await res.json();
+      if (d.type === "disambiguation" || !/film|anim/i.test(d.description ?? "")) continue;
+      const src = d.thumbnail?.source ?? d.originalimage?.source;
+      if (src) return src;
+    } catch {
+      /* дараагийн нэрийг туршина */
+    }
+  }
+  return null;
+}
+
+async function withPosters(movies: any): Promise<any[]> {
+  if (!Array.isArray(movies)) return [];
+  const list = movies
+    .filter((m) => m && typeof m.title === "string")
+    .slice(0, 3)
+    .map((m) => ({ title: m.title.slice(0, 80), year: m.year ?? null, note: String(m.note ?? "").slice(0, 160) }));
+  return Promise.all(list.map(async (m) => ({ ...m, poster: await findPoster(m.title, m.year ?? undefined) })));
 }
 
 function extractJson(text: string) {
@@ -117,6 +151,7 @@ export async function POST(req: Request) {
       .join("");
     const json = extractJson(text);
     if (!json) return Response.json({ error: "bad_ai_output" }, { status: 502 });
+    if (body.type === "mood") json.movies = await withPosters(json.movies);
     return Response.json(json);
   } catch (e: any) {
     console.error("AI error:", e?.message);
