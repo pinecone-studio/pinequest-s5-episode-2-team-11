@@ -1,5 +1,5 @@
 -- =====================================================================
---  Bloomy — Найзууд · Пад SOS
+--  Bloomy — Найзууд · Хэрэглэлийн SOS
 --  schema.sql-ийн ДАРАА ажиллуулна:
 --  Supabase → SQL Editor → New query → энэ файлыг бүтнээр нь хуулж → Run
 --  Дахин ажиллуулахад аюулгүй (өгөгдөл устахгүй).
@@ -80,7 +80,7 @@ create table if not exists public.pad_requests (
   sender_name text not null default '',
   group_id    uuid references public.friend_groups (id) on delete set null,
   group_name  text not null default '',
-  place       text not null check (place in ('class', 'wc', 'hall', 'gym')),
+  place       text not null check (char_length(place) <= 40),
   resolved    boolean not null default false,
   created_at  timestamptz not null default now()
 );
@@ -172,7 +172,7 @@ returns table (id uuid, display_name text) language sql stable security definer 
   order by p.display_name
 $$;
 
--- ---------- Пад SOS ----------
+-- ---------- Хэрэглэлийн SOS ----------
 
 create or replace function public.send_pad_request(p_group uuid, p_place text)
 returns bigint language plpgsql security definer set search_path = public as $$
