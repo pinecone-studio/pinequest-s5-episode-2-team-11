@@ -10,7 +10,21 @@ import CurrentScreen from "./CurrentScreen";
 import SosModal from "../sos/SosModal";
 import { useTheme } from "../../../context/ThemeContext";
 
-export default function AppShell({ initialTab = "home" }) {
+// Хаяг → таб
+const TAB_BY_PATH = {
+  "/": "home",
+  "/daughter": "home",
+  "/mother": "home",
+  "/daughter/insights": "insights",
+  "/daughter/supplies": "supplies",
+  "/mother/supplies": "supplies",
+  "/mother/messages": "messages",
+  "/friends": "friends",
+  "/learn": "learn",
+  "/settings": "me",
+};
+
+export default function AppShell() {
   const router = useRouter();
   const pathname = usePathname();
   const family = useFamily();
@@ -33,8 +47,8 @@ export default function AppShell({ initialTab = "home" }) {
   } = family;
 
   useEffect(() => {
-    setTab(initialTab);
-  }, [initialTab, setTab]);
+    setTab(TAB_BY_PATH[pathname] ?? "home");
+  }, [pathname, setTab]);
 
   useEffect(() => {
     if (authLoading) return;

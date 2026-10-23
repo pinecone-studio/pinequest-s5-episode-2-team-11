@@ -285,3 +285,55 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ---------- AI чатбот аватар ---------- */
+@keyframes bloomTalk {
+  0%,
+  100% {
+    transform: scaleY(0.25);
+  }
+  30% {
+    transform: scaleY(1);
+  }
+  60% {
+    transform: scaleY(0.5);
+  }
+  80% {
+    transform: scaleY(0.9);
+  }
+}
+@keyframes bloomBlink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.1);
+  }
+}
+@keyframes bloomBob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+  25% {
+    transform: translateY(-2px) rotate(-2deg);
+  }
+  75% {
+    transform: translateY(-1px) rotate(2deg);
+  }
+}
+.bloom-talk {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: bloomTalk 0.32s ease-in-out infinite;
+}
+.bloom-blink {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: bloomBlink 4s ease-in-out infinite;
+}
+.bloom-bob {
+  animation: bloomBob 0.9s ease-in-out infinite;
+}
