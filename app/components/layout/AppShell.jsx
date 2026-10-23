@@ -74,6 +74,10 @@ export default function AppShell({ initialTab = "home" }) {
           showNav={showNav}
           tab={tab}
           onOpenSettings={() => navigateToTab("me")}
+          onLogoClick={() => {
+            if (session) navigateToTab("home");
+            else window.dispatchEvent(new Event("bloomy-auth-back"));
+          }}
         />
         <main className={`px-4 pt-4 ${showNav ? "pb-28" : "pb-10"}`}>
           <CurrentScreen family={family} pathname={pathname} />
