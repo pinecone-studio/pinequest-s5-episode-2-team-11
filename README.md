@@ -2,20 +2,77 @@
 
 Өсвөр насны охид болон тэдний ээж / асран хамгаалагчдад зориулсан сарын тэмдэг, халамжийн апп.
 
-- 👧 Охин: мөчлөгийн тооцоо, AI өдрийн зөвлөмж, сэтгэл санааны дэмжлэг, SOS өвдөлт намдаах дасгал
-- 👩 Ээж: охины халамжийн статус, AI сануулга, ариун цэврийн хэрэгслийн үлдэгдэл, мэдэгдэл
+## Боломжууд
+
+**👧 Охин**
+- Мөчлөгийн тооцоо, мөчлөгийн цагираг (дараагийн сарын тэмдэг, үе шат)
+- Өдөр бүрийн сэтгэл санаа сонгох → AI зөвлөмж
+- SOS — өвдөлт намдаах сунгалтын дасгал, «Ээжид мэдэгдэх»
+- Ариун цэврийн хэрэгслийн үлдэгдэл хянах
+- Өнөөдрийн ордын зурхай
+- Сурах булан — пад хэрэглэх заавар зурагтай
+- Найзууд: найзын кодоор холбогдож, яаралтай үед пад SOS илгээх (чатгүй, тогтсон хариултууд)
+
+**👩 Ээж / асран хамгаалагч**
+- Охины халамжийн статус бодит хугацаанд
+- AI сануулга, мэдэгдэл
+- Хэрэгслийн үлдэгдэл → «Нөхөн дүүргэсэн»
+
+**Бусад**
 - 🔒 Гэр бүл бүр хаалттай, охин юуг хуваалцахаа өөрөө шийднэ
+- 🌙 Цайвар / бараан горим
 - 📱 Утсанд апп шиг суулгана (PWA)
 
-**Технологи:** Next.js 16 · React 19 · Tailwind CSS 4 · Supabase (Auth, Postgres, Realtime) · Claude API
+## Технологи
+
+Next.js 16 · React 19 · Tailwind CSS 4 · Supabase (Auth, Postgres, Realtime) · Claude API
 
 ## Эхлэх
 
-```bash
-npm install
-cp .env.example .env.local   # утгуудаа бөглөнө
-npm run dev
+1. Supabase-ийн SQL Editor дээр `supabase/schema.sql`, дараа нь `supabase/friends.sql`-ийг ажиллуулна.
+2. Төслийн үндсэн фолдерт `.env.local` үүсгэнэ:
+
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...
+   ANTHROPIC_API_KEY=sk-ant-...
+   # ANTHROPIC_MODEL=claude-haiku-5-5   # заавал биш
+   ```
+
+3. Ажиллуулна:
+
+   ```bash
+   npm install
+   npm run dev      # → http://localhost:3000
+   npm run phone    # утаснаас турших (0.0.0.0 дээр)
+   ```
+
+> AI key байхгүй ч апп ажиллана — AI-ийн оронд бэлэн зөвлөмжүүд харагдана.
+
+## Скриптүүд
+
+| Команд | Үйлдэл |
+|---|---|
+| `npm run dev` | Хөгжүүлэлтийн сервер |
+| `npm run phone` | Сүлжээн дэх утаснаас нээх боломжтой dev сервер |
+| `npm run build` | Production build |
+| `npm run start` | Production сервер |
+
+## Бүтэц
+
+```
+app/
+  api/ai/          Claude API-р AI зөвлөмж
+  api/horoscope/   Өнөөдрийн ордын зурхай (gogo.mn)
+  components/      daughter · mother · friends · learn · sos · onboarding · settings · layout · ui
+  daughter/ mother/ friends/ learn/ settings/   Хуудсууд
+context/           FamilyContext · FriendsContext · ThemeContext
+lib/               Supabase клиент, огноо/мөчлөгийн тооцоо, туслах функцууд
+supabase/          schema.sql, friends.sql
+public/            Лого, PWA дүрснүүд
 ```
 
-- Бүрэн тохируулах заавар, Vercel-д гаргах: **[SETUP.md](./SETUP.md)**
+## Дэлгэрэнгүй
+
+- Бүрэн тохируулах заавар, Vercel-д гаргах, демо хийх дараалал: **[SETUP.md](./SETUP.md)**
 - Багаар ажиллах: **[TEAM.md](./TEAM.md)**
