@@ -22,7 +22,6 @@ export default function LearnHub() {
 
       <div className="grid grid-cols-3 gap-1 bb-bg-FDE7F1 rounded-2xl p-1">
         {[
-          ...(isDaughter ? [["pad", padDone ? "Пад заавар ✓" : "Пад заавар 🌸"],] : []),
           ["pad", padDone ? "Хэрэглэл ✓" : "Хэрэглэл 🌸"],
           ["kit", "Сургуулийн цүнх"],
           ["food", "Хооллолт"],
@@ -39,7 +38,7 @@ export default function LearnHub() {
         ))}
       </div>
 
-      {isDaughter && learnTab === "pad" && <PadGuide role={view} onAskFriends={() => setTab("friends")} />}
+      {learnTab === "pad" && <PadGuide role={view} onAskFriends={() => setTab("friends")} />}
 
       {learnTab === "kit" && (
         <Card>
@@ -89,50 +88,46 @@ export default function LearnHub() {
               🎉 Цүнх бэлэн боллоо — чи юунд ч бэлэн!
             </p>
           )}
-          <p className="mt-3 text-xs font-semibold text-slate-400 text-center">
-            Энэ жагсаалт ээж, охин хоёрын харагдацад зэрэг шинэчлэгдэнэ.
-          </p>
         </Card>
       )}
 
 
       {learnTab === "food" && (
         <Card>
-          <SectionTitle icon={Apple} title="Сарын тэмдгийн үеийн хооллолт" />
+          <SectionTitle icon={Apple} title="Сарын тэмдэг ирсэн үед юу идэх вэ?" />
           <p className="mb-4 text-sm font-semibold leading-relaxed text-slate-600">
-            Заавал хориглох хүнс байхгүй. Өөрт таатай, тэнцвэртэй хоол сонгоорой.
+            Дуртай хоолоо идэж болно шүү. Хоолыг бүр мөсөн хорих хэрэггүй 🌸
           </p>
           <div className="space-y-3">
             <div className="rounded-2xl bb-bg-FFF7FB p-4">
-              <p className="font-extrabold bb-text-962D66">Идвэл тохиромжтой санаанууд 🌿</p>
+              <p className="font-extrabold bb-text-962D66">Тэжээлтэй хоол сонгоорой 🌿</p>
               <p className="mt-1 text-sm leading-relaxed text-slate-600">
-                Овьёос, бүхэл үрийн талх, будаа; тараг, навчит ногоо; өндөг, шош, мах зэрэг төмөртэй хүнс; жимс, ногоо, ус.
+                Овьёос, талх, будаа, тараг, өндөг, мах, жимс ногоо гээд дуртай тэжээлтэй хоолоо сонгоорой. Бүлээн ус уухаа мартав аа, хөөрхнөө 🌸
               </p>
             </div>
             <div className="rounded-2xl bb-bg-FFF7FB p-4">
               <p className="font-extrabold bb-text-962D66">Амттан идмээр санагдвал 🍫</p>
               <p className="mt-1 text-sm leading-relaxed text-slate-600">
-                Жимс, тарагтай овьёос эсвэл багахан шоколад идэж болно. Амттаныг бүрэн хорих шаардлагагүй.
+                Амттан идмээр байвал жимс, тарагтай овьёос эсвэл жаахан шоколад идэж болно. Амттанаа бүр мөсөн хорих хэрэггүй шүү 🍫
               </p>
             </div>
             <div className="rounded-2xl bb-bg-FFF7FB p-4">
-              <p className="font-extrabold bb-text-962D66">Биеэ ажиглаарай 💧</p>
+              <p className="font-extrabold bb-text-962D66">Биеэ сонсоорой 💗</p>
               <p className="mt-1 text-sm leading-relaxed text-slate-600">
-                Давс ихтэй зууш, кофеин зарим хүнд зовиур нэмэгдүүлж болно. Тийм бол хэмжээг нь багасгаад үзээрэй; хүнс бүрийг хорих шаардлагагүй.
+                Чипс, кофе эсвэл өтгөн цай заримдаа гэдсийг эвгүйрхүүлдэг. Чамд тэгж санагдвал бага хэрэглээд үзээрэй. Өөртөө юу таатайг анзаараарай 💗
               </p>
             </div>
           </div>
           <p className="mt-4 text-xs font-medium leading-relaxed text-slate-400">
-            Тэнцвэртэй хооллолт, кальци агуулсан хүнсийг зөвлөдөг. Хоол хүнс нь сарын тэмдгийн өвдөлтийг заавал арилгана гэсэн үг биш.
-            <a className="ml-1 underline" href="https://www.acog.org/womens-health/faqs/premenstrual-syndrome" target="_blank" rel="noreferrer">ACOG-ийн зөвлөмж</a>
+            Гэдэс базалсан өдөр өөртөө жаахан амралт өгөөрэй. Бүлээн ус ууж, бүлээн жин тавиад биеэ амраагаарай. Жингээ хэт халуун байлгаж болохгүй шүү 💗
           </p>
         </Card>
       )}
       <div className="flex items-start gap-3 rounded-2xl bb-bg-E9DDFC-30 p-4">
         <Info className="w-5 h-5 bb-text-7C4DCC shrink-0 mt-0.5" />
         <p className="text-xs font-semibold text-slate-600 leading-relaxed">
-          Энэ аппын мэдээлэл эмчийн зөвлөгөөг орлохгүй шүү. Өвдөлт ихтэй эсвэл цус их гарвал санаа
-          зоволгүйгээр ээждээ эсвэл итгэдэг том хүндээ хэлж, эмчид хандаарай.
+          Энэ аппын мэдээлэл эмчийн зөвлөгөөг орлохгүй. Их өвдөх, цус их гарах зэрэг санаа зовоосон зүйл
+          байвал ээждээ болон итгэдэг том хүндээ хандаарай. Шаардлагатай бол эмчид хандаарай.
         </p>
       </div>
     </div>
