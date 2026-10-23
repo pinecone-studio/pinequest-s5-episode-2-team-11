@@ -1,16 +1,17 @@
 "use client";
 
 import { useFamily } from "../../../context/FamilyContext";
-import { Check, Backpack, Info, RefreshCw } from "lucide-react";
-import { KIT_ITEMS, MYTHS } from "../../../lib/data";
+import { Check, Backpack, Info } from "lucide-react";
+import { KIT_ITEMS } from "../../../lib/data";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
 import PadGuide, { usePadGuideFinished } from "./PadGuide";
 
 export default function LearnHub() {
-  const { learnTab, setLearnTab, kitChecked, flippedMyths, toggleKit, toggleMyth, view, setTab } =
+  const { learnTab, setLearnTab, kitChecked, toggleKit, view, setTab } =
     useFamily();
   const padDone = usePadGuideFinished();
+  const isDaughter = view === "daughter";
 
   return (
     <div className="space-y-4 bloom-fade">
@@ -19,11 +20,10 @@ export default function LearnHub() {
         <h2 className="text-2xl font-black text-slate-700">Анхны сарын тэмдэг ба боловсрол 📖</h2>
       </div>
 
-      <div className="grid grid-cols-3 gap-1 bb-bg-FDE7F1 rounded-2xl p-1">
+      <div className="grid grid-cols-2 gap-1 bb-bg-FDE7F1 rounded-2xl p-1">
         {[
-          ["pad", padDone ? "Пад заавар ✓" : "Пад заавар 🌸"],
+          ...(isDaughter ? [["pad", padDone ? "Пад заавар ✓" : "Пад заавар 🌸"],] : []),
           ["kit", "Сургуулийн цүнх"],
-          ["myths", "Домог ба үнэн"],
         ].map(([id, label]) => (
           <button
             key={id}
@@ -37,7 +37,7 @@ export default function LearnHub() {
         ))}
       </div>
 
-      {learnTab === "pad" && <PadGuide role={view} onAskFriends={() => setTab("friends")} />}
+      {isDaughter && learnTab === "pad" && <PadGuide role={view} onAskFriends={() => setTab("friends")} />}
 
       {learnTab === "kit" && (
         <Card>
@@ -93,42 +93,6 @@ export default function LearnHub() {
         </Card>
       )}
 
-      {learnTab === "myths" && (
-        <div className="space-y-3">
-          <p className="text-xs font-bold text-slate-400 text-center">Карт дээр дарж үнэнийг мэдээрэй ✨</p>
-          {MYTHS.map((m) => {
-            const flipped = flippedMyths.includes(m.id);
-            return (
-              <button
-                key={m.id}
-                onClick={() => toggleMyth(m.id)}
-                className={`w-full text-left rounded-3xl p-5 transition-all duration-300 active:scale-95 border-2 ${
-                  flipped ? "bb-bg-FDE7F1 bb-border-F8D3E6" : "bg-white border-slate-100 shadow-sm"
-                }`}
-              >
-                <span
-                  className={`inline-block text-xs font-black uppercase tracking-widest rounded-full px-2.5 py-1 ${
-                    flipped ? "bb-bg-E0679F text-white" : "bb-bg-E9DDFC bb-text-6A3BB8"
-                  }`}
-                >
-                  {flipped ? "✓ Үнэн" : "✗ Домог"}
-                </span>
-                <p
-                  key={flipped ? "fact" : "myth"}
-                  className={`mt-2 font-extrabold leading-snug bloom-pop ${flipped ? "bb-text-962D66" : "text-slate-700"}`}
-                >
-                  {flipped ? m.fact : `«${m.myth}»`}
-                </p>
-                {!flipped && (
-                  <span className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-slate-400">
-                    <RefreshCw className="w-3 h-3" /> Эргүүлэх
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
 
       <div className="flex items-start gap-3 rounded-2xl bb-bg-E9DDFC-30 p-4">
         <Info className="w-5 h-5 bb-text-7C4DCC shrink-0 mt-0.5" />
