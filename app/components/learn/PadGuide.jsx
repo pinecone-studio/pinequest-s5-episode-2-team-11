@@ -83,7 +83,7 @@ export default function PadGuide({ role, onAskFriends }) {
       <Card>
         <SectionTitle
           icon={BookOpen}
-          title="Ариун цэврийн хэрэглэл хэрхэн хэрэглэх вэ?"
+          title="Ариун цэврийн хэрэглэлээ яаж хэрэглэх вэ?"
           right={
             T.finished && (
               <span className="text-xs font-extrabold rounded-full px-2.5 py-1 bb-bg-F48FB1 text-white whitespace-nowrap">
@@ -93,7 +93,7 @@ export default function PadGuide({ role, onAskFriends }) {
           }
         />
         <p className="text-sm font-semibold text-slate-500 leading-relaxed mb-4">
-          Эхний удаа бүгд л сурдаг. Энэ бол бүрэн хэвийн зүйл 🌸
+          Анх удаа хэрэглэж байгаа бол санаа зоволтгүй. Алхам алхмаар хамтдаа суръя 💗
         </p>
         <div className="grid grid-cols-2 gap-1 bb-bg-FDE7F1 rounded-2xl p-1">
           {PAD_GUIDE.map((p, i) => (
