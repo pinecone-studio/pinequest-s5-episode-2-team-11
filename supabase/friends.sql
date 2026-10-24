@@ -6,7 +6,7 @@
 --
 --  Нууцлал:
 --   • Зөвхөн охид (daughter) ашиглана. Ээж нар найзуудын SOS-ийг харахгүй.
---   • Найзууд харилцан зөвшөөрсөн avatar-ын хувцас, арьсны өнгийг л харна.
+--   • Найзууд өөрийн хувцас, дэвсгэр, арьсны өнгийг л хуваалцана.
 --   • Мөчлөг, сэтгэл санаа болон XP/дэлбээ зэрэг тоглоомын оноог хуваалцахгүй.
 --   • Чат байхгүй: хариулт нь тогтсон 4 сонголтоос (дээрэлхэлтээс сэргийлнэ).
 -- =====================================================================
@@ -17,7 +17,9 @@ alter table public.profiles
   add column if not exists avatar_look jsonb not null
     default '{"hair":"hair-long-brown","top":"top-tee-white","bottom":"bottom-jeans","shoes":"shoes-white","acc":"acc-none"}'::jsonb,
   add column if not exists avatar_skin smallint not null default 0
-    check (avatar_skin between 0 and 3);
+    check (avatar_skin between 0 and 3),
+  add column if not exists avatar_background text not null default 'pink'
+    check (avatar_background in ('pink', 'lilac', 'mint', 'blue', 'peach', 'yellow'));
 
 -- ---------- Найзын код (жишээ: K7M2QX) ----------
 
@@ -181,10 +183,17 @@ returns table (id uuid, display_name text) language sql stable security definer 
   order by p.display_name
 $$;
 
-create or replace function public.list_friends_with_avatars()
-returns table (id uuid, display_name text, avatar_look jsonb, avatar_skin smallint)
+drop function if exists public.list_friends_with_avatars();
+create function public.list_friends_with_avatars()
+returns table (
+  id uuid,
+  display_name text,
+  avatar_look jsonb,
+  avatar_skin smallint,
+  avatar_background text
+)
 language sql stable security definer set search_path = public as $$
-  select p.id, p.display_name, p.avatar_look, p.avatar_skin
+  select p.id, p.display_name, p.avatar_look, p.avatar_skin, p.avatar_background
   from public.friendships f
   join public.profiles p on p.id = f.friend_id
   where f.user_id = auth.uid()
@@ -234,6 +243,66 @@ begin
 end;
 $$;
 
+create or replace function public.send_pad_request_to_friends(p_recipient_ids uuid[], p_place text)
+returns bigint language plpgsql security definer set search_path = public as $$
+declare
+  v_me    uuid := auth.uid();
+  v_id    bigint;
+  v_count int;
+  v_names text;
+begin
+  if v_me is null then raise exception 'not_authenticated'; end if;
+  if public.my_role() <> 'daughter' then raise exception 'teens_only'; end if;
+  if p_recipient_ids is null or cardinality(p_recipient_ids) = 0 then
+    raise exception 'empty_recipients';
+  end if;
+  if p_place is null or char_length(p_place) > 40 then raise exception 'invalid_place'; end if;
+
+  if exists (
+    select 1
+    from (select distinct unnest(p_recipient_ids) as id) selected
+    where not exists (
+      select 1 from public.friendships f
+      where f.user_id = v_me and f.friend_id = selected.id
+    )
+  ) then
+    raise exception 'not_friends';
+  end if;
+
+  if exists (
+    select 1 from public.pad_requests
+    where sender_id = v_me and created_at > now() - interval '20 seconds'
+  ) then
+    raise exception 'too_soon';
+  end if;
+
+  select string_agg(p.display_name, ', ' order by p.display_name)
+  into v_names
+  from (select distinct unnest(p_recipient_ids) as id) selected
+  join public.profiles p on p.id = selected.id;
+
+  insert into public.pad_requests (sender_id, sender_name, group_id, group_name, place)
+  values (
+    v_me,
+    coalesce((select display_name from public.profiles where id = v_me), ''),
+    null,
+    coalesce(v_names, ''),
+    p_place
+  )
+  returning id into v_id;
+
+  insert into public.pad_request_recipients (request_id, user_id)
+  select v_id, selected.id
+  from (select distinct unnest(p_recipient_ids) as id) selected;
+  get diagnostics v_count = row_count;
+  if v_count = 0 then raise exception 'empty_recipients'; end if;
+
+  update public.pad_requests set resolved = true
+  where sender_id = v_me and id <> v_id and not resolved;
+  return v_id;
+end;
+$$;
+
 create or replace function public.respond_pad_request(p_request bigint, p_reply text)
 returns void language plpgsql security definer set search_path = public as $$
 begin
@@ -250,6 +319,8 @@ grant execute on function public.list_friends() to authenticated;
 revoke all on function public.list_friends_with_avatars() from public, anon;
 grant execute on function public.list_friends_with_avatars() to authenticated;
 grant execute on function public.send_pad_request(uuid, text) to authenticated;
+revoke all on function public.send_pad_request_to_friends(uuid[], text) from public, anon;
+grant execute on function public.send_pad_request_to_friends(uuid[], text) to authenticated;
 grant execute on function public.respond_pad_request(bigint, text) to authenticated;
 
 -- ---------- Row Level Security ----------
