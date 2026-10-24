@@ -40,7 +40,6 @@ export default function AppShell() {
     setTab,
     sosOpen,
     toast,
-    momUnread,
     lowSupplyCount,
     showOnboarding,
     needsMotherCode,
@@ -86,6 +85,7 @@ export default function AppShell() {
       <div className="relative mx-auto max-w-md min-h-screen bb-bg-FFF7FB sm:shadow-2xl sm:shadow-slate-300/40">
         <AppHeader
           showNav={showNav}
+          view={view}
           tab={tab}
           onOpenSettings={() => navigateToTab("me")}
           onLogoClick={() => {
@@ -101,7 +101,6 @@ export default function AppShell() {
             view={view}
             linked={linked}
             lowSupplyCount={lowSupplyCount}
-            momUnread={momUnread}
             unansweredIncoming={unansweredIncoming}
             tab={tab}
             onNavigate={navigateToTab}

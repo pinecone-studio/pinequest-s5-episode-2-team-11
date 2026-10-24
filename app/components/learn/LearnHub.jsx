@@ -1,30 +1,29 @@
 "use client";
 
+import { useEffect } from "react";
 import { useFamily } from "../../../context/FamilyContext";
-import { Check, Backpack, Info, Apple } from "lucide-react";
-import { KIT_ITEMS } from "../../../lib/data";
+import { Info, Apple } from "lucide-react";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
 import PadGuide, { usePadGuideFinished } from "./PadGuide";
 
 export default function LearnHub() {
-  const { learnTab, setLearnTab, kitChecked, toggleKit, view, setTab } =
+  const { learnTab, setLearnTab, view, setTab } =
     useFamily();
   const padDone = usePadGuideFinished();
   const isDaughter = view === "daughter";
+  useEffect(() => {
+    if (isDaughter && learnTab === "kit") setLearnTab("pad");
+  }, [isDaughter, learnTab, setLearnTab]);
+  const tabs = [
+    ...(isDaughter ? [["pad", padDone ? "Хэрэглэл ✓" : "Хэрэглэл 🌸"]] : []),
+    ...(isDaughter ? [["food", "Хооллолт"]] : []),
+  ];
 
   return (
     <div className="space-y-4 bloom-fade">
-      <div>
-        <h2 className="text-2xl font-black text-slate-700">Анхны сарын тэмдэг ба боловсрол 📖</h2>
-      </div>
-
-      <div className="grid grid-cols-3 gap-1 bb-bg-FDE7F1 rounded-2xl p-1">
-        {[
-          ["pad", padDone ? "Хэрэглэл ✓" : "Хэрэглэл 🌸"],
-          ["kit", "Сургуулийн цүнх"],
-          ["food", "Хооллолт"],
-        ].map(([id, label]) => (
+      <div className="grid grid-cols-2 gap-1 bb-bg-FDE7F1 rounded-2xl p-1">
+        {tabs.map(([id, label]) => (
           <button
             key={id}
             onClick={() => setLearnTab(id)}
@@ -37,61 +36,9 @@ export default function LearnHub() {
         ))}
       </div>
 
-      {learnTab === "pad" && <PadGuide role={view} onAskFriends={() => setTab("friends")} />}
+      {isDaughter && learnTab === "pad" && <PadGuide role={view} onAskFriends={() => setTab("friends")} />}
 
-      {learnTab === "kit" && (
-        <Card>
-          <SectionTitle
-            icon={Backpack}
-            title="ЕБС-ийн яаралтай цүнх"
-            right={
-              <span className="text-xs font-extrabold bb-text-B83B7E">
-                {kitChecked.length}/{KIT_ITEMS.length}
-              </span>
-            }
-          />
-          <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden mb-4">
-            <div
-              className="h-full bb-grad-8 rounded-full transition-all duration-500"
-              style={{ width: `${(kitChecked.length / KIT_ITEMS.length) * 100}%` }}
-            />
-          </div>
-          <div className="space-y-2">
-            {KIT_ITEMS.map((k) => {
-              const on = kitChecked.includes(k.id);
-              return (
-                <button
-                  key={k.id}
-                  onClick={() => toggleKit(k.id)}
-                  className={`w-full flex items-center gap-3 rounded-2xl px-3 py-3 text-left transition active:scale-95 ${
-                    on ? "bb-bg-FDE7F1" : "bb-bg-FFF7FB"
-                  }`}
-                >
-                  <span
-                    className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition shrink-0 ${
-                      on ? "bb-bg-E0679F bb-border-E0679F" : "border-slate-300 bg-white"
-                    }`}
-                  >
-                    {on && <Check className="w-4 h-4 text-white" />}
-                  </span>
-                  <span className="text-lg">{k.emoji}</span>
-                  <span className={`text-sm font-bold ${on ? "bb-text-962D66" : "text-slate-600"}`}>
-                    {k.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-          {kitChecked.length === KIT_ITEMS.length && (
-            <p className="mt-4 text-center text-sm font-extrabold bb-text-B83B7E bb-bg-FDE7F1 rounded-2xl py-3 bloom-pop">
-              🎉 Цүнх бэлэн боллоо — чи юунд ч бэлэн!
-            </p>
-          )}
-        </Card>
-      )}
-
-
-      {learnTab === "food" && (
+      {isDaughter && learnTab === "food" && (
         <Card>
           <SectionTitle icon={Apple} title="Сарын тэмдэг ирсэн үед юу идэх вэ?" />
           <p className="mb-4 text-sm font-semibold leading-relaxed text-slate-600">
@@ -122,13 +69,15 @@ export default function LearnHub() {
           </p>
         </Card>
       )}
-      <div className="flex items-start gap-3 rounded-2xl bb-bg-E9DDFC-30 p-4">
-        <Info className="w-5 h-5 bb-text-7C4DCC shrink-0 mt-0.5" />
-        <p className="text-xs font-semibold text-slate-600 leading-relaxed">
-          Энэ аппын мэдээлэл эмчийн зөвлөгөөг орлохгүй. Их өвдөх, цус их гарах зэрэг санаа зовоосон зүйл
-          байвал ээждээ болон итгэдэг том хүндээ хандаарай. Шаардлагатай бол эмчид хандаарай.
-        </p>
-      </div>
+      {isDaughter && (
+        <div className="flex items-start gap-3 rounded-2xl bb-bg-E9DDFC-30 p-4">
+          <Info className="w-5 h-5 bb-text-7C4DCC shrink-0 mt-0.5" />
+          <p className="text-xs font-semibold text-slate-600 leading-relaxed">
+            Энэ аппын мэдээлэл эмчийн зөвлөгөөг орлохгүй. Их өвдөх, цус их гарах зэрэг санаа зовоосон зүйл
+            байвал ээждээ болон итгэдэг том хүндээ хандаарай. Шаардлагатай бол эмчид хандаарай.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
