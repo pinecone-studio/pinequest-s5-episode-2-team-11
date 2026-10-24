@@ -22,7 +22,7 @@ export function FriendsProvider({ children }) {
   const active = Boolean(supabase && userId && ready && view === "daughter");
 
   const [friendCode, setFriendCode] = useState("");
-  const [friends, setFriends] = useState([]); // [{ id, display_name }]
+  const [friends, setFriends] = useState([]); // [{ id, display_name, avatar_look, avatar_skin }]
   const [groups, setGroups] = useState([]); // [{ id, name, emoji, members: [id] }]
   const [activeGroupId, setActiveGroupId] = useState(null);
   const [place, setPlace] = useState("");
@@ -32,9 +32,13 @@ export function FriendsProvider({ children }) {
 
   /* ---------- Татах ---------- */
   const loadFriends = useCallback(async () => {
-    const { data } = await supabase.rpc("list_friends");
+    const { data, error } = await supabase.rpc("list_friends_with_avatars");
+    if (error) {
+      setToast(friendError(error));
+      return;
+    }
     setFriends(data ?? []);
-  }, []);
+  }, [setToast]);
 
   const loadGroups = useCallback(async () => {
     const { data } = await supabase

@@ -6,9 +6,18 @@
 --
 --  Нууцлал:
 --   • Зөвхөн охид (daughter) ашиглана. Ээж нар найзуудын SOS-ийг харахгүй.
---   • Найзууд бие биеийнхээ зөвхөн НЭРИЙГ харна — мөчлөг, сэтгэл санааг огт харахгүй.
+--   • Найзууд харилцан зөвшөөрсөн avatar-ын хувцас, арьсны өнгийг л харна.
+--   • Мөчлөг, сэтгэл санаа болон XP/дэлбээ зэрэг тоглоомын оноог хуваалцахгүй.
 --   • Чат байхгүй: хариулт нь тогтсон 4 сонголтоос (дээрэлхэлтээс сэргийлнэ).
 -- =====================================================================
+
+-- ---------- Найзуудтай хуваалцах avatar ----------
+
+alter table public.profiles
+  add column if not exists avatar_look jsonb not null
+    default '{"hair":"hair-long-brown","top":"top-tee-white","bottom":"bottom-jeans","shoes":"shoes-white","acc":"acc-none"}'::jsonb,
+  add column if not exists avatar_skin smallint not null default 0
+    check (avatar_skin between 0 and 3);
 
 -- ---------- Найзын код (жишээ: K7M2QX) ----------
 
@@ -172,6 +181,16 @@ returns table (id uuid, display_name text) language sql stable security definer 
   order by p.display_name
 $$;
 
+create or replace function public.list_friends_with_avatars()
+returns table (id uuid, display_name text, avatar_look jsonb, avatar_skin smallint)
+language sql stable security definer set search_path = public as $$
+  select p.id, p.display_name, p.avatar_look, p.avatar_skin
+  from public.friendships f
+  join public.profiles p on p.id = f.friend_id
+  where f.user_id = auth.uid()
+  order by p.display_name
+$$;
+
 -- ---------- Хэрэглэлийн SOS ----------
 
 create or replace function public.send_pad_request(p_group uuid, p_place text)
@@ -228,6 +247,8 @@ $$;
 grant execute on function public.add_friend(text) to authenticated;
 grant execute on function public.remove_friend(uuid) to authenticated;
 grant execute on function public.list_friends() to authenticated;
+revoke all on function public.list_friends_with_avatars() from public, anon;
+grant execute on function public.list_friends_with_avatars() to authenticated;
 grant execute on function public.send_pad_request(uuid, text) to authenticated;
 grant execute on function public.respond_pad_request(bigint, text) to authenticated;
 
