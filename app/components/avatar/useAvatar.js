@@ -7,9 +7,11 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { supabase } from "../../../lib/supabase";
 import {
   DAILY_GIFT,
   REWARD_PER_STEP_BLOCK,
+  SKIN_TONES,
   START_PETALS,
   STARTER_LOOK,
   STARTER_OWNED,
@@ -20,6 +22,17 @@ import {
 } from "../../../lib/wardrobe";
 
 const today = () => new Date().toISOString().slice(0, 10);
+
+const normalizeLook = (look) =>
+  Object.fromEntries(
+    Object.entries(STARTER_LOOK).map(([slot, fallback]) => {
+      const id = look?.[slot];
+      return [slot, itemById(id)?.slot === slot ? id : fallback];
+    }),
+  );
+
+const normalizeSkin = (skin) =>
+  Number.isInteger(skin) && skin >= 0 && skin < SKIN_TONES.length ? skin : 0;
 
 const fresh = () => ({
   xp: 0,
@@ -40,7 +53,8 @@ const read = (key) => {
       ...fresh(),
       ...saved,
       owned: Array.from(new Set([...STARTER_OWNED, ...(saved.owned ?? [])])),
-      look: { ...STARTER_LOOK, ...(saved.look ?? {}) },
+      look: normalizeLook(saved.look),
+      skin: normalizeSkin(saved.skin),
     };
   } catch {
     return fresh();
@@ -51,13 +65,63 @@ export function useAvatar(userId, onToast = () => {}) {
   const key = `bloomy:avatar:${userId || "guest"}`;
   const [state, setState] = useState(fresh);
   const [loaded, setLoaded] = useState(false);
+  const [avatarSyncReady, setAvatarSyncReady] = useState(false);
   const toastRef = useRef(onToast);
   toastRef.current = onToast;
 
   useEffect(() => {
-    setState(read(key));
+    let cancelled = false;
+    setLoaded(false);
+    setAvatarSyncReady(false);
+    const localState = read(key);
+    setState(localState);
     setLoaded(true);
-  }, [key]);
+
+    if (!supabase || !userId) {
+      setAvatarSyncReady(true);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const loadSharedAvatar = async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("avatar_look, avatar_skin")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (cancelled) return;
+      if (error) {
+        toastRef.current("Дүрийг серверээс ачаалж чадсангүй. Supabase-ийн тохиргоог шалгана уу.");
+        return;
+      }
+      if (!data) {
+        toastRef.current("Профайл олдсонгүй. Дүр зөвхөн энэ төхөөрөмжид хадгалагдана.");
+        return;
+      }
+
+      const remoteLook = normalizeLook(data.avatar_look);
+      const remoteSkin = normalizeSkin(data.avatar_skin);
+      const localHasCustomAvatar =
+        JSON.stringify(localState.look) !== JSON.stringify(STARTER_LOOK) || localState.skin !== 0;
+      const remoteHasCustomAvatar =
+        JSON.stringify(remoteLook) !== JSON.stringify(STARTER_LOOK) || remoteSkin !== 0;
+      const useLocalAvatar = localHasCustomAvatar && !remoteHasCustomAvatar;
+
+      setState((current) => ({
+        ...current,
+        look: useLocalAvatar ? localState.look : remoteLook,
+        skin: useLocalAvatar ? localState.skin : remoteSkin,
+      }));
+      setAvatarSyncReady(true);
+    };
+
+    loadSharedAvatar();
+    return () => {
+      cancelled = true;
+    };
+  }, [key, userId]);
 
   useEffect(() => {
     if (!loaded) return;
@@ -65,6 +129,23 @@ export function useAvatar(userId, onToast = () => {}) {
       window.localStorage.setItem(key, JSON.stringify(state));
     } catch {}
   }, [key, loaded, state]);
+
+  useEffect(() => {
+    if (!loaded || !avatarSyncReady || !supabase || !userId) return;
+
+    const timeout = setTimeout(async () => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ avatar_look: state.look, avatar_skin: state.skin })
+        .eq("id", userId);
+
+      if (error) {
+        toastRef.current("Дүрийг найзуудтай синк хийж чадсангүй. Интернэтээ шалгана уу.");
+      }
+    }, 250);
+
+    return () => clearTimeout(timeout);
+  }, [avatarSyncReady, loaded, state.look, state.skin, userId]);
 
   // XP нэмэх бүрт түвшин ахисан эсэхийг шалгана
   const reward = (s, amount) => {
