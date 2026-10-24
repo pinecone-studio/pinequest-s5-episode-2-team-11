@@ -68,3 +68,5 @@ body {
 .theme-dark textarea,
 .theme-dark select { color: #f4edf6; }
 .theme-dark ::placeholder { color: #a99aaf; }
+.theme-dark .journal-note-input { color: #352d3a; }
+.theme-dark .journal-note-input::placeholder { color: #776a7a; }
