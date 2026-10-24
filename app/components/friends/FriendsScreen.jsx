@@ -10,6 +10,7 @@ import { Users, Plus, Lock, Copy, Check, UserPlus, Loader2, Heart, ShieldCheck, 
 import { useFamily } from "../../../context/FamilyContext";
 import { useFriends } from "../../../context/FriendsContext";
 import { GROUP_EMOJIS, PLACE_MAX } from "../../../lib/friends";
+import { AVATAR_BACKGROUNDS } from "../../../lib/wardrobe";
 import Card from "../ui/Card";
 import SectionTitle from "../ui/SectionTitle";
 import SosCallButton from "./SosCallButton";
@@ -28,7 +29,13 @@ const chip = (on, onCls, offCls = "bg-white border-slate-100 text-slate-500") =>
 export default function FriendsScreen() {
   const { setToast } = useFamily();
   const F = useFriends();
-  const { friends, groups, activeGroup, sosStage, placeInfo } = F;
+  const { friends, groups, sosStage, placeInfo } = F;
+  const [selectedRecipientIds, setSelectedRecipientIds] = useState([]);
+  const selectedFriends = friends.filter((friend) => selectedRecipientIds.includes(friend.id));
+  const toggleRecipient = (id) =>
+    setSelectedRecipientIds((selected) =>
+      selected.includes(id) ? selected.filter((friendId) => friendId !== id) : [...selected, id],
+    );
   const nameOf = (id) => friends.find((f) => f.id === id)?.display_name ?? "…";
 
   return (
@@ -52,28 +59,59 @@ export default function FriendsScreen() {
       {/* ---------- SOS илгээх (жижиг) ---------- */}
       <Card className="!p-4 bb-grad-7">
         <Label>Хэнд илгээх вэ?</Label>
-        {groups.length ? (
-          <div className="flex flex-wrap gap-2">
-            {groups.map((g) => (
-              <button
-                key={g.id}
-                onClick={() => F.setActiveGroupId(g.id)}
-                className={chip(
-                  activeGroup?.id === g.id,
-                  "bb-bg-F48FB1 border-transparent text-white",
-                  "bg-white bb-border-F8D3E6 text-slate-500",
-                )}
-              >
-                {g.emoji} {g.name}
-              </button>
-            ))}
-          </div>
+        {friends.length ? (
+          <>
+            <div className="flex flex-wrap gap-2">
+              {friends.map((friend) => {
+                const selected = selectedRecipientIds.includes(friend.id);
+                return (
+                  <button
+                    key={friend.id}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => toggleRecipient(friend.id)}
+                    className={chip(
+                      selected,
+                      "bb-bg-F48FB1 border-transparent text-white",
+                      "bg-white bb-border-F8D3E6 text-slate-500",
+                    )}
+                  >
+                    {selected ? "✓ " : ""}{friend.display_name}
+                  </button>
+                );
+              })}
+            </div>
+            {groups.length > 0 && (
+              <div className="mt-3">
+                <Label>Бүлгээр сонгох</Label>
+                <div className="flex flex-wrap gap-2">
+                  {groups.map((group) => (
+                    <button
+                      key={group.id}
+                      type="button"
+                      onClick={() => setSelectedRecipientIds(group.members)}
+                      className={chip(
+                        group.members.length > 0 &&
+                          group.members.length === selectedRecipientIds.length &&
+                          group.members.every((id) => selectedRecipientIds.includes(id)),
+                        "bb-bg-B794F4 border-transparent text-white",
+                        "bg-white bb-border-F8D3E6 text-slate-500",
+                      )}
+                    >
+                      {group.emoji} {group.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <p className="mt-2 text-xs font-semibold text-slate-400">
+              {selectedFriends.length
+                ? `${selectedFriends.length} найз сонголоо: ${selectedFriends.map((friend) => friend.display_name).join(", ")}`
+                : "Хэнд мэдэгдэхээ сонгоно уу. Сонгосон найзууд л дохио авна."}
+            </p>
+          </>
         ) : (
-          <p className="text-sm font-semibold text-slate-400">
-            {friends.length
-              ? "Бүлэг алга байна — доороос үүсгээрэй."
-              : "Эхлээд найзаа кодоор нэмээд бүлэг үүсгээрэй."}
-          </p>
+          <p className="text-sm font-semibold text-slate-400">Эхлээд найзаа кодоор нэмээрэй.</p>
         )}
 
         <label
@@ -93,7 +131,12 @@ export default function FriendsScreen() {
         />
 
         <div className="mt-4 flex items-center gap-4">
-          <SosCallButton size={84} stage={sosStage} onClick={F.sendSos} />
+          <SosCallButton
+            size={84}
+            stage={sosStage}
+            disabled={!selectedFriends.length}
+            onClick={() => F.sendSos(selectedRecipientIds)}
+          />
           <div className="flex-1 min-w-0">
             <p className="text-lg font-black text-slate-800 leading-tight">
               {sosStage === "ringing"
@@ -104,9 +147,9 @@ export default function FriendsScreen() {
             </p>
             <p className="mt-0.5 text-xs font-semibold text-slate-500 leading-snug">
               {sosStage === "idle"
-                ? activeGroup
-                  ? `Товчийг дарахад «${activeGroup.name}» бүлгийн ${activeGroup.members.length} найзад очно.`
-                  : "Эхлээд бүлэг үүсгээрэй."
+                ? selectedFriends.length
+                  ? `Сонгосон ${selectedFriends.length} найзад дохио илгээнэ.`
+                  : "Эхлээд мэдэгдэх найзаа сонгоно уу."
                 : placeInfo.short
                   ? `📍 ${placeInfo.short} — найзууддаа мэдэгдлээ.`
                   : "Найзууддаа мэдэгдлээ."}
@@ -289,12 +332,23 @@ function FriendsAvatarCarousel({ friends }) {
         {friends.map((friend) => (
           <div
             key={friend.id}
-            className="flex w-28 shrink-0 snap-start flex-col items-center rounded-2xl border border-slate-100 bg-white px-2 pt-2"
+            className="flex w-28 shrink-0 snap-start flex-col items-center overflow-hidden rounded-2xl border border-slate-100 px-2 pt-2"
+            style={{
+              background: AVATAR_BACKGROUNDS.find((option) => option.id === friend.avatar_background)?.color ??
+                AVATAR_BACKGROUNDS[0].color,
+            }}
           >
-            <Avatar look={friend.avatar_look} skin={friend.avatar_skin} idle size={76} />
-            <p className="w-full truncate pb-2 text-center text-xs font-extrabold text-slate-600">
+            <Avatar
+              look={friend.avatar_look}
+              skin={friend.avatar_skin}
+              label={`${friend.display_name}-ийн дүр`}
+              idle
+              size={76}
+            />
+            <p className="w-full truncate text-center text-xs font-extrabold text-slate-600">
               {friend.display_name}
             </p>
+            <p className="pb-2 text-[10px] font-semibold text-slate-500">{friend.display_name}</p>
           </div>
         ))}
       </div>

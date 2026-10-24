@@ -10,6 +10,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "../../../lib/supabase";
 import {
   DAILY_GIFT,
+  AVATAR_BACKGROUNDS,
   REWARD_PER_STEP_BLOCK,
   SKIN_TONES,
   START_PETALS,
@@ -33,6 +34,8 @@ const normalizeLook = (look) =>
 
 const normalizeSkin = (skin) =>
   Number.isInteger(skin) && skin >= 0 && skin < SKIN_TONES.length ? skin : 0;
+const normalizeBackground = (background) =>
+  AVATAR_BACKGROUNDS.some((option) => option.id === background) ? background : "pink";
 
 const fresh = () => ({
   xp: 0,
@@ -40,6 +43,7 @@ const fresh = () => ({
   skin: 0,
   owned: STARTER_OWNED,
   look: STARTER_LOOK,
+  background: "pink",
   walk: { date: today(), steps: 0, xp: 0 },
   giftDate: null,
 });
@@ -55,6 +59,7 @@ const read = (key) => {
       owned: Array.from(new Set([...STARTER_OWNED, ...(saved.owned ?? [])])),
       look: normalizeLook(saved.look),
       skin: normalizeSkin(saved.skin),
+      background: normalizeBackground(saved.background),
     };
   } catch {
     return fresh();
@@ -87,7 +92,7 @@ export function useAvatar(userId, onToast = () => {}) {
     const loadSharedAvatar = async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("avatar_look, avatar_skin")
+        .select("avatar_look, avatar_skin, avatar_background")
         .eq("id", userId)
         .maybeSingle();
 
@@ -103,16 +108,22 @@ export function useAvatar(userId, onToast = () => {}) {
 
       const remoteLook = normalizeLook(data.avatar_look);
       const remoteSkin = normalizeSkin(data.avatar_skin);
+      const remoteBackground = normalizeBackground(data.avatar_background);
       const localHasCustomAvatar =
-        JSON.stringify(localState.look) !== JSON.stringify(STARTER_LOOK) || localState.skin !== 0;
+        JSON.stringify(localState.look) !== JSON.stringify(STARTER_LOOK) ||
+        localState.skin !== 0 ||
+        localState.background !== "pink";
       const remoteHasCustomAvatar =
-        JSON.stringify(remoteLook) !== JSON.stringify(STARTER_LOOK) || remoteSkin !== 0;
+        JSON.stringify(remoteLook) !== JSON.stringify(STARTER_LOOK) ||
+        remoteSkin !== 0 ||
+        remoteBackground !== "pink";
       const useLocalAvatar = localHasCustomAvatar && !remoteHasCustomAvatar;
 
       setState((current) => ({
         ...current,
         look: useLocalAvatar ? localState.look : remoteLook,
         skin: useLocalAvatar ? localState.skin : remoteSkin,
+        background: useLocalAvatar ? localState.background : remoteBackground,
       }));
       setAvatarSyncReady(true);
     };
@@ -136,7 +147,11 @@ export function useAvatar(userId, onToast = () => {}) {
     const timeout = setTimeout(async () => {
       const { error } = await supabase
         .from("profiles")
-        .update({ avatar_look: state.look, avatar_skin: state.skin })
+        .update({
+          avatar_look: state.look,
+          avatar_skin: state.skin,
+          avatar_background: state.background,
+        })
         .eq("id", userId);
 
       if (error) {
@@ -145,7 +160,7 @@ export function useAvatar(userId, onToast = () => {}) {
     }, 250);
 
     return () => clearTimeout(timeout);
-  }, [avatarSyncReady, loaded, state.look, state.skin, userId]);
+  }, [avatarSyncReady, loaded, state.look, state.skin, state.background, userId]);
 
   // XP нэмэх бүрт түвшин ахисан эсэхийг шалгана
   const reward = (s, amount) => {
@@ -200,6 +215,11 @@ export function useAvatar(userId, onToast = () => {}) {
   };
 
   const setSkin = (skin) => setState((s) => ({ ...s, skin }));
+  const setBackground = (background) => {
+    if (AVATAR_BACKGROUNDS.some((option) => option.id === background)) {
+      setState((s) => ({ ...s, background }));
+    }
+  };
 
   const reset = () => setState(fresh());
 
@@ -214,6 +234,7 @@ export function useAvatar(userId, onToast = () => {}) {
     buy,
     equip,
     setSkin,
+    setBackground,
     reset,
   };
 }
