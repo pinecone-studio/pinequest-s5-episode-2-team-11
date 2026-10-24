@@ -10,7 +10,7 @@ import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
 
-const MODEL = process.env.ANTHROPIC_MODEL || "claude-haiku-5-5";
+const MODEL = process.env.ANTHROPIC_MODEL || "claude-haiku-4-5-20251001";
 
 const PHASE_MN: Record<string, string> = {
   period: "сарын тэмдгийн үе",
@@ -25,6 +25,69 @@ const MOOD_MN: Record<string, string> = {
   craving: "чихэр, амттан идмээр",
 };
 
+const CYCLE_LOG_VALUES: Record<string, string[]> = {
+  emotion: ["Happy", "Calm", "Sad", "Anxious", "Embarrassed", "Irritable"],
+  skin: ["Clear", "Spots", "Oily", "Dry", "Sensitive"],
+  symptoms: ["Cramps", "Headache", "Bloating", "Fatigue", "Tenderness"],
+  period: ["None", "Spotting", "Light", "Medium", "Heavy"],
+  sleep: ["Poor", "Okay", "Good", "Great"],
+};
+
+function buildCyclePredictionPrompt(body: any) {
+  const rawEntries = Array.isArray(body.entries) ? body.entries.slice(-60) : [];
+  const entries = rawEntries.flatMap((entry: any) => {
+    if (!entry || typeof entry.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(entry.date)) return [];
+    const daysBeforePeriod = Number(entry.daysBeforePeriod);
+    if (![3, 4, 5].includes(daysBeforePeriod)) return [];
+    const values: Record<string, string> = {};
+    Object.entries(CYCLE_LOG_VALUES).forEach(([category, allowed]) => {
+      const value = entry.values?.[category];
+      if (typeof value === "string" && allowed.includes(value)) values[category] = value;
+    });
+    if (!Object.keys(values).length) return [];
+    return [{ date: entry.date, daysBeforePeriod, values }];
+  });
+  return {
+    maxTokens: 650,
+    prompt: `Чи өсвөр насны хэрэглэгчид зориулсан мөчлөгийн өмнөх хувийн ажиглалт гаргана. Оролтын бүртгэлүүд нь өмнөх мөчлөгүүдийн сарын тэмдэг ирэхээс 3–5 хоногийн өмнөх өдрүүдийнх. Зөвхөн өгөгдөлд байгаа давтагдсан хэв маягийг хэл; цөөн эсвэл нэг мөчлөгийн мэдээллээс баттай дүгнэлт бүү хий. Стресс, PMS зэрэг онош мэт үг бүү хэрэглэ, ирээдүйн мэдрэмжийг баталгаатай мэт бүү өгүүл. Таамаг гэдгийг зөөлөн тодотго. Зөвлөгөө нь энгийн, аюулгүй, өсвөр насанд тохирсон байг: тайван амьсгалах, амрах, унтахын өмнө дэлгэцээ багасгах, тогтмол хоол/ус уух зэрэг. Эм, эмчилгээ, калори эсвэл жин хасах зөвлөгөө өгөхгүй. Хүчтэй өвдөлт, их цус алдалт, ухаан балартах мэдээлэл байвал итгэдэг том хүн, эмчтэй ярилцахыг зөвлө.
+Өгөгдөл: ${JSON.stringify({ daysUntilExpectedPeriod: [3, 4, 5].includes(Number(body.daysUntil)) ? Number(body.daysUntil) : null, previousPrePeriodEntries: entries })}
+ЗӨВХӨН JSON буцаа: {"prediction":"ирэх хэд хоногийн болгоомжтой таамаг, 1-2 өгүүлбэр","pattern":"бүртгэлээс ажиглагдсан давтагдсан хэв маяг эсвэл өгөгдөл хүрэлцэхгүй тухай","tips":["хийж болох зөвлөгөө 1","зөвлөгөө 2","зөвлөгөө 3"],"confidence":"low эсвэл moderate","dataNote":"өгөгдлийн хүрэлцээ болон таамаг гэдгийг тайлбарласан богино өгүүлбэр"}`,
+  };
+}
+
+function buildCycleSummaryPrompt(body: any) {
+  const rawLogs = Array.isArray(body.logs) ? body.logs.slice(-180) : [];
+  const logs = rawLogs.flatMap((entry: any) => {
+    if (!entry || typeof entry.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(entry.date)) return [];
+    const day: Record<string, Record<string, string>> = { AM: {}, PM: {} };
+    (["AM", "PM"] as const).forEach((time) => {
+      const source = entry[time];
+      if (!source || typeof source !== "object") return;
+      Object.entries(CYCLE_LOG_VALUES).forEach(([category, allowed]) => {
+        const value = source[category];
+        if (typeof value === "string" && allowed.includes(value)) day[time][category] = value;
+      });
+    });
+    if (!Object.keys(day.AM).length && !Object.keys(day.PM).length) return [];
+    return [{ date: entry.date, ...day }];
+  });
+  const cycleLength = Number(body.cycleLength);
+  const periodLength = Number(body.periodLength);
+  const cycle = {
+    usualCycleLength: Number.isFinite(cycleLength) && cycleLength >= 15 && cycleLength <= 60 ? cycleLength : null,
+    usualPeriodLength: Number.isFinite(periodLength) && periodLength >= 1 && periodLength <= 14 ? periodLength : null,
+    latestPeriodStart: typeof body.lastPeriodStart === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.lastPeriodStart) ? body.lastPeriodStart : null,
+    dailyEntries: logs,
+  };
+  return {
+    maxTokens: 900,
+    prompt: `Өсвөр насны хэрэглэгчийн сарын мөчлөгийн тэмдэглэлийг дүгнэ. Доорх JSON өгөгдөл л ашигла. Бүртгэгдээгүй мэдрэмж, шинж тэмдгийг таамаглаж нэмж болохгүй. Мөчлөгийн өмнөх өдрүүдийн өөрчлөлт болон сарын тэмдэг эхэлсний дараах тэмдэглэлүүдийг харьцуул; давтагдсан хэв маяг байвал болгоомжтой дурд. Ганц удаагийн шинжийг PMS гэж оношилж нэрлэхгүй. Өгөгдөл цөөн бол тодорхой хэл. Эмчилгээ, эмийн зөвлөгөө өгөхгүй. Хүчтэй өвдөлт, ухаан балартах эсвэл маш их цус алдалтын тэмдэглэл байвал итгэдэг том хүн, эмчтэй ярилцахыг зөөлөн зөвлө. Дүгнэлт нь зөвхөн хэрэглэгчид харагдах хувийн тойм байна.
+Хариуг энгийн, ойлгомжтой монгол хэлээр, богино өгүүлбэрээр бич.
+Оролт: ${JSON.stringify(cycle)}
+ЗӨВХӨН JSON буцаа: {"summary":"1-2 өгүүлбэрийн ерөнхий дүгнэлт","beforePeriod":"Сарын тэмдгийн өмнөх бүртгэлийн хэв маяг","duringPeriod":"Сарын тэмдгийн үеийн бүртгэлийн хэв маяг","afterPeriod":"Дараах өдрүүдэд сэтгэл санаа, биеийн байдал хэрхэн өөрчлөгдсөн","mood":"Сэтгэл хөдлөлийн ажиглалт","body":"Арьс, шинж тэмдэг, нойрны ажиглалт","dataQuality":"Дүгнэлтэд хүрэлцсэн эсэхийг товч тайлбарла"}`,
+  };
+}
+
 const SAFETY = `Чи "Bloomy" апп-ын зөөлөн, найрсаг туслах. Хэрэглэгчид нь Монголын 10–18 насны охид болон тэдний асран хамгаалагчид.
 Дүрэм:
 - Зөвхөн энгийн, найрсаг монгол хэлээр бич. Богино байх.
@@ -35,6 +98,8 @@ const SAFETY = `Чи "Bloomy" апп-ын зөөлөн, найрсаг тусл�
 - Хариугаа ЗӨВХӨН JSON хэлбэрээр, өөр текстгүй буцаа.`;
 
 function buildPrompt(body: any): { prompt: string; maxTokens: number } | null {
+  if (body.type === "cycle_summary") return buildCycleSummaryPrompt(body);
+  if (body.type === "cycle_prediction") return buildCyclePredictionPrompt(body);
   const phase = PHASE_MN[body.phase] ?? "тодорхойгүй үе";
   if (body.type === "insight") {
     return {
@@ -152,6 +217,21 @@ export async function POST(req: Request) {
     const json = extractJson(text);
     if (!json) return Response.json({ error: "bad_ai_output" }, { status: 502 });
     if (body.type === "mood") json.movies = await withPosters(json.movies);
+    if (body.type === "cycle_summary") {
+      const fields = ["summary", "beforePeriod", "duringPeriod", "afterPeriod", "mood", "body", "dataQuality"];
+      const safe: Record<string, string> = {};
+      fields.forEach((field) => { safe[field] = typeof json[field] === "string" ? json[field].slice(0, 700) : ""; });
+      return Response.json(safe);
+    }
+    if (body.type === "cycle_prediction") {
+      return Response.json({
+        prediction: typeof json.prediction === "string" ? json.prediction.slice(0, 500) : "",
+        pattern: typeof json.pattern === "string" ? json.pattern.slice(0, 500) : "",
+        tips: Array.isArray(json.tips) ? json.tips.filter((tip: unknown) => typeof tip === "string").slice(0, 3).map((tip: string) => tip.slice(0, 240)) : [],
+        confidence: json.confidence === "moderate" ? "moderate" : "low",
+        dataNote: typeof json.dataNote === "string" ? json.dataNote.slice(0, 300) : "",
+      });
+    }
     return Response.json(json);
   } catch (e: any) {
     console.error("AI error:", e?.message);
