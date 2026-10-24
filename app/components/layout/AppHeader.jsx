@@ -2,7 +2,7 @@ import { User, Sun, Moon, ChevronLeft } from "lucide-react";
 import BloomyLogo from "../ui/BloomyLogo";
 import { useTheme } from "../../../context/ThemeContext";
 
-export default function AppHeader({ showNav, tab, onOpenSettings, onLogoClick }) {
+export default function AppHeader({ showNav, view, tab, onOpenSettings, onLogoClick }) {
   const { theme, setTheme } = useTheme();
   return (
     <header
@@ -31,7 +31,7 @@ export default function AppHeader({ showNav, tab, onOpenSettings, onLogoClick })
             </span>
             {theme === "dark" ? "Dark" : "Light"}
           </button>
-          {showNav && (
+          {showNav && view !== "mother" && (
             <button
               onClick={onOpenSettings}
               aria-label="Би — профайл, тохиргоо"
