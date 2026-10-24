@@ -16,7 +16,7 @@ const PHASE_MN: Record<string, string> = {
   period: "сарын тэмдгийн үе",
   follicular: "дааврын тэнцвэрт (фолликулын) үе",
   ovulation: "овуляцийн үе",
-  luteal: "сарын тэмдгийн өмнөх (лютейн) үе",
+  luteal: "сарын тэмдгийн өмнөх (мөчлөг) үе",
 };
 const MOOD_MN: Record<string, string> = {
   sad: "гунигтай, уйлмаар",
