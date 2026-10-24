@@ -74,27 +74,25 @@ export default function PadGuide({ role, onAskFriends }) {
 
   return (
     <div className="space-y-4">
-      {role === "mother" && (
-        <div className="rounded-2xl bb-bg-FDE7F1 p-3 text-sm font-extrabold bb-text-B83B7E text-center bloom-pop">
-          Охинтойгоо хамт үзээрэй 💗
-        </div>
-      )}
-
       <Card>
-        <SectionTitle
-          icon={BookOpen}
-          title="Ариун цэврийн хэрэглэлээ яаж хэрэглэх вэ?"
-          right={
-            T.finished && (
-              <span className="text-xs font-extrabold rounded-full px-2.5 py-1 bb-bg-F48FB1 text-white whitespace-nowrap">
-                Дууссан ✓
-              </span>
-            )
-          }
-        />
-        <p className="text-sm font-semibold text-slate-500 leading-relaxed mb-4">
-          Анх удаа хэрэглэж байгаа бол санаа зоволтгүй. Алхам алхмаар хамтдаа суръя 💗
-        </p>
+        {role !== "mother" && (
+          <>
+            <SectionTitle
+              icon={BookOpen}
+              title="Ариун цэврийн хэрэглэлээ яаж хэрэглэх вэ?"
+              right={
+                T.finished && (
+                  <span className="text-xs font-extrabold rounded-full px-2.5 py-1 bb-bg-F48FB1 text-white whitespace-nowrap">
+                    Дууссан ✓
+                  </span>
+                )
+              }
+            />
+            <p className="text-sm font-semibold text-slate-500 leading-relaxed mb-4">
+              Анх удаа хэрэглэж байгаа бол санаа зоволтгүй. Алхам алхмаар хамтдаа суръя 💗
+            </p>
+          </>
+        )}
         <div className="grid grid-cols-2 gap-1 bb-bg-FDE7F1 rounded-2xl p-1">
           {PAD_GUIDE.map((p, i) => (
             <button
@@ -175,16 +173,18 @@ export default function PadGuide({ role, onAskFriends }) {
         </div>
       </Card>
 
-      <div className="rounded-3xl bb-bg-E9DDFC p-5 bloom-fade">
-        <p className="font-black bb-text-7C4DCC mb-2 flex items-center gap-2">
-          <AlertCircle className="w-4 h-4" /> Анхаар!
-        </p>
-        <ul className="space-y-2 text-sm font-semibold text-slate-600 leading-snug">
-          {PAD_GUIDE_WARNINGS.map((w) => (
-            <li key={w}>• {w}</li>
-          ))}
-        </ul>
-      </div>
+      {role !== "mother" && (
+        <div className="rounded-3xl bb-bg-E9DDFC p-5 bloom-fade">
+          <p className="font-black bb-text-7C4DCC mb-2 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4" /> Анхаар!
+          </p>
+          <ul className="space-y-2 text-sm font-semibold text-slate-600 leading-snug">
+            {PAD_GUIDE_WARNINGS.map((w) => (
+              <li key={w}>• {w}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
