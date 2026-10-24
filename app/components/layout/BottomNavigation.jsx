@@ -1,13 +1,13 @@
-import { Sparkles, BookOpen, Home, Bell, Package, Users } from "lucide-react";
+import { Sparkles, BookOpen, Home, Package, Users, User } from "lucide-react";
 
-export default function BottomNavigation({ view, linked, lowSupplyCount, momUnread, unansweredIncoming, tab, onNavigate }) {
+export default function BottomNavigation({ view, linked, lowSupplyCount, unansweredIncoming, tab, onNavigate }) {
   const items =
     view === "mother"
       ? [
           { id: "home", label: "Халамж", icon: Home },
           { id: "supplies", label: "Хэрэгсэл", icon: Package, badge: linked ? lowSupplyCount : 0 },
-          { id: "messages", label: "Мэдэгдэл", icon: Bell, badge: momUnread },
           { id: "learn", label: "Сурах", icon: BookOpen },
+          { id: "me", label: "Профайл", icon: User },
         ]
       : [
           { id: "home", label: "Өнөөдөр", icon: Home },
