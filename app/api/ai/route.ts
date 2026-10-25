@@ -12,9 +12,30 @@ export const runtime = "nodejs";
 
 const MODEL = process.env.ANTHROPIC_MODEL || "claude-haiku-4-5-20251001";
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite";
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
-// GEMINI_API_KEY байвал Gemini, үгүй бол Claude ашиглана
+// Дараалал: OPENAI_API_KEY (ChatGPT) → GEMINI_API_KEY → ANTHROPIC_API_KEY (Claude)
 async function generate(prompt: string, maxTokens: number): Promise<string> {
+  const openaiKey = process.env.OPENAI_API_KEY;
+  if (openaiKey) {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
+      body: JSON.stringify({
+        model: OPENAI_MODEL,
+        max_completion_tokens: maxTokens * 2,
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: SAFETY },
+          { role: "user", content: prompt },
+        ],
+      }),
+      signal: AbortSignal.timeout(25000),
+    });
+    if (!res.ok) throw new Error(`OpenAI ${res.status}: ${await res.text()}`);
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content ?? "";
+  }
   const geminiKey = process.env.GEMINI_API_KEY;
   if (geminiKey) {
     const res = await fetch(
@@ -132,7 +153,33 @@ const SAFETY = `Чи "Bloomy" апп-ын зөөлөн, найрсаг тусл�
 - Бие махбодийг ичгүүртэй зүйл гэж бүү хандаарай; ичгүүргүй, эерэг байлга.
 - Хариугаа ЗӨВХӨН JSON хэлбэрээр, өөр текстгүй буцаа.`;
 
+// Асран хамгаалагчид: охины сүүлийн 7 хоногийн ангилсан бүртгэлийн тойм (хувийн тэмдэглэл ОРОХГҮЙ)
+function buildWeeklySummaryPrompt(body: any) {
+  const days = (Array.isArray(body.days) ? body.days.slice(-7) : []).flatMap((entry: any) => {
+    if (!entry || typeof entry.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(entry.date)) return [];
+    const values: Record<string, string> = {};
+    Object.entries(CYCLE_LOG_VALUES).forEach(([category, allowed]) => {
+      const value = entry[category];
+      if (typeof value === "string" && allowed.includes(value)) values[category] = value;
+    });
+    return Object.keys(values).length ? [{ date: entry.date, ...values }] : [];
+  });
+  const name = String(body.daughterName || "Охин").slice(0, 40);
+  const phase = PHASE_MN[body.phase] ?? "тодорхойгүй үе";
+  const daysUntil = Number.isFinite(Number(body.daysUntil)) ? Number(body.daysUntil) : null;
+  return {
+    maxTokens: 500,
+    prompt: `Асран хамгаалагчид охин ${name}-ийн сүүлийн 7 хоногийн бүртгэлийн товч тойм бич. Охин одоо ${phase}-д байна.${
+      daysUntil != null && daysUntil >= 0 ? ` Дараагийн сарын тэмдэг ойролцоогоор ${daysUntil} хоногийн дараа.` : ""
+    }
+Доорх ангилсан өгөгдлийг л ашигла (сэтгэл, шинж тэмдэг, урсгал, арьс, нойр). Бүртгэгдээгүй зүйлийг таамаглаж бүү нэм. Охины хувийн байдлыг хүндэтгэсэн, буруутгаагүй өнгөөр бич. Оношлохгүй. Хүчтэй өвдөлт олон өдөр давтагдсан бол эмчтэй зөвлөлдөхийг зөөлөн санал болго. Өгөгдөл цөөн бол тэгж хэл.
+Өгөгдөл: ${JSON.stringify(days)}
+ЗӨВХӨН JSON: {"summary":"2-3 өгүүлбэрийн тойм","tips":["асран хамгаалагчийн хийж болох 1 өгүүлбэрийн халамж","...","..."]}`,
+  };
+}
+
 function buildPrompt(body: any): { prompt: string; maxTokens: number } | null {
+  if (body.type === "weekly_summary") return buildWeeklySummaryPrompt(body);
   if (body.type === "cycle_summary") return buildCycleSummaryPrompt(body);
   if (body.type === "cycle_prediction") return buildCyclePredictionPrompt(body);
   const phase = PHASE_MN[body.phase] ?? "тодорхойгүй үе";
@@ -247,7 +294,7 @@ function extractJson(text: string) {
 }
 
 export async function POST(req: Request) {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY || process.env.ANTHROPIC_API_KEY;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!apiKey || !url || !anon) return Response.json({ error: "ai_not_configured" }, { status: 503 });
@@ -285,6 +332,12 @@ export async function POST(req: Request) {
       return Response.json({
         reply: typeof json.reply === "string" ? json.reply.slice(0, 1200) : "",
         chips: Array.isArray(json.chips) ? json.chips.filter((chip: unknown) => typeof chip === "string").slice(0, 2).map((chip: string) => chip.slice(0, 60)) : [],
+      });
+    }
+    if (body.type === "weekly_summary") {
+      return Response.json({
+        summary: typeof json.summary === "string" ? json.summary.slice(0, 700) : "",
+        tips: Array.isArray(json.tips) ? json.tips.filter((tip: unknown) => typeof tip === "string").slice(0, 3).map((tip: string) => tip.slice(0, 240)) : [],
       });
     }
     if (body.type === "cycle_prediction") {
