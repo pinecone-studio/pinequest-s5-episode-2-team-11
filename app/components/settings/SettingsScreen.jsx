@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   LogOut,
   User,
@@ -12,6 +12,7 @@ import {
   Copy,
   Check,
   Share2,
+  Pencil,
   AlertCircle,
   Loader2,
 } from "lucide-react";
@@ -47,13 +48,66 @@ export default function SettingsScreen() {
     lastPeriodStart,
     updateName,
     signOut,
+    setToast,
   } = useFamily();
   const [editingCycle, setEditingCycle] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState(profile?.display_name ?? "");
-  if (editingCycle) return <CycleSetup onDone={() => setEditingCycle(false)} />;
-
+  const [profilePhoto, setProfilePhoto] = useState("");
+  const photoInput = useRef(null);
   const isMother = view === "mother";
+
+  useEffect(() => {
+    if (!isMother || !profile?.id) {
+      setProfilePhoto("");
+      return;
+    }
+    setProfilePhoto(localStorage.getItem(`bloomy:profile-photo:${profile.id}`) ?? "");
+  }, [isMother, profile?.id]);
+
+  const changeProfilePhoto = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file || !isMother || !profile?.id) return;
+
+    try {
+      const url = URL.createObjectURL(file);
+      const photo = await new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => {
+          const canvas = document.createElement("canvas");
+          const size = Math.min(image.naturalWidth, image.naturalHeight);
+          canvas.width = 256;
+          canvas.height = 256;
+          const context = canvas.getContext("2d");
+          context.drawImage(
+            image,
+            (image.naturalWidth - size) / 2,
+            (image.naturalHeight - size) / 2,
+            size,
+            size,
+            0,
+            0,
+            256,
+            256,
+          );
+          URL.revokeObjectURL(url);
+          resolve(canvas.toDataURL("image/jpeg", 0.82));
+        };
+        image.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error("Unable to read image"));
+        };
+        image.src = url;
+      });
+      localStorage.setItem(`bloomy:profile-photo:${profile.id}`, photo);
+      setProfilePhoto(photo);
+      setToast("Профайл зураг шинэчлэгдлээ 📷");
+    } catch {
+      setToast("Зураг хадгалж чадсангүй. Өөр зураг сонгоод үзээрэй.");
+    }
+    event.target.value = "";
+  };
+  if (editingCycle) return <CycleSetup onDone={() => setEditingCycle(false)} />;
 
   return (
     <div className="space-y-4">
@@ -84,26 +138,53 @@ export default function SettingsScreen() {
             </button>
           </form>
         ) : (
-          <button
-            onClick={() => {
-              setName(profile?.display_name ?? "");
-              setEditingName(true);
-            }}
-            className="w-full flex items-center gap-3 text-left"
-          >
-            <span className="w-12 h-12 rounded-2xl bb-bg-E8F5E9 flex items-center justify-center text-2xl">
-              {isMother ? "🤝" : "🌱"}
-            </span>
-            <span className="flex-1 min-w-0">
-              <span className="block font-extrabold text-slate-700 truncate">
-                {profile?.display_name || "—"}
+          <div className="w-full flex items-center gap-3">
+            <span className="relative w-12 h-12 shrink-0">
+              <span className="w-12 h-12 overflow-hidden rounded-2xl bb-bg-E8F5E9 flex items-center justify-center text-2xl">
+                {isMother && profilePhoto ? (
+                  <img src={profilePhoto} alt="Профайл зураг" className="h-full w-full object-cover" />
+                ) : isMother ? "🤝" : "🌱"}
               </span>
-              <span className="block text-xs font-semibold text-slate-400 truncate">
-                {session?.user?.email}
-              </span>
+              {isMother && (
+                <>
+                  <input
+                    ref={photoInput}
+                    type="file"
+                    accept="image/*"
+                    onChange={changeProfilePhoto}
+                    className="hidden"
+                    aria-label="Профайл зураг сонгох"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => photoInput.current?.click()}
+                    aria-label="Профайл зураг солих"
+                    className="absolute -right-1 -bottom-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-white text-slate-500 shadow-sm"
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </button>
+                </>
+              )}
             </span>
-            <Pencil className="w-4 h-4 text-slate-400" />
-          </button>
+            <button
+              type="button"
+              onClick={() => {
+                setName(profile?.display_name ?? "");
+                setEditingName(true);
+              }}
+              className="flex min-w-0 flex-1 items-center gap-3 text-left"
+            >
+              <span className="flex-1 min-w-0">
+                <span className="block font-extrabold text-slate-700 truncate">
+                  {profile?.display_name || "—"}
+                </span>
+                <span className="block text-xs font-semibold text-slate-400 truncate">
+                  {session?.user?.email}
+                </span>
+              </span>
+              <Pencil className="w-4 h-4 text-slate-400" />
+            </button>
+          </div>
         )}
       </Card>
 
