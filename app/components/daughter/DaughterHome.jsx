@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useFamily } from "../../../context/FamilyContext";
-import { Users, Package, X, ChevronRight, AlertCircle, Droplets, Brain, BookOpen, CalendarDays } from "lucide-react";
+import { Users, Package, ChevronRight, AlertCircle, Droplets, Brain, BookOpen, CalendarDays } from "lucide-react";
 import { PHASE_COLORS, PHASES } from "../../../lib/data";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
@@ -23,7 +23,6 @@ export default function DaughterHome() {
     hasCycle,
     noPeriodYet,
     daysLate,
-    markRead,
     cycleLength,
     periodLength,
     day,
@@ -33,7 +32,6 @@ export default function DaughterHome() {
     daysUntil,
     lastPeriodStart,
     lowSupplyCount,
-    latestTeenMsg,
     selectedMood,
     startPeriod,
     openSos,
@@ -54,19 +52,6 @@ export default function DaughterHome() {
           <Users className="w-3 h-3" /> {linked ? "Асран хамгаалагчтай холбоотой" : "Холбогдоогүй"}
         </span>
       </div>
-
-      {latestTeenMsg && (
-        <div className="flex items-start gap-3 rounded-2xl bb-bg-E9DDFC-50 p-4 bloom-pop">
-          <span className="text-2xl">👩</span>
-          <div className="flex-1">
-            <p className="text-xs font-extrabold uppercase tracking-widest bb-text-7C4DCC">Асран хамгаалагчаас · {latestTeenMsg.time}</p>
-            <p className="font-bold text-slate-700">{latestTeenMsg.text}</p>
-          </div>
-          <button onClick={() => markRead(latestTeenMsg.id)} className="text-slate-400 hover:text-slate-600" aria-label="Хаах">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
 
       <IncomingSosCard />
       <FriendsQuickCard onOpen={() => setTab("friends")} />
