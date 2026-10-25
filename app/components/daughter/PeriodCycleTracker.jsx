@@ -13,10 +13,13 @@ import {
   Moon,
   Pencil,
   Sparkles,
+  Sun,
   X,
 } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
+import { useTheme } from "../../../context/ThemeContext";
 import { askAi } from "../../../lib/ai-client";
+import CycleSetup from "../onboarding/CycleSetup";
 
 const localDateKey = (date) => {
   const y = date.getFullYear();
@@ -81,6 +84,7 @@ const dateLabel = (d) => `${d.getMonth() + 1}-р сарын ${d.getDate()}, ${WE
 
 export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, lastPeriodStart }) {
   const { saveCycle, startPeriod, setToast, session } = useFamily();
+  const { theme, setTheme } = useTheme();
   const [today] = useState(() => localDateKey(new Date()));
   const [selectedDate, setSelectedDate] = useState(() => localDateKey(new Date()));
   const [month, setMonth] = useState(() => {
@@ -96,6 +100,7 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summaryError, setSummaryError] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [editingCycle, setEditingCycle] = useState(false);
 
   useEffect(() => {
     const prefix = "bloom:tracker-log:";
@@ -255,14 +260,50 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
   );
 
   return (
-    <main className="fixed inset-0 z-[70] overflow-y-auto overscroll-contain bg-[#111018] px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-[max(14px,env(safe-area-inset-top))] text-[#f4edf6]">
+    <main data-theme={theme} className="cycle-tracker fixed inset-0 z-[70] overflow-y-auto overscroll-contain bg-[#111018] px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-[max(14px,env(safe-area-inset-top))] text-[#f4edf6]">
       <div className="mx-auto max-w-md space-y-3">
         <header className="flex items-center gap-3">
           <button type="button" onClick={onBack} aria-label="Буцах" className="flex h-10 w-10 items-center justify-center rounded-full bg-[#211c29] text-white">
             <ArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="text-lg font-black">Миний мөчлөг</h1>
+          <button type="button" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            role="switch" aria-checked={theme === "dark"}
+            aria-label={theme === "dark" ? "Light mode" : "Dark mode"}
+            className="ml-auto flex items-center gap-2 rounded-full px-2 py-1.5 text-xs font-extrabold text-[#cbb6d9] transition active:scale-95">
+            <span className={`relative h-6 w-11 rounded-full p-0.5 transition-colors ${theme === "dark" ? "bg-[#e0679f]" : "bg-[#d8ccdf]"}`}>
+              <span className={`flex h-5 w-5 items-center justify-center rounded-full bg-white shadow-sm transition-transform ${theme === "dark" ? "translate-x-5" : "translate-x-0"}`}>
+                {theme === "dark" ? <Moon className="h-3 w-3 text-[#b83b7e]" /> : <Sun className="h-3 w-3 text-[#80658a]" />}
+              </span>
+            </span>
+            {theme === "dark" ? "Dark" : "Light"}
+          </button>
         </header>
+
+        {/* ---------- Мөчлөгийн мэдээлэл ---------- */}
+        <section className="overflow-hidden rounded-[22px] border border-[#765482] bg-gradient-to-br from-[#382943] via-[#2a2233] to-[#211b29] p-2.5 shadow-[0_10px_26px_rgba(8,4,14,0.36)]">
+          {lastPeriodStart ? (
+            <dl className="grid grid-cols-3 gap-2">
+              {[
+                ["Сүүлд эхэлсэн", lastPeriodStart.slice(5).replace("-", "/")],
+                ["Мөчлөг", `${cycleLength} хоног`],
+                ["Үргэлжлэх", `${periodLength} хоног`],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-xl border border-[#5a4662] bg-[#342a3b] px-1.5 py-2 text-center shadow-sm shadow-black/10">
+                  <dt className="text-[9px] font-bold leading-3 text-[#c6b5cf]">{label}</dt>
+                  <dd className="mt-1 text-[13px] font-black leading-4 text-white">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <p className="rounded-2xl bg-white/[0.035] px-3 py-3 text-xs font-semibold text-[#c1b4ca]">Мөчлөгийн мэдээлэл оруулаагүй байна.</p>
+          )}
+          <button type="button" onClick={() => setEditingCycle(true)}
+            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl border border-[#805d8a] bg-[#46344f] py-2 text-[11px] font-extrabold text-white transition hover:bg-[#543d60] active:scale-[.98]">
+            <Pencil className="h-3 w-3 text-[#e2bdff]" />
+            {lastPeriodStart ? "Мэдээлэл засах" : "Мөчлөгөө тохируулах"}
+          </button>
+        </section>
 
         {/* ---------- Календарь ---------- */}
         <section className="rounded-[24px] border border-[#302838] bg-[#1a1721] p-3">
@@ -294,7 +335,7 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
               return (
                 <button key={key} type="button" onClick={() => selectDate(date)}
                   aria-label={`${dateLabel(date)}${kind === "period" ? ", сарын тэмдэг" : kind === "predicted" ? ", таамаг" : kind === "ovulation" ? ", овуляци" : ""}${logged ? ", тэмдэглэлтэй" : ""}`}
-                  className={`relative mx-auto flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition active:scale-90 ${style} ${!inMonth ? "opacity-40" : ""} ${isToday ? "outline outline-2 outline-offset-2 outline-white/70" : ""}`}>
+                  className={`cycle-day relative mx-auto flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition active:scale-90 ${style} ${!inMonth ? "opacity-40" : ""} ${isToday ? "cycle-today outline outline-2 outline-offset-2 outline-white/70" : ""}`}>
                   <span>{date.getDate()}</span>
                   {logged && (
                     <span className={`absolute -bottom-1.5 h-1.5 w-1.5 rounded-full ${kind === "period" ? "bg-[#ffd1e0]" : "bg-[#a78bfa]"}`} />
@@ -346,6 +387,17 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
           )}
         </section>
       </div>
+
+      {editingCycle && (
+        <div className="fixed inset-0 z-[90] overflow-y-auto bg-slate-50 px-4 pt-[max(14px,env(safe-area-inset-top))]">
+          <div className="mx-auto max-w-md">
+            <button type="button" onClick={() => setEditingCycle(false)} className="mb-2 inline-flex h-9 items-center gap-2 rounded-full bg-[#211c29]/70 px-3 text-sm font-bold text-[#cbb6d9] transition hover:bg-[#3a2d41] hover:text-white">
+              <ArrowLeft className="h-4 w-4" /> Буцах
+            </button>
+            <CycleSetup onDone={() => setEditingCycle(false)} />
+          </div>
+        </div>
+      )}
 
       {/* ---------- Өдөр дээр дарахад гарч ирэх цонх ---------- */}
       {sheetOpen && (
