@@ -10,12 +10,15 @@ import {
   Droplets,
   Heart,
   LoaderCircle,
+  Minus,
   Moon,
   Pencil,
+  Plus,
   Sparkles,
   X,
 } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
+import { useTheme } from "../../../context/ThemeContext";
 import { askAi } from "../../../lib/ai-client";
 import { supabase } from "../../../lib/supabase";
 
@@ -24,6 +27,17 @@ const localDateKey = (date) => {
   const m = String(date.getMonth() + 1).padStart(2, "0");
   const d = String(date.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
+};
+
+const sortPeriodStarts = (dates, today) => [...new Set((dates ?? []).filter((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date) && date <= today))].sort();
+const cycleGapsFromStarts = (dates) => dates.slice(1).map((date, index) => {
+  const from = new Date(`${dates[index]}T00:00:00`);
+  const to = new Date(`${date}T00:00:00`);
+  return Math.round((to - from) / 86400000);
+}).filter((days) => days >= 15 && days <= 60);
+const cycleLengthFromStarts = (dates, fallback) => {
+  const gaps = cycleGapsFromStarts(dates);
+  return gaps.length ? Math.round(gaps.reduce((sum, days) => sum + days, 0) / gaps.length) : fallback;
 };
 
 // Хадгалах утга нь англиар (хуучин бүртгэлтэй нийцүүлэх), дэлгэцэнд монголоор харуулна
@@ -81,7 +95,7 @@ const WEEKDAY_LONG = ["Ням", "Даваа", "Мягмар", "Лхагва", "�
 const dateLabel = (d) => `${d.getMonth() + 1}-р сарын ${d.getDate()}, ${WEEKDAY_LONG[d.getDay()]}`;
 
 export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, lastPeriodStart }) {
-  const { saveCycle, startPeriod, setToast, session, profile } = useFamily();
+  const { saveCycle, setToast, session, profile } = useFamily();
 
   // Асран хамгаалагчийн 7 хоногийн тоймд зориулж ЗӨВХӨН сонголтуудыг (тэмдэглэлийн бичвэр БИШ)
   // Supabase-ийн day_logs руу илгээнэ (supabase/day-logs.sql)
@@ -101,6 +115,7 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
     const { error } = await supabase.from("day_logs").upsert(rows, { onConflict: "user_id,log_date" });
     if (error) console.warn("[day_logs] sync:", error.message);
   };
+  const { theme } = useTheme();
   const [today] = useState(() => localDateKey(new Date()));
   const [selectedDate, setSelectedDate] = useState(() => localDateKey(new Date()));
   const [month, setMonth] = useState(() => {
@@ -108,6 +123,10 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
     return new Date(d.getFullYear(), d.getMonth(), 1);
   });
   const [logs, setLogs] = useState({});
+  const [periodStarts, setPeriodStarts] = useState([]);
+  const [draftPeriodStarts, setDraftPeriodStarts] = useState([]);
+  const [draftPeriodLength, setDraftPeriodLength] = useState(periodLength);
+  const [editingStarts, setEditingStarts] = useState(false);
   const [note, setNote] = useState("");
   const [noteDates, setNoteDates] = useState(() => new Set());
   const [activeCategory, setActiveCategory] = useState(null);
@@ -116,6 +135,19 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summaryError, setSummaryError] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
+  const periodStartsStorageKey = `bloom:period-starts:${session?.user?.id ?? "local"}`;
+
+  useEffect(() => {
+    let savedStarts = [];
+    try {
+      savedStarts = JSON.parse(window.localStorage.getItem(periodStartsStorageKey) ?? "[]");
+    } catch {
+      savedStarts = [];
+    }
+    const initialStarts = sortPeriodStarts([...savedStarts, ...(lastPeriodStart ? [lastPeriodStart] : [])], today);
+    setPeriodStarts(initialStarts);
+    window.localStorage.setItem(periodStartsStorageKey, JSON.stringify(initialStarts));
+  }, [periodStartsStorageKey, lastPeriodStart, today]);
 
   useEffect(() => {
     const prefix = "bloom:tracker-log:";
@@ -139,29 +171,34 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
     (_, i) => new Date(month.getFullYear(), month.getMonth(), i - monthOffset + 1),
   );
   const monthName = `${month.getFullYear()} оны ${month.getMonth() + 1}-р сар`;
-  const cycleStart = lastPeriodStart ? new Date(`${lastPeriodStart}T00:00:00`) : null;
+  const visiblePeriodStarts = editingStarts ? draftPeriodStarts : periodStarts;
+  const latestPeriodStart = visiblePeriodStarts.length ? visiblePeriodStarts[visiblePeriodStarts.length - 1] : editingStarts ? null : lastPeriodStart;
+  const cycleGaps = cycleGapsFromStarts(visiblePeriodStarts);
+  const hasMeasuredCycle = cycleGaps.length > 0;
+  const measuredCycleLength = cycleLengthFromStarts(visiblePeriodStarts, cycleLength);
+  const cycleStart = latestPeriodStart ? new Date(`${latestPeriodStart}T00:00:00`) : null;
   const selected = new Date(`${selectedDate}T00:00:00`);
   const selectedPeriodLength = cycleStart ? Math.round((selected - cycleStart) / 86400000) + 1 : 0;
-  const canCorrectStart = Boolean(lastPeriodStart) && selectedDate !== lastPeriodStart;
+  const canCorrectStart = Boolean(latestPeriodStart) && selectedDate !== latestPeriodStart;
   const canCorrectEnd = selectedPeriodLength > 0 && selectedPeriodLength <= 14 && selectedPeriodLength !== periodLength;
-  const cycleDay = cycleStart
-    ? ((Math.floor((selected - cycleStart) / 86400000) % cycleLength) + cycleLength) % cycleLength + 1
+  const cycleDay = cycleStart && hasMeasuredCycle
+    ? ((Math.floor((selected - cycleStart) / 86400000) % measuredCycleLength) + measuredCycleLength) % measuredCycleLength + 1
     : null;
   const selectedLog = flat(logs[selectedDate]);
   const active = categories.find((category) => category.id === activeCategory);
-  const nextPeriodDate = cycleStart && cycleLength
-    ? new Date(cycleStart.getFullYear(), cycleStart.getMonth(), cycleStart.getDate() + cycleLength)
+  const nextPeriodDate = cycleStart && hasMeasuredCycle
+    ? new Date(cycleStart.getFullYear(), cycleStart.getMonth(), cycleStart.getDate() + measuredCycleLength)
     : null;
   const nextPeriodLabel = nextPeriodDate ? dateLabel(nextPeriodDate) : null;
   const daysToNext = nextPeriodDate ? Math.round((nextPeriodDate - new Date(`${today}T00:00:00`)) / 86400000) : null;
   const prePeriodTrends = { emotion: {}, symptoms: {} };
-  if (cycleStart && cycleLength) {
+  if (cycleStart && hasMeasuredCycle) {
     Object.entries(logs).forEach(([dateKey, dayLog]) => {
       if (dateKey > today) return;
       const date = new Date(`${dateKey}T00:00:00`);
       const diff = Math.floor((date - cycleStart) / 86400000);
-      const cycleOffset = ((diff % cycleLength) + cycleLength) % cycleLength;
-      if (cycleOffset < Math.max(0, cycleLength - 7)) return;
+      const cycleOffset = ((diff % measuredCycleLength) + measuredCycleLength) % measuredCycleLength;
+      if (cycleOffset < Math.max(0, measuredCycleLength - 7)) return;
       ["emotion", "symptoms"].forEach((categoryId) => {
         const value = flat(dayLog)[categoryId];
         if (value) prePeriodTrends[categoryId][value] = (prePeriodTrends[categoryId][value] ?? 0) + 1;
@@ -176,11 +213,11 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
   const todayDate = new Date(`${today}T00:00:00`);
   const dayKind = (date, key) => {
     if (selectedValueIsPeriod(flat(logs[key]).period)) return "period";
-    if (!cycleStart || !cycleLength || !periodLength) return null;
+    if (!cycleStart || !hasMeasuredCycle || !periodLength) return null;
     const diff = Math.floor((date - cycleStart) / 86400000);
-    if (diff < -cycleLength * 3) return null; // хэт эртний өдрүүдийг будахгүй
-    const day = (((diff % cycleLength) + cycleLength) % cycleLength) + 1;
-    const ovDay = cycleLength - 14;
+    if (diff < -measuredCycleLength * 3) return null; // хэт эртний өдрүүдийг будахгүй
+    const day = (((diff % measuredCycleLength) + measuredCycleLength) % measuredCycleLength) + 1;
+    const ovDay = measuredCycleLength - 14;
     if (day <= periodLength) {
       if (diff >= 0 && diff < periodLength && date <= todayDate) return "period";
       return date > todayDate ? "predicted" : null; // өнгөрсөн өдрийг таамаглахгүй (тэмдэглэснээр л харагдана)
@@ -191,6 +228,14 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
 
   const selectDate = (date) => {
     const key = localDateKey(date);
+    if (editingStarts) {
+      if (key > today) return;
+      setDraftPeriodStarts((current) => sortPeriodStarts(
+        current.includes(key) ? current.filter((start) => start !== key) : [...current, key],
+        today,
+      ));
+      return;
+    }
     setSelectedDate(key);
     setNote(window.localStorage.getItem(`bloom:private-note:${key}`) ?? "");
     if (date.getMonth() !== month.getMonth()) setMonth(new Date(date.getFullYear(), date.getMonth(), 1));
@@ -237,9 +282,9 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
       .map(([date, entries]) => ({ date, AM: flat(entries), PM: {} }));
     const result = await askAi(session, {
       type: "cycle_summary",
-      cycleLength,
+      cycleLength: measuredCycleLength,
       periodLength,
-      lastPeriodStart,
+      lastPeriodStart: latestPeriodStart,
       logs: dailyLogs,
     }, 30000, { detailed: true });
     if (result?.summary) setCycleSummary(result);
@@ -257,17 +302,51 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
     setSummaryLoading(false);
   };
 
+  const persistPeriodStarts = async (dates, notify = true, nextPeriodLength = periodLength) => {
+    const nextStarts = sortPeriodStarts(dates, today);
+    if (!nextStarts.length) {
+      setToast("Ядаж нэг эхэлсэн өдрийг сонгоно уу.");
+      return false;
+    }
+    const nextCycleLength = cycleLengthFromStarts(nextStarts, cycleLength);
+    const ok = await saveCycle({ lastPeriodStart: nextStarts[nextStarts.length - 1], cycleLength: nextCycleLength, periodLength: nextPeriodLength });
+    if (!ok) return false;
+    setPeriodStarts(nextStarts);
+    setDraftPeriodStarts(nextStarts);
+    window.localStorage.setItem(periodStartsStorageKey, JSON.stringify(nextStarts));
+    if (notify) {
+      const gaps = cycleGapsFromStarts(nextStarts);
+      setToast(gaps.length > 0
+        ? `Хадгаллаа. Таны мөчлөгийн дундаж ${nextCycleLength} хоног байна.`
+        : nextStarts.length > 1
+          ? "Эхэлсэн өдрүүдийн хооронд 15–60 хоног байх үед дунджийг тооцно. Огноогоо шалгаарай."
+          : "Эхэлсэн өдрийг хадгаллаа. Дараагийн удаа тэмдэглэхэд дундаж мөчлөг тооцно.");
+    }
+    return true;
+  };
+
+  const beginEditingStarts = () => {
+    setDraftPeriodStarts(periodStarts.length ? periodStarts : lastPeriodStart ? [lastPeriodStart] : []);
+    setDraftPeriodLength(periodLength);
+    setEditingStarts(true);
+  };
+
   const correctStartDate = async () => {
-    const ok = selectedDate === today
-      ? await startPeriod()
-      : await saveCycle({ lastPeriodStart: selectedDate, cycleLength, periodLength });
-    if (ok && selectedDate !== today) setToast("Мөчлөгийн эхлэх өдрийг шинэчиллээ.");
-    if (ok) setShowCorrection(false);
+    if (selectedDate === today) {
+      const started = await startPeriod();
+      if (!started) return;
+    }
+    const nextStarts = sortPeriodStarts([...periodStarts, selectedDate], today);
+    const ok = await persistPeriodStarts(nextStarts, selectedDate !== today);
+    if (ok) {
+      setShowCorrection(false);
+      setSheetOpen(false);
+    }
   };
 
   const correctEndDate = async () => {
     const endLength = Math.round((selected - cycleStart) / 86400000) + 1;
-    const ok = await saveCycle({ lastPeriodStart, cycleLength, periodLength: endLength });
+    const ok = await saveCycle({ lastPeriodStart: latestPeriodStart, cycleLength: measuredCycleLength, periodLength: endLength });
     if (ok) setToast("Сарын тэмдэг дууссан өдрийг шинэчиллээ.");
     if (ok) setShowCorrection(false);
   };
@@ -278,7 +357,7 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
   );
 
   return (
-    <main className="fixed inset-0 z-[70] overflow-y-auto overscroll-contain bg-[#111018] px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-[max(14px,env(safe-area-inset-top))] text-[#f4edf6]">
+    <main data-theme={theme} className="cycle-tracker fixed inset-0 z-[70] overflow-y-auto overscroll-contain bg-[#111018] px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-[max(14px,env(safe-area-inset-top))] text-[#f4edf6]">
       <div className="mx-auto max-w-md space-y-3">
         <header className="flex items-center gap-3">
           <button type="button" onClick={onBack} aria-label="Буцах" className="flex h-10 w-10 items-center justify-center rounded-full bg-[#211c29] text-white">
@@ -286,6 +365,50 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
           </button>
           <h1 className="text-lg font-black">Миний мөчлөг</h1>
         </header>
+
+        {/* ---------- Мөчлөгийн мэдээлэл ---------- */}
+        <section className="overflow-hidden rounded-[22px] border border-[#765482] bg-gradient-to-br from-[#382943] via-[#2a2233] to-[#211b29] p-2.5 shadow-[0_10px_26px_rgba(8,4,14,0.36)]">
+          {latestPeriodStart ? (
+            <dl className="grid grid-cols-3 gap-2">
+              {[
+                ["Сүүлд эхэлсэн", latestPeriodStart.slice(5).replace("-", "/")],
+                [hasMeasuredCycle ? "Дундаж мөчлөг" : "Бүртгэсэн эхлэл", hasMeasuredCycle ? `${measuredCycleLength} хоног` : `${visiblePeriodStarts.length} өдөр`],
+                ["Үргэлжлэх", `${periodLength} хоног`],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-xl border border-[#5a4662] bg-[#342a3b] px-1.5 py-2 text-center shadow-sm shadow-black/10">
+                  <dt className="text-[9px] font-bold leading-3 text-[#c6b5cf]">{label}</dt>
+                  <dd className="mt-1 text-[13px] font-black leading-4 text-white">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <p className="rounded-2xl bg-white/[0.035] px-3 py-3 text-xs font-semibold text-[#c1b4ca]">Мөчлөгийн мэдээлэл оруулаагүй байна.</p>
+          )}
+          {editingStarts ? (
+            <div className="mt-2 space-y-2">
+              <p className="cycle-edit-hint rounded-xl bg-[#211c29] px-3 py-2 text-center text-[11px] font-semibold leading-relaxed text-[#cbb6d9]">
+                Календарь дээр сарын тэмдэг эхэлсэн өдрүүдээ дарж сонгоно уу. Хоёр ба түүнээс олон өдрөөс мөчлөгийн дунджийг тооцно.
+              </p>
+              <div className="cycle-edit-duration flex items-center justify-between rounded-xl bg-[#211c29] px-3 py-2">
+                <span className="text-[11px] font-bold text-[#cbb6d9]">Үргэлжлэх хугацаа</span>
+                <div className="flex items-center gap-3">
+                  <button type="button" onClick={() => setDraftPeriodLength((value) => Math.max(1, value - 1))} disabled={draftPeriodLength <= 1} aria-label="Үргэлжлэх хоног хасах" className="cycle-edit-stepper flex h-8 w-8 items-center justify-center rounded-lg bg-[#30283a] text-[#e2bdff] disabled:opacity-40"><Minus className="h-4 w-4" /></button>
+                  <output className="cycle-edit-value min-w-16 text-center text-sm font-black text-white">{draftPeriodLength} хоног</output>
+                  <button type="button" onClick={() => setDraftPeriodLength((value) => Math.min(14, value + 1))} disabled={draftPeriodLength >= 14} aria-label="Үргэлжлэх хоног нэмэх" className="cycle-edit-stepper flex h-8 w-8 items-center justify-center rounded-lg bg-[#30283a] text-[#e2bdff] disabled:opacity-40"><Plus className="h-4 w-4" /></button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => setEditingStarts(false)} className="cycle-edit-cancel rounded-xl bg-[#30283a] py-2.5 text-xs font-extrabold text-[#cbb6d9]">Болих</button>
+                <button type="button" onClick={async () => { if (await persistPeriodStarts(draftPeriodStarts, true, draftPeriodLength)) setEditingStarts(false); }} className="rounded-xl bg-[#e96691] py-2.5 text-xs font-extrabold text-white">Хадгалах</button>
+              </div>
+            </div>
+          ) : (
+            <button type="button" onClick={beginEditingStarts}
+              className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl border border-[#805d8a] bg-[#46344f] py-2 text-[11px] font-extrabold text-white transition hover:bg-[#543d60] active:scale-[.98]">
+              <Pencil className="h-3 w-3 text-[#e2bdff]" /> Мэдээлэл засах
+            </button>
+          )}
+        </section>
 
         {/* ---------- Календарь ---------- */}
         <section className="rounded-[24px] border border-[#302838] bg-[#1a1721] p-3">
@@ -304,8 +427,11 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
               const isToday = key === today;
               const kind = dayKind(date, key);
               const logged = monthLogDates.has(key);
+              const recordedStart = visiblePeriodStarts.includes(key);
               const style =
-                kind === "period"
+                recordedStart
+                  ? "bg-[#e96691] font-extrabold text-white ring-2 ring-[#ffd1e0]"
+                  : kind === "period"
                   ? "bg-[#e96691] font-extrabold text-white"
                   : kind === "predicted"
                     ? "border-2 border-dashed border-[#f4a1ba] text-[#f4a1ba]"
@@ -315,9 +441,9 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
                         ? "text-[#e8dfed] hover:bg-[#2a2332]"
                         : "text-[#62596b]";
               return (
-                <button key={key} type="button" onClick={() => selectDate(date)}
-                  aria-label={`${dateLabel(date)}${kind === "period" ? ", сарын тэмдэг" : kind === "predicted" ? ", таамаг" : kind === "ovulation" ? ", овуляци" : ""}${logged ? ", тэмдэглэлтэй" : ""}`}
-                  className={`relative mx-auto flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition active:scale-90 ${style} ${!inMonth ? "opacity-40" : ""} ${isToday ? "outline outline-2 outline-offset-2 outline-white/70" : ""}`}>
+                <button key={key} type="button" onClick={() => selectDate(date)} disabled={editingStarts && key > today}
+                  aria-label={`${dateLabel(date)}${recordedStart ? ", сарын тэмдэг эхэлсэн өдөр" : kind === "period" ? ", сарын тэмдэг" : kind === "predicted" ? ", таамаг" : kind === "ovulation" ? ", овуляци" : ""}${logged ? ", тэмдэглэлтэй" : ""}`}
+                  className={`cycle-day relative mx-auto flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition active:scale-90 ${style} ${!inMonth ? "opacity-40" : ""} ${editingStarts && key > today ? "cursor-not-allowed opacity-30" : ""} ${isToday ? "cycle-today outline outline-2 outline-offset-2 outline-white/70" : ""}`}>
                   <span>{date.getDate()}</span>
                   {logged && (
                     <span className={`absolute -bottom-1.5 h-1.5 w-1.5 rounded-full ${kind === "period" ? "bg-[#ffd1e0]" : "bg-[#a78bfa]"}`} />
@@ -332,7 +458,7 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
             <span className="flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full bg-[#3a3158] ring-1 ring-[#cdb5ff]" /> Овуляци</span>
             <span className="flex items-center gap-1"><i className="h-1.5 w-1.5 rounded-full bg-[#a78bfa]" /> Тэмдэглэсэн</span>
           </div>
-          <p className="mt-2 text-center text-[11px] text-[#7d7286]">Өдөр дээр дарж тэмдэглэнэ</p>
+          <p className="mt-2 text-center text-[11px] text-[#7d7286]">{editingStarts ? "Ягаанаар тэмдэглэсэн өдрийг дахин дарж хасна" : "Өдөр дээр дарж тэмдэглэнэ"}</p>
         </section>
 
         {/* ---------- Дараагийн мөчлөг ---------- */}
@@ -342,7 +468,9 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
             <span className="text-[9px] font-bold">хоног</span>
           </span>
           <div className="min-w-0">
-            <p className="text-sm font-extrabold text-[#f3c2d3]">{nextPeriodLabel ? `Дараагийнх: ${nextPeriodLabel}` : "Мөчлөгөө оруулаарай"}</p>
+            <p className="text-sm font-extrabold text-[#f3c2d3]">
+              {nextPeriodLabel ? `Тооцоолсон дараагийн өдөр: ${nextPeriodLabel}` : visiblePeriodStarts.length ? "Дундаж тооцоход дараагийн эхэлсэн өдрөө тэмдэглээрэй" : "Сарын тэмдэг эхэлсэн өдрөө тэмдэглээрэй"}
+            </p>
             {(commonEmotion || commonSymptoms.length > 0) && (
               <p className="mt-0.5 text-xs text-[#c9bccf]">
                 Өмнө нь: {[commonEmotion && mn(commonEmotion), ...commonSymptoms.map(mn)].filter(Boolean).join(", ")}
@@ -426,7 +554,7 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
               Хадгалах
             </button>
 
-            {lastPeriodStart && selectedDate <= today && (canCorrectStart || canCorrectEnd) && (
+            {latestPeriodStart && selectedDate <= today && (canCorrectStart || canCorrectEnd) && (
               <div className="mt-3">
                 {!showCorrection ? (
                   <button type="button" onClick={() => setShowCorrection(true)} className="flex w-full items-center justify-center gap-1.5 py-2 text-xs font-bold text-[#a99eaf]">

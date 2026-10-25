@@ -1,9 +1,7 @@
-import { Sun, Moon, Bell } from "lucide-react";
+import { Bell, Settings } from "lucide-react";
 import BloomyLogo from "../ui/BloomyLogo";
-import { useTheme } from "../../../context/ThemeContext";
 
 export default function AppHeader({ showNav, view, tab, momUnread = 0, onOpenSettings, onOpenNotifications, onLogoClick }) {
-  const { theme, setTheme } = useTheme();
   return (
     <header
       className="sticky top-0 z-40 bb-bg-FFF7FB-85 backdrop-blur-md border-b border-slate-100 px-4 pb-3"
@@ -15,23 +13,20 @@ export default function AppHeader({ showNav, view, tab, momUnread = 0, onOpenSet
           <span className="font-black text-slate-700">Bloomy</span>
         </button>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            role="switch"
-            aria-label={theme === "dark" ? "Light mode" : "Dark mode"}
-            aria-checked={theme === "dark"}
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="flex items-center gap-2 rounded-full px-2 py-1.5 text-xs font-extrabold text-slate-500 active:scale-95 transition"
-          >
-            <span className={`relative h-6 w-11 rounded-full p-0.5 transition-colors ${theme === "dark" ? "bb-bg-E0679F" : "bg-slate-200"}`}>
-              <span className={`theme-switch-thumb flex h-5 w-5 items-center justify-center rounded-full bg-white shadow-sm transition-transform ${theme === "dark" ? "translate-x-5" : "translate-x-0"}`}>
-                {theme === "dark" ? <Moon className="h-3 w-3 bb-text-B83B7E" /> : <Sun className="h-3 w-3 text-slate-600" />}
-              </span>
-            </span>
-            {theme === "dark" ? "Dark" : "Light"}
-          </button>
           {showNav && (
             <button
+              type="button"
+              onClick={onOpenSettings}
+              aria-label="Тохиргоо"
+              title="Тохиргоо"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-100 bg-white text-slate-500 active:scale-95"
+            >
+              <Settings className="h-4 w-4" />
+            </button>
+          )}
+          {showNav && (
+            <button
+              type="button"
               onClick={onOpenNotifications}
               aria-label="Мэдэгдэл"
               className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-100 bg-white text-slate-500 active:scale-95"

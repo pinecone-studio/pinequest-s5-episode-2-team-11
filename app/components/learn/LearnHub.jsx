@@ -5,6 +5,7 @@ import { useFamily } from "../../../context/FamilyContext";
 import {
   Apple,
   ChevronRight,
+  Droplets,
   Heart,
   Info,
   Leaf,
@@ -41,32 +42,46 @@ export default function LearnHub() {
     {
       icon: Leaf,
       number: "01",
-      title: "Тэжээлтэй хоол, бүлээн ус",
+      title: "Тэжээлтэй хоол сонгоорой",
       description:
-        "Овьёос, талх, будаа, тараг, өндөг, мах, жимс ногооноос өөрт тохирохыг сонгоорой. Ус уухаа мартав аа. Бүлээн ус уухад таатай байвал өдөртөө ойр ойрхон бага багаар уугаарай 🌸",
+        "Овьёос, талх, будаа, тараг, өндөг, мах, жимс ногооноос өөрт тохирох тэжээллэг хоолоо сонгоорой. Заавал тусгай хоол идэх албагүй, өөрт таалагддаг зүйлээсээ сонгож болно 🌸",
       color: "text-[#4F8B67]",
       iconBg: "bg-[#E6F4E9]",
       line: "bg-[#B8DFC2]",
+      tone: "leaf",
+    },
+    {
+      icon: Droplets,
+      number: "02",
+      title: "Бүлээн ус уугаарай",
+      description:
+        "Өдөртөө ус уухаа мартав аа. Бүлээн ус уухад таатай байвал ойр ойрхон бага багаар уугаарай. Заавал халуун байх шаардлагагүй шүү 💧",
+      color: "text-[#8052C6]",
+      iconBg: "bb-bg-E9DDFC-60",
+      line: "bg-[#CDB7F5]",
+      tone: "water",
     },
     {
       icon: Apple,
-      number: "02",
+      number: "03",
       title: "Амттан идмээр санагдвал",
       description:
         "Амттан идмээр байвал жимс, тарагтай овьёос эсвэл жаахан шоколад идэж болно. Амттанаа бүр мөсөн хорих хэрэггүй шүү 🍫",
       color: "bb-text-B83B7E",
       iconBg: "bb-bg-FDE7F1",
       line: "bg-[#F3B6D1]",
+      tone: "sweet",
     },
     {
       icon: Heart,
-      number: "03",
-      title: "Биеэ сонсоорой",
+      number: "04",
+      title: "Зайлсхийх зүйлс",
       description:
-        "Чипс, кофе эсвэл өтгөн цай заримдаа гэдсийг эвгүйрхүүлдэг. Чамд тэгж санагдвал бага хэрэглээд, өөрт юу таатайг анзаараарай. Гэдэс базалбал бүлээн жин тавьж үзэж болно. Жингээ арьсанд эвтэйхэн бүлээн байгааг шалгаарай; хэт халуун байж болохгүй 💗",
-      color: "bb-text-7C4DCC",
-      iconBg: "bb-bg-E9DDFC-60",
-      line: "bg-[#CDB7F5]",
+        "Зовиуртай үед эдгээрийг багасгаарай:\n\n• Кофе, өтгөн цай, энергийн ундаа — нойр муутгаж, базлалтыг нэмэгдүүлж магадгүй.\n• Давс ихтэй чипс, түргэн хоол — гэдэс дүүргэж магадгүй.\n• Их чихэр — сарын тэмдгийн өмнөх зовиурыг нэмэгдүүлж магадгүй.\n\nХүн бүрт нөлөө нь өөр 💗",
+      color: "learn-food-avoid-fg",
+      iconBg: "learn-food-avoid-icon",
+      line: "bg-[#E9B45A]",
+      tone: "avoid",
     },
   ];
 
@@ -98,53 +113,41 @@ export default function LearnHub() {
 
       {isDaughter && learnTab === "food" && (
         <div className="space-y-4">
-          <section className="relative isolate overflow-hidden rounded-[1.75rem] border border-pink-100 bg-gradient-to-br from-[#FFE6F1] via-[#FFF4F8] to-[#F0E9FF] p-4 shadow-sm sm:p-5">
-            <div aria-hidden="true" className="absolute -right-10 -top-12 -z-10 h-36 w-36 rounded-full bg-white/55" />
-            <div aria-hidden="true" className="absolute -bottom-16 right-20 -z-10 h-28 w-28 rounded-full bg-[#F8D6E8]/60" />
+          <section className="learn-food-hero relative isolate overflow-hidden rounded-[1.75rem] border border-pink-100 bg-gradient-to-br from-[#FFE6F1] via-[#FFF4F8] to-[#F0E9FF] p-4 shadow-sm sm:p-5">
+            <div aria-hidden="true" className="learn-food-hero-orb absolute -right-10 -top-12 -z-10 h-36 w-36 rounded-full bg-white/55" />
+            <div aria-hidden="true" className="learn-food-hero-orb absolute -bottom-16 right-20 -z-10 h-28 w-28 rounded-full bg-[#F8D6E8]/60" />
             <div className="flex items-start justify-between gap-3">
               <div className="max-w-xl">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/70 px-2.5 py-1 text-[9px] font-black tracking-[0.12em] text-[#A74E80]">
+                <span className="learn-food-hero-badge inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/70 px-2.5 py-1 text-[9px] font-black tracking-[0.12em] text-[#A74E80]">
                   <Sparkles className="h-3 w-3" /> ӨӨРИЙГӨӨ ХАЛАМЖЛАХ НЬ
                 </span>
                 <h2 className="mt-3 text-xl font-black leading-tight text-slate-800 sm:text-2xl">
                   Сарын тэмдгийн үед юу идвэл дээр вэ?
                 </h2>
               </div>
-              <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/80 bg-white/80 shadow-sm sm:flex">
+              <div className="learn-food-hero-icon hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/80 bg-white/80 shadow-sm sm:flex">
                 <Apple className="h-6 w-6 text-[#C44886]" strokeWidth={1.8} />
               </div>
-            </div>
-            <div className="mt-4 flex items-center gap-2 text-xs font-extrabold text-[#875372]">
-              <span className="flex -space-x-1.5">
-                {[Leaf, Apple, Heart].map((Icon, index) => (
-                  <span key={index} className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-[#FFF4F8] bg-white">
-                    <Icon className="h-3 w-3 text-[#B83B7E]" />
-                  </span>
-                ))}
-              </span>
-              Хооллолтын 3 зөвлөмж
             </div>
           </section>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            {foodTips.map(({ icon: Icon, number, title, description, color, iconBg, line }) => (
+            {foodTips.map(({ icon: Icon, number, title, description, color, iconBg, line, tone }) => (
               <button
                 key={number}
                 type="button"
-                onClick={() => setSelectedFoodTip({ icon: Icon, number, title, description, color, iconBg })}
+                onClick={() => setSelectedFoodTip({ icon: Icon, number, title, description, color, iconBg, tone })}
                 aria-haspopup="dialog"
                 aria-label={`${title} — дэлгэрэнгүй унших`}
-                className="group relative w-full overflow-hidden rounded-[1.75rem] border border-slate-100 bg-white p-5 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300 sm:p-6"
+                data-tone={tone}
+                className="learn-food-tip-card group relative w-full overflow-hidden rounded-[1.75rem] border border-slate-100 bg-white p-5 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300 sm:p-6"
               >
                 <div aria-hidden="true" className={`absolute inset-y-5 left-0 w-1 rounded-r-full ${line}`} />
                 <div className="flex items-start gap-3.5">
-                  <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${iconBg}`}>
-                    <Icon className={`h-5 w-5 ${color}`} strokeWidth={2} />
+                  <span className={`learn-food-tip-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${iconBg}`}>
+                    <Icon className={`learn-food-tip-icon-svg h-5 w-5 ${color}`} strokeWidth={2} />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="mb-1 flex items-center gap-2">
-                      <span className="text-[10px] font-black tracking-[0.15em] text-slate-400">САНАА {number}</span>
-                    </div>
                     <h3 className="text-base font-black leading-snug text-slate-800 sm:text-lg">{title}</h3>
                     <span className="mt-3 inline-flex items-center gap-1 text-xs font-extrabold text-[#A74E80]">
                       Дэлгэрэнгүй <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -170,9 +173,10 @@ export default function LearnHub() {
             aria-modal="true"
             aria-labelledby="food-tip-title"
             aria-describedby="food-tip-description"
+            data-tone={selectedFoodTip.tone}
             className="relative z-10 my-auto w-full max-w-md overflow-hidden rounded-[2rem] border border-white/70 bg-white p-6 shadow-2xl bloom-pop sm:p-8"
           >
-            <div aria-hidden="true" className="absolute -right-10 -top-12 h-36 w-36 rounded-full bg-pink-100/70" />
+            <div aria-hidden="true" className="learn-food-dialog-orb absolute -right-10 -top-12 h-36 w-36 rounded-full bg-pink-100/70" />
             <button
               type="button"
               autoFocus
@@ -184,20 +188,16 @@ export default function LearnHub() {
             </button>
             <div className="relative">
               <div className="flex items-center gap-3">
-                <span className={`flex h-14 w-14 items-center justify-center rounded-[1.25rem] ${selectedFoodTip.iconBg}`}>
-                  <SelectedFoodIcon className={`h-7 w-7 ${selectedFoodTip.color}`} strokeWidth={1.9} />
+                <span className={`learn-food-tip-icon flex h-14 w-14 items-center justify-center rounded-[1.25rem] ${selectedFoodTip.iconBg}`}>
+                  <SelectedFoodIcon className={`learn-food-tip-icon-svg h-7 w-7 ${selectedFoodTip.color}`} strokeWidth={1.9} />
                 </span>
-                <span className="text-xs font-black tracking-[0.16em] text-slate-400">САНАА {selectedFoodTip.number}</span>
               </div>
               <h2 id="food-tip-title" className="mt-5 pr-8 text-2xl font-black leading-tight text-slate-800">
                 {selectedFoodTip.title}
               </h2>
-              <p id="food-tip-description" className="mt-4 text-base font-semibold leading-relaxed text-slate-600">
+              <p id="food-tip-description" className="mt-4 whitespace-pre-line text-base font-semibold leading-relaxed text-slate-600">
                 {selectedFoodTip.description}
               </p>
-              <div className="mt-6 rounded-2xl bg-[#FFF4F8] px-4 py-3 text-sm font-bold leading-relaxed text-[#875372]">
-                Өөртөө таатайг сонгоорой 💗
-              </div>
             </div>
           </section>
         </div>
