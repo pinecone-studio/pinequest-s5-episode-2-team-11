@@ -85,13 +85,15 @@ export default function AppShell() {
   };
 
   const showNav = family.supabaseConfigured && session && family.profile && ready && !showOnboarding;
+  const isCompactLesson = pathname === "/learn" && view === "daughter" && family.learnTab === "pad" && showNav;
+
 
   return (
     <div
-      className={`min-h-screen bb-grad-11 text-slate-700 ${theme === "dark" ? "theme-dark" : ""}`}
+      className={`${isCompactLesson ? "learn-viewport-shell" : "min-h-screen"} bb-grad-11 text-slate-700 ${theme === "dark" ? "theme-dark" : ""}`}
       style={{ fontFamily: "'Nunito', ui-rounded, 'SF Pro Rounded', system-ui, sans-serif" }}
     >
-      <div className="relative mx-auto max-w-md min-h-screen bb-bg-FFF7FB sm:shadow-2xl sm:shadow-slate-300/40">
+      <div className={`relative mx-auto max-w-md bb-bg-FFF7FB sm:shadow-2xl sm:shadow-slate-300/40 ${isCompactLesson ? "learn-viewport-app" : "min-h-screen"}`}>
         <AppHeader
           showNav={showNav}
           view={view}
@@ -104,7 +106,7 @@ export default function AppShell() {
             else window.dispatchEvent(new Event("bloomy-auth-back"));
           }}
         />
-        <main className={`px-4 pt-4 ${showNav ? "pb-28" : "pb-10"}`}>
+        <main className={isCompactLesson ? "learn-viewport-main" : `px-4 pt-4 ${showNav ? "pb-28" : "pb-10"}`}>
           <CurrentScreen family={family} pathname={pathname} />
         </main>
         {showNav && (
