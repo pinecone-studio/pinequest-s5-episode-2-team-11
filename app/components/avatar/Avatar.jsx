@@ -189,6 +189,7 @@ export default function Avatar({
   skin = 0,
   walking = false,
   idle = false,
+  label = "Миний дүр",
   crop = "0 0 120 200",
   size = 120,
   className = "",
@@ -209,7 +210,7 @@ export default function Avatar({
       height={(size * ch) / cw}
       className={`${walking ? "av-walk" : idle ? "av-idle" : ""} ${className}`}
       role="img"
-      aria-label="Миний дүр"
+      aria-label={label}
     >
       <style>{ANIM}</style>
       <g className="av-body">

@@ -5,6 +5,7 @@ import { Package, Check, Plus, Minus } from "lucide-react";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
 import PageHeader from "../ui/PageHeader";
+import SchoolBagChecklist from "../supplies/SchoolBagChecklist";
 
 export default function MotherSupplies() {
   const { supplies, updateSupply, restock } = useFamily();
@@ -82,6 +83,8 @@ export default function MotherSupplies() {
           })}
         </div>
       </Card>
+
+      <SchoolBagChecklist />
     </div>
   );
 }

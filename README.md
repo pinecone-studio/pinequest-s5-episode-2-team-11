@@ -25,7 +25,7 @@ bun# Bloomy 🌿
 
 ## Технологи
 
-Next.js 16 · React 19 · Tailwind CSS 4 · Supabase (Auth, Postgres, Realtime) · Claude API
+Next.js 16 · React 19 · Tailwind CSS 4 · Supabase (Auth, Postgres, Realtime) · Gemini API
 
 ## Эхлэх
 
@@ -35,8 +35,8 @@ Next.js 16 · React 19 · Tailwind CSS 4 · Supabase (Auth, Postgres, Realtime) 
    ```
    NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...
-   ANTHROPIC_API_KEY=sk-ant-...
-   # ANTHROPIC_MODEL=claude-haiku-5-5   # заавал биш
+   GEMINI_API_KEY=таны-gemini-api-key
+   # GEMINI_MODEL=gemini-3.8-flash   # заавал биш
    ```
 
 3. Ажиллуулна:
@@ -62,7 +62,7 @@ Next.js 16 · React 19 · Tailwind CSS 4 · Supabase (Auth, Postgres, Realtime) 
 
 ```
 app/
-  api/ai/          Claude API-р AI зөвлөмж
+  api/ai/          Gemini API-р AI зөвлөмж
   api/horoscope/   Өнөөдрийн ордын зурхай (gogo.mn)
   components/      daughter · mother · friends · learn · sos · onboarding · settings · layout · ui
   daughter/ mother/ friends/ learn/ settings/   Хуудсууд

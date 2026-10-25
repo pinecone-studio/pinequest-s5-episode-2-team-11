@@ -22,7 +22,7 @@ export function FriendsProvider({ children }) {
   const active = Boolean(supabase && userId && ready && view === "daughter");
 
   const [friendCode, setFriendCode] = useState("");
-  const [friends, setFriends] = useState([]); // [{ id, display_name }]
+  const [friends, setFriends] = useState([]); // friend names and shared avatar customization only
   const [groups, setGroups] = useState([]); // [{ id, name, emoji, members: [id] }]
   const [activeGroupId, setActiveGroupId] = useState(null);
   const [place, setPlace] = useState("");
@@ -32,9 +32,13 @@ export function FriendsProvider({ children }) {
 
   /* ---------- Татах ---------- */
   const loadFriends = useCallback(async () => {
-    const { data } = await supabase.rpc("list_friends");
+    const { data, error } = await supabase.rpc("list_friends_with_avatars");
+    if (error) {
+      setToast(friendError(error));
+      return;
+    }
     setFriends(data ?? []);
-  }, []);
+  }, [setToast]);
 
   const loadGroups = useCallback(async () => {
     const { data } = await supabase
@@ -225,18 +229,22 @@ export function FriendsProvider({ children }) {
   /* ---------- SOS ---------- */
   const activeGroup = groups.find((g) => g.id === activeGroupId) ?? groups[0] ?? null;
 
-  const sendSos = async () => {
+  const sendSos = async (recipientIds) => {
     if (sending) return;
-    if (!activeGroup) return setToast("Эхлээд бүлэг үүсгээрэй 💗");
+    const selectedFriends = friends.filter((friend) => recipientIds.includes(friend.id));
+    if (!selectedFriends.length) return setToast("Мэдэгдэл илгээх найзаа сонгоно уу.");
     setSending(true);
     const started = Date.now();
-    const { error } = await supabase.rpc("send_pad_request", { p_group: activeGroup.id, p_place: place.trim().slice(0, 40) });
+    const { error } = await supabase.rpc("send_pad_request_to_friends", {
+      p_recipient_ids: selectedFriends.map((friend) => friend.id),
+      p_place: place.trim().slice(0, 40),
+    });
     // Дуудлагын анимейшн хэтэрхий богино харагдахгүйн тулд
     await new Promise((r) => setTimeout(r, Math.max(0, 1200 - (Date.now() - started))));
     setSending(false);
     if (error) return setToast(friendError(error));
     await loadOutgoing();
-    setToast(`«${activeGroup.name}» бүлгийн ${activeGroup.members.length} найзад дохио очлоо 📣`);
+    setToast(`${selectedFriends.length} найзад дохио очлоо 📣`);
   };
 
   const resolveSos = async () => {

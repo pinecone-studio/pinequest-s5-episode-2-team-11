@@ -13,7 +13,7 @@ import Avatar from "./Avatar";
 import AvatarStudio from "./AvatarStudio";
 import { useAvatar } from "./useAvatar";
 import { PetalIcon, Sparkle, XpIcon } from "./icons";
-import { DAILY_GIFT, XP_PER_LEVEL } from "../../../lib/wardrobe";
+import { AVATAR_BACKGROUNDS, DAILY_GIFT, XP_PER_LEVEL } from "../../../lib/wardrobe";
 
 const ACTIONS = [
   { id: "walk", label: "Алхах", Icon: Footprints },
@@ -46,7 +46,8 @@ export default function AvatarCard() {
         <button
           onClick={() => setStudioTab("closet")}
           aria-label="Дүрээ өөрчлөх"
-          className="relative mt-3 w-full overflow-hidden rounded-3xl bb-grad-sos-soft border bb-border-F8D3E6 flex justify-center pt-5 pb-3 active:scale-95 transition"
+          className="relative mt-3 w-full overflow-hidden rounded-3xl border bb-border-F8D3E6 flex justify-center pt-5 pb-3 active:scale-95 transition"
+          style={{ background: AVATAR_BACKGROUNDS.find((option) => option.id === av.background)?.color }}
         >
           <span className="absolute left-6 top-6 opacity-80"><Sparkle size={14} color="#F48FB1" /></span>
           <span className="absolute right-8 top-12 opacity-70"><Sparkle size={10} color="#B794F4" /></span>

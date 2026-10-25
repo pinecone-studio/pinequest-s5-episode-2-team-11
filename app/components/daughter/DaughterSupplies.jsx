@@ -1,14 +1,14 @@
 "use client";
 
 import { useFamily } from "../../../context/FamilyContext";
-import { Package, ChevronRight, Backpack, Send } from "lucide-react";
-import { KIT_ITEMS } from "../../../lib/data";
+import { Package, Send } from "lucide-react";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
 import PageHeader from "../ui/PageHeader";
+import SchoolBagChecklist from "../supplies/SchoolBagChecklist";
 
 export default function DaughterSupplies() {
-  const { linked, setTab, setLearnTab, supplies, kitChecked, updateSupply, requestSupplies } = useFamily();
+  const { linked, supplies, updateSupply, requestSupplies } = useFamily();
 
   return (
     <div className="space-y-4">
@@ -55,24 +55,7 @@ export default function DaughterSupplies() {
         </button>
       </Card>
 
-      <button
-        onClick={() => {
-          setLearnTab("kit");
-          setTab("learn");
-        }}
-        className="w-full flex items-center gap-3 bg-white rounded-3xl p-4 border border-slate-100 shadow-sm active:scale-95 transition text-left"
-      >
-        <span className="w-10 h-10 rounded-xl bb-bg-FDE7F1 flex items-center justify-center">
-          <Backpack className="w-5 h-5 bb-text-B83B7E" />
-        </span>
-        <span className="flex-1">
-          <span className="block text-sm font-extrabold text-slate-700">Сургуулийн яаралтай цүнх</span>
-          <span className="block text-xs font-semibold text-slate-500">
-            {kitChecked.length}/{KIT_ITEMS.length} зүйл бэлэн
-          </span>
-        </span>
-        <ChevronRight className="w-5 h-5 text-slate-300" />
-      </button>
+      <SchoolBagChecklist daughter />
     </div>
   );
 }

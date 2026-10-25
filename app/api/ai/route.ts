@@ -1,16 +1,15 @@
 /**
- * POST /api/ai — Bloomy-ийн AI (Claude API).
+ * POST /api/ai — Bloomy-ийн AI (Gemini API).
  *
- * • API түлхүүр зөвхөн сервер дээр (.env.local → ANTHROPIC_API_KEY). Утсанд хэзээ ч очихгүй.
+ * • API түлхүүр зөвхөн сервер дээр (.env.local → GEMINI_API_KEY). Утсанд хэзээ ч очихгүй.
  * • Зөвхөн нэвтэрсэн хэрэглэгч ашиглана (Supabase access token шалгана).
  * • Хариу JSON. Алдаа гарвал апп бэлэн текст рүү шилжинэ.
  */
-import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
 
-const MODEL = process.env.ANTHROPIC_MODEL || "claude-haiku-4-5-20251001";
+const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
 
 const PHASE_MN: Record<string, string> = {
   period: "сарын тэмдгийн үе",
@@ -179,7 +178,7 @@ function extractJson(text: string) {
 }
 
 export async function POST(req: Request) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!apiKey || !url || !anon) return Response.json({ error: "ai_not_configured" }, { status: 503 });
@@ -201,19 +200,24 @@ export async function POST(req: Request) {
   const built = buildPrompt(body);
   if (!built) return Response.json({ error: "bad_type" }, { status: 400 });
 
-  // 3) Claude
+  // 3) Gemini
   try {
-    const client = new Anthropic({ apiKey });
-    const res = await client.messages.create({
-      model: MODEL,
-      max_tokens: built.maxTokens,
-      system: SAFETY,
-      messages: [{ role: "user", content: built.prompt }],
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: SAFETY }] },
+        contents: [{ role: "user", parts: [{ text: built.prompt }] }],
+        generationConfig: { maxOutputTokens: built.maxTokens, responseMimeType: "application/json" },
+      }),
     });
-    const text = res.content
-      .filter((b: any) => b.type === "text")
-      .map((b: any) => b.text)
-      .join("");
+    const response = await res.json().catch(() => null);
+    if (!res.ok) {
+      console.error("Gemini API error:", res.status, response?.error?.status ?? "unknown");
+      const code = res.status === 401 || res.status === 403 ? "ai_invalid_key" : res.status === 429 ? "ai_quota_exceeded" : "ai_failed";
+      return Response.json({ error: code }, { status: 502 });
+    }
+    const text = response?.candidates?.[0]?.content?.parts?.map((part: any) => part.text ?? "").join("") ?? "";
     const json = extractJson(text);
     if (!json) return Response.json({ error: "bad_ai_output" }, { status: 502 });
     if (body.type === "mood") json.movies = await withPosters(json.movies);
@@ -234,7 +238,7 @@ export async function POST(req: Request) {
     }
     return Response.json(json);
   } catch (e: any) {
-    console.error("AI error:", e?.message);
+    console.error("Gemini request failed:", e?.message);
     return Response.json({ error: "ai_failed" }, { status: 502 });
   }
 }

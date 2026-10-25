@@ -9,7 +9,14 @@ import { X, Lock, Check, Footprints, ShoppingBag, Shirt } from "lucide-react";
 import Avatar from "./Avatar";
 import WalkMode from "./WalkMode";
 import { PetalIcon, SLOT_CROP, XpIcon } from "./icons";
-import { ITEMS, SKIN_TONES, SLOTS, XP_PER_LEVEL, itemById } from "../../../lib/wardrobe";
+import {
+  AVATAR_BACKGROUNDS,
+  ITEMS,
+  SKIN_TONES,
+  SLOTS,
+  XP_PER_LEVEL,
+  itemById,
+} from "../../../lib/wardrobe";
 
 const TABS = [
   { id: "walk", label: "Алхах", Icon: Footprints },
@@ -58,7 +65,10 @@ function ItemTile({ item, onClick, active, badge, locked, av }) {
         active ? "bb-border-F48FB1 bb-bg-FDE7F1-50" : "border-slate-100 bg-white"
       }`}
     >
-      <span className="w-full h-16 rounded-xl bb-bg-FDE7F1-50 flex items-center justify-center overflow-hidden">
+      <span
+        className="w-full h-16 rounded-xl flex items-center justify-center overflow-hidden"
+        style={{ background: AVATAR_BACKGROUNDS.find((option) => option.id === av.background)?.color }}
+      >
         <Avatar
           look={{ ...av.look, [item.slot]: item.id }}
           skin={av.skin}
@@ -86,7 +96,10 @@ function Shop({ av }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-center rounded-3xl bb-grad-sos-soft border bb-border-F8D3E6 py-3">
+      <div
+        className="flex justify-center rounded-3xl border bb-border-F8D3E6 py-3"
+        style={{ background: AVATAR_BACKGROUNDS.find((option) => option.id === av.background)?.color }}
+      >
         <Avatar look={preview} skin={av.skin} idle size={120} />
       </div>
 
@@ -148,8 +161,30 @@ function Closet({ av }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-center rounded-3xl bb-grad-sos-soft border bb-border-F8D3E6 py-3">
+      <div
+        className="flex justify-center rounded-3xl border bb-border-F8D3E6 py-3"
+        style={{ background: AVATAR_BACKGROUNDS.find((option) => option.id === av.background)?.color }}
+      >
         <Avatar look={av.look} skin={av.skin} idle size={120} />
+      </div>
+
+      <div>
+        <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2">Дүрийн дэвсгэр</p>
+        <div className="flex flex-wrap gap-3">
+          {AVATAR_BACKGROUNDS.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              aria-label={`${option.label} дэвсгэр`}
+              aria-pressed={av.background === option.id}
+              onClick={() => av.setBackground(option.id)}
+              className={`h-10 w-10 rounded-full border-4 transition ${
+                av.background === option.id ? "bb-border-F48FB1" : "border-white"
+              }`}
+              style={{ background: option.color }}
+            />
+          ))}
+        </div>
       </div>
 
       <div>
