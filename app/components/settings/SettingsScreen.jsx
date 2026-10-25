@@ -3,11 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import {
   LogOut,
-  User,
   Users,
   Lock,
   Unlock,
-  CalendarHeart,
   ShieldCheck,
   Copy,
   Check,
@@ -20,7 +18,6 @@ import { useFamily } from "../../../context/FamilyContext";
 import Card from "../ui/Card";
 import SectionTitle from "../ui/SectionTitle";
 import PageHeader from "../ui/PageHeader";
-import CycleSetup from "../onboarding/CycleSetup";
 import MyFriendCode from "../friends/MyFriendCode";
 
 export default function SettingsScreen() {
@@ -42,15 +39,10 @@ export default function SettingsScreen() {
     joining,
     shareWithMom,
     setShareWithMom,
-    hasCycle,
-    cycleLength,
-    periodLength,
-    lastPeriodStart,
     updateName,
     signOut,
     setToast,
   } = useFamily();
-  const [editingCycle, setEditingCycle] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState(profile?.display_name ?? "");
   const [profilePhoto, setProfilePhoto] = useState("");
@@ -107,14 +99,13 @@ export default function SettingsScreen() {
     }
     event.target.value = "";
   };
-  if (editingCycle) return <CycleSetup onDone={() => setEditingCycle(false)} />;
-
   return (
     <div className="space-y-4">
-      <PageHeader sub={isMother ? "Асран хамгаалагчийн бүртгэл" : "Миний бүртгэл"} title="Миний бүртгэл" />
+      <p className="text-sm font-bold text-slate-400">
+        {isMother ? "Асран хамгаалагчийн бүртгэл" : "Миний бүртгэл"}
+      </p>
 
       <Card>
-        <SectionTitle icon={User} title="Профайл" />
         {editingName ? (
           <form
             onSubmit={(e) => {
@@ -302,36 +293,13 @@ export default function SettingsScreen() {
 
       {!isMother && (
         <>
-          <Card>
-            <SectionTitle icon={CalendarHeart} title="Миний мөчлөг" tone="peach" />
-            {hasCycle ? (
-              <dl className="grid grid-cols-3 gap-2 text-center">
-                {[
-                  ["Сүүлд эхэлсэн", lastPeriodStart?.slice(5).replace("-", "/")],
-                  ["Мөчлөг", `${cycleLength} хоног`],
-                  ["Үргэлжлэх", `${periodLength} хоног`],
-                ].map(([k, v]) => (
-                  <div key={k} className="rounded-2xl bb-bg-FFF7FB py-3 px-1">
-                    <dt className="text-xs font-bold text-slate-400">{k}</dt>
-                    <dd className="mt-1 font-black text-slate-700">{v}</dd>
-                  </div>
-                ))}
-              </dl>
-            ) : (
-              <p className="text-sm font-semibold text-slate-500">Мөчлөгийн мэдээлэл оруулаагүй байна.</p>
-            )}
-            <button
-              onClick={() => setEditingCycle(true)}
-              className="mt-3 w-full rounded-2xl bg-white border-2 border-slate-100 py-3 text-sm font-extrabold text-slate-700 active:scale-95 transition"
-            >
-              {hasCycle ? "Засах" : "Тохируулах"}
-            </button>
-          </Card>
-
-          
-
-          <Card>
-            <SectionTitle icon={shareWithMom ? Unlock : Lock} title="Нууцлал" />
+          <Card className="p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-7 h-7 rounded-lg bb-bg-FDE7F1 flex items-center justify-center">
+                {shareWithMom ? <Unlock className="w-3.5 h-3.5 bb-text-B83B7E" /> : <Lock className="w-3.5 h-3.5 bb-text-B83B7E" />}
+              </span>
+              <h3 className="font-extrabold text-slate-700 text-sm">Нууцлал</h3>
+            </div>
             <button
               onClick={() => setShareWithMom((s) => !s)}
               className="w-full flex items-center justify-between gap-3 text-left"
@@ -339,11 +307,8 @@ export default function SettingsScreen() {
               aria-checked={shareWithMom}
             >
               <span>
-                <span className="block font-extrabold text-slate-700 text-sm">
+                <span className="block font-extrabold text-slate-700 text-xs leading-4">
                   Сэтгэл санаагаа асран хамгаалагчтай хуваалцах
-                </span>
-                <span className="block text-xs font-semibold text-slate-500">
-                  Унтраавал асран хамгаалагч тань таны сэтгэл санааг харахгүй.
                 </span>
               </span>
               <span
@@ -358,10 +323,10 @@ export default function SettingsScreen() {
         </>
       )}
 
-      <div className="flex items-start gap-3 bb-bg-FDE7F1-70 rounded-2xl p-4">
-        <ShieldCheck className="w-5 h-5 bb-text-B83B7E shrink-0 mt-0.5" />
-        <p className="text-xs text-slate-600 font-semibold leading-relaxed">
-          Таны мэдээлэл зөвхөн таны гэр бүлийн бүлэгт харагдана. Bloomy эмчийн зөвлөгөөг орлохгүй.
+      <div className="flex items-start gap-2.5 bb-bg-FDE7F1-70 rounded-2xl p-3">
+        <ShieldCheck className="w-4 h-4 bb-text-B83B7E shrink-0 mt-0.5" />
+        <p className="text-[11px] text-slate-600 font-semibold leading-5">
+          Таны мэдээлэл зөвхөн таны гэр бүлийн бүлэгт харагдана.
         </p>
       </div>
 
