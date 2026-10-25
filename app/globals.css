@@ -131,6 +131,22 @@ body {
   background: #f6eafb;
   color: #65436e;
 }
+.cycle-tracker[data-theme="light"] .cycle-edit-hint,
+.cycle-tracker[data-theme="light"] .cycle-edit-duration {
+  border: 1px solid #ead9eb;
+  background: #fff !important;
+  color: #735a78 !important;
+}
+.cycle-tracker[data-theme="light"] .cycle-edit-duration > span { color: #735a78 !important; }
+.cycle-tracker[data-theme="light"] .cycle-edit-stepper {
+  background: #f1e7f6 !important;
+  color: #805596 !important;
+}
+.cycle-tracker[data-theme="light"] .cycle-edit-value { color: #493b50 !important; }
+.cycle-tracker[data-theme="light"] .cycle-edit-cancel {
+  background: #f1eaf4 !important;
+  color: #735a78 !important;
+}
 .cycle-tracker[data-theme="light"] header > button:first-child {
   background: #f0e8f4;
   color: #614c68;
