@@ -12,16 +12,16 @@ import {
   Copy,
   Check,
   Share2,
-  Pencil,
   AlertCircle,
   Loader2,
+  Pencil,
 } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import Card from "../ui/Card";
 import SectionTitle from "../ui/SectionTitle";
 import PageHeader from "../ui/PageHeader";
 import CycleSetup from "../onboarding/CycleSetup";
-import CycleJournalCalendar from "../daughter/CycleJournalCalendar";
+import MyFriendCode from "../friends/MyFriendCode";
 
 export default function SettingsScreen() {
   const {
@@ -187,8 +187,9 @@ export default function SettingsScreen() {
           </div>
         )}
       </Card>
-
+              <MyFriendCode />
       <Card>
+        
         <SectionTitle icon={Users} title="Гэр бүл" />
         {isMother ? (linked ? (
           <>
@@ -327,9 +328,7 @@ export default function SettingsScreen() {
             </button>
           </Card>
 
-          <Card>
-            <CycleJournalCalendar lastPeriodStart={lastPeriodStart} cycleLength={cycleLength} periodLength={periodLength} />
-          </Card>
+          
 
           <Card>
             <SectionTitle icon={shareWithMom ? Unlock : Lock} title="Нууцлал" />

@@ -1,4 +1,4 @@
-import { User, Sun, Moon, ChevronLeft, Bell } from "lucide-react";
+import { Sun, Moon, ChevronLeft, Bell } from "lucide-react";
 import BloomyLogo from "../ui/BloomyLogo";
 import { useTheme } from "../../../context/ThemeContext";
 
@@ -31,7 +31,7 @@ export default function AppHeader({ showNav, view, tab, momUnread = 0, onOpenSet
             </span>
             {theme === "dark" ? "Dark" : "Light"}
           </button>
-          {showNav && view === "mother" && (
+          {showNav && (
             <button
               onClick={onOpenNotifications}
               aria-label="Мэдэгдэл"
@@ -43,17 +43,6 @@ export default function AppHeader({ showNav, view, tab, momUnread = 0, onOpenSet
                   {momUnread}
                 </span>
               )}
-            </button>
-          )}
-          {showNav && view !== "mother" && (
-            <button
-              onClick={onOpenSettings}
-              aria-label="Би — профайл, тохиргоо"
-              className={`w-9 h-9 rounded-full flex items-center justify-center border-2 shrink-0 transition ${
-                tab === "me" ? "bb-bg-FDE7F1 bb-border-F48FB1 bb-text-B83B7E" : "bg-white border-slate-100 text-slate-500"
-              }`}
-            >
-              <User className="w-4 h-4" />
             </button>
           )}
         </div>

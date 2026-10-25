@@ -9,8 +9,7 @@ import Card from "../ui/Card";
 import CycleRing from "./CycleRing";
 import HoroscopeCard from "./HoroscopeCard";
 import FriendsQuickCard from "../friends/FriendsQuickCard";
-import IncomingSosCard from "../friends/IncomingSosCard";
-import TodayCheckin from "./TodayCheckin";
+import IncomingSosCard from "../friends/IncomingSosCard"; 
 import PeriodCycleTracker from "./PeriodCycleTracker";
 import CyclePredictionCard from "./CyclePredictionCard";
 
@@ -191,7 +190,6 @@ export default function DaughterHome() {
         </button>
       </div>
 
-      <TodayCheckin />
 
       {cycleModalOpen && (
         <PeriodCycleTracker onBack={() => setCycleModalOpen(false)} cycleLength={cycleLength} periodLength={periodLength} lastPeriodStart={lastPeriodStart} />
