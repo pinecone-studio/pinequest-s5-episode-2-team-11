@@ -30,7 +30,7 @@ export default function HoroscopeCard() {
 
   if (!sign) {
     return (
-      <Card className="bg-gradient-to-br from-white via-white to-[#fbf7ff] border-purple-100 ring-1 ring-purple-100/70 shadow-[0_12px_28px_rgba(124,77,204,0.14)]">
+      <Card className="bb-border-E9DDFC shadow-[0_12px_28px_rgba(124,77,204,0.14)]">
         <SectionTitle icon={Sparkles} title="Өнөөдрийн зурхай" tone="peach" />
         <p className="text-sm font-semibold text-slate-500">
           Төрсөн өдрийн мэдээлэл бүртгэлд байхгүй тул зурхайг харуулах боломжгүй байна.
@@ -40,7 +40,7 @@ export default function HoroscopeCard() {
   }
 
   return (
-    <Card className="bg-gradient-to-br from-white via-white to-[#fbf7ff] border-purple-100 ring-1 ring-purple-100/70 shadow-[0_12px_28px_rgba(124,77,204,0.14)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(124,77,204,0.2)]">
+    <Card className="bb-border-E9DDFC shadow-[0_12px_28px_rgba(124,77,204,0.14)] transition-all duration-300">
       <SectionTitle icon={Sparkles} title="Өнөөдрийн зурхай" tone="peach" />
       <div className="flex items-center gap-3">
         <span className="w-12 h-12 rounded-2xl bb-bg-E9DDFC-50 flex items-center justify-center text-2xl bb-text-7C4DCC">
