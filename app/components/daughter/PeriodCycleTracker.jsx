@@ -182,7 +182,9 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
     if (result?.summary) setCycleSummary(result);
     else {
       const errors = {
-        ai_not_configured: "Серверт ANTHROPIC_API_KEY тохируулаагүй байна. API түлхүүрээ серверийн орчинд нэмээд дахин асаах эсвэл deploy хийнэ үү.",
+        ai_not_configured: "Серверт GEMINI_API_KEY тохируулаагүй байна. API түлхүүрээ серверийн орчинд нэмээд дахин асаах эсвэл deploy хийнэ үү.",
+        ai_invalid_key: "Gemini API түлхүүр хүчингүй байна. Google AI Studio-оос түлхүүрээ дахин шалгана уу.",
+        ai_quota_exceeded: "Gemini API-н хэрэглээний хязгаарт хүрсэн байна. Google AI Studio дээр quota болон billing тохиргоогоо шалгана уу.",
         unauthorized: "Нэвтрэлтийн хугацаа дууссан байна. Дахин нэвтэрч оролдоорой.",
         ai_failed: "AI үйлчилгээ хүсэлтэд хариу өгсөнгүй. Серверийн API түлхүүр, model тохиргоог шалгана уу.",
         bad_ai_output: "AI хариуны формат буруу ирлээ. Дахин оролдоно уу.",

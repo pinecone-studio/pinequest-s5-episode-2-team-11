@@ -1,18 +1,32 @@
 +"use client";
 
 import { useFamily } from "../../../context/FamilyContext";
-import { Copy, Users, Bell, Check, HeartHandshake } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Copy, Users, Bell, Check, HeartHandshake, ChevronLeft } from "lucide-react";
 import { MOM_QUICK_NOTES } from "../../../lib/data";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
 import PageHeader from "../ui/PageHeader";
 
 export default function MotherMessages() {
-  const { familyCode, linked, daughterName, copied, momInbox, setToast, sendToTeen, copyCode } = useFamily();
+  const router = useRouter();
+  const { familyCode, linked, daughterName, copied, momInbox, setToast, sendToTeen, copyCode, setTab } = useFamily();
 
   return (
     <div className="space-y-4">
-      <PageHeader sub="Охинтойгоо холбоотой байгаарай" title="Мэдэгдэл 💌" />
+      <div className="flex items-center gap-2 bloom-fade">
+        <button
+          onClick={() => {
+            setTab("home");
+            router.replace("/mother");
+          }}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm border border-slate-100 active:scale-90"
+          aria-label="Буцах"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <PageHeader sub="Охинтойгоо холбоотой байгаарай" title="Мэдэгдэл 💌" />
+      </div>
 
       <Card>
         <SectionTitle icon={Bell} title="Ирсэн мэдэгдэл" />

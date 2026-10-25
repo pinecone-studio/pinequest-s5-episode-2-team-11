@@ -110,7 +110,28 @@ export default function SettingsScreen() {
       <Card>
         <SectionTitle icon={Users} title="Гэр бүл" />
         {isMother ? (linked ? (
-          <p className="text-sm font-bold bb-text-B83B7E">✓ {daughterName} холбогдсон</p>
+          <>
+            <p className="text-sm font-bold bb-text-B83B7E">✓ {daughterName} холбогдсон</p>
+            <div className="mt-3 flex items-center gap-2">
+              <span className="flex-1 rounded-2xl bb-bg-FFF7FB py-3 text-center text-lg font-black tracking-wider text-slate-600">
+                {familyCode || "…"}
+              </span>
+              <button
+                onClick={copyCode}
+                className="w-12 h-12 rounded-2xl bb-bg-FDE7F1 bb-text-B83B7E flex items-center justify-center active:scale-90"
+                aria-label="Кодыг хуулах"
+              >
+                {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+              </button>
+              <button
+                onClick={shareCode}
+                className="w-12 h-12 rounded-2xl bg-white border-2 border-slate-100 bb-text-B83B7E flex items-center justify-center active:scale-90"
+                aria-label="Кодыг хуваалцах"
+              >
+                <Share2 className="w-5 h-5" />
+              </button>
+            </div>
+          </>
         ) : (
           <>
             <p className="text-sm font-semibold text-slate-500">
@@ -149,7 +170,28 @@ export default function SettingsScreen() {
             </button>
           </>
         )) : linked ? (
-          <p className="text-sm font-bold bb-text-B83B7E">✓ Асран хамгаалагчтайгаа холбогдсон</p>
+          <>
+            <p className="text-sm font-bold bb-text-B83B7E">✓ Асран хамгаалагчтайгаа холбогдсон</p>
+            <div className="mt-3 flex items-center gap-2">
+              <span className="flex-1 rounded-2xl bb-bg-FFF7FB py-3 text-center text-lg font-black tracking-wider text-slate-600">
+                {familyCode || "…"}
+              </span>
+              <button
+                onClick={copyCode}
+                className="w-12 h-12 rounded-2xl bb-bg-FDE7F1 bb-text-B83B7E flex items-center justify-center active:scale-90"
+                aria-label="Кодыг хуулах"
+              >
+                {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+              </button>
+              <button
+                onClick={shareCode}
+                className="w-12 h-12 rounded-2xl bg-white border-2 border-slate-100 bb-text-B83B7E flex items-center justify-center active:scale-90"
+                aria-label="Кодыг хуваалцах"
+              >
+                <Share2 className="w-5 h-5" />
+              </button>
+            </div>
+          </>
         ) : (
           <>
             <p className="text-sm font-semibold text-slate-500">Асран хамгаалагчдаа энэ кодыг оруулуулж холбогдоорой.</p>
