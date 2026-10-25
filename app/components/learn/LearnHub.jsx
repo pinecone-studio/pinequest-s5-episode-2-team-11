@@ -7,7 +7,6 @@ import {
   ChevronRight,
   Droplets,
   Heart,
-  Info,
   Leaf,
   Sparkles,
   X,
@@ -38,6 +37,7 @@ export default function LearnHub() {
     ...(isDaughter ? [["pad", padDone ? "Хэрэглэл ✓" : "Хэрэглэл 🌸"]] : []),
     ...(isDaughter ? [["food", "Хооллолт"]] : []),
   ];
+  const compactLesson = isDaughter && learnTab === "pad";
   const foodTips = [
     {
       icon: Leaf,
@@ -86,36 +86,9 @@ export default function LearnHub() {
   ];
 
   return (
-    <div className="space-y-4 bloom-fade">
-<<<<<<< HEAD
-      <div>
-        <p className="text-sm font-bold text-slate-400">
-          {view === "mother" ? "Асран хамгаалагчдад" : "Охидод"}
-        </p>
-        <h2 className="text-2xl font-black text-slate-700">Анхны сарын тэмдэг ба боловсрол 📖</h2>
-      </div>
-
-      <div className="grid grid-cols-3 gap-1 bb-bg-FDE7F1 rounded-2xl p-1">
-        {[
-          ...(isDaughter ? [["pad", padDone ? "Пад заавар ✓" : "Пад заавар 🌸"],] : []),
-          ["pad", padDone ? "Хэрэглэл ✓" : "Хэрэглэл 🌸"],
-          ["kit", "Сургуулийн цүнх"],
-          ["food", "Хооллолт"],
-        ].map(([id, label]) => (
-          <button
-            key={id}
-            onClick={() => setLearnTab(id)}
-            className={`rounded-xl py-2.5 text-xs font-extrabold transition-all ${
-              learnTab === id ? "bg-white bb-text-B83B7E shadow-sm" : "text-slate-500"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-=======
+    <div className={compactLesson ? "flex h-full min-h-0 flex-col overflow-hidden" : "space-y-4 bloom-fade"}>
       {isDaughter && (
-        <div className="grid grid-cols-2 gap-1 bb-bg-FDE7F1 rounded-2xl p-1">
+        <div className={`grid grid-cols-2 gap-1 rounded-2xl bb-bg-FDE7F1 p-1 ${compactLesson ? "mb-2 flex-none" : ""}`}>
           {tabs.map(([id, label]) => (
             <button
               key={id}
@@ -129,9 +102,10 @@ export default function LearnHub() {
           ))}
         </div>
       )}
->>>>>>> 702fbc17cd8d50efdbf4cf81d645a4ef83bab45e
 
-      {isDaughter && learnTab === "pad" && <PadGuide role={view} onAskFriends={() => setTab("friends")} />}
+      {isDaughter && learnTab === "pad" && (
+        <PadGuide role={view} onAskFriends={() => setTab("friends")} />
+      )}
       {!isDaughter && (
         <>
           <ParentAiAssistant />
@@ -228,15 +202,6 @@ export default function LearnHub() {
               </p>
             </div>
           </section>
-        </div>
-      )}
-      {isDaughter && (
-        <div className="flex items-start gap-3 rounded-2xl bb-bg-E9DDFC-30 p-4">
-          <Info className="w-5 h-5 bb-text-7C4DCC shrink-0 mt-0.5" />
-          <p className="text-xs font-semibold text-slate-600 leading-relaxed">
-            Энэ аппын мэдээлэл эмчийн зөвлөгөөг орлохгүй. Их өвдөх, цус их гарах зэрэг санаа зовоосон зүйл
-            байвал ээждээ болон итгэдэг том хүндээ хандаарай. Шаардлагатай бол эмчид хандаарай.
-          </p>
         </div>
       )}
     </div>

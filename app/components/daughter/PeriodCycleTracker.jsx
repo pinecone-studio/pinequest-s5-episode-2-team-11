@@ -397,7 +397,7 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
           <div className="grid grid-cols-7 text-center text-[11px] font-extrabold text-[#968b9e]">
             {WEEKDAYS.map((d) => <span key={d} className="py-1.5">{d}</span>)}
           </div>
-          <div className="grid grid-cols-7 gap-y-1">
+          <div className="grid grid-cols-7 gap-x-1 gap-y-1.5">
             {calendarDays.map((date) => {
               const key = localDateKey(date);
               const inMonth = date.getMonth() === month.getMonth();
@@ -420,11 +420,9 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
               return (
                 <button key={key} type="button" onClick={() => selectDate(date)} disabled={editingStarts && key > today}
                   aria-label={`${dateLabel(date)}${recordedStart ? ", сарын тэмдэг эхэлсэн өдөр" : kind === "period" ? ", сарын тэмдэг" : kind === "predicted" ? ", таамаг" : kind === "ovulation" ? ", овуляци" : ""}${logged ? ", тэмдэглэлтэй" : ""}`}
-                  className={`cycle-day relative mx-auto flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition active:scale-90 ${style} ${!inMonth ? "opacity-40" : ""} ${editingStarts && key > today ? "cursor-not-allowed opacity-30" : ""} ${isToday ? "cycle-today outline outline-2 outline-offset-2 outline-white/70" : ""}`}>
+                  style={logged ? { boxShadow: "0 0 0 1.5px rgb(244 161 186 / 65%)" } : undefined}
+                  className={`cycle-day relative mx-auto flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold transition active:scale-90 ${style} ${!inMonth ? "opacity-40" : ""} ${editingStarts && key > today ? "cursor-not-allowed opacity-30" : ""} ${isToday ? "cycle-today outline outline-2 outline-offset-2 outline-white/70" : ""}`}>
                   <span>{date.getDate()}</span>
-                  {logged && (
-                    <span className={`absolute -bottom-1.5 h-1.5 w-1.5 rounded-full ${kind === "period" ? "bg-[#ffd1e0]" : "bg-[#a78bfa]"}`} />
-                  )}
                 </button>
               );
             })}
@@ -433,7 +431,7 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
             <span className="flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full bg-[#e96691]" /> Сарын тэмдэг</span>
             <span className="flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full border-2 border-dashed border-[#f4a1ba]" /> Таамаг</span>
             <span className="flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full bg-[#3a3158] ring-1 ring-[#cdb5ff]" /> Овуляци</span>
-            <span className="flex items-center gap-1"><i className="h-1.5 w-1.5 rounded-full bg-[#a78bfa]" /> Тэмдэглэсэн</span>
+            <span className="flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full border border-[#f4a1ba]/70" /> Тэмдэглэсэн</span>
           </div>
           <p className="mt-2 text-center text-[11px] text-[#7d7286]">{editingStarts ? "Ягаанаар тэмдэглэсэн өдрийг дахин дарж хасна" : "Өдөр дээр дарж тэмдэглэнэ"}</p>
         </section>
