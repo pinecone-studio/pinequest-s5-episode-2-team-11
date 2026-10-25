@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronLeft, AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { AlertCircle, Eye, EyeOff, Loader2, Heart } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import RoleSelect from "./RoleSelect";
 import BloomyLogo from "../ui/BloomyLogo";
@@ -19,6 +19,15 @@ export default function AuthScreen() {
   const [showPw, setShowPw] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    const returnToRoleSelect = () => {
+      setStage("role");
+      setMessage("");
+    };
+    window.addEventListener("bloomy-auth-back", returnToRoleSelect);
+    return () => window.removeEventListener("bloomy-auth-back", returnToRoleSelect);
+  }, []);
 
   if (stage === "role") {
     return (
@@ -54,31 +63,24 @@ export default function AuthScreen() {
   };
 
   const inputCls =
-    "w-full rounded-2xl border-2 border-slate-100 bb-focus-border-F48FB1 outline-none px-4 py-3 font-bold text-slate-700 bg-white";
+    "w-full rounded-2xl border-2 bb-border-F8D3E6 bb-focus-border-F48FB1 outline-none px-4 py-3 font-bold text-slate-700 bb-bg-FFF7FB transition focus:shadow-md focus:shadow-pink-100";
 
   return (
     <form onSubmit={submit} className="px-2 pt-4 pb-10 bloom-fade">
-      <button
-        type="button"
-        onClick={() => setStage("role")}
-        className="flex items-center gap-1 text-sm font-bold text-slate-400 hover:text-slate-600 mb-6"
-      >
-        <ChevronLeft className="w-4 h-4" /> Буцах
-      </button>
-
-      <div className="mb-3">
-        {isSignup ? (
-          <span className="text-5xl">{role === "mother" ? "🤝" : "🌱"}</span>
-        ) : (
+      {!isSignup && (
+        <div className="mb-3">
           <BloomyLogo className="w-16 h-16" />
-        )}
-      </div>
+        </div>
+      )}
+      {isSignup && (
+        <span className="mb-3 inline-flex items-center gap-1.5 rounded-full bb-bg-FDE7F1 px-3 py-1.5 text-xs font-extrabold bb-text-B83B7E">
+          <Heart className="h-3.5 w-3.5 fill-current" /> Bloomy · Шинэ бүртгэл
+        </span>
+      )}
       <h2 className="text-2xl font-black text-slate-700">
         {isSignup ? (role === "mother" ? "Асран хамгаалагчийн бүртгэл" : "Өсвөр насны охины бүртгэл") : "Тавтай морил"}
       </h2>
-      <p className="mt-1 text-slate-500 font-semibold">
-        {isSignup ? "Хэдхэн секундэд бүртгүүлээрэй." : "Имэйл, нууц үгээрээ нэвтэрнэ үү."}
-      </p>
+      {!isSignup && <p className="mt-1 text-lg text-slate-500 font-semibold">Имэйл, нууц үгээрээ нэвтэрнэ үү.</p>}
 
       <div className="mt-6 space-y-4">
         {isSignup && (
@@ -94,7 +96,6 @@ export default function AuthScreen() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               className={inputCls}
-              placeholder={role === "mother" ? "жишээ нь: Сараа" : "жишээ нь: Ану"}
               autoComplete="given-name"
               maxLength={40}
             />
@@ -118,7 +119,6 @@ export default function AuthScreen() {
               min="1990-01-01"
               autoComplete="bday"
             />
-            <p className="mt-1.5 text-xs font-semibold text-slate-400">Ордын зурхайг чинь автоматаар харуулна ✨</p>
           </div>
         )}
         <div>
@@ -135,7 +135,6 @@ export default function AuthScreen() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className={inputCls}
-            placeholder="name@gmail.com"
             autoComplete="email"
           />
         </div>
@@ -153,7 +152,6 @@ export default function AuthScreen() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className={`${inputCls} pr-12`}
-              placeholder="дор хаяж 6 тэмдэгт"
               autoComplete={isSignup ? "new-password" : "current-password"}
             />
             <button
@@ -177,7 +175,7 @@ export default function AuthScreen() {
       <button
         type="submit"
         disabled={!canSubmit || busy}
-        className="mt-6 w-full bb-bg-E0679F bb-disabled-bg-F8D3E6 text-white font-extrabold rounded-2xl py-4 active:scale-95 transition shadow-lg bb-shadow-F48FB1-30 flex items-center justify-center gap-2"
+        className="mt-6 w-full bb-grad-sos bb-disabled-bg-F8D3E6 text-white font-extrabold rounded-2xl py-4 active:scale-95 transition shadow-lg bb-shadow-F48FB1-30 flex items-center justify-center gap-2"
       >
         {busy && <Loader2 className="w-5 h-5 animate-spin" />}
         {isSignup ? "Бүртгүүлэх" : "Нэвтрэх"}
