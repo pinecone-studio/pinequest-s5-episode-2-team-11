@@ -83,9 +83,13 @@ body {
   border-color: #382532;
   background-color: #302631;
 }
+.learn-food-tip-card {
+  border-color: #e3d6f0;
+  background-color: #f7f2fc;
+}
 .theme-dark .learn-food-tip-card {
-  border-color: #a65382;
-  background-color: #3d3243;
+  border-color: #b66b96;
+  background-color: #493b4b;
 }
 .theme-dark .learn-food-tip-icon { background-color: #382f40; }
 .theme-dark [data-tone="avoid"] .learn-food-tip-icon { background-color: #493a2a; }
