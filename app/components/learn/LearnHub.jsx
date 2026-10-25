@@ -25,6 +25,7 @@ export default function LearnHub() {
       <div className="grid grid-cols-3 gap-1 bb-bg-FDE7F1 rounded-2xl p-1">
         {[
           ...(isDaughter ? [["pad", padDone ? "Пад заавар ✓" : "Пад заавар 🌸"],] : []),
+          ["pad", padDone ? "Хэрэглэл ✓" : "Хэрэглэл 🌸"],
           ["kit", "Сургуулийн цүнх"],
           ["food", "Хооллолт"],
         ].map(([id, label]) => (

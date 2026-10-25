@@ -164,7 +164,7 @@ export default function DaughterHome() {
           <span className="w-9 h-9 rounded-xl bb-bg-FDE7F1 flex items-center justify-center">
             <Brain className="w-4 h-4 bb-text-B83B7E" />
           </span>
-          <p className="mt-3 text-sm font-extrabold text-slate-700">Өдрийн зөвлөмж</p>
+          <p className="mt-3 text-sm font-extrabold text-slate-700">Сэтгэл санаа</p>
           <p className="text-xs font-semibold text-slate-500 mt-0.5">
             {selectedMood ? `${selectedMood.emoji} ${selectedMood.label}` : "Сэтгэл санаагаа тэмдэглээрэй"}
           </p>
