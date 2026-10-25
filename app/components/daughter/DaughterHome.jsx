@@ -42,7 +42,6 @@ export default function DaughterHome() {
       <div className="flex items-end justify-between gap-2 bloom-fade">
         <div>
           <p className="text-sm font-bold text-slate-400">Сайн уу, {daughterName} 🌸</p>
-          <h2 className="text-2xl font-black text-slate-700">Өнөөдөр ямар байна?</h2>
         </div>
         <span
           className={`flex items-center gap-1 text-xs font-extrabold px-2.5 py-1 rounded-full shrink-0 ${

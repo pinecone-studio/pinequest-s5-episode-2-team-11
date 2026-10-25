@@ -26,7 +26,7 @@ export default function FriendsQuickCard({ onOpen }) {
           <p className="text-xs font-semibold text-slate-500 leading-snug mt-0.5">
             {first
               ? `${first.responder_name}: ${replyText(first.reply)}`
-              : "Найзаа сонгоод дохио илгээгээрэй"}
+              : "Асран хамгаалагчдаа дохио илгээгээрэй"}
           </p>
         </div>
         <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
