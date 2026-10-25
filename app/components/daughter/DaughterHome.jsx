@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useFamily } from "../../../context/FamilyContext";
-import { Users, Package, ChevronRight, AlertCircle, Droplets, Brain, BookOpen, CalendarDays } from "lucide-react";
+import { Users, ChevronRight, AlertCircle, Droplets, BookOpen, CalendarDays } from "lucide-react";
 import { PHASE_COLORS, PHASES } from "../../../lib/data";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
@@ -31,8 +31,6 @@ export default function DaughterHome() {
     isPeriod,
     daysUntil,
     lastPeriodStart,
-    lowSupplyCount,
-    selectedMood,
     startPeriod,
     openSos,
   } = useFamily();
@@ -53,7 +51,7 @@ export default function DaughterHome() {
       </div>
 
       <IncomingSosCard />
-      <FriendsQuickCard onOpen={() => setTab("friends")} />
+      <FriendsQuickCard />
 
       <HoroscopeCard />
       {hasCycle && <CyclePredictionCard daysUntil={daysUntil} cycleLength={cycleLength} lastPeriodStart={lastPeriodStart} />}
@@ -129,51 +127,20 @@ export default function DaughterHome() {
       {/* SOS */}
       <button
         onClick={openSos}
-        className="w-full rounded-3xl bg-gradient-to-r from-[#7c2d74] to-[#5b3ca6] p-5 text-left text-white shadow-xl bb-shadow-B794F4-30 active:scale-95 transition flex items-center gap-4 relative overflow-hidden bloom-fade"
+        className="w-full rounded-3xl bg-gradient-to-r from-[#e0679f] to-[#b83b7e] p-5 text-left text-white shadow-xl bb-shadow-F48FB1-30 active:scale-95 transition flex items-center gap-4 relative overflow-hidden bloom-fade"
       >
         <span className="relative w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center">
           <span className="absolute inset-0 rounded-2xl bg-white/10 animate-ping" />
           <AlertCircle className="w-7 h-7 text-white" />
         </span>
         <span className="flex-1 relative">
-          <span className="block text-xl font-black text-slate-800">SOS</span>
-          <span className="block text-sm font-bold text-slate-700/80">
+          <span className="block text-xl font-black text-white">SOS</span>
+          <span className="block text-sm font-bold text-white/85">
             3 минутын амьсгал ба сунгалтын дасгал
           </span>
         </span>
         <ChevronRight className="w-6 h-6 relative text-white" />
       </button>
-
-      {/* Өнөөдрийн товч */}
-      <div className="grid grid-cols-2 gap-3 bloom-fade">
-        <button
-          onClick={() => setTab("insights")}
-          className="text-left bg-white rounded-3xl p-4 border border-slate-100 shadow-sm active:scale-95 transition"
-        >
-          <span className="w-9 h-9 rounded-xl bb-bg-FDE7F1 flex items-center justify-center">
-            <Brain className="w-4 h-4 bb-text-B83B7E" />
-          </span>
-          <p className="mt-3 text-sm font-extrabold text-slate-700">Сэтгэл санаа</p>
-          <p className="text-xs font-semibold text-slate-500 mt-0.5">
-            {selectedMood ? `${selectedMood.emoji} ${selectedMood.label}` : "Сэтгэл санаагаа тэмдэглээрэй"}
-          </p>
-        </button>
-        <button
-          onClick={() => setTab("supplies")}
-          className="text-left bg-white rounded-3xl p-4 border border-slate-100 shadow-sm active:scale-95 transition"
-        >
-          <span className="w-9 h-9 rounded-xl bb-bg-E9DDFC-50 flex items-center justify-center">
-            <Package className="w-4 h-4 bb-text-7C4DCC" />
-          </span>
-          <p className="mt-3 text-sm font-extrabold text-slate-700">Миний хэрэгсэл</p>
-          <p
-            className={`text-xs font-semibold mt-0.5 ${lowSupplyCount ? "bb-text-7C4DCC" : "text-slate-500"}`}
-          >
-            {lowSupplyCount ? `${lowSupplyCount} зүйл дуусах дөхсөн` : "Бүгд хангалттай ✓"}
-          </p>
-        </button>
-      </div>
-
 
       {cycleModalOpen && (
         <PeriodCycleTracker onBack={() => setCycleModalOpen(false)} cycleLength={cycleLength} periodLength={periodLength} lastPeriodStart={lastPeriodStart} />
