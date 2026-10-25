@@ -48,6 +48,7 @@ export default function LearnHub() {
       color: "text-[#4F8B67]",
       iconBg: "bg-[#E6F4E9]",
       line: "bg-[#B8DFC2]",
+      tone: "leaf",
     },
     {
       icon: Droplets,
@@ -58,6 +59,7 @@ export default function LearnHub() {
       color: "text-[#8052C6]",
       iconBg: "bb-bg-E9DDFC-60",
       line: "bg-[#CDB7F5]",
+      tone: "water",
     },
     {
       icon: Apple,
@@ -68,6 +70,7 @@ export default function LearnHub() {
       color: "bb-text-B83B7E",
       iconBg: "bb-bg-FDE7F1",
       line: "bg-[#F3B6D1]",
+      tone: "sweet",
     },
     {
       icon: Heart,
@@ -75,9 +78,10 @@ export default function LearnHub() {
       title: "Зайлсхийх зүйлс",
       description:
         "Зовиуртай үед эдгээрийг багасгаарай:\n\n• Кофе, өтгөн цай, энергийн ундаа — нойр муутгаж, базлалтыг нэмэгдүүлж магадгүй.\n• Давс ихтэй чипс, түргэн хоол — гэдэс дүүргэж магадгүй.\n• Их чихэр — сарын тэмдгийн өмнөх зовиурыг нэмэгдүүлж магадгүй.\n\nХүн бүрт нөлөө нь өөр 💗",
-      color: "text-[#A86113]",
-      iconBg: "bg-[#FFF0D5]",
+      color: "learn-food-avoid-fg",
+      iconBg: "learn-food-avoid-icon",
       line: "bg-[#E9B45A]",
+      tone: "avoid",
     },
   ];
 
@@ -109,26 +113,26 @@ export default function LearnHub() {
 
       {isDaughter && learnTab === "food" && (
         <div className="space-y-4">
-          <section className="relative isolate overflow-hidden rounded-[1.75rem] border border-pink-100 bg-gradient-to-br from-[#FFE6F1] via-[#FFF4F8] to-[#F0E9FF] p-4 shadow-sm sm:p-5">
-            <div aria-hidden="true" className="absolute -right-10 -top-12 -z-10 h-36 w-36 rounded-full bg-white/55" />
-            <div aria-hidden="true" className="absolute -bottom-16 right-20 -z-10 h-28 w-28 rounded-full bg-[#F8D6E8]/60" />
+          <section className="learn-food-hero relative isolate overflow-hidden rounded-[1.75rem] border border-pink-100 bg-gradient-to-br from-[#FFE6F1] via-[#FFF4F8] to-[#F0E9FF] p-4 shadow-sm sm:p-5">
+            <div aria-hidden="true" className="learn-food-hero-orb absolute -right-10 -top-12 -z-10 h-36 w-36 rounded-full bg-white/55" />
+            <div aria-hidden="true" className="learn-food-hero-orb absolute -bottom-16 right-20 -z-10 h-28 w-28 rounded-full bg-[#F8D6E8]/60" />
             <div className="flex items-start justify-between gap-3">
               <div className="max-w-xl">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/70 px-2.5 py-1 text-[9px] font-black tracking-[0.12em] text-[#A74E80]">
+                <span className="learn-food-hero-badge inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/70 px-2.5 py-1 text-[9px] font-black tracking-[0.12em] text-[#A74E80]">
                   <Sparkles className="h-3 w-3" /> ӨӨРИЙГӨӨ ХАЛАМЖЛАХ НЬ
                 </span>
                 <h2 className="mt-3 text-xl font-black leading-tight text-slate-800 sm:text-2xl">
                   Сарын тэмдгийн үед юу идвэл дээр вэ?
                 </h2>
               </div>
-              <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/80 bg-white/80 shadow-sm sm:flex">
+              <div className="learn-food-hero-icon hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/80 bg-white/80 shadow-sm sm:flex">
                 <Apple className="h-6 w-6 text-[#C44886]" strokeWidth={1.8} />
               </div>
             </div>
-            <div className="mt-4 flex items-center gap-2 text-xs font-extrabold text-[#875372]">
+            <div className="learn-food-hero-summary mt-4 flex items-center gap-2 text-xs font-extrabold text-[#875372]">
               <span className="flex -space-x-1.5">
                 {[Leaf, Droplets, Apple, Heart].map((Icon, index) => (
-                  <span key={index} className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-[#FFF4F8] bg-white">
+                  <span key={index} className="learn-food-hero-summary-icon flex h-6 w-6 items-center justify-center rounded-full border-2 border-[#FFF4F8] bg-white">
                     <Icon className="h-3 w-3 text-[#B83B7E]" />
                   </span>
                 ))}
@@ -138,19 +142,20 @@ export default function LearnHub() {
           </section>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            {foodTips.map(({ icon: Icon, number, title, description, color, iconBg, line }) => (
+            {foodTips.map(({ icon: Icon, number, title, description, color, iconBg, line, tone }) => (
               <button
                 key={number}
                 type="button"
-                onClick={() => setSelectedFoodTip({ icon: Icon, number, title, description, color, iconBg })}
+                onClick={() => setSelectedFoodTip({ icon: Icon, number, title, description, color, iconBg, tone })}
                 aria-haspopup="dialog"
                 aria-label={`${title} — дэлгэрэнгүй унших`}
-                className="group relative w-full overflow-hidden rounded-[1.75rem] border border-slate-100 bg-white p-5 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300 sm:p-6"
+                data-tone={tone}
+                className="learn-food-tip-card group relative w-full overflow-hidden rounded-[1.75rem] border border-slate-100 bg-white p-5 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300 sm:p-6"
               >
                 <div aria-hidden="true" className={`absolute inset-y-5 left-0 w-1 rounded-r-full ${line}`} />
                 <div className="flex items-start gap-3.5">
-                  <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${iconBg}`}>
-                    <Icon className={`h-5 w-5 ${color}`} strokeWidth={2} />
+                  <span className={`learn-food-tip-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${iconBg}`}>
+                    <Icon className={`learn-food-tip-icon-svg h-5 w-5 ${color}`} strokeWidth={2} />
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="mb-1 flex items-center gap-2">
@@ -181,9 +186,10 @@ export default function LearnHub() {
             aria-modal="true"
             aria-labelledby="food-tip-title"
             aria-describedby="food-tip-description"
+            data-tone={selectedFoodTip.tone}
             className="relative z-10 my-auto w-full max-w-md overflow-hidden rounded-[2rem] border border-white/70 bg-white p-6 shadow-2xl bloom-pop sm:p-8"
           >
-            <div aria-hidden="true" className="absolute -right-10 -top-12 h-36 w-36 rounded-full bg-pink-100/70" />
+            <div aria-hidden="true" className="learn-food-dialog-orb absolute -right-10 -top-12 h-36 w-36 rounded-full bg-pink-100/70" />
             <button
               type="button"
               autoFocus
@@ -195,8 +201,8 @@ export default function LearnHub() {
             </button>
             <div className="relative">
               <div className="flex items-center gap-3">
-                <span className={`flex h-14 w-14 items-center justify-center rounded-[1.25rem] ${selectedFoodTip.iconBg}`}>
-                  <SelectedFoodIcon className={`h-7 w-7 ${selectedFoodTip.color}`} strokeWidth={1.9} />
+                <span className={`learn-food-tip-icon flex h-14 w-14 items-center justify-center rounded-[1.25rem] ${selectedFoodTip.iconBg}`}>
+                  <SelectedFoodIcon className={`learn-food-tip-icon-svg h-7 w-7 ${selectedFoodTip.color}`} strokeWidth={1.9} />
                 </span>
                 <span className="text-xs font-black tracking-[0.16em] text-slate-400">САНАА {selectedFoodTip.number}</span>
               </div>

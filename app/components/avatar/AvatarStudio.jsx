@@ -67,7 +67,7 @@ function ItemTile({ item, onClick, active, badge, locked, av }) {
     >
       <span
         className="w-full h-16 rounded-xl flex items-center justify-center overflow-hidden"
-        style={{ background: AVATAR_BACKGROUNDS.find((option) => option.id === av.background)?.color }}
+        style={{ background: AVATAR_BACKGROUNDS.find((option) => option.id === av.background)?.background }}
       >
         <Avatar
           look={{ ...av.look, [item.slot]: item.id }}
@@ -98,9 +98,9 @@ function Shop({ av }) {
     <div className="space-y-4">
       <div
         className="flex justify-center rounded-3xl border bb-border-F8D3E6 py-3"
-        style={{ background: AVATAR_BACKGROUNDS.find((option) => option.id === av.background)?.color }}
+        style={{ background: AVATAR_BACKGROUNDS.find((option) => option.id === av.background)?.background }}
       >
-        <Avatar look={preview} skin={av.skin} idle size={120} />
+        <Avatar look={preview} skin={av.skin} idle size={100} />
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-1">
@@ -163,26 +163,41 @@ function Closet({ av }) {
     <div className="space-y-4">
       <div
         className="flex justify-center rounded-3xl border bb-border-F8D3E6 py-3"
-        style={{ background: AVATAR_BACKGROUNDS.find((option) => option.id === av.background)?.color }}
+        style={{ background: AVATAR_BACKGROUNDS.find((option) => option.id === av.background)?.background }}
       >
-        <Avatar look={av.look} skin={av.skin} idle size={120} />
+        <Avatar look={av.look} skin={av.skin} idle size={100} />
       </div>
 
       <div>
         <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2">Дүрийн дэвсгэр</p>
-        <div className="flex flex-wrap gap-3">
+        <div className={`grid gap-2 ${AVATAR_BACKGROUNDS.length === 1 ? "grid-cols-1" : "grid-cols-3"}`}>
           {AVATAR_BACKGROUNDS.map((option) => (
             <button
               key={option.id}
               type="button"
-              aria-label={`${option.label} дэвсгэр`}
+              aria-label={`${option.country ? `${option.country}, ` : ""}${option.label} дэвсгэр`}
               aria-pressed={av.background === option.id}
               onClick={() => av.setBackground(option.id)}
-              className={`h-10 w-10 rounded-full border-4 transition ${
-                av.background === option.id ? "bb-border-F48FB1" : "border-white"
+              className={`relative overflow-hidden rounded-xl border-2 transition hover:scale-[1.02] ${
+                AVATAR_BACKGROUNDS.length === 1 ? "aspect-[16/9]" : "aspect-[4/3]"
+              } ${
+                av.background === option.id ? "bb-border-F48FB1 ring-2 ring-pink-200" : "border-white"
               }`}
-              style={{ background: option.color }}
-            />
+              style={{ background: option.background }}
+            >
+              <span
+                className="absolute inset-x-0 bottom-0 flex flex-col truncate px-1.5 py-1 text-left text-slate-700"
+                style={{ background: "rgba(255,255,255,0.84)", color: "#554454" }}
+              >
+                {option.country && <span className="truncate text-[8px] font-bold leading-tight opacity-75">{option.country}</span>}
+                <span className="truncate text-[10px] font-extrabold leading-tight">{option.label}</span>
+              </span>
+              {av.background === option.id && (
+                <span className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-pink-600 shadow-sm">
+                  <Check className="h-3 w-3" />
+                </span>
+              )}
+            </button>
           ))}
         </div>
       </div>
