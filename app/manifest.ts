@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Bloomy",
     short_name: "Bloomy",
-    description: "Өсвөр насны охид болон ээжүүдэд зориулсан мөчлөг, халамжийн апп",
+    description: "Өсвөр насны охид болон асран хамгаалагчдад зориулсан мөчлөг, халамжийн апп",
     lang: "mn",
     start_url: "/",
     scope: "/",

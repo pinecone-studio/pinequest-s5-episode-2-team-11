@@ -125,10 +125,10 @@ export default function SosModal() {
                   <div className="h-14">
                     <StretchFigure type={s.figure} active={active || done} />
                   </div>
-                  <p className="mt-1 text-xs font-extrabold text-slate-400">{i + 1}-р минут</p>
+                  <p className="mt-1 text-xs font-extrabold text-slate-400">{i + 1} минут</p>
                   <p className="text-xs font-extrabold text-slate-700 leading-tight">
                     {done && !active ? "✓ " : ""}
-                    {s.title}
+                    {s.cardTitle || s.title}
                   </p>
                 </div>
               );
@@ -162,15 +162,15 @@ export default function SosModal() {
         >
           {sosSent ? (
             <>
-              <Check className="w-5 h-5" /> Ээжид зөөлөн мэдэгдэл очлоо
+              <Check className="w-5 h-5" /> Асран хамгаалагчид зөөлөн мэдэгдэл очлоо
             </>
           ) : linked ? (
             <>
-              <Heart className="w-5 h-5" /> Ээжид мэдэгдэх
+              <Heart className="w-5 h-5" /> Асран хамгаалагчид мэдэгдэх
             </>
           ) : (
             <>
-              <Lock className="w-5 h-5" /> Мэдэгдэхийн тулд ээжтэйгээ холбогдоорой
+              <Lock className="w-5 h-5" /> Мэдэгдэхийн тулд асран хамгаалагчтайгаа холбогдоорой
             </>
           )}
         </button>
