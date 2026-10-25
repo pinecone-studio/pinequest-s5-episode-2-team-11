@@ -10,22 +10,22 @@ body {
 /* Dark mode is scoped to the app shell so the selected theme covers every tab. */
 .theme-dark {
   color: #f1e8f4;
-  background-image: linear-gradient(135deg, #17131d, #241a28 55%, #1d1828);
+  background-image: linear-gradient(135deg, #211923, #2c2330 55%, #282337);
 }
 .theme-dark .bb-bg-FFF7FB,
 .theme-dark .bb-bg-FFF7FB-85,
 .theme-dark .bg-white {
-  background-color: #251f2b;
+  background-color: #302638;
 }
 .theme-dark .theme-switch-thumb { background-color: #fff; }
-.theme-dark .bg-white\/95 { background-color: rgb(37 31 43 / 95%); }
-.theme-dark .bg-white\/80 { background-color: rgb(37 31 43 / 80%); }
-.theme-dark .bg-white\/75 { background-color: rgb(37 31 43 / 75%); }
-.theme-dark .bg-white\/50 { background-color: rgb(37 31 43 / 50%); }
-.theme-dark .bg-white\/40 { background-color: rgb(37 31 43 / 40%); }
+.theme-dark .bg-white\/95 { background-color: rgb(48 38 56 / 95%); }
+.theme-dark .bg-white\/80 { background-color: rgb(48 38 56 / 80%); }
+.theme-dark .bg-white\/75 { background-color: rgb(48 38 56 / 75%); }
+.theme-dark .bg-white\/50 { background-color: rgb(48 38 56 / 50%); }
+.theme-dark .bg-white\/40 { background-color: rgb(48 38 56 / 40%); }
 .theme-dark .bg-slate-50,
-.theme-dark .bg-slate-100 { background-color: #302938; }
-.theme-dark .bg-slate-200 { background-color: #453b4d; }
+.theme-dark .bg-slate-100 { background-color: #3a3242; }
+.theme-dark .bg-slate-200 { background-color: #51465a; }
 .theme-dark .border-slate-100,
 .theme-dark .border-slate-200 { border-color: #403647; }
 .theme-dark .text-slate-800,
@@ -51,7 +51,7 @@ body {
 .theme-dark .bb-bg-E9DDFC-50,
 .theme-dark .bb-bg-E9DDFC-60,
 .theme-dark .bb-bg-E9DDFC-40,
-.theme-dark .bb-bg-E9DDFC-30 { background-color: #332b42; }
+.theme-dark .bb-bg-E9DDFC-30 { background-color: #3b3249; }
 .theme-dark .bb-grad-4,
 .theme-dark .bb-grad-5,
 .theme-dark .bb-grad-7,
@@ -64,9 +64,119 @@ body {
 .theme-dark .bb-border-F8D3E6,
 .theme-dark .bb-border-FDE7F1 { border-color: #68445e; }
 .theme-dark .bb-border-F48FB1 { border-color: #9e557b; }
+.theme-dark .learn-food-hero {
+  border-color: #594052;
+  background-image: linear-gradient(135deg, #382532, #30263b 65%, #2c263d);
+}
+.theme-dark .learn-food-hero-orb { background-color: rgb(232 151 193 / 10%); }
+.theme-dark .learn-food-hero-badge {
+  border-color: #5d4355;
+  background-color: #302631;
+  color: #f0b1d0;
+}
+.theme-dark .learn-food-hero-icon {
+  border-color: #594052;
+  background-color: #302631;
+}
+.theme-dark .learn-food-hero-summary { color: #e8b8d0; }
+.theme-dark .learn-food-hero-summary-icon {
+  border-color: #382532;
+  background-color: #302631;
+}
+.learn-food-tip-card {
+  border-color: #e3d6f0;
+  background-color: #f7f2fc;
+}
+.theme-dark .learn-food-tip-card {
+  border-color: #b66b96;
+  background-color: #493b4b;
+}
+.theme-dark .learn-food-tip-icon { background-color: #382f40; }
+.theme-dark [data-tone="avoid"] .learn-food-tip-icon { background-color: #493a2a; }
+.learn-food-avoid-icon { background-color: #fff0d5; }
+.learn-food-avoid-fg { color: #a86113; }
+.theme-dark .learn-food-avoid-icon { background-color: #493a2a; }
+.theme-dark .learn-food-avoid-fg { color: #f3c36c; }
+.theme-dark .learn-food-dialog-orb { background-color: rgb(232 151 193 / 10%); }
 .theme-dark input,
 .theme-dark textarea,
 .theme-dark select { color: #f4edf6; }
 .theme-dark ::placeholder { color: #a99aaf; }
 .theme-dark .journal-note-input { color: #352d3a; }
 .theme-dark .journal-note-input::placeholder { color: #776a7a; }
+
+/* The cycle tracker is a fixed overlay, so give it its own theme-aware palette. */
+.cycle-tracker[data-theme="light"] {
+  background: #fff7fb !important;
+  color: #493b50 !important;
+}
+.cycle-tracker[data-theme="light"] > div > section {
+  border-color: #ead9eb;
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(108 72 112 / 8%);
+}
+.cycle-tracker[data-theme="light"] > div > section:first-of-type {
+  border-color: #e5c9e6;
+  background: linear-gradient(135deg, #fff0f7, #f3edff 60%, #fff8fc);
+}
+.cycle-tracker[data-theme="light"] > div > section:first-of-type > dl > div {
+  border-color: #f0b9d0;
+  background: #ffe3ed;
+  box-shadow: 0 3px 10px rgb(211 133 168 / 14%);
+}
+.cycle-tracker[data-theme="light"] > div > section:first-of-type > dl dt { color: #a16f88 !important; }
+.cycle-tracker[data-theme="light"] > div > section:first-of-type > dl dd { color: #603e53 !important; }
+.cycle-tracker[data-theme="light"] > div > section:first-of-type > button {
+  border-color: #ddb9df;
+  background: #f6eafb;
+  color: #65436e;
+}
+.cycle-tracker[data-theme="light"] .cycle-edit-hint,
+.cycle-tracker[data-theme="light"] .cycle-edit-duration {
+  border: 1px solid #ead9eb;
+  background: #fff !important;
+  color: #735a78 !important;
+}
+.cycle-tracker[data-theme="light"] .cycle-edit-duration > span { color: #735a78 !important; }
+.cycle-tracker[data-theme="light"] .cycle-edit-stepper {
+  background: #f1e7f6 !important;
+  color: #805596 !important;
+}
+.cycle-tracker[data-theme="light"] .cycle-edit-value { color: #493b50 !important; }
+.cycle-tracker[data-theme="light"] .cycle-edit-cancel {
+  background: #f1eaf4 !important;
+  color: #735a78 !important;
+}
+.cycle-tracker[data-theme="light"] header > button:first-child {
+  background: #f0e8f4;
+  color: #614c68;
+}
+.cycle-tracker[data-theme="light"] header > button:last-child {
+  border-color: #ead9eb;
+  background: #fff;
+  color: #614c68;
+}
+.cycle-tracker[data-theme="light"] section:nth-of-type(2) h2 { color: #493b50 !important; }
+.cycle-tracker[data-theme="light"] > div > section:nth-of-type(2) {
+  border-color: #f0d1df;
+  background: linear-gradient(145deg, #fff7fa, #fff0f5 58%, #fff8fa);
+}
+.cycle-tracker[data-theme="light"] section:nth-of-type(2) .cycle-day { color: #493b50; }
+.cycle-tracker[data-theme="light"] section:nth-of-type(2) .cycle-day[class*="bg-[#e96691]"] { color: #fff; }
+.cycle-tracker[data-theme="light"] section:nth-of-type(2) .cycle-day[class*="bg-[#3a3158]"] {
+  background-color: #e9dcff;
+  color: #6c4da0;
+  box-shadow: inset 0 0 0 1px #d6c0fa;
+}
+.cycle-tracker[data-theme="light"] section:nth-of-type(2) .cycle-today { outline-color: #8a6c92; }
+.cycle-tracker[data-theme="light"] section:nth-of-type(2) .text-\[\#a99eaf\] { color: #806f86; }
+.cycle-tracker[data-theme="light"] section:nth-of-type(2) .text-\[\#7d7286\] { color: #897991; }
+.cycle-tracker[data-theme="light"] > div > section:nth-of-type(3) {
+  border-color: #edc8d9;
+  background: linear-gradient(135deg, #fff0f6, #fbf1ff);
+}
+.cycle-tracker[data-theme="light"] > div > section:nth-of-type(3) p { color: #985c78 !important; }
+.cycle-tracker[data-theme="light"] > div > section:nth-of-type(4) > button {
+  background: #a77caf;
+}
+.cycle-tracker[data-theme="light"] > div > section:nth-of-type(4) > p { color: #897991 !important; }

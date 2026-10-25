@@ -7,12 +7,12 @@ import Card from "../ui/Card";
 import PageHeader from "../ui/PageHeader";
 import SchoolBagChecklist from "../supplies/SchoolBagChecklist";
 
-export default function DaughterSupplies() {
+export default function DaughterSupplies({ embedded = false }) {
   const { linked, supplies, updateSupply, requestSupplies } = useFamily();
 
   return (
     <div className="space-y-4">
-      <PageHeader sub="Дуусахаас нь өмнө асран хамгаалагчдаа хэлээрэй" title="Миний хэрэгсэл 🎒" />
+      {!embedded && <PageHeader sub="Дуусахаас нь өмнө асран хамгаалагчдаа хэлээрэй" title="Миний хэрэгсэл 🎒" />}
 
       {/* Хэрэгсэл */}
       <Card>
