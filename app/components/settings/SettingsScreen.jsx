@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Languages, Moon, Sun, LogOut, Lock, Unlock, ShieldCheck } from "lucide-react";
+import { Languages, Moon, Sun, Lock, Unlock, ShieldCheck } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import { useTheme } from "../../../context/ThemeContext";
 import Card from "../ui/Card";
@@ -10,7 +10,7 @@ import SectionTitle from "../ui/SectionTitle";
 
 export default function SettingsScreen() {
   const { theme, setTheme } = useTheme();
-  const { view, shareWithMom, setShareWithMom, signOut } = useFamily();
+  const { view, shareWithMom, setShareWithMom } = useFamily();
   const [language, setLanguage] = useState("mn");
 
   useEffect(() => {
@@ -89,13 +89,6 @@ export default function SettingsScreen() {
         <p className="text-[11px] font-semibold leading-5 text-slate-600">Таны мэдээлэл зөвхөн таны гэр бүлийн бүлэгт харагдана.</p>
       </div>
 
-      <button
-        type="button"
-        onClick={signOut}
-        className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-slate-100 bg-white py-3 font-extrabold bb-text-7C4DCC transition active:scale-95"
-      >
-        <LogOut className="h-4 w-4" /> Гарах
-      </button>
     </div>
   );
 }

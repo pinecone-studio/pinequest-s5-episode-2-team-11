@@ -9,6 +9,7 @@ import {
   AlertCircle,
   Loader2,
   Pencil,
+  LogOut,
 } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import Card from "../ui/Card";
@@ -36,6 +37,7 @@ export default function ProfileScreen() {
     updateName,
     updateEmail,
     setToast,
+    signOut,
   } = useFamily();
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState(profile?.display_name ?? "");
@@ -273,7 +275,13 @@ export default function ProfileScreen() {
           </>
         )}
       </Card>
-
+      <button
+        type="button"
+        onClick={signOut}
+        className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-slate-100 bg-white py-3 font-extrabold bb-text-7C4DCC transition active:scale-95"
+      >
+        <LogOut className="h-4 w-4" /> Гарах
+      </button>
     </div>
   );
 }
