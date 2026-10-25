@@ -42,7 +42,9 @@ function readPreviousPrePeriodEntries(lastPeriodStart, cycleLength, today) {
 }
 
 const configMessages = {
-  ai_not_configured: "AI тохиргоо дутуу байна. Серверт ANTHROPIC_API_KEY нэмэх шаардлагатай.",
+  ai_not_configured: "AI тохиргоо дутуу байна. Серверт GEMINI_API_KEY нэмэх шаардлагатай.",
+  ai_invalid_key: "Gemini API түлхүүр хүчингүй байна. Google AI Studio-оос түлхүүрээ шалгана уу.",
+  ai_quota_exceeded: "Gemini API-н хэрэглээний хязгаарт хүрсэн байна. Google AI Studio дээр quota тохиргоог шалгана уу.",
   unauthorized: "Нэвтрэлтийн хугацаа дууссан байна. Дахин нэвтэрч оролдоорой.",
   ai_failed: "AI үйлчилгээ хүсэлтэд хариу өгсөнгүй. Серверийн API түлхүүр, model тохиргоог шалгана уу.",
   timeout: "AI хариу удааширлаа. Дахин оролдоорой.",

@@ -5,7 +5,6 @@
  * • Зөвхөн нэвтэрсэн хэрэглэгч ашиглана (Supabase access token шалгана).
  * • Хариу JSON. Алдаа гарвал апп бэлэн текст рүү шилжинэ.
  */
-import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
@@ -55,16 +54,26 @@ async function generate(prompt: string, maxTokens: number): Promise<string> {
     const data = await res.json();
     return (data.candidates?.[0]?.content?.parts ?? []).filter((p: any) => !p.thought).map((p: any) => p.text ?? "").join("");
   }
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  const res = await client.messages.create({
-    model: MODEL,
-    max_tokens: maxTokens,
-    system: SAFETY,
-    messages: [{ role: "user", content: prompt }],
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": process.env.ANTHROPIC_API_KEY ?? "",
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: maxTokens,
+      system: SAFETY,
+      messages: [{ role: "user", content: prompt }],
+    }),
+    signal: AbortSignal.timeout(25000),
   });
-  return res.content
-    .filter((b: any) => b.type === "text")
-    .map((b: any) => b.text)
+  if (!res.ok) throw new Error(`Anthropic ${res.status}: ${await res.text()}`);
+  const data = await res.json();
+  return (data.content ?? [])
+    .filter((block: any) => block.type === "text")
+    .map((block: any) => block.text ?? "")
     .join("");
 }
 

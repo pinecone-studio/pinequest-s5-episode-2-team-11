@@ -14,7 +14,7 @@ export default function NotConfigured() {
       <pre className="bg-slate-800 text-slate-100 text-xs rounded-2xl p-4 overflow-x-auto">
         {`NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-ANTHROPIC_API_KEY=sk-ant-...`}
+GEMINI_API_KEY=таны-gemini-api-key`}
       </pre>
       <p className="text-xs font-semibold text-slate-400">
         Файлаа хадгалсны дараа серверээ дахин эхлүүлнэ (npm run dev).
