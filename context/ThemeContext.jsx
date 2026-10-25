@@ -11,15 +11,23 @@ export function ThemeProvider({ children }) {
   useEffect(() => {
     const saved = window.localStorage.getItem("bloomy-theme");
     if (saved === "dark" || saved === "light") setTheme(saved);
+    // Хэрэглэгч өөрөө сонгоогүй бол утасны (системийн) тохиргоог дагана
+    else if (window.matchMedia?.("(prefers-color-scheme: dark)").matches) setTheme("dark");
     setLoaded(true);
   }, []);
 
-  useEffect(() => {
-    if (!loaded) return;
-    window.localStorage.setItem("bloomy-theme", theme);
-  }, [loaded, theme]);
+  // Хэрэглэгч өөрөө солих үед л хадгална (бусад үед системийг дагана)
+  const chooseTheme = (next) => {
+    setTheme((prev) => {
+      const value = typeof next === "function" ? next(prev) : next;
+      try {
+        window.localStorage.setItem("bloomy-theme", value);
+      } catch {}
+      return value;
+    });
+  };
 
-  return <ThemeContext.Provider value={{ theme, setTheme }}>{children}</ThemeContext.Provider>;
+  return <ThemeContext.Provider value={{ theme, setTheme: chooseTheme, loaded }}>{children}</ThemeContext.Provider>;
 }
 
 export function useTheme() {
