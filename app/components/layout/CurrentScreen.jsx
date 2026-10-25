@@ -6,6 +6,7 @@ import DaughterSupplies from "../daughter/DaughterSupplies";
 import MotherHome from "../mother/MotherHome";
 import MotherMessages from "../mother/MotherMessages";
 import MotherSupplies from "../mother/MotherSupplies";
+import MotherCalendar from "../mother/MotherCalendar";
 import LearnHub from "../learn/LearnHub";
 import SettingsScreen from "../settings/SettingsScreen";
 import FriendsScreen from "../friends/FriendsScreen";
@@ -49,6 +50,7 @@ export default function CurrentScreen({ family, pathname }) {
   }
 
   if (tab === "supplies") return <MotherSupplies />;
+  if (tab === "calendar") return <MotherCalendar />;
   if (tab === "messages") return <MotherMessages />;
   return <MotherHome />;
 }
