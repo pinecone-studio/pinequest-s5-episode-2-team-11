@@ -18,10 +18,10 @@ function Stepper({ id, label, hint, value, setValue, min, max }) {
         <button
           type="button"
           onClick={() => setValue(Math.max(min, value - 1))}
-          className="w-12 h-12 rounded-2xl bg-white border-2 border-slate-100 flex items-center justify-center active:scale-90"
+          className="w-12 h-12 rounded-2xl bg-[#30283a] border-2 border-[#594963] text-[#d8b8ff] flex items-center justify-center transition hover:border-[#d88ab8] active:scale-90"
           aria-label="Хасах"
         >
-          <Minus className="w-5 h-5 text-slate-500" />
+          <Minus className="w-5 h-5" />
         </button>
         <output id={id} className="flex-1 text-center text-3xl font-black text-slate-700">
           {value} <span className="text-base font-bold text-slate-400">хоног</span>
@@ -29,10 +29,10 @@ function Stepper({ id, label, hint, value, setValue, min, max }) {
         <button
           type="button"
           onClick={() => setValue(Math.min(max, value + 1))}
-          className="w-12 h-12 rounded-2xl bg-white border-2 border-slate-100 flex items-center justify-center active:scale-90"
+          className="w-12 h-12 rounded-2xl bg-[#30283a] border-2 border-[#594963] text-[#d8b8ff] flex items-center justify-center transition hover:border-[#d88ab8] active:scale-90"
           aria-label="Нэмэх"
         >
-          <Plus className="w-5 h-5 text-slate-500" />
+          <Plus className="w-5 h-5" />
         </button>
       </div>
       {hint && <p className="mt-1.5 text-xs font-semibold text-slate-400">{hint}</p>}
@@ -61,14 +61,11 @@ export default function CycleSetup({ onDone }) {
 
   return (
     <div className="px-2 pt-4 pb-10 bloom-fade space-y-6">
-      <div>
-        <div className="w-16 h-16 rounded-2xl bb-bg-E9DDFC-60 flex items-center justify-center mb-4">
-          <CalendarHeart className="w-8 h-8 bb-text-7C4DCC" />
-        </div>
+      <div className="flex items-start justify-between gap-4">
         <h2 className="text-2xl font-black text-slate-700">Мөчлөгөө тохируулъя</h2>
-        <p className="mt-2 text-slate-500 font-semibold">
-          Яг мэдэхгүй бол ойролцоогоор оруулаарай. Дараа нь хүссэн үедээ засаж болно.
-        </p>
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#f7d7e8] to-[#ded0ff] shadow-md shadow-[#d88ab8]/20 ring-1 ring-white/20">
+          <CalendarHeart className="h-6 w-6 text-[#8d579e]" />
+        </div>
       </div>
 
       <div>
@@ -85,7 +82,7 @@ export default function CycleSetup({ onDone }) {
           max={today}
           min={addDays(today, -90)}
           onChange={(e) => e.target.value && setStart(e.target.value)}
-          className="w-full rounded-2xl border-2 border-slate-100 bb-focus-border-F48FB1 outline-none px-4 py-3 font-bold text-slate-700 bg-white"
+          className="w-full rounded-2xl border-2 border-[#594963] bb-focus-border-F48FB1 outline-none px-4 py-3 font-bold text-slate-700 bg-white shadow-sm shadow-black/10"
         />
       </div>
 
