@@ -20,6 +20,7 @@ const TAB_BY_PATH = {
   "/mother/supplies": "supplies",
   "/mother/calendar": "calendar",
   "/mother/messages": "messages",
+  "/daughter/messages": "messages",
   "/friends": "friends",
   "/learn": "learn",
   "/settings": "me",
@@ -46,6 +47,8 @@ export default function AppShell() {
     showOnboarding,
     needsMotherCode,
   } = family;
+  // Охины хонхны тоо: асран хамгаалагчийн уншаагүй үг + хариулаагүй найзын SOS
+  const teenUnread = (family.teenInbox ?? []).filter((n) => !n.read).length + (unansweredIncoming ?? 0);
 
   useEffect(() => {
     setTab(TAB_BY_PATH[pathname] ?? "home");
@@ -72,7 +75,7 @@ export default function AppShell() {
       calendar: "/mother/calendar",
       friends: "/friends",
       learn: "/learn",
-      messages: "/mother/messages",
+      messages: view === "mother" ? "/mother/messages" : "/daughter/messages",
       me: "/settings",
     };
     router.push(routes[nextTab] ?? "/");
@@ -90,7 +93,7 @@ export default function AppShell() {
           showNav={showNav}
           view={view}
           tab={tab}
-          momUnread={momUnread}
+          momUnread={view === "mother" ? momUnread : teenUnread}
           onOpenSettings={() => navigateToTab("me")}
           onOpenNotifications={() => navigateToTab("messages")}
           onLogoClick={() => {
