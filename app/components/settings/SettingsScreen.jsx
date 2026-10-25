@@ -12,7 +12,6 @@ import {
   Copy,
   Check,
   Share2,
-  Pencil,
   AlertCircle,
   Loader2,
   Pencil,
