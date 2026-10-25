@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import { askAi } from "../../../lib/ai-client";
+import { supabase } from "../../../lib/supabase";
 
 const localDateKey = (date) => {
   const y = date.getFullYear();
@@ -80,7 +81,26 @@ const WEEKDAY_LONG = ["Ням", "Даваа", "Мягмар", "Лхагва", "�
 const dateLabel = (d) => `${d.getMonth() + 1}-р сарын ${d.getDate()}, ${WEEKDAY_LONG[d.getDay()]}`;
 
 export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, lastPeriodStart }) {
-  const { saveCycle, startPeriod, setToast, session } = useFamily();
+  const { saveCycle, startPeriod, setToast, session, profile } = useFamily();
+
+  // Асран хамгаалагчийн 7 хоногийн тоймд зориулж ЗӨВХӨН сонголтуудыг (тэмдэглэлийн бичвэр БИШ)
+  // Supabase-ийн day_logs руу илгээнэ (supabase/day-logs.sql)
+  const syncDays = async (entries) => {
+    if (!supabase || !profile?.id || profile.role !== "daughter" || !entries.length) return;
+    const rows = entries.map(([date, values]) => ({
+      user_id: profile.id,
+      family_id: profile.family_id ?? null,
+      log_date: date,
+      emotion: values.emotion ?? null,
+      symptoms: values.symptoms ?? null,
+      period: values.period ?? null,
+      skin: values.skin ?? null,
+      sleep: values.sleep ?? null,
+      updated_at: new Date().toISOString(),
+    }));
+    const { error } = await supabase.from("day_logs").upsert(rows, { onConflict: "user_id,log_date" });
+    if (error) console.warn("[day_logs] sync:", error.message);
+  };
   const [today] = useState(() => localDateKey(new Date()));
   const [selectedDate, setSelectedDate] = useState(() => localDateKey(new Date()));
   const [month, setMonth] = useState(() => {
@@ -106,6 +126,8 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
         return all;
       }, {});
     setLogs(result);
+    const since = localDateKey(new Date(Date.now() - 30 * 86400000));
+    syncDays(Object.entries(result).filter(([d]) => d >= since).map(([d, v]) => [d, flat(v)]));
     setNoteDates(new Set(Object.keys(window.localStorage).filter((k) => k.startsWith("bloom:private-note:")).map((k) => k.slice(19))));
     setNote(window.localStorage.getItem(`bloom:private-note:${selectedDate}`) ?? "");
   }, []);
@@ -185,6 +207,7 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
     setLogs(all);
     window.localStorage.setItem(`bloom:tracker-log:${selectedDate}`, JSON.stringify(next));
     setActiveCategory(null);
+    syncDays([[selectedDate, next]]);
   };
 
   const saveNote = () => {
