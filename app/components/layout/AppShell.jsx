@@ -23,7 +23,8 @@ const TAB_BY_PATH = {
   "/daughter/messages": "messages",
   "/friends": "friends",
   "/learn": "learn",
-  "/settings": "me",
+  "/settings": "settings",
+  "/profile": "me",
 };
 
 export default function AppShell() {
@@ -58,8 +59,8 @@ export default function AppShell() {
     if (authLoading) return;
     if (!session && pathname !== "/") {
       router.replace("/");
-    } else if (session && ready && needsMotherCode && pathname !== "/settings") {
-      router.replace("/settings");
+    } else if (session && ready && needsMotherCode && pathname !== "/profile") {
+      router.replace("/profile");
     } else if (session && ready && view && pathname === "/") {
       // Нэвтэрсэн бол нүүр хуудас руу шууд оруулна
       router.replace(view === "mother" ? "/mother" : "/daughter");
@@ -76,7 +77,8 @@ export default function AppShell() {
       friends: "/friends",
       learn: "/learn",
       messages: view === "mother" ? "/mother/messages" : "/daughter/messages",
-      me: "/settings",
+      me: "/profile",
+      settings: "/settings",
     };
     router.push(routes[nextTab] ?? "/");
   };
@@ -94,7 +96,7 @@ export default function AppShell() {
           view={view}
           tab={tab}
           momUnread={view === "mother" ? momUnread : teenUnread}
-          onOpenSettings={() => navigateToTab("me")}
+          onOpenSettings={() => navigateToTab("settings")}
           onOpenNotifications={() => navigateToTab("messages")}
           onLogoClick={() => {
             if (session) navigateToTab("home");
