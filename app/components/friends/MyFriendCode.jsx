@@ -1,6 +1,6 @@
 "use client";
 
-/** Профайл хуудсан дээрх «Миний найзын код» (зөвхөн охинд) */
+/** Профайл хуудсан дээрх «Миний код» (зөвхөн охинд) */
 
 import { useState } from "react";
 import { Copy, Check, UserPlus } from "lucide-react";
@@ -28,7 +28,7 @@ export default function MyFriendCode() {
 
   return (
     <Card>
-      <SectionTitle icon={UserPlus} title="Миний найзын код" />
+      <SectionTitle icon={UserPlus} title="Миний код" />
       <div className="flex items-center gap-2 rounded-2xl bb-bg-FDE7F1 p-3">
         <p className="flex-1 text-2xl font-black tracking-widest bb-text-B83B7E">{friendCode || "……"}</p>
         <button
@@ -40,7 +40,6 @@ export default function MyFriendCode() {
           {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
         </button>
       </div>
-      <p className="mt-2 text-xs font-semibold text-slate-400">Зөвхөн итгэдэг найздаа өгөөрэй.</p>
     </Card>
   );
 }

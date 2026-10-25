@@ -108,7 +108,7 @@ export default function FriendsScreen() {
             <div key={friend.id} className="w-20 shrink-0 text-center">
               <div
                 className="rounded-2xl overflow-hidden flex justify-center pt-1.5 border border-slate-100"
-                style={{ background: AVATAR_BACKGROUNDS.find((o) => o.id === friend.avatar_background)?.color ?? AVATAR_BACKGROUNDS[0].color }}
+                style={{ background: AVATAR_BACKGROUNDS.find((o) => o.id === friend.avatar_background)?.background ?? AVATAR_BACKGROUNDS[0].background }}
               >
                 <Avatar look={friend.avatar_look} skin={friend.avatar_skin} label={`${friend.display_name}-ийн дүр`} idle size={56} />
               </div>
