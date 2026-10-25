@@ -1,4 +1,4 @@
-// «Пад заавар»-ын алхам бүрийн энгийн SVG зураг. k = lib/padGuide.js доторх ill.
+// «Хэрэглэлийн заавар»-ын алхам бүрийн энгийн SVG зураг. k = lib/padGuide.js доторх ill.
 
 const PINK = "#F48FB1";
 const ROSE = "#E0679F";

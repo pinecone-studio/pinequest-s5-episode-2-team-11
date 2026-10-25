@@ -10,7 +10,24 @@ import CurrentScreen from "./CurrentScreen";
 import SosModal from "../sos/SosModal";
 import { useTheme } from "../../../context/ThemeContext";
 
-export default function AppShell({ initialTab = "home" }) {
+// Хаяг → таб
+const TAB_BY_PATH = {
+  "/": "home",
+  "/daughter": "home",
+  "/mother": "home",
+  "/daughter/insights": "insights",
+  "/daughter/supplies": "supplies",
+  "/mother/supplies": "supplies",
+  "/mother/calendar": "calendar",
+  "/mother/messages": "messages",
+  "/daughter/messages": "messages",
+  "/friends": "friends",
+  "/learn": "learn",
+  "/settings": "settings",
+  "/profile": "me",
+};
+
+export default function AppShell() {
   const router = useRouter();
   const pathname = usePathname();
   const family = useFamily();
@@ -31,17 +48,19 @@ export default function AppShell({ initialTab = "home" }) {
     showOnboarding,
     needsMotherCode,
   } = family;
+  // Охины хонхны тоо: асран хамгаалагчийн уншаагүй үг + хариулаагүй найзын SOS
+  const teenUnread = (family.teenInbox ?? []).filter((n) => !n.read).length + (unansweredIncoming ?? 0);
 
   useEffect(() => {
-    setTab(initialTab);
-  }, [initialTab, setTab]);
+    setTab(TAB_BY_PATH[pathname] ?? "home");
+  }, [pathname, setTab]);
 
   useEffect(() => {
     if (authLoading) return;
     if (!session && pathname !== "/") {
       router.replace("/");
-    } else if (session && ready && needsMotherCode && pathname !== "/settings") {
-      router.replace("/settings");
+    } else if (session && ready && needsMotherCode && pathname !== "/profile") {
+      router.replace("/profile");
     } else if (session && ready && view && pathname === "/") {
       // Нэвтэрсэн бол нүүр хуудас руу шууд оруулна
       router.replace(view === "mother" ? "/mother" : "/daughter");
@@ -54,10 +73,12 @@ export default function AppShell({ initialTab = "home" }) {
       home: view === "mother" ? "/mother" : "/daughter",
       insights: "/daughter/insights",
       supplies: view === "mother" ? "/mother/supplies" : "/daughter/supplies",
+      calendar: "/mother/calendar",
       friends: "/friends",
       learn: "/learn",
-      messages: "/mother/messages",
-      me: "/settings",
+      messages: view === "mother" ? "/mother/messages" : "/daughter/messages",
+      me: "/profile",
+      settings: "/settings",
     };
     router.push(routes[nextTab] ?? "/");
   };
@@ -72,8 +93,11 @@ export default function AppShell({ initialTab = "home" }) {
       <div className="relative mx-auto max-w-md min-h-screen bb-bg-FFF7FB sm:shadow-2xl sm:shadow-slate-300/40">
         <AppHeader
           showNav={showNav}
+          view={view}
           tab={tab}
-          onOpenSettings={() => navigateToTab("me")}
+          momUnread={view === "mother" ? momUnread : teenUnread}
+          onOpenSettings={() => navigateToTab("settings")}
+          onOpenNotifications={() => navigateToTab("messages")}
           onLogoClick={() => {
             if (session) navigateToTab("home");
             else window.dispatchEvent(new Event("bloomy-auth-back"));
@@ -87,7 +111,6 @@ export default function AppShell({ initialTab = "home" }) {
             view={view}
             linked={linked}
             lowSupplyCount={lowSupplyCount}
-            momUnread={momUnread}
             unansweredIncoming={unansweredIncoming}
             tab={tab}
             onNavigate={navigateToTab}

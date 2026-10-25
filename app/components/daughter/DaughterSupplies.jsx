@@ -1,18 +1,18 @@
 "use client";
 
 import { useFamily } from "../../../context/FamilyContext";
-import { Package, ChevronRight, Backpack, Send } from "lucide-react";
-import { KIT_ITEMS } from "../../../lib/data";
+import { Package, Send } from "lucide-react";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
 import PageHeader from "../ui/PageHeader";
+import SchoolBagChecklist from "../supplies/SchoolBagChecklist";
 
-export default function DaughterSupplies() {
-  const { linked, setTab, setLearnTab, supplies, kitChecked, updateSupply, requestSupplies } = useFamily();
+export default function DaughterSupplies({ embedded = false }) {
+  const { linked, supplies, updateSupply, requestSupplies } = useFamily();
 
   return (
     <div className="space-y-4">
-      <PageHeader sub="Дуусахаас нь өмнө ээждээ хэлээрэй" title="Миний хэрэгсэл 🎒" />
+      {!embedded && <PageHeader sub="Дуусахаас нь өмнө асран хамгаалагчдаа хэлээрэй" title="Миний хэрэгсэл 🎒" />}
 
       {/* Хэрэгсэл */}
       <Card>
@@ -51,28 +51,11 @@ export default function DaughterSupplies() {
           className="mt-4 w-full rounded-2xl bb-bg-FDE7F1 bb-text-B83B7E disabled:text-slate-300 disabled:bg-slate-50 font-extrabold py-3 text-sm active:scale-95 transition flex items-center justify-center gap-2"
         >
           <Send className="w-4 h-4" />{" "}
-          {linked ? "Дуусах дөхсөн үү? Ээждээ хэлэх" : "Хүсэлт илгээхийн тулд ээжтэйгээ холбогдоорой"}
+          {linked ? "Дуусах дөхсөн үү? Асран хамгаалагчдаа хэлэх" : "Хүсэлт илгээхийн тулд асран хамгаалагчтайгаа холбогдоорой"}
         </button>
       </Card>
 
-      <button
-        onClick={() => {
-          setLearnTab("kit");
-          setTab("learn");
-        }}
-        className="w-full flex items-center gap-3 bg-white rounded-3xl p-4 border border-slate-100 shadow-sm active:scale-95 transition text-left"
-      >
-        <span className="w-10 h-10 rounded-xl bb-bg-FDE7F1 flex items-center justify-center">
-          <Backpack className="w-5 h-5 bb-text-B83B7E" />
-        </span>
-        <span className="flex-1">
-          <span className="block text-sm font-extrabold text-slate-700">Сургуулийн яаралтай цүнх</span>
-          <span className="block text-xs font-semibold text-slate-500">
-            {kitChecked.length}/{KIT_ITEMS.length} зүйл бэлэн
-          </span>
-        </span>
-        <ChevronRight className="w-5 h-5 text-slate-300" />
-      </button>
+      <SchoolBagChecklist daughter />
     </div>
   );
 }
