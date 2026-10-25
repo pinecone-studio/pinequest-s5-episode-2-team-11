@@ -1,7 +1,7 @@
 /**
- * POST /api/ai — Bloomy-ийн AI (Claude API).
+ * POST /api/ai — Bloomy-ийн AI (Gemini эсвэл Claude API).
  *
- * • API түлхүүр зөвхөн сервер дээр (.env.local → ANTHROPIC_API_KEY). Утсанд хэзээ ч очихгүй.
+ * • API түлхүүр зөвхөн сервер дээр (.env.local → ``GEMINI_API_KEY`` эсвэл ANTHROPIC_API_KEY). Утсанд хэзээ ч очихгүй.
  * • Зөвхөн нэвтэрсэн хэрэглэгч ашиглана (Supabase access token шалгана).
  * • Хариу JSON. Алдаа гарвал апп бэлэн текст рүү шилжинэ.
  */
@@ -11,6 +11,41 @@ import { createClient } from "@supabase/supabase-js";
 export const runtime = "nodejs";
 
 const MODEL = process.env.ANTHROPIC_MODEL || "claude-haiku-4-5-20251001";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite";
+
+// GEMINI_API_KEY байвал Gemini, үгүй бол Claude ашиглана
+async function generate(prompt: string, maxTokens: number): Promise<string> {
+  const geminiKey = process.env.GEMINI_API_KEY;
+  if (geminiKey) {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: SAFETY }] },
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          generationConfig: { maxOutputTokens: maxTokens * 4, responseMimeType: "application/json" },
+        }),
+        signal: AbortSignal.timeout(25000),
+      }
+    );
+    if (!res.ok) throw new Error(`Gemini ${res.status}: ${await res.text()}`);
+    const data = await res.json();
+    return (data.candidates?.[0]?.content?.parts ?? []).filter((p: any) => !p.thought).map((p: any) => p.text ?? "").join("");
+  }
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const res = await client.messages.create({
+    model: MODEL,
+    max_tokens: maxTokens,
+    system: SAFETY,
+    messages: [{ role: "user", content: prompt }],
+  });
+  return res.content
+    .filter((b: any) => b.type === "text")
+    .map((b: any) => b.text)
+    .join("");
+}
 
 const PHASE_MN: Record<string, string> = {
   period: "сарын тэмдгийн үе",
@@ -134,6 +169,23 @@ JSON: {"label": "мэдрэмжийн 1-2 үгтэй нэр", "title": "дула
 JSON: {"nudge": "..."}`,
     };
   }
+  if (body.type === "daughter_chat") {
+    const messages = Array.isArray(body.messages)
+      ? body.messages
+          .slice(-8)
+          .filter((item: any) => item && ["user", "assistant"].includes(item.role))
+          .map((item: any) => `${item.role === "user" ? "Охин" : "Блүми эгч"}: ${String(item.content ?? "").trim().slice(0, 600)}`)
+      : [];
+    if (!messages.length) return null;
+    return {
+      maxTokens: 400,
+      prompt: `Чи "Блүми эгч" — 10–18 насны охидын итгэлт, дулаан эгч шиг туслах. Охинтой хийсэн чат:
+${messages.join("\n")}
+Охины сүүлийн мессежид өмнөх яриаг харгалзан хариул. 2–4 богино өгүүлбэр, энгийн үгтэй, 1–2 тохирох эможитой. Бие махбод, сарын тэмдэг, сэтгэл санаа, найз нөхөд, сургуулийн талаар ичгүүргүй, эерэгээр тайлбарла. Чи хүн биш, эмч биш автомат туслах гэдгээ асуувал шударгаар хэл. Хувийн мэдээлэл (хаяг, утас, сургуулийн нэр) бүү асуу. Хүчирхийлэл, өөрийгөө гэмтээх, аюултай байдал дурдагдвал итгэдэг том хүндээ хэлэх, 108 (хүүхдийн тусламжийн утас) руу залгахыг зөвлө.
+"chips" нь охины дараа асууж болох 0–2 богино асуулт (эможитой).
+JSON: {"reply": "...", "chips": ["..."]}`,
+    };
+  }
   if (body.type === "parent_chat") {
     const messages = Array.isArray(body.messages)
       ? body.messages
@@ -195,7 +247,7 @@ function extractJson(text: string) {
 }
 
 export async function POST(req: Request) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY || process.env.ANTHROPIC_API_KEY;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!apiKey || !url || !anon) return Response.json({ error: "ai_not_configured" }, { status: 503 });
@@ -217,19 +269,9 @@ export async function POST(req: Request) {
   const built = buildPrompt(body);
   if (!built) return Response.json({ error: "bad_type" }, { status: 400 });
 
-  // 3) Claude
+  // 3) AI (Gemini эсвэл Claude)
   try {
-    const client = new Anthropic({ apiKey });
-    const res = await client.messages.create({
-      model: MODEL,
-      max_tokens: built.maxTokens,
-      system: SAFETY,
-      messages: [{ role: "user", content: built.prompt }],
-    });
-    const text = res.content
-      .filter((b: any) => b.type === "text")
-      .map((b: any) => b.text)
-      .join("");
+    const text = await generate(built.prompt, built.maxTokens);
     const json = extractJson(text);
     if (!json) return Response.json({ error: "bad_ai_output" }, { status: 502 });
     if (body.type === "mood") json.movies = await withPosters(json.movies);
@@ -238,6 +280,12 @@ export async function POST(req: Request) {
       const safe: Record<string, string> = {};
       fields.forEach((field) => { safe[field] = typeof json[field] === "string" ? json[field].slice(0, 700) : ""; });
       return Response.json(safe);
+    }
+    if (body.type === "daughter_chat") {
+      return Response.json({
+        reply: typeof json.reply === "string" ? json.reply.slice(0, 1200) : "",
+        chips: Array.isArray(json.chips) ? json.chips.filter((chip: unknown) => typeof chip === "string").slice(0, 2).map((chip: string) => chip.slice(0, 60)) : [],
+      });
     }
     if (body.type === "cycle_prediction") {
       return Response.json({
