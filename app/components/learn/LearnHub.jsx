@@ -129,16 +129,6 @@ export default function LearnHub() {
                 <Apple className="h-6 w-6 text-[#C44886]" strokeWidth={1.8} />
               </div>
             </div>
-            <div className="learn-food-hero-summary mt-4 flex items-center gap-2 text-xs font-extrabold text-[#875372]">
-              <span className="flex -space-x-1.5">
-                {[Leaf, Droplets, Apple, Heart].map((Icon, index) => (
-                  <span key={index} className="learn-food-hero-summary-icon flex h-6 w-6 items-center justify-center rounded-full border-2 border-[#FFF4F8] bg-white">
-                    <Icon className="h-3 w-3 text-[#B83B7E]" />
-                  </span>
-                ))}
-              </span>
-              4 хэрэгтэй зөвлөмж
-            </div>
           </section>
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -158,9 +148,6 @@ export default function LearnHub() {
                     <Icon className={`learn-food-tip-icon-svg h-5 w-5 ${color}`} strokeWidth={2} />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="mb-1 flex items-center gap-2">
-                      <span className="text-[10px] font-black tracking-[0.15em] text-slate-400">САНАА {number}</span>
-                    </div>
                     <h3 className="text-base font-black leading-snug text-slate-800 sm:text-lg">{title}</h3>
                     <span className="mt-3 inline-flex items-center gap-1 text-xs font-extrabold text-[#A74E80]">
                       Дэлгэрэнгүй <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -204,7 +191,6 @@ export default function LearnHub() {
                 <span className={`learn-food-tip-icon flex h-14 w-14 items-center justify-center rounded-[1.25rem] ${selectedFoodTip.iconBg}`}>
                   <SelectedFoodIcon className={`learn-food-tip-icon-svg h-7 w-7 ${selectedFoodTip.color}`} strokeWidth={1.9} />
                 </span>
-                <span className="text-xs font-black tracking-[0.16em] text-slate-400">САНАА {selectedFoodTip.number}</span>
               </div>
               <h2 id="food-tip-title" className="mt-5 pr-8 text-2xl font-black leading-tight text-slate-800">
                 {selectedFoodTip.title}
