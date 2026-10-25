@@ -97,7 +97,33 @@ const SAFETY = `Чи "Bloomy" апп-ын зөөлөн, найрсаг тусл�
 - Бие махбодийг ичгүүртэй зүйл гэж бүү хандаарай; ичгүүргүй, эерэг байлга.
 - Хариугаа ЗӨВХӨН JSON хэлбэрээр, өөр текстгүй буцаа.`;
 
+// Асран хамгаалагчид: охины сүүлийн 7 хоногийн ангилсан бүртгэлийн тойм (хувийн тэмдэглэл ОРОХГҮЙ)
+function buildWeeklySummaryPrompt(body: any) {
+  const days = (Array.isArray(body.days) ? body.days.slice(-7) : []).flatMap((entry: any) => {
+    if (!entry || typeof entry.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(entry.date)) return [];
+    const values: Record<string, string> = {};
+    Object.entries(CYCLE_LOG_VALUES).forEach(([category, allowed]) => {
+      const value = entry[category];
+      if (typeof value === "string" && allowed.includes(value)) values[category] = value;
+    });
+    return Object.keys(values).length ? [{ date: entry.date, ...values }] : [];
+  });
+  const name = String(body.daughterName || "Охин").slice(0, 40);
+  const phase = PHASE_MN[body.phase] ?? "тодорхойгүй үе";
+  const daysUntil = Number.isFinite(Number(body.daysUntil)) ? Number(body.daysUntil) : null;
+  return {
+    maxTokens: 500,
+    prompt: `Асран хамгаалагчид охин ${name}-ийн сүүлийн 7 хоногийн бүртгэлийн товч тойм бич. Охин одоо ${phase}-д байна.${
+      daysUntil != null && daysUntil >= 0 ? ` Дараагийн сарын тэмдэг ойролцоогоор ${daysUntil} хоногийн дараа.` : ""
+    }
+Доорх ангилсан өгөгдлийг л ашигла (сэтгэл, шинж тэмдэг, урсгал, арьс, нойр). Бүртгэгдээгүй зүйлийг таамаглаж бүү нэм. Охины хувийн байдлыг хүндэтгэсэн, буруутгаагүй өнгөөр бич. Оношлохгүй. Хүчтэй өвдөлт олон өдөр давтагдсан бол эмчтэй зөвлөлдөхийг зөөлөн санал болго. Өгөгдөл цөөн бол тэгж хэл.
+Өгөгдөл: ${JSON.stringify(days)}
+ЗӨВХӨН JSON: {"summary":"2-3 өгүүлбэрийн тойм","tips":["асран хамгаалагчийн хийж болох 1 өгүүлбэрийн халамж","...","..."]}`,
+  };
+}
+
 function buildPrompt(body: any): { prompt: string; maxTokens: number } | null {
+  if (body.type === "weekly_summary") return buildWeeklySummaryPrompt(body);
   if (body.type === "cycle_summary") return buildCycleSummaryPrompt(body);
   if (body.type === "cycle_prediction") return buildCyclePredictionPrompt(body);
   const phase = PHASE_MN[body.phase] ?? "тодорхойгүй үе";
@@ -238,6 +264,12 @@ export async function POST(req: Request) {
       const safe: Record<string, string> = {};
       fields.forEach((field) => { safe[field] = typeof json[field] === "string" ? json[field].slice(0, 700) : ""; });
       return Response.json(safe);
+    }
+    if (body.type === "weekly_summary") {
+      return Response.json({
+        summary: typeof json.summary === "string" ? json.summary.slice(0, 700) : "",
+        tips: Array.isArray(json.tips) ? json.tips.filter((tip: unknown) => typeof tip === "string").slice(0, 3).map((tip: string) => tip.slice(0, 240)) : [],
+      });
     }
     if (body.type === "cycle_prediction") {
       return Response.json({
