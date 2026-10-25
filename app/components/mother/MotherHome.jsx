@@ -1,12 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { useFamily } from "../../../context/FamilyContext";
-import { Copy, Share2, Users, Sparkles, Bell, Check, Lock, RefreshCw } from "lucide-react";
+import { Copy, Share2, Users, Sparkles, Check, Lock, RefreshCw, HeartHandshake, Send } from "lucide-react";
+import { MOM_QUICK_NOTES } from "../../../lib/data";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
 import ThinkingDots from "../ui/ThinkingDots";
 
 export default function MotherHome() {
+  const [customMessage, setCustomMessage] = useState("");
   const {
     familyCode,
     linked,
@@ -14,7 +17,6 @@ export default function MotherHome() {
     copied,
     day,
     shareWithMom,
-    momInbox,
     nudgeLoading,
     nudgesDone,
     phase,
@@ -23,16 +25,25 @@ export default function MotherHome() {
     daysLate,
     profile,
     daysUntil,
-    momUnread,
     selectedMood,
     currentNudge,
     copyCode,
     shareCode,
     refreshNudge,
     markNudgeDone,
-    openBell,
     careMessage,
+    sendToTeen,
+    sendToMom,
+    setToast,
   } = useFamily();
+
+  const sendCareMessage = async (message) => {
+    const sentToDaughter = await sendToTeen(message, "care");
+    if (!sentToDaughter) return false;
+    const savedCopy = await sendToMom(`Охиндоо илгээсэн үг: ${message}`, "care");
+    setToast(savedCopy ? `${daughterName}-д илгээлээ 💌` : "Охинд илгээлээ, хуулбар мэдэгдэл хадгалагдсангүй.");
+    return true;
+  };
 
   return (
     <div className="space-y-4">
@@ -42,23 +53,6 @@ export default function MotherHome() {
             Сайн байна уу{profile?.display_name ? `, ${profile.display_name}` : ""} 🤍
           </p>
           <h2 className="text-2xl font-black text-slate-700">Гэр бүлийн халамж</h2>
-        </div>
-        <div className="relative">
-          <button
-            onClick={openBell}
-            className="relative w-11 h-11 rounded-2xl bg-white border border-slate-100 flex items-center justify-center shadow-sm active:scale-95"
-            aria-label="Мэдэгдэл"
-          >
-            <Bell className={`w-5 h-5 text-slate-600 ${momUnread ? "bloom-wiggle" : ""}`} />
-            {momUnread > 0 && (
-              <span
-                style={{ minWidth: 20 }}
-                className="absolute -top-1 -right-1 h-5 px-1 rounded-full bb-bg-B794F4 text-white text-xs font-black flex items-center justify-center"
-              >
-                {momUnread}
-              </span>
-            )}
-          </button>
         </div>
       </div>
 
@@ -152,24 +146,6 @@ export default function MotherHome() {
         )}
       </div>
 
-      {momInbox
-        .filter((n) => n.kind === "sos" || n.kind === "supply")
-        .slice(0, 2)
-        .map((n) => (
-          <div
-            key={n.id}
-            className={`flex items-start gap-3 rounded-2xl p-4 bloom-pop border-2 ${
-              n.kind === "sos" ? "bb-bg-E9DDFC-50 bb-border-B794F4-50" : "bb-bg-FFF7FB bb-border-D8C4F7-60"
-            }`}
-          >
-            <span className="text-2xl">{n.kind === "sos" ? "🆘" : "🛍️"}</span>
-            <div className="flex-1">
-              <p className="font-extrabold text-sm text-slate-700">{n.text}</p>
-              <p className="text-xs font-bold text-slate-400 mt-0.5">{n.time}</p>
-            </div>
-          </div>
-        ))}
-
       {/* AI халамжийн сануулга */}
       <Card className="bb-grad-7">
         <SectionTitle
@@ -214,6 +190,50 @@ export default function MotherHome() {
           </p>
         )}
       </Card>
+
+      {linked && (
+        <Card>
+          <SectionTitle icon={HeartHandshake} title="Охиндоо зөөлөн үг илгээх" />
+          <div className="flex flex-wrap gap-2">
+            {MOM_QUICK_NOTES.map((message) => (
+              <button
+                key={message}
+                type="button"
+                onClick={() => sendCareMessage(message)}
+                className="rounded-full bb-bg-FFF7FB border-2 border-slate-100 text-slate-700 text-xs font-extrabold px-3 py-2 bb-hover-border-CDB4F5 active:scale-95 transition"
+              >
+                {message}
+              </button>
+            ))}
+          </div>
+          <form
+            className="mt-4 flex items-center gap-2"
+            onSubmit={async (event) => {
+              event.preventDefault();
+              const message = customMessage.trim();
+              if (!message) return;
+              if (await sendCareMessage(message)) setCustomMessage("");
+            }}
+          >
+            <input
+              value={customMessage}
+              onChange={(event) => setCustomMessage(event.target.value)}
+              maxLength={300}
+              placeholder="Өөрийн үгээ энд бичээрэй…"
+              aria-label="Охиндоо илгээх зөөлөн үг"
+              className="min-w-0 flex-1 rounded-2xl border-2 border-pink-100 bg-white px-4 py-3 text-sm font-semibold text-slate-700 placeholder:text-slate-400 focus:border-pink-300 focus:outline-none"
+            />
+            <button
+              type="submit"
+              disabled={!customMessage.trim()}
+              aria-label="Охиндоо илгээх"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bb-bg-E0679F text-white disabled:cursor-not-allowed disabled:opacity-40 active:scale-95"
+            >
+              <Send className="h-4 w-4" />
+            </button>
+          </form>
+        </Card>
+      )}
     </div>
   );
 }
