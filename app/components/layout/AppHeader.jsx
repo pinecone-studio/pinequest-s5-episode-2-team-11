@@ -1,4 +1,4 @@
-import { Sun, Moon, ChevronLeft, Bell } from "lucide-react";
+import { Sun, Moon, Bell } from "lucide-react";
 import BloomyLogo from "../ui/BloomyLogo";
 import { useTheme } from "../../../context/ThemeContext";
 
@@ -11,7 +11,6 @@ export default function AppHeader({ showNav, view, tab, momUnread = 0, onOpenSet
     >
       <div className="flex items-center justify-between gap-2">
         <button type="button" onClick={onLogoClick} aria-label="Bloomy руу буцах" className="flex items-center gap-1.5 rounded-xl text-left active:scale-95 transition">
-          {!showNav && <ChevronLeft className="h-5 w-5 text-slate-500" />}
           <BloomyLogo className="w-8 h-8 shrink-0" />
           <span className="font-black text-slate-700">Bloomy</span>
         </button>
