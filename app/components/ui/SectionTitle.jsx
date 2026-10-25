@@ -1,4 +1,4 @@
-export default function SectionTitle({ icon: Icon, title, right, tone = "sage" }) {
+export default function SectionTitle({ icon: Icon, title, right, tone = "sage", titleStyle }) {
   const bg = tone === "peach" ? "bb-bg-E9DDFC-60" : "bb-bg-FDE7F1";
   const fg = tone === "peach" ? "bb-text-7C4DCC" : "bb-text-B83B7E";
   return (
@@ -9,7 +9,7 @@ export default function SectionTitle({ icon: Icon, title, right, tone = "sage" }
             <Icon className={`w-4 h-4 ${fg}`} />
           </span>
         )}
-        <h3 className="font-extrabold text-slate-700 text-base">{title}</h3>
+        <h3 className="font-extrabold text-slate-700 text-base" style={titleStyle}>{title}</h3>
       </div>
       {right}
     </div>

@@ -1,11 +1,12 @@
 import AuthScreen from "../onboarding/AuthScreen";
 import CycleSetup from "../onboarding/CycleSetup";
 import DaughterHome from "../daughter/DaughterHome";
-import DaughterInsights from "../daughter/DaughterInsights";
-import DaughterSupplies from "../daughter/DaughterSupplies";
+import DaughterHelper from "../daughter/DaughterHelper";
+import DaughterMessages from "../daughter/DaughterMessages";
 import MotherHome from "../mother/MotherHome";
 import MotherMessages from "../mother/MotherMessages";
 import MotherSupplies from "../mother/MotherSupplies";
+import MotherCalendar from "../mother/MotherCalendar";
 import LearnHub from "../learn/LearnHub";
 import SettingsScreen from "../settings/SettingsScreen";
 import FriendsScreen from "../friends/FriendsScreen";
@@ -42,13 +43,15 @@ export default function CurrentScreen({ family, pathname }) {
   if (tab === "learn") return <LearnHub />;
 
   if (view === "daughter") {
-    if (tab === "insights") return <DaughterInsights />;
-    if (tab === "supplies") return <DaughterSupplies />;
+    if (tab === "messages") return <DaughterMessages />;
+    if (tab === "insights" || tab === "supplies")
+      return <DaughterHelper key={tab} initial={tab === "supplies" ? "supplies" : "chat"} />;
     if (tab === "friends") return <FriendsScreen />;
     return <DaughterHome />;
   }
 
   if (tab === "supplies") return <MotherSupplies />;
+  if (tab === "calendar") return <MotherCalendar />;
   if (tab === "messages") return <MotherMessages />;
   return <MotherHome />;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   LogOut,
   User,
@@ -12,24 +12,16 @@ import {
   Copy,
   Check,
   Share2,
-  Pencil,
   AlertCircle,
   Loader2,
-  ChevronLeft,
-  ChevronRight,
+  Pencil,
 } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import Card from "../ui/Card";
 import SectionTitle from "../ui/SectionTitle";
 import PageHeader from "../ui/PageHeader";
 import CycleSetup from "../onboarding/CycleSetup";
-
-const localDateKey = (date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
+import MyFriendCode from "../friends/MyFriendCode";
 
 export default function SettingsScreen() {
   const {
@@ -56,58 +48,66 @@ export default function SettingsScreen() {
     lastPeriodStart,
     updateName,
     signOut,
+    setToast,
   } = useFamily();
   const [editingCycle, setEditingCycle] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState(profile?.display_name ?? "");
-  const [journalNotes, setJournalNotes] = useState({});
-  const [journalDate, setJournalDate] = useState(() => localDateKey(new Date()));
-  const [calendarMonth, setCalendarMonth] = useState(() => {
-    const date = new Date();
-    return new Date(date.getFullYear(), date.getMonth(), 1);
-  });
-  const [journalDraft, setJournalDraft] = useState("");
-  const [journalLoaded, setJournalLoaded] = useState(false);
+  const [profilePhoto, setProfilePhoto] = useState("");
+  const photoInput = useRef(null);
+  const isMother = view === "mother";
 
   useEffect(() => {
-    const prefix = "bloom:private-note:";
-    const entries = Object.keys(window.localStorage)
-      .filter((key) => key.startsWith(prefix))
-      .reduce((notes, key) => {
-        const value = window.localStorage.getItem(key);
-        if (value) notes[key.slice(prefix.length)] = value;
-        return notes;
-      }, {});
-    Object.keys(window.localStorage).filter((key) => key.startsWith("bloom:checkin:")).forEach((key) => {
-      const date = key.slice("bloom:checkin:".length);
-      try {
-        const checkin = JSON.parse(window.localStorage.getItem(key));
-        if (checkin?.reason && !entries[date]) {
-          entries[date] = `Яагаад ингэж мэдэрсэн бэ?\n${checkin.reason}`;
-          window.localStorage.setItem(`${prefix}${date}`, entries[date]);
-        }
-        if (checkin?.reason) {
-          delete checkin.reason;
-          window.localStorage.setItem(key, JSON.stringify(checkin));
-        }
-      } catch {
-        // Хуучин check-in өгөгдөл уншигдахгүй бол алгасна.
-      }
-    });
-    setJournalNotes(entries);
-    setJournalDraft(entries[journalDate] ?? "");
-    setJournalLoaded(true);
-  }, []);
+    if (!isMother || !profile?.id) {
+      setProfilePhoto("");
+      return;
+    }
+    setProfilePhoto(localStorage.getItem(`bloomy:profile-photo:${profile.id}`) ?? "");
+  }, [isMother, profile?.id]);
 
+  const changeProfilePhoto = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file || !isMother || !profile?.id) return;
+
+    try {
+      const url = URL.createObjectURL(file);
+      const photo = await new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => {
+          const canvas = document.createElement("canvas");
+          const size = Math.min(image.naturalWidth, image.naturalHeight);
+          canvas.width = 256;
+          canvas.height = 256;
+          const context = canvas.getContext("2d");
+          context.drawImage(
+            image,
+            (image.naturalWidth - size) / 2,
+            (image.naturalHeight - size) / 2,
+            size,
+            size,
+            0,
+            0,
+            256,
+            256,
+          );
+          URL.revokeObjectURL(url);
+          resolve(canvas.toDataURL("image/jpeg", 0.82));
+        };
+        image.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error("Unable to read image"));
+        };
+        image.src = url;
+      });
+      localStorage.setItem(`bloomy:profile-photo:${profile.id}`, photo);
+      setProfilePhoto(photo);
+      setToast("Профайл зураг шинэчлэгдлээ 📷");
+    } catch {
+      setToast("Зураг хадгалж чадсангүй. Өөр зураг сонгоод үзээрэй.");
+    }
+    event.target.value = "";
+  };
   if (editingCycle) return <CycleSetup onDone={() => setEditingCycle(false)} />;
-
-  const isMother = view === "mother";
-  const monthOffset = (calendarMonth.getDay() + 6) % 7;
-  const calendarCellCount = Math.ceil((monthOffset + new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 0).getDate()) / 7) * 7;
-  const calendarDates = Array.from({ length: calendarCellCount }, (_, i) =>
-    new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), i - monthOffset + 1),
-  );
-  const monthLabel = new Intl.DateTimeFormat("mn-MN", { year: "numeric", month: "long" }).format(calendarMonth);
 
   return (
     <div className="space-y-4">
@@ -138,30 +138,58 @@ export default function SettingsScreen() {
             </button>
           </form>
         ) : (
-          <button
-            onClick={() => {
-              setName(profile?.display_name ?? "");
-              setEditingName(true);
-            }}
-            className="w-full flex items-center gap-3 text-left"
-          >
-            <span className="w-12 h-12 rounded-2xl bb-bg-E8F5E9 flex items-center justify-center text-2xl">
-              {isMother ? "🤝" : "🌱"}
-            </span>
-            <span className="flex-1 min-w-0">
-              <span className="block font-extrabold text-slate-700 truncate">
-                {profile?.display_name || "—"}
+          <div className="w-full flex items-center gap-3">
+            <span className="relative w-12 h-12 shrink-0">
+              <span className="w-12 h-12 overflow-hidden rounded-2xl bb-bg-E8F5E9 flex items-center justify-center text-2xl">
+                {isMother && profilePhoto ? (
+                  <img src={profilePhoto} alt="Профайл зураг" className="h-full w-full object-cover" />
+                ) : isMother ? "🤝" : "🌱"}
               </span>
-              <span className="block text-xs font-semibold text-slate-400 truncate">
-                {session?.user?.email}
-              </span>
+              {isMother && (
+                <>
+                  <input
+                    ref={photoInput}
+                    type="file"
+                    accept="image/*"
+                    onChange={changeProfilePhoto}
+                    className="hidden"
+                    aria-label="Профайл зураг сонгох"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => photoInput.current?.click()}
+                    aria-label="Профайл зураг солих"
+                    className="absolute -right-1 -bottom-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-white text-slate-500 shadow-sm"
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </button>
+                </>
+              )}
             </span>
-            <Pencil className="w-4 h-4 text-slate-400" />
-          </button>
+            <button
+              type="button"
+              onClick={() => {
+                setName(profile?.display_name ?? "");
+                setEditingName(true);
+              }}
+              className="flex min-w-0 flex-1 items-center gap-3 text-left"
+            >
+              <span className="flex-1 min-w-0">
+                <span className="block font-extrabold text-slate-700 truncate">
+                  {profile?.display_name || "—"}
+                </span>
+                <span className="block text-xs font-semibold text-slate-400 truncate">
+                  {session?.user?.email}
+                </span>
+              </span>
+              <Pencil className="w-4 h-4 text-slate-400" />
+            </button>
+          </div>
         )}
       </Card>
-
+              <MyFriendCode />
       <Card>
+        
         <SectionTitle icon={Users} title="Гэр бүл" />
         {isMother ? (linked ? (
           <>
@@ -300,67 +328,7 @@ export default function SettingsScreen() {
             </button>
           </Card>
 
-          <Card>
-            <SectionTitle icon={Pencil} title="Миний өдрийн тэмдэглэл" />
-            <div className="flex items-center justify-between">
-              <button type="button" aria-label="Өмнөх сар" onClick={() => setCalendarMonth((month) => new Date(month.getFullYear(), month.getMonth() - 1, 1))}
-                className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-50 text-slate-600">
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <p className="font-extrabold capitalize text-slate-700">{monthLabel}</p>
-              <button type="button" aria-label="Дараагийн сар" onClick={() => setCalendarMonth((month) => new Date(month.getFullYear(), month.getMonth() + 1, 1))}
-                className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-50 text-slate-600">
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="mt-3 grid grid-cols-7 text-center text-[11px] font-extrabold text-slate-400">
-              {["Да", "Мя", "Лх", "Пү", "Ба", "Бя", "Ня"].map((day) => <span key={day} className="py-2">{day}</span>)}
-            </div>
-            <div className="grid grid-cols-7 gap-y-1 text-center">
-              {calendarDates.map((date) => {
-                const key = localDateKey(date);
-                const inMonth = date.getMonth() === calendarMonth.getMonth();
-                const selected = key === journalDate;
-                const hasNote = Boolean(journalNotes[key]);
-                const isToday = key === localDateKey(new Date());
-                return (
-                  <button key={key} type="button" onClick={() => {
-                    setJournalDate(key);
-                    setJournalDraft(journalNotes[key] ?? "");
-                    if (!inMonth) setCalendarMonth(new Date(date.getFullYear(), date.getMonth(), 1));
-                  }}
-                    className={`relative mx-auto flex h-10 w-10 flex-col items-center justify-center rounded-full text-sm font-bold ${
-                      selected ? "bb-bg-FDE7F1 bb-text-B83B7E" : inMonth ? "text-slate-700 hover:bg-slate-50" : "text-slate-300"
-                    } ${isToday && !selected ? "ring-1 ring-purple-300" : ""}`}>
-                    <span>{date.getDate()}</span>
-                    {hasNote && <span className={`absolute bottom-1 h-1 w-1 rounded-full ${selected ? "bg-pink-600" : "bg-purple-400"}`} />}
-                  </button>
-                );
-              })}
-            </div>
-            <textarea
-              value={journalDraft}
-              onChange={(event) => setJournalDraft(event.target.value)}
-              rows={4}
-              placeholder="Өнөөдөр юу болсон, юу мэдэрч байгаагаа бичээрэй…"
-              className="mt-3 w-full rounded-2xl border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-700 placeholder:text-slate-400"
-            />
-            <button
-              type="button"
-              disabled={!journalLoaded}
-              onClick={() => {
-                const next = { ...journalNotes };
-                if (journalDraft.trim()) next[journalDate] = journalDraft.trim();
-                else delete next[journalDate];
-                window.localStorage.setItem(`bloom:private-note:${journalDate}`, next[journalDate] ?? "");
-                if (!next[journalDate]) window.localStorage.removeItem(`bloom:private-note:${journalDate}`);
-                setJournalNotes(next);
-              }}
-              className="mt-2 w-full rounded-2xl bg-slate-100 py-3 text-sm font-extrabold text-slate-600 disabled:opacity-50"
-            >
-              Тэмдэглэлээ хадгалах
-            </button>
-          </Card>
+          
 
           <Card>
             <SectionTitle icon={shareWithMom ? Unlock : Lock} title="Нууцлал" />

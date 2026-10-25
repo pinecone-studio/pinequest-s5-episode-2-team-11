@@ -1,17 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import { useFamily } from "../../../context/FamilyContext";
-import { Users, Package, X, ChevronRight, AlertCircle, Droplets, Brain, BookOpen } from "lucide-react";
+import { Users, Package, ChevronRight, AlertCircle, Droplets, Brain, BookOpen, CalendarDays } from "lucide-react";
 import { PHASE_COLORS, PHASES } from "../../../lib/data";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
 import CycleRing from "./CycleRing";
 import HoroscopeCard from "./HoroscopeCard";
 import FriendsQuickCard from "../friends/FriendsQuickCard";
-import IncomingSosCard from "../friends/IncomingSosCard";
-import TodayCheckin from "./TodayCheckin";
+import IncomingSosCard from "../friends/IncomingSosCard"; 
+import PeriodCycleTracker from "./PeriodCycleTracker";
+import CyclePredictionCard from "./CyclePredictionCard";
 
 export default function DaughterHome() {
+  const [cycleModalOpen, setCycleModalOpen] = useState(false);
   const {
     linked,
     daughterName,
@@ -20,7 +23,6 @@ export default function DaughterHome() {
     hasCycle,
     noPeriodYet,
     daysLate,
-    markRead,
     cycleLength,
     periodLength,
     day,
@@ -28,8 +30,8 @@ export default function DaughterHome() {
     phaseKey,
     isPeriod,
     daysUntil,
+    lastPeriodStart,
     lowSupplyCount,
-    latestTeenMsg,
     selectedMood,
     startPeriod,
     openSos,
@@ -51,42 +53,30 @@ export default function DaughterHome() {
         </span>
       </div>
 
-      {latestTeenMsg && (
-        <div className="flex items-start gap-3 rounded-2xl bb-bg-E9DDFC-50 p-4 bloom-pop">
-          <span className="text-2xl">👩</span>
-          <div className="flex-1">
-            <p className="text-xs font-extrabold uppercase tracking-widest bb-text-7C4DCC">
-              Асран хамгаалагчаас · {latestTeenMsg.time}
-            </p>
-            <p className="font-bold text-slate-700">{latestTeenMsg.text}</p>
-          </div>
-          <button
-            onClick={() => markRead(latestTeenMsg.id)}
-            className="text-slate-400 hover:text-slate-600"
-            aria-label="Хаах"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
       <IncomingSosCard />
       <FriendsQuickCard onOpen={() => setTab("friends")} />
 
       <HoroscopeCard />
+      {hasCycle && <CyclePredictionCard daysUntil={daysUntil} cycleLength={cycleLength} lastPeriodStart={lastPeriodStart} />}
 
       {/* Мөчлөгийн тойрог */}
       {hasCycle ? (
         <Card>
-          <SectionTitle icon={Droplets} title="Миний мөчлөг" />
-          <CycleRing
-            day={day}
-            cycleLength={cycleLength}
-            periodLength={periodLength}
-            phaseKey={phaseKey}
-            daysUntil={daysUntil}
-            daysLate={daysLate}
-          />
+          <SectionTitle icon={Droplets} title="Миний мөчлөг" right={
+            <button type="button" onClick={() => setCycleModalOpen(true)} className="flex items-center gap-1 rounded-full bb-bg-E9DDFC-50 px-3 py-1.5 text-xs font-extrabold bb-text-7C4DCC">
+              <CalendarDays className="h-3.5 w-3.5" /> Хуанли
+            </button>
+          } />
+          <button type="button" onClick={() => setCycleModalOpen(true)} className="mx-auto block rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400" aria-label="Мөчлөгийн хуанли ба өдрийн тэмдэглэл нээх">
+            <CycleRing
+              day={day}
+              cycleLength={cycleLength}
+              periodLength={periodLength}
+              phaseKey={phaseKey}
+              daysUntil={daysUntil}
+              daysLate={daysLate}
+            />
+          </button>
           <div className="mt-3 flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs font-bold text-slate-500">
             {Object.entries(PHASE_COLORS).map(([k, c]) => (
               <span key={k} className="flex items-center gap-1">
@@ -185,7 +175,10 @@ export default function DaughterHome() {
         </button>
       </div>
 
-      <TodayCheckin />
+
+      {cycleModalOpen && (
+        <PeriodCycleTracker onBack={() => setCycleModalOpen(false)} cycleLength={cycleLength} periodLength={periodLength} lastPeriodStart={lastPeriodStart} />
+      )}
     </div>
   );
 }

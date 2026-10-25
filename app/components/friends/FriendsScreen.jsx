@@ -5,11 +5,12 @@
  * Өгөгдөл: context/FriendsContext.jsx · Database: supabase/friends.sql
  */
 
-import { useRef, useState } from "react";
-import { Users, Plus, Lock, Copy, Check, UserPlus, Loader2, Heart, ShieldCheck, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState } from "react";
+import { Users, Plus, Lock, UserPlus, Loader2, ChevronRight, Phone, X } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import { useFriends } from "../../../context/FriendsContext";
 import { GROUP_EMOJIS, PLACE_MAX } from "../../../lib/friends";
+import { AVATAR_BACKGROUNDS } from "../../../lib/wardrobe";
 import Card from "../ui/Card";
 import SectionTitle from "../ui/SectionTitle";
 import SosCallButton from "./SosCallButton";
@@ -25,139 +26,204 @@ const Label = ({ children }) => (
 const chip = (on, onCls, offCls = "bg-white border-slate-100 text-slate-500") =>
   `px-3 py-1.5 rounded-full text-xs font-extrabold border-2 transition ${on ? onCls : offCls}`;
 
+/** Доороос гарч ирэх цонх */
+function Sheet({ title, onClose, children }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: "rgba(43,34,48,0.4)" }} onClick={onClose}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        onClick={(e) => e.stopPropagation()}
+        className="bloom-pop w-full max-w-md max-h-[88vh] overflow-y-auto rounded-t-[28px] bb-bg-FFF7FB px-4 pt-2"
+        style={{ paddingBottom: "max(20px, env(safe-area-inset-bottom))" }}
+      >
+        <span className="mx-auto mb-3 block h-1.5 w-10 rounded-full bg-slate-200" />
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-lg font-black text-slate-800">{title}</h2>
+          <button onClick={onClose} aria-label="Хаах" className="w-9 h-9 rounded-full bg-white border-2 border-slate-100 flex items-center justify-center text-slate-500">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export default function FriendsScreen() {
-  const { setToast } = useFamily();
+
   const F = useFriends();
-  const { friends, groups, activeGroup, sosStage, placeInfo } = F;
+  const { friends, sosStage, outgoing, replyText } = F;
+  const [sheet, setSheet] = useState(null); // "sos" | "friends" | "groups"
   const nameOf = (id) => friends.find((f) => f.id === id)?.display_name ?? "…";
+  const firstReply = outgoing?.responses?.[0];
 
   return (
     <div className="space-y-4 pb-2">
-      {/* ---------- Гарчиг (жижиг) ---------- */}
-      <div className="flex items-center gap-3 bloom-fade">
-        <div className="w-10 h-10 rounded-2xl bb-grad-sos-soft border bb-border-F8D3E6 flex items-center justify-center shrink-0">
-          <Heart className="w-5 h-5 bb-text-B83B7E fill-current" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-black uppercase tracking-[0.16em] bb-text-B83B7E">Найзууд · SOS</p>
-          <h2 className="text-xl leading-tight font-black text-slate-800">Пад хэрэгтэй юу?</h2>
-        </div>
-        <span className="inline-flex items-center gap-1 rounded-full bg-white border border-slate-100 px-2.5 py-1 text-xs font-extrabold text-slate-500 shrink-0">
-          <Users className="w-3.5 h-3.5 bb-text-7C4DCC" /> {friends.length}
-        </span>
+      {/* ---------- Гарчиг ---------- */}
+      <div className="flex items-center justify-between gap-3 bloom-fade">
+        <h2 className="text-2xl font-black text-slate-800">Найзууд</h2>
+        <button
+          onClick={() => setSheet("friends")}
+          className="inline-flex items-center gap-1.5 rounded-full bb-bg-FDE7F1 bb-text-B83B7E px-3 py-2 text-xs font-extrabold active:scale-95 transition"
+        >
+          <UserPlus className="w-4 h-4" /> Найз нэмэх
+        </button>
       </div>
 
       <IncomingSosCard />
 
-      {/* ---------- SOS илгээх (жижиг) ---------- */}
-      <Card className="!p-4 bb-grad-7">
-        <Label>Хэнд илгээх вэ?</Label>
-        {groups.length ? (
-          <div className="flex flex-wrap gap-2">
-            {groups.map((g) => (
-              <button
-                key={g.id}
-                onClick={() => F.setActiveGroupId(g.id)}
-                className={chip(
-                  activeGroup?.id === g.id,
-                  "bb-bg-F48FB1 border-transparent text-white",
-                  "bg-white bb-border-F8D3E6 text-slate-500",
-                )}
-              >
-                {g.emoji} {g.name}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm font-semibold text-slate-400">
-            {friends.length
-              ? "Бүлэг алга байна — доороос үүсгээрэй."
-              : "Эхлээд найзаа кодоор нэмээд бүлэг үүсгээрэй."}
+      {/* ---------- SOS (нэг мөр) ---------- */}
+      <button
+        onClick={() => setSheet("sos")}
+        className="w-full flex items-center gap-3 rounded-3xl p-3 bb-grad-sos-soft border bb-border-F8D3E6 shadow-sm text-left active:scale-95 transition"
+      >
+        <span className="w-12 h-12 shrink-0 rounded-full bb-grad-sos text-white flex items-center justify-center shadow-md">
+          <Phone className="w-5 h-5" />
+        </span>
+        <span className="flex-1 min-w-0">
+          <span className="block font-black text-slate-800">
+            {sosStage === "sent" ? "Дохио очлоо 📣" : sosStage === "ringing" ? "Илгээж байна…" : "Пад хэрэгтэй юу?"}
+          </span>
+          <span className="block text-xs font-semibold text-slate-500 bx-trunc">
+            {firstReply ? `${firstReply.responder_name}: ${replyText(firstReply.reply)}` : "Найзаа сонгоод дохио илгээ"}
+          </span>
+        </span>
+        <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+      </button>
+
+      {/* ---------- Найзуудын дүр ---------- */}
+      <Card className="!p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <p className="font-black text-slate-800">
+            Миний найзууд <span className="text-slate-400">· {friends.length}</span>
           </p>
-        )}
-
-        <label
-          htmlFor="sos-place"
-          className="block mt-3 mb-2 text-xs font-extrabold uppercase tracking-widest text-slate-400"
-        >
-          Хаана байна?
-        </label>
-        <input
-          id="sos-place"
-          value={F.place}
-          onChange={(e) => F.setPlace(e.target.value.slice(0, PLACE_MAX))}
-          maxLength={PLACE_MAX}
-          placeholder="ж: 2-р давхрын бие засах газар"
-          autoComplete="off"
-          className="w-full rounded-2xl border-2 border-slate-100 bg-white px-4 py-2.5 font-bold text-slate-700 outline-none bb-focus-border-F48FB1"
-        />
-
-        <div className="mt-4 flex items-center gap-4">
-          <SosCallButton size={84} stage={sosStage} onClick={F.sendSos} />
-          <div className="flex-1 min-w-0">
-            <p className="text-lg font-black text-slate-800 leading-tight">
-              {sosStage === "ringing"
-                ? "Дохио илгээж байна…"
-                : sosStage === "sent"
-                  ? "Дохио очлоо 📣"
-                  : "Пад хэрэгтэй байна"}
-            </p>
-            <p className="mt-0.5 text-xs font-semibold text-slate-500 leading-snug">
-              {sosStage === "idle"
-                ? activeGroup
-                  ? `Товчийг дарахад «${activeGroup.name}» бүлгийн ${activeGroup.members.length} найзад очно.`
-                  : "Эхлээд бүлэг үүсгээрэй."
-                : placeInfo.short
-                  ? `📍 ${placeInfo.short} — найзууддаа мэдэгдлээ.`
-                  : "Найзууддаа мэдэгдлээ."}
-            </p>
-          </div>
-        </div>
-
-        <FriendReplies />
-        {sosStage === "sent" && (
-          <button
-            onClick={F.resolveSos}
-            className="mt-3 w-full rounded-2xl py-3 font-extrabold bb-bg-FDE7F1 bb-text-B83B7E active:scale-95 transition"
-          >
-            Болсон, баярлалаа 💗
+          <button onClick={() => setSheet("groups")} className="text-xs font-extrabold bb-text-B83B7E">
+            Бүлгүүд
           </button>
-        )}
+        </div>
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {friends.map((friend) => (
+            <div key={friend.id} className="w-20 shrink-0 text-center">
+              <div
+                className="rounded-2xl overflow-hidden flex justify-center pt-1.5 border border-slate-100"
+                style={{ background: AVATAR_BACKGROUNDS.find((o) => o.id === friend.avatar_background)?.color ?? AVATAR_BACKGROUNDS[0].color }}
+              >
+                <Avatar look={friend.avatar_look} skin={friend.avatar_skin} label={`${friend.display_name}-ийн дүр`} idle size={56} />
+              </div>
+              <p className="mt-1 truncate text-xs font-extrabold text-slate-600">{friend.display_name}</p>
+            </div>
+          ))}
+          <button
+            onClick={() => setSheet("friends")}
+            className="w-20 shrink-0 flex flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed bb-border-F8D3E6 bb-text-B83B7E text-xs font-extrabold"
+            style={{ minHeight: 112 }}
+          >
+            <Plus className="w-5 h-5" /> Нэмэх
+          </button>
+        </div>
       </Card>
 
-            {/* ---------- Миний дүр · Алхалт · Дэлгүүр ---------- */}
+      {/* ---------- Миний дүр · Алхалт · Дэлгүүр ---------- */}
       <AvatarCard />
 
-      {/* ---------- Найзууд + бүлгүүд нэг дор ---------- */}
-      <Card>
-        <MyFriends setToast={setToast} />
-        <div className="my-5 border-t border-slate-100" />
-        <MyGroups nameOf={nameOf} />
-      </Card>
+      {sheet === "sos" && (
+        <Sheet title="Пад хэрэгтэй юу?" onClose={() => setSheet(null)}>
+          <SosPanel />
+        </Sheet>
+      )}
+      {sheet === "friends" && (
+        <Sheet title="Найз нэмэх" onClose={() => setSheet(null)}>
+          <MyFriends />
+        </Sheet>
+      )}
+      {sheet === "groups" && (
+        <Sheet title="Бүлгүүд" onClose={() => setSheet(null)}>
+          <MyGroups nameOf={nameOf} />
+        </Sheet>
+      )}
+    </div>
+  );
+}
+
+/* ================= SOS илгээх ================= */
+
+function SosPanel() {
+  const F = useFriends();
+  const { friends, groups, sosStage, placeInfo } = F;
+  const [ids, setIds] = useState([]);
+  const toggle = (id) => setIds((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+
+  if (!friends.length) {
+    return <p className="py-6 text-center text-sm font-semibold text-slate-400">Эхлээд найзаа кодоор нэмээрэй 🌸</p>;
+  }
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <Label>Хэнд?</Label>
+        <div className="flex flex-wrap gap-2">
+          {groups.map((g) => {
+            const on = g.members.length > 0 && g.members.length === ids.length && g.members.every((id) => ids.includes(id));
+            return (
+              <button key={g.id} onClick={() => setIds(g.members)} className={chip(on, "bb-bg-B794F4 border-transparent text-white")}>
+                {g.emoji} {g.name}
+              </button>
+            );
+          })}
+          {friends.map((f) => (
+            <button key={f.id} onClick={() => toggle(f.id)} className={chip(ids.includes(f.id), "bb-bg-F48FB1 border-transparent text-white")}>
+              {ids.includes(f.id) ? "✓ " : ""}
+              {f.display_name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <input
+        value={F.place}
+        onChange={(e) => F.setPlace(e.target.value.slice(0, PLACE_MAX))}
+        maxLength={PLACE_MAX}
+        placeholder="📍 Хаана байна? (заавал биш)"
+        aria-label="Хаана байна?"
+        autoComplete="off"
+        className="w-full rounded-2xl border-2 border-slate-100 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 outline-none bb-focus-border-F48FB1"
+      />
+
+      <div className="flex items-center gap-4">
+        <SosCallButton size={72} stage={sosStage} disabled={!ids.length} onClick={() => F.sendSos(ids)} />
+        <p className="flex-1 text-sm font-semibold text-slate-500 leading-snug">
+          {sosStage === "ringing"
+            ? "Дохио илгээж байна…"
+            : sosStage === "sent"
+              ? placeInfo.short
+                ? `📍 ${placeInfo.short} — найзууддаа мэдэгдлээ.`
+                : "Найзууддаа мэдэгдлээ."
+              : ids.length
+                ? `${ids.length} найзад дохио очно. Товчийг дар.`
+                : "Хэнд илгээхээ сонго."}
+        </p>
+      </div>
+
+      <FriendReplies />
+      {sosStage === "sent" && (
+        <button onClick={F.resolveSos} className="w-full rounded-2xl py-3 font-extrabold bb-bg-FDE7F1 bb-text-B83B7E active:scale-95 transition">
+          Болсон, баярлалаа 💗
+        </button>
+      )}
     </div>
   );
 }
 
 /* ================= Миний найзууд: код, нэмэх, жагсаалт ================= */
 
-function MyFriends({ setToast }) {
-  const { friendCode, friends, addFriend, removeFriend } = useFriends();
+function MyFriends() {
+  const { friends, addFriend, removeFriend } = useFriends();
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [copied, setCopied] = useState(false);
   const [confirmId, setConfirmId] = useState(null);
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(friendCode);
-      setToast("Найзын код хуулагдлаа 📋");
-    } catch {
-      setToast(`Чиний код: ${friendCode}`);
-    }
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -171,29 +237,11 @@ function MyFriends({ setToast }) {
 
   return (
     <div>
-      <SectionTitle icon={UserPlus} title="Миний найзууд" />
-
-      {friends.length > 0 && <FriendsAvatarCarousel friends={friends} />}
-
-      <div className="flex items-center gap-2 rounded-2xl bb-bg-FDE7F1 p-3">
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400">Миний найзын код</p>
-          <p className="text-2xl font-black tracking-widest bb-text-B83B7E">{friendCode || "……"}</p>
-        </div>
-        <button
-          onClick={copy}
-          disabled={!friendCode}
-          className="w-11 h-11 rounded-2xl bg-white bb-text-B83B7E flex items-center justify-center active:scale-90"
-          aria-label="Найзын кодоо хуулах"
-        >
-          {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-        </button>
-      </div>
-      <p className="mt-2 text-xs font-semibold text-slate-400">
-        Энэ кодоо зөвхөн итгэдэг найздаа өг. Найз чинь кодыг чинь оруулахад та хоёр найз болно.
+      <p className="text-xs font-semibold text-slate-400">
+        Найзынхаа кодыг оруулаарай. Өөрийн код чинь <b>Профайл</b> хэсэгт байгаа.
       </p>
 
-      <form onSubmit={submit} className="mt-4 flex gap-2">
+      <form onSubmit={submit} className="mt-3 flex gap-2">
         <input
           id="friend-code"
           value={code}
@@ -247,58 +295,6 @@ function MyFriends({ setToast }) {
         )}
       </div>
     </div>
-  );
-}
-
-function FriendsAvatarCarousel({ friends }) {
-  const listRef = useRef(null);
-
-  const scroll = (direction) => {
-    listRef.current?.scrollBy({ left: direction * 180, behavior: "smooth" });
-  };
-
-  return (
-    <section aria-label="Найзуудын дүр" className="mt-3">
-      <div className="mb-2 flex items-center justify-between">
-        <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400">Найзуудын дүр</p>
-        {friends.length > 1 && (
-          <div className="flex gap-1">
-            <button
-              type="button"
-              onClick={() => scroll(-1)}
-              aria-label="Өмнөх найзын дүр"
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-white border border-slate-100 text-slate-500"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => scroll(1)}
-              aria-label="Дараагийн найзын дүр"
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-white border border-slate-100 text-slate-500"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-        )}
-      </div>
-      <div
-        ref={listRef}
-        className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2"
-      >
-        {friends.map((friend) => (
-          <div
-            key={friend.id}
-            className="flex w-28 shrink-0 snap-start flex-col items-center rounded-2xl border border-slate-100 bg-white px-2 pt-2"
-          >
-            <Avatar look={friend.avatar_look} skin={friend.avatar_skin} idle size={76} />
-            <p className="w-full truncate pb-2 text-center text-xs font-extrabold text-slate-600">
-              {friend.display_name}
-            </p>
-          </div>
-        ))}
-      </div>
-    </section>
   );
 }
 
