@@ -134,6 +134,22 @@ JSON: {"label": "мэдрэмжийн 1-2 үгтэй нэр", "title": "дула
 JSON: {"nudge": "..."}`,
     };
   }
+  if (body.type === "parent_chat") {
+    const messages = Array.isArray(body.messages)
+      ? body.messages
+          .slice(-8)
+          .filter((item: any) => item && ["user", "assistant"].includes(item.role))
+          .map((item: any) => `${item.role === "user" ? "Асран хамгаалагч" : "Туслах"}: ${String(item.content ?? "").trim().slice(0, 600)}`)
+      : [String(body.message ?? "").trim().slice(0, 600)].filter(Boolean).map((message) => `Асран хамгаалагч: ${message}`);
+    if (!messages.length) return null;
+    return {
+      maxTokens: 350,
+      prompt: `Асран хамгаалагч болон туслахын чат:
+${messages.join("\n")}
+Сүүлийн асуултад чатны өмнөх яриаг харгалзан эелдэг, товч хариул. Чатлаж буй хүн нь охины ээж/аав эсвэл асран хамгаалагч гэдгийг сана: түүнд “ээждээ”, “аавдаа”, “итгэдэг том хүндээ ханд” гэж хэзээ ч бүү хэл. Охиноо буруутгахгүй, тайван сонсож, хувийн орон зайг нь хүндэтгэн дэмжихэд чиглэ. Монголын гэр бүлд тохирсон, хэрэгжүүлж болох нэг санаа хэл. Сэдэв өөр байсан ч хариулж болох ч Bloomy аппын зорилготой холбоотой чиглэлд зөөлнөөр тусал. Эмнэлгийн асуудал байвал оношлохгүй, шаардлагатай үед эмчтэй зөвлөлдөхийг зөвлө.
+JSON: {"reply": "..."}`,
+    };
+  }
   return null;
 }
 

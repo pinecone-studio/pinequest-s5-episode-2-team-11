@@ -60,16 +60,10 @@ export default function DaughterHome() {
         <div className="flex items-start gap-3 rounded-2xl bb-bg-E9DDFC-50 p-4 bloom-pop">
           <span className="text-2xl">👩</span>
           <div className="flex-1">
-            <p className="text-xs font-extrabold uppercase tracking-widest bb-text-7C4DCC">
-              Асран хамгаалагчаас · {latestTeenMsg.time}
-            </p>
+            <p className="text-xs font-extrabold uppercase tracking-widest bb-text-7C4DCC">Асран хамгаалагчаас · {latestTeenMsg.time}</p>
             <p className="font-bold text-slate-700">{latestTeenMsg.text}</p>
           </div>
-          <button
-            onClick={() => markRead(latestTeenMsg.id)}
-            className="text-slate-400 hover:text-slate-600"
-            aria-label="Хаах"
-          >
+          <button onClick={() => markRead(latestTeenMsg.id)} className="text-slate-400 hover:text-slate-600" aria-label="Хаах">
             <X className="w-4 h-4" />
           </button>
         </div>

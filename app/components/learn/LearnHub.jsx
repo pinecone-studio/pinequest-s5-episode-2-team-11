@@ -6,6 +6,8 @@ import { Info, Apple } from "lucide-react";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
 import PadGuide, { usePadGuideFinished } from "./PadGuide";
+import ParentAiAssistant from "./ParentAiAssistant";
+import ParentLearningTopics from "./ParentLearningTopics";
 
 export default function LearnHub() {
   const { learnTab, setLearnTab, view, setTab } =
@@ -22,21 +24,29 @@ export default function LearnHub() {
 
   return (
     <div className="space-y-4 bloom-fade">
-      <div className="grid grid-cols-2 gap-1 bb-bg-FDE7F1 rounded-2xl p-1">
-        {tabs.map(([id, label]) => (
-          <button
-            key={id}
-            onClick={() => setLearnTab(id)}
-            className={`rounded-xl py-2.5 text-xs font-extrabold transition-all ${
-              learnTab === id ? "bg-white bb-text-B83B7E shadow-sm" : "text-slate-500"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      {isDaughter && (
+        <div className="grid grid-cols-2 gap-1 bb-bg-FDE7F1 rounded-2xl p-1">
+          {tabs.map(([id, label]) => (
+            <button
+              key={id}
+              onClick={() => setLearnTab(id)}
+              className={`rounded-xl py-2.5 text-xs font-extrabold transition-all ${
+                learnTab === id ? "bg-white bb-text-B83B7E shadow-sm" : "text-slate-500"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {isDaughter && learnTab === "pad" && <PadGuide role={view} onAskFriends={() => setTab("friends")} />}
+      {!isDaughter && (
+        <>
+          <ParentAiAssistant />
+          <ParentLearningTopics />
+        </>
+      )}
 
       {isDaughter && learnTab === "food" && (
         <Card>

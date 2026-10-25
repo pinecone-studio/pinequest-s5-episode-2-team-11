@@ -18,6 +18,7 @@ const TAB_BY_PATH = {
   "/daughter/insights": "insights",
   "/daughter/supplies": "supplies",
   "/mother/supplies": "supplies",
+  "/mother/calendar": "calendar",
   "/mother/messages": "messages",
   "/friends": "friends",
   "/learn": "learn",
@@ -40,6 +41,7 @@ export default function AppShell() {
     setTab,
     sosOpen,
     toast,
+    momUnread,
     lowSupplyCount,
     showOnboarding,
     needsMotherCode,
@@ -67,6 +69,7 @@ export default function AppShell() {
       home: view === "mother" ? "/mother" : "/daughter",
       insights: "/daughter/insights",
       supplies: view === "mother" ? "/mother/supplies" : "/daughter/supplies",
+      calendar: "/mother/calendar",
       friends: "/friends",
       learn: "/learn",
       messages: "/mother/messages",
@@ -87,7 +90,9 @@ export default function AppShell() {
           showNav={showNav}
           view={view}
           tab={tab}
+          momUnread={momUnread}
           onOpenSettings={() => navigateToTab("me")}
+          onOpenNotifications={() => navigateToTab("messages")}
           onLogoClick={() => {
             if (session) navigateToTab("home");
             else window.dispatchEvent(new Event("bloomy-auth-back"));
