@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { MessageCircleHeart, Send, Trash2, ShieldCheck } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import { autoReply } from "../../../lib/chat-replies";
+import { askAi } from "../../../lib/ai-client";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
 import ChatAvatar from "./ChatAvatar";
@@ -73,9 +74,19 @@ export default function AiChat() {
     setDraft("");
     setChips([]);
     setThinking(true);
-    // Бодож байгаа мэт богино хүлээлт
-    await new Promise((r) => setTimeout(r, 600 + Math.random() * 500));
-    const { reply, chips: nextChips } = autoReply(content);
+    // Аюулын сэдэвт тогтмол хариу (тусламжийн утас) өгнө, бусад үед AI
+    const fallback = autoReply(content);
+    let reply = fallback.reply;
+    let nextChips = fallback.chips;
+    if (fallback.urgent) {
+      await new Promise((r) => setTimeout(r, 600));
+    } else {
+      const ai = await askAi(session, { type: "daughter_chat", messages: next.slice(-8) }, 30000);
+      if (typeof ai?.reply === "string" && ai.reply.trim()) {
+        reply = ai.reply.trim();
+        nextChips = Array.isArray(ai.chips) ? ai.chips : [];
+      }
+    }
     setThinking(false);
     setMessages([...next, { role: "assistant", content: reply }]);
     setChips(nextChips);
