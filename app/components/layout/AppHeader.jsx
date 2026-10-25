@@ -1,8 +1,8 @@
-import { User, Sun, Moon, ChevronLeft } from "lucide-react";
+import { Sun, Moon, ChevronLeft, Bell } from "lucide-react";
 import BloomyLogo from "../ui/BloomyLogo";
 import { useTheme } from "../../../context/ThemeContext";
 
-export default function AppHeader({ showNav, view, tab, onOpenSettings, onLogoClick }) {
+export default function AppHeader({ showNav, view, tab, momUnread = 0, onOpenSettings, onOpenNotifications, onLogoClick }) {
   const { theme, setTheme } = useTheme();
   return (
     <header
@@ -31,17 +31,18 @@ export default function AppHeader({ showNav, view, tab, onOpenSettings, onLogoCl
             </span>
             {theme === "dark" ? "Dark" : "Light"}
           </button>
-          {showNav && view !== "mother" && (
+          {showNav && (
             <button
-              onClick={onOpenSettings}
-              aria-label="Би — профайл, тохиргоо"
-              className={`w-9 h-9 rounded-full flex items-center justify-center border-2 shrink-0 transition ${
-                tab === "me"
-                  ? "bb-bg-FDE7F1 bb-border-F48FB1 bb-text-B83B7E"
-                  : "bg-white border-slate-100 text-slate-500"
-              }`}
+              onClick={onOpenNotifications}
+              aria-label="Мэдэгдэл"
+              className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-100 bg-white text-slate-500 active:scale-95"
             >
-              <User className="w-4 h-4" />
+              <Bell className={`h-4 w-4 ${momUnread ? "bloom-wiggle" : ""}`} />
+              {momUnread > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bb-bg-B794F4 px-1 text-[10px] font-black text-white">
+                  {momUnread}
+                </span>
+              )}
             </button>
           )}
         </div>

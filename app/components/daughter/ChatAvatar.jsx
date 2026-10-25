@@ -5,7 +5,7 @@
  */
 export default function ChatAvatar({ talking = false, size = 72 }) {
   return (
-    <div className={talking ? "bloom-bob" : ""} style={{ width: size, height: size }}>
+    <div className={talking ? "bloom-bob" : "bloom-avatar-float"} style={{ width: size, height: size }}>
       <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden="true">
         {/* Арын дугуй */}
         <circle cx="50" cy="50" r="48" fill="#FDE7F1" />
@@ -45,7 +45,7 @@ export default function ChatAvatar({ talking = false, size = 72 }) {
         {talking ? (
           <ellipse className="bloom-talk" cx="50" cy="69" rx="5" ry="4" fill="#B83B7E" />
         ) : (
-          <path d="M44 67 Q50 73 56 67" stroke="#B83B7E" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+          <path className="bloom-smile" d="M44 67 Q50 73 56 67" stroke="#B83B7E" strokeWidth="2.5" fill="none" strokeLinecap="round" />
         )}
 
         {/* Цэцэг */}
