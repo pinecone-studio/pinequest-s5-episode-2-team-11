@@ -35,7 +35,7 @@ const normalizeLook = (look) =>
 const normalizeSkin = (skin) =>
   Number.isInteger(skin) && skin >= 0 && skin < SKIN_TONES.length ? skin : 0;
 const normalizeBackground = (background) =>
-  AVATAR_BACKGROUNDS.some((option) => option.id === background) ? background : "pink";
+  AVATAR_BACKGROUNDS.some((option) => option.id === background) ? background : "room";
 
 const fresh = () => ({
   xp: 0,
@@ -43,7 +43,7 @@ const fresh = () => ({
   skin: 0,
   owned: STARTER_OWNED,
   look: STARTER_LOOK,
-  background: "pink",
+  background: "room",
   walk: { date: today(), steps: 0, xp: 0 },
   giftDate: null,
 });
@@ -112,11 +112,11 @@ export function useAvatar(userId, onToast = () => {}) {
       const localHasCustomAvatar =
         JSON.stringify(localState.look) !== JSON.stringify(STARTER_LOOK) ||
         localState.skin !== 0 ||
-        localState.background !== "pink";
+        localState.background !== "room";
       const remoteHasCustomAvatar =
         JSON.stringify(remoteLook) !== JSON.stringify(STARTER_LOOK) ||
         remoteSkin !== 0 ||
-        remoteBackground !== "pink";
+        remoteBackground !== "room";
       const useLocalAvatar = localHasCustomAvatar && !remoteHasCustomAvatar;
 
       setState((current) => ({
