@@ -43,8 +43,8 @@ export default function AppShell() {
     setTab,
     sosOpen,
     toast,
-    momUnread,
     lowSupplyCount,
+    momUnread,
     showOnboarding,
     needsMotherCode,
   } = family;

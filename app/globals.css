@@ -26,6 +26,26 @@ body {
 .theme-dark .bg-slate-50,
 .theme-dark .bg-slate-100 { background-color: #3a3242; }
 .theme-dark .bg-slate-200 { background-color: #51465a; }
+.daughter-supply-request-card {
+  background-image: linear-gradient(135deg, #e0679f, #b83b7e);
+  border-color: #e0679f;
+}
+.theme-dark .daughter-supply-request-card {
+  background-image: linear-gradient(135deg, #e0679f, #b83b7e);
+  border-color: #e0679f;
+}
+.daughter-supply-request-card p,
+.daughter-supply-request-card .text-slate-400,
+.daughter-supply-request-card > button { color: #fff; }
+.daughter-supply-request-card .bx-halo { background: rgb(255 255 255 / 16%); }
+.daughter-supply-request-card .bb-grad-sos {
+  background-image: linear-gradient(135deg, rgb(255 255 255 / 24%), rgb(255 255 255 / 12%));
+}
+.theme-dark .horoscope-card {
+  border-color: #594052;
+  --tw-ring-color: rgb(158 85 123 / 45%);
+  background-image: linear-gradient(135deg, #302638, #302638 60%, #342b3e);
+}
 .theme-dark .border-slate-100,
 .theme-dark .border-slate-200 { border-color: #403647; }
 .theme-dark .text-slate-800,
