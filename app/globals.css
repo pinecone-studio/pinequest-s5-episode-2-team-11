@@ -10,22 +10,22 @@ body {
 /* Dark mode is scoped to the app shell so the selected theme covers every tab. */
 .theme-dark {
   color: #f1e8f4;
-  background-image: linear-gradient(135deg, #17131d, #241a28 55%, #1d1828);
+  background-image: linear-gradient(135deg, #211923, #2c2330 55%, #282337);
 }
 .theme-dark .bb-bg-FFF7FB,
 .theme-dark .bb-bg-FFF7FB-85,
 .theme-dark .bg-white {
-  background-color: #251f2b;
+  background-color: #302638;
 }
 .theme-dark .theme-switch-thumb { background-color: #fff; }
-.theme-dark .bg-white\/95 { background-color: rgb(37 31 43 / 95%); }
-.theme-dark .bg-white\/80 { background-color: rgb(37 31 43 / 80%); }
-.theme-dark .bg-white\/75 { background-color: rgb(37 31 43 / 75%); }
-.theme-dark .bg-white\/50 { background-color: rgb(37 31 43 / 50%); }
-.theme-dark .bg-white\/40 { background-color: rgb(37 31 43 / 40%); }
+.theme-dark .bg-white\/95 { background-color: rgb(48 38 56 / 95%); }
+.theme-dark .bg-white\/80 { background-color: rgb(48 38 56 / 80%); }
+.theme-dark .bg-white\/75 { background-color: rgb(48 38 56 / 75%); }
+.theme-dark .bg-white\/50 { background-color: rgb(48 38 56 / 50%); }
+.theme-dark .bg-white\/40 { background-color: rgb(48 38 56 / 40%); }
 .theme-dark .bg-slate-50,
-.theme-dark .bg-slate-100 { background-color: #302938; }
-.theme-dark .bg-slate-200 { background-color: #453b4d; }
+.theme-dark .bg-slate-100 { background-color: #3a3242; }
+.theme-dark .bg-slate-200 { background-color: #51465a; }
 .theme-dark .border-slate-100,
 .theme-dark .border-slate-200 { border-color: #403647; }
 .theme-dark .text-slate-800,
@@ -51,7 +51,7 @@ body {
 .theme-dark .bb-bg-E9DDFC-50,
 .theme-dark .bb-bg-E9DDFC-60,
 .theme-dark .bb-bg-E9DDFC-40,
-.theme-dark .bb-bg-E9DDFC-30 { background-color: #332b42; }
+.theme-dark .bb-bg-E9DDFC-30 { background-color: #3b3249; }
 .theme-dark .bb-grad-4,
 .theme-dark .bb-grad-5,
 .theme-dark .bb-grad-7,
@@ -64,6 +64,36 @@ body {
 .theme-dark .bb-border-F8D3E6,
 .theme-dark .bb-border-FDE7F1 { border-color: #68445e; }
 .theme-dark .bb-border-F48FB1 { border-color: #9e557b; }
+.theme-dark .learn-food-hero {
+  border-color: #594052;
+  background-image: linear-gradient(135deg, #382532, #30263b 65%, #2c263d);
+}
+.theme-dark .learn-food-hero-orb { background-color: rgb(232 151 193 / 10%); }
+.theme-dark .learn-food-hero-badge {
+  border-color: #5d4355;
+  background-color: #302631;
+  color: #f0b1d0;
+}
+.theme-dark .learn-food-hero-icon {
+  border-color: #594052;
+  background-color: #302631;
+}
+.theme-dark .learn-food-hero-summary { color: #e8b8d0; }
+.theme-dark .learn-food-hero-summary-icon {
+  border-color: #382532;
+  background-color: #302631;
+}
+.theme-dark .learn-food-tip-card {
+  border-color: #a65382;
+  background-color: #3d3243;
+}
+.theme-dark .learn-food-tip-icon { background-color: #382f40; }
+.theme-dark [data-tone="avoid"] .learn-food-tip-icon { background-color: #493a2a; }
+.learn-food-avoid-icon { background-color: #fff0d5; }
+.learn-food-avoid-fg { color: #a86113; }
+.theme-dark .learn-food-avoid-icon { background-color: #493a2a; }
+.theme-dark .learn-food-avoid-fg { color: #f3c36c; }
+.theme-dark .learn-food-dialog-orb { background-color: rgb(232 151 193 / 10%); }
 .theme-dark input,
 .theme-dark textarea,
 .theme-dark select { color: #f4edf6; }
