@@ -44,6 +44,7 @@ export default function AppShell() {
     sosOpen,
     toast,
     lowSupplyCount,
+    momUnread,
     showOnboarding,
     needsMotherCode,
   } = family;
