@@ -198,7 +198,7 @@ export default function AiChat() {
           </button>
         </div>
         <p className="mt-2 flex items-center justify-center gap-1 text-[11px] font-semibold text-slate-400">
-          <ShieldCheck className="w-3 h-3" /> Хувийн мэдээллээ бүү хуваалц · Аюулд орвол 108 утсанд залга
+          <ShieldCheck className="w-3 h-3" /> Хувийн мэдээллээ бүү хуваалц
         </p>
       </form>
     </Card>

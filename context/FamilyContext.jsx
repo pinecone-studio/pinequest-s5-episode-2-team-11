@@ -12,13 +12,14 @@
  */
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { DEFAULT_SUPPLIES, MOOD_FALLBACK, MOOD_OPTIONS, PHASES, SOS_STEPS, SOS_TOTAL } from "../lib/data";
+import { DEFAULT_SUPPLIES, KIT_ITEMS, MOOD_FALLBACK, MOOD_OPTIONS, PHASES, SOS_STEPS, SOS_TOTAL } from "../lib/data";
 import { genitive, getMomNudges, getPhaseKey } from "../lib/helpers";
 import { cycleStatus, formatTime, toDateStr } from "../lib/dates";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { askAi } from "../lib/ai-client";
 
 const FamilyContext = createContext(null);
+const LOCAL_KIT_KEY = "bloomy:kit-checks";
 
 const AUTH_ERRORS = {
   "Invalid login credentials": "Имэйл эсвэл нууц үг буруу байна.",
@@ -48,6 +49,15 @@ export function FamilyProvider({ children }) {
   const [moodRows, setMoodRows] = useState([]);
   const [kitRows, setKitRows] = useState([]);
   const [localKit, setLocalKit] = useState([]);
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(LOCAL_KIT_KEY) ?? "[]");
+      if (Array.isArray(saved)) setLocalKit(saved.filter((id) => KIT_ITEMS.some((item) => item.id === id)));
+    } catch {
+      /* localStorage боломжгүй */
+    }
+  }, []);
 
   /* ================= Дэлгэцийн төлөв ================= */
   const [tab, setTab] = useState("home");
@@ -510,13 +520,6 @@ export function FamilyProvider({ children }) {
     await supabase.from("profiles").update({ no_period_yet: true }).eq("id", userId);
   };
 
-  const saveBirthDate = async (birth_date) => {
-    setProfile((p) => ({ ...p, birth_date }));
-    const { error } = await supabase.from("profiles").update({ birth_date }).eq("id", userId);
-    if (error) setToast("Хадгалж чадсангүй. Дахин оролдоно уу.");
-    return !error;
-  };
-
   const setShareWithMom = async (next) => {
     const value = typeof next === "function" ? next(shareWithMom) : next;
     setProfile((p) => ({ ...p, share_mood: value }));
@@ -718,18 +721,47 @@ export function FamilyProvider({ children }) {
   };
 
   /* ================= Боловсрол ================= */
-  const toggleKit = async (id) => {
+  const saveKit = async (ids) => {
+    const nextIds = Array.from(new Set((Array.isArray(ids) ? ids : []).filter((id) => KIT_ITEMS.some((item) => item.id === id))));
     if (!familyId) {
-      setLocalKit((p) => (p.includes(id) ? p.filter((k) => k !== id) : [...p, id]));
-      return;
+      setLocalKit(nextIds);
+      try {
+        localStorage.setItem(LOCAL_KIT_KEY, JSON.stringify(nextIds));
+      } catch {
+        /* localStorage боломжгүй */
+      }
+      return true;
     }
-    if (kitChecked.includes(id)) {
-      setKitRows((p) => p.filter((r) => r.item_id !== id));
-      await supabase.from("kit_checks").delete().eq("family_id", familyId).eq("item_id", id);
-    } else {
-      setKitRows((p) => [...p, { item_id: id }]);
-      await supabase.from("kit_checks").insert({ family_id: familyId, item_id: id });
+
+    const currentIds = kitRows.map((row) => row.item_id);
+    const removeIds = currentIds.filter((id) => !nextIds.includes(id));
+    const addIds = nextIds.filter((id) => !currentIds.includes(id));
+
+    if (removeIds.length) {
+      const { error } = await supabase
+        .from("kit_checks")
+        .delete()
+        .eq("family_id", familyId)
+        .in("item_id", removeIds);
+      if (error) {
+        setToast("Цүнхний жагсаалтыг хадгалж чадсангүй. Дахин оролдоно уу.");
+        return false;
+      }
     }
+
+    if (addIds.length) {
+      const { error } = await supabase
+        .from("kit_checks")
+        .insert(addIds.map((item_id) => ({ family_id: familyId, item_id })));
+      if (error) {
+        await loadKit(familyId);
+        setToast("Цүнхний жагсаалтыг хадгалж чадсангүй. Дахин оролдоно уу.");
+        return false;
+      }
+    }
+
+    setKitRows(nextIds.map((item_id) => ({ item_id })));
+    return true;
   };
 
   const toggleMyth = (id) =>
@@ -739,10 +771,27 @@ export function FamilyProvider({ children }) {
 
   const updateName = async (name) => {
     const display_name = name.trim();
-    if (!display_name) return;
+    if (!display_name) return false;
+    const { error } = await supabase.from("profiles").update({ display_name }).eq("id", userId);
+    if (error) {
+      setToast("Нэр хадгалж чадсангүй. Дахин оролдоно уу.");
+      return false;
+    }
     setProfile((p) => ({ ...p, display_name }));
-    await supabase.from("profiles").update({ display_name }).eq("id", userId);
     setToast("Нэр хадгалагдлаа ✓");
+    return true;
+  };
+
+  const updateEmail = async (email) => {
+    const nextEmail = email.trim();
+    if (!nextEmail || nextEmail === session?.user?.email) return true;
+    const { error } = await supabase.auth.updateUser({ email: nextEmail });
+    if (error) {
+      setToast("Имэйл солиж чадсангүй. Хаягаа шалгаад дахин оролдоно уу.");
+      return false;
+    }
+    setToast("Шинэ имэйл хаяг руу баталгаажуулах холбоос илгээлээ.");
+    return true;
   };
 
   /* ================= Ээжийн статус текст ================= */
@@ -776,8 +825,8 @@ export function FamilyProvider({ children }) {
     signIn,
     signOut,
     updateName,
+    updateEmail,
     birthDate,
-    saveBirthDate,
     // гэр бүл
     view,
     family,
@@ -868,7 +917,7 @@ export function FamilyProvider({ children }) {
     sosNotifyMom,
     // боловсрол
     kitChecked,
-    toggleKit,
+    saveKit,
     flippedMyths,
     toggleMyth,
     // UI
