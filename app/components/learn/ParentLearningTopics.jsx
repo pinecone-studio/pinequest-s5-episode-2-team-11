@@ -63,20 +63,19 @@ export default function ParentLearningTopics() {
           const isOpen = Boolean(expanded[title]);
           return (
             <section key={title} className={`parent-topic rounded-2xl bg-white p-4 ${isOpen ? "parent-topic-open" : ""}`}>
-              <div className="flex items-center gap-3">
-                <h3 className="parent-topic-title flex min-w-0 flex-1 items-center gap-2 font-extrabold" style={{ color: headingColor }}>
+              <button
+                type="button"
+                onClick={() => setExpanded((current) => ({ ...current, [title]: !current[title] }))}
+                aria-expanded={isOpen}
+                className="flex w-full items-center gap-3 text-left active:opacity-80"
+              >
+                <span className="parent-topic-title flex min-w-0 flex-1 items-center gap-2 font-extrabold" style={{ color: headingColor }}>
                   <Icon className="h-4 w-4 shrink-0 bb-text-B83B7E" /> {title}
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setExpanded((current) => ({ ...current, [title]: !current[title] }))}
-                  aria-expanded={isOpen}
-                  aria-label={isOpen ? "Хураах" : "Дэлгэрүүлж харах"}
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bb-text-B83B7E active:scale-95"
-                >
+                </span>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bb-text-B83B7E" aria-hidden="true">
                   <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-180" : ""}`} />
-                </button>
-              </div>
+                </span>
+              </button>
               {isOpen && <p className="mt-3 text-sm font-semibold leading-relaxed text-slate-600" style={{ color: bodyColor }}>{text}</p>}
             </section>
           );
