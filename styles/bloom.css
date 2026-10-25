@@ -329,6 +329,61 @@
   transform-origin: center;
   animation: bloomTalk 0.32s ease-in-out infinite;
 }
+.bloom-smile {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: bloomSmile 2.4s ease-in-out infinite;
+}
+.bloom-avatar-float {
+  animation: bloomAvatarFloat 3s ease-in-out infinite;
+}
+.parent-topic {
+  border: 1px solid #e8c3d0;
+  background-color: #fff !important;
+}
+.parent-topic-open {
+  border-color: #d98eae;
+  background-color: #fff4f8 !important;
+}
+.parent-ai-launcher {
+  border: 1px solid #e7d9f2;
+  background: linear-gradient(120deg, #fff8fb, #f7f1ff);
+  box-shadow: 0 4px 14px rgba(124, 77, 204, 0.1);
+  transition: box-shadow 180ms ease, transform 180ms ease;
+}
+.parent-ai-launcher:hover {
+  box-shadow: 0 6px 18px rgba(124, 77, 204, 0.16);
+}
+.parent-learning-card {
+  border-color: #e7d9f2;
+  box-shadow: 0 5px 18px rgba(124, 77, 204, 0.08);
+}
+.parent-ai-title {
+  color: #a94775;
+}
+.parent-topic-title {
+  color: #a94775;
+}
+.theme-dark .parent-topic {
+  border-color: #57404f;
+  background-color: #251f2b !important;
+}
+.theme-dark .parent-topic-open {
+  border-color: #a76d87;
+  background-color: #302631 !important;
+}
+.theme-dark .parent-ai-launcher {
+  border-color: #51425e;
+  background: linear-gradient(120deg, #2b222d, #30283a);
+  box-shadow: 0 4px 16px rgba(13, 10, 18, 0.24);
+}
+.theme-dark .parent-learning-card {
+  border-color: #51425e;
+  box-shadow: 0 5px 18px rgba(13, 10, 18, 0.2);
+}
+.theme-dark .parent-ai-title {
+  color: #d9a6bc;
+}
 .bloom-blink {
   transform-box: fill-box;
   transform-origin: center;
@@ -336,4 +391,34 @@
 }
 .bloom-bob {
   animation: bloomBob 0.9s ease-in-out infinite;
+}
+
+@keyframes bloomSmile {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.25) translateY(-0.5px);
+  }
+}
+
+@keyframes bloomAvatarFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bloom-smile,
+  .bloom-avatar-float,
+  .bloom-talk,
+  .bloom-blink,
+  .bloom-bob {
+    animation: none;
+  }
 }
