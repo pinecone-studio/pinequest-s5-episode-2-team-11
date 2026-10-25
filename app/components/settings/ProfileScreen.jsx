@@ -165,7 +165,7 @@ export default function ProfileScreen() {
 
               <MyFriendCode />
       <Card>
-        
+
         <SectionTitle icon={Users} title="Гэр бүл" />
         {isMother ? (linked ? (
           <>
