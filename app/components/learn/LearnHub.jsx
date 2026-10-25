@@ -5,6 +5,7 @@ import { useFamily } from "../../../context/FamilyContext";
 import {
   Apple,
   ChevronRight,
+  Droplets,
   Heart,
   Info,
   Leaf,
@@ -41,16 +42,26 @@ export default function LearnHub() {
     {
       icon: Leaf,
       number: "01",
-      title: "Тэжээлтэй хоол, бүлээн ус",
+      title: "Тэжээлтэй хоол сонгоорой",
       description:
-        "Овьёос, талх, будаа, тараг, өндөг, мах, жимс ногооноос өөрт тохирохыг сонгоорой. Ус уухаа мартав аа. Бүлээн ус уухад таатай байвал өдөртөө ойр ойрхон бага багаар уугаарай 🌸",
+        "Овьёос, талх, будаа, тараг, өндөг, мах, жимс ногооноос өөрт тохирох тэжээллэг хоолоо сонгоорой. Заавал тусгай хоол идэх албагүй, өөрт таалагддаг зүйлээсээ сонгож болно 🌸",
       color: "text-[#4F8B67]",
       iconBg: "bg-[#E6F4E9]",
       line: "bg-[#B8DFC2]",
     },
     {
-      icon: Apple,
+      icon: Droplets,
       number: "02",
+      title: "Бүлээн ус уугаарай",
+      description:
+        "Өдөртөө ус уухаа мартав аа. Бүлээн ус уухад таатай байвал ойр ойрхон бага багаар уугаарай. Заавал халуун байх шаардлагагүй шүү 💧",
+      color: "text-[#8052C6]",
+      iconBg: "bb-bg-E9DDFC-60",
+      line: "bg-[#CDB7F5]",
+    },
+    {
+      icon: Apple,
+      number: "03",
       title: "Амттан идмээр санагдвал",
       description:
         "Амттан идмээр байвал жимс, тарагтай овьёос эсвэл жаахан шоколад идэж болно. Амттанаа бүр мөсөн хорих хэрэггүй шүү 🍫",
@@ -60,13 +71,13 @@ export default function LearnHub() {
     },
     {
       icon: Heart,
-      number: "03",
-      title: "Биеэ сонсоорой",
+      number: "04",
+      title: "Зайлсхийх зүйлс",
       description:
-        "Чипс, кофе эсвэл өтгөн цай заримдаа гэдсийг эвгүйрхүүлдэг. Чамд тэгж санагдвал бага хэрэглээд, өөрт юу таатайг анзаараарай. Гэдэс базалбал бүлээн жин тавьж үзэж болно. Жингээ арьсанд эвтэйхэн бүлээн байгааг шалгаарай; хэт халуун байж болохгүй 💗",
-      color: "bb-text-7C4DCC",
-      iconBg: "bb-bg-E9DDFC-60",
-      line: "bg-[#CDB7F5]",
+        "Зовиуртай үед эдгээрийг багасгаарай:\n\n• Кофе, өтгөн цай, энергийн ундаа — нойр муутгаж, базлалтыг нэмэгдүүлж магадгүй.\n• Давс ихтэй чипс, түргэн хоол — гэдэс дүүргэж магадгүй.\n• Их чихэр — сарын тэмдгийн өмнөх зовиурыг нэмэгдүүлж магадгүй.\n\nХүн бүрт нөлөө нь өөр 💗",
+      color: "text-[#A86113]",
+      iconBg: "bg-[#FFF0D5]",
+      line: "bg-[#E9B45A]",
     },
   ];
 
@@ -116,13 +127,13 @@ export default function LearnHub() {
             </div>
             <div className="mt-4 flex items-center gap-2 text-xs font-extrabold text-[#875372]">
               <span className="flex -space-x-1.5">
-                {[Leaf, Apple, Heart].map((Icon, index) => (
+                {[Leaf, Droplets, Apple, Heart].map((Icon, index) => (
                   <span key={index} className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-[#FFF4F8] bg-white">
                     <Icon className="h-3 w-3 text-[#B83B7E]" />
                   </span>
                 ))}
               </span>
-              Хооллолтын 3 зөвлөмж
+              4 хэрэгтэй зөвлөмж
             </div>
           </section>
 
@@ -192,12 +203,9 @@ export default function LearnHub() {
               <h2 id="food-tip-title" className="mt-5 pr-8 text-2xl font-black leading-tight text-slate-800">
                 {selectedFoodTip.title}
               </h2>
-              <p id="food-tip-description" className="mt-4 text-base font-semibold leading-relaxed text-slate-600">
+              <p id="food-tip-description" className="mt-4 whitespace-pre-line text-base font-semibold leading-relaxed text-slate-600">
                 {selectedFoodTip.description}
               </p>
-              <div className="mt-6 rounded-2xl bg-[#FFF4F8] px-4 py-3 text-sm font-bold leading-relaxed text-[#875372]">
-                Өөртөө таатайг сонгоорой 💗
-              </div>
             </div>
           </section>
         </div>
