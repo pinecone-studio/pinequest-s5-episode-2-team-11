@@ -31,7 +31,7 @@ export default function AppHeader({ showNav, view, tab, momUnread = 0, onOpenSet
             </span>
             {theme === "dark" ? "Dark" : "Light"}
           </button>
-          {showNav && view === "mother" && (
+          {showNav && (
             <button
               onClick={onOpenNotifications}
               aria-label="Мэдэгдэл"
