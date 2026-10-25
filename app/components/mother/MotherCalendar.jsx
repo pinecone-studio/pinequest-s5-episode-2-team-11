@@ -1,103 +1,333 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, Droplets, X } from "lucide-react";
+/**
+ * Асран хамгаалагчийн «Календарь» — охины календарьтай ижил загвар.
+ *   • Өдрийн өнгө: сарын тэмдэг · таамаг · овуляци · бүртгэсэн өдөр (цэг)
+ *   • Охины ХУВИЙН ТЭМДЭГЛЭЛ харагдахгүй. Зөвхөн «Энэ 7 хоног»-ийн тойм харуулна.
+ *   • Өгөгдөл: Supabase day_logs (supabase/day-logs.sql) — охин хуваалцахыг зөвшөөрсөн үед л.
+ */
+
+import { useEffect, useMemo, useState } from "react";
+import { CalendarDays, ChevronLeft, ChevronRight, Droplets, Lock, Sparkles, LoaderCircle, X } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
-import { daysBetween, toDateStr } from "../../../lib/dates";
+import { supabase } from "../../../lib/supabase";
+import { askAi } from "../../../lib/ai-client";
+import { toDateStr } from "../../../lib/dates";
 import { PHASE_COLORS, PHASES } from "../../../lib/data";
+import CycleRing from "../daughter/CycleRing";
+import { genitive, getPhaseKey } from "../../../lib/helpers";
 import Card from "../ui/Card";
 import PageHeader from "../ui/PageHeader";
 import SectionTitle from "../ui/SectionTitle";
-import CycleRing from "../daughter/CycleRing";
 
 const WEEKDAYS = ["Да", "Мя", "Лх", "Пү", "Ба", "Бя", "Ня"];
-const dateKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+const WEEKDAY_LONG = ["Ням", "Даваа", "Мягмар", "Лхагва", "Пүрэв", "Баасан", "Бямба"];
+const parse = (key) => new Date(`${key}T00:00:00`);
+const dayDiff = (a, b) => Math.round((parse(b) - parse(a)) / 86400000);
+const dateLabel = (d) => `${d.getMonth() + 1}-р сарын ${d.getDate()}, ${WEEKDAY_LONG[d.getDay()]}`;
+
+const MN = {
+  Happy: "баяртай", Calm: "тайван", Sad: "гунигтай", Anxious: "түгшсэн", Embarrassed: "ичсэн", Irritable: "уурлангуй",
+  Cramps: "базлалт", Headache: "толгой өвдөлт", Bloating: "гэдэс дүүрэлт", Fatigue: "ядаргаа", Tenderness: "хөндүүр",
+  Poor: "муу", Okay: "дунд зэрэг", Good: "сайн", Great: "маш сайн",
+};
+const EMOJI = { Happy: "😊", Calm: "😌", Sad: "😢", Anxious: "😟", Embarrassed: "😳", Irritable: "😠" };
+const FLOW = ["Spotting", "Light", "Medium", "Heavy"];
+
+const top = (rows, field) => {
+  const count = {};
+  rows.forEach((r) => r[field] && (count[r[field]] = (count[r[field]] ?? 0) + 1));
+  return Object.entries(count).sort((a, b) => b[1] - a[1]);
+};
 
 export default function MotherCalendar() {
-  const { linked, daughterName, hasCycle, cycleLength, periodLength, lastPeriodStart, noPeriodYet, day, daysLate, phaseKey, daysUntil } = useFamily();
-  const [showLargeCalendar, setShowLargeCalendar] = useState(false);
+  const { linked, daughterName, hasCycle, cycleLength, periodLength, lastPeriodStart, noPeriodYet, phaseKey, daysUntil, daysLate, day, shareWithMom, session, profile } =
+    useFamily();
+  const today = toDateStr();
   const [month, setMonth] = useState(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
+  const [rows, setRows] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [ai, setAi] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState("");
+
+  // Сүүлийн 60 хоногийн ангилсан бүртгэл (RLS: охин хуваалцсан үед л ирнэ)
+  useEffect(() => {
+    if (!supabase || !linked) return;
+    const since = toDateStr(new Date(Date.now() - 60 * 86400000));
+    supabase
+      .from("day_logs")
+      .select("log_date, emotion, symptoms, period, skin, sleep")
+      .gte("log_date", since)
+      .order("log_date")
+      .then(({ data, error }) => {
+        if (error) console.warn("[day_logs] mother:", error.message);
+        setRows(data ?? []);
+      });
+  }, [linked, shareWithMom]);
+
+  const byDate = useMemo(() => Object.fromEntries(rows.map((r) => [r.log_date, r])), [rows]);
+  const weekStart = toDateStr(new Date(Date.now() - 6 * 86400000));
+  const week = rows.filter((r) => r.log_date >= weekStart && r.log_date <= today);
+
+  // Өмнө гаргасан AI тоймыг энэ 7 хоногт дахин дуудахгүйн тулд хадгална
+  const cacheKey = `bloom:weekly-summary:${profile?.id ?? "x"}:${weekStart}`;
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(cacheKey) ?? "null");
+      if (saved?.summary) setAi(saved);
+    } catch {}
+  }, [cacheKey]);
 
   const dates = useMemo(() => {
     const offset = (month.getDay() + 6) % 7;
     const count = Math.ceil((offset + new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate()) / 7) * 7;
-    return Array.from({ length: count }, (_, index) => new Date(month.getFullYear(), month.getMonth(), index - offset + 1));
+    return Array.from({ length: count }, (_, i) => new Date(month.getFullYear(), month.getMonth(), i - offset + 1));
   }, [month]);
-  const monthLabel = new Intl.DateTimeFormat("mn-MN", { year: "numeric", month: "long" }).format(month);
-  const today = toDateStr();
+  const monthLabel = `${month.getFullYear()} оны ${month.getMonth() + 1}-р сар`;
 
-  const periodDay = (date) => {
-    if (!lastPeriodStart || !hasCycle) return false;
-    const diff = daysBetween(lastPeriodStart, dateKey(date));
-    if (diff < 0) return false;
-    return diff % cycleLength < periodLength;
+  const dayInfo = (key) => {
+    if (FLOW.includes(byDate[key]?.period)) return { kind: "period", day: null };
+    if (!lastPeriodStart || !hasCycle) return { kind: null, day: null };
+    const diff = dayDiff(lastPeriodStart, key);
+    if (diff < -cycleLength * 3) return { kind: null, day: null };
+    const day = (((diff % cycleLength) + cycleLength) % cycleLength) + 1;
+    const phase = getPhaseKey(day, cycleLength, periodLength);
+    if (phase === "period") {
+      if (diff >= 0 && diff < periodLength && key <= today) return { kind: "period", day };
+      return { kind: key > today ? "predicted" : null, day };
+    }
+    return { kind: phase === "ovulation" ? "ovulation" : null, day };
   };
+
+  // Дүрмээр гаргах тойм (AI-гүй үед ч ажиллана)
+  const mood = top(week, "emotion")[0];
+  const symptoms = top(week, "symptoms").slice(0, 2);
+  const sleep = top(week, "sleep")[0];
+  const flowDays = week.filter((r) => FLOW.includes(r.period)).length;
+
+  const askSummary = async () => {
+    setAiLoading(true);
+    setAiError("");
+    const result = await askAi(
+      session,
+      {
+        type: "weekly_summary",
+        daughterName,
+        phase: phaseKey,
+        daysUntil,
+        days: week.map((r) => ({ date: r.log_date, emotion: r.emotion, symptoms: r.symptoms, period: r.period, skin: r.skin, sleep: r.sleep })),
+      },
+      25000,
+      { detailed: true },
+    );
+    setAiLoading(false);
+    if (result?.summary) {
+      setAi(result);
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify(result));
+      } catch {}
+    } else setAiError("AI тойм гаргаж чадсангүй. Дараа дахин оролдоорой.");
+  };
+
+  if (!linked)
+    return (
+      <div className="space-y-4">
+        <PageHeader sub="Охины мөчлөг" title="Календарь" />
+        <Card><p className="py-4 text-center text-sm font-semibold text-slate-500">Охиноо холбосны дараа календарь харагдана 🌱</p></Card>
+      </div>
+    );
+
+  const sel = selected ? { key: selected, date: parse(selected), ...dayInfo(selected) } : null;
 
   return (
     <div className="space-y-4">
-      <PageHeader sub={`${daughterName || "Охины тань"} · мөчлөг`} title="Сарын тэмдгийн календарь 🗓️" />
-      {!linked ? (
-        <Card><p className="py-4 text-center text-sm font-semibold text-slate-500">Охиноо холбосны дараа календарийг харах боломжтой 🌱</p></Card>
-      ) : noPeriodYet ? (
-        <Card><SectionTitle icon={CalendarDays} title="Календарь" /><p className="text-sm font-semibold text-slate-500">Одоогоор сарын тэмдгийн эхэлсэн өдөр бүртгэгдээгүй байна. 🌱</p></Card>
-      ) : !hasCycle ? (
-        <Card><SectionTitle icon={CalendarDays} title="Календарь" /><p className="text-sm font-semibold text-slate-500">Охины мөчлөгийн мэдээлэл ороогүй байна.</p></Card>
-      ) : (
-        <>
-          <Card className="!mt-0 min-h-[740px] pb-12">
-            <SectionTitle
-              icon={Droplets}
-              title="Охины мөчлөг"
-              right={
-                <button type="button" onClick={() => setShowLargeCalendar(true)} className="flex items-center gap-1 rounded-full bb-bg-FDE7F1 bb-text-B83B7E px-2.5 py-1.5 text-xs font-extrabold active:scale-95">
-                  <CalendarDays className="h-3.5 w-3.5" /> Хуанли
-                </button>
-              }
-            />
-            <div className="mx-auto w-fit">
-              <button type="button" onClick={() => setShowLargeCalendar(true)} aria-label="Охины мөчлөгийн хуанли нээх" className="block rounded-full p-0 active:scale-[0.98] transition-transform">
-                <CycleRing day={day} cycleLength={cycleLength} periodLength={periodLength} phaseKey={phaseKey} daysUntil={daysUntil} daysLate={daysLate} />
-              </button>
-            </div>
-            <div className="mt-5 flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs font-bold text-slate-500">
+      <PageHeader sub={`${daughterName || "Охин"} · мөчлөг`} title="Календарь" />
+
+      {/* ---------- Мөчлөгийн цагираг (дарахад хуанли нээгдэнэ) ---------- */}
+      <Card>
+        <SectionTitle
+          icon={Droplets}
+          title="Охины мөчлөг"
+          right={
+            <button type="button" onClick={() => setCalendarOpen(true)} className="flex items-center gap-1 rounded-full bb-bg-FDE7F1 bb-text-B83B7E px-2.5 py-1.5 text-xs font-extrabold active:scale-95">
+              <CalendarDays className="h-3.5 w-3.5" /> Хуанли
+            </button>
+          }
+        />
+        {hasCycle && !noPeriodYet ? (
+          <>
+            <button type="button" onClick={() => setCalendarOpen(true)} aria-label="Охины хуанли нээх" className="mx-auto block w-fit rounded-full active:scale-95 transition-transform">
+              <CycleRing day={day} cycleLength={cycleLength} periodLength={periodLength} phaseKey={phaseKey} daysUntil={daysUntil} daysLate={daysLate} />
+            </button>
+            <div className="mt-4 flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs font-bold text-slate-500">
               {Object.entries(PHASE_COLORS).map(([key, color]) => (
-                <span key={key} className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />{PHASES[key].short}</span>
+                <span key={key} className="flex items-center gap-1">
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />
+                  {PHASES[key].short}
+                </span>
               ))}
             </div>
-            <p className="mt-3 text-center text-xs font-semibold text-slate-400">Өмнөх тэмдэглэсэн өдрөөр тооцоолсон тул мөчлөгийн өдөр зөрж магадгүй.</p>
-          </Card>
+            <p className="mt-2 text-center text-xs font-semibold text-slate-400">Цагираг дээр дарж хуанли нээнэ</p>
+          </>
+        ) : (
+          <p className="text-sm font-semibold text-slate-500">Охины мөчлөгийн мэдээлэл хараахан ороогүй байна 🌱</p>
+        )}
+      </Card>
 
-          {showLargeCalendar && (
-            <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/60 p-4" role="dialog" aria-modal="true" aria-label="Сарын хуанли" onClick={() => setShowLargeCalendar(false)}>
-              <div className="w-full max-w-md rounded-3xl bg-white p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
-                <div className="mb-4 flex items-center justify-between">
-                  <h2 className="font-black text-slate-700">Охины сарын хуанли</h2>
-                  <button type="button" onClick={() => setShowLargeCalendar(false)} className="flex h-9 w-9 items-center justify-center rounded-full bb-bg-FFF7FB text-slate-600" aria-label="Хаах"><X className="h-5 w-5" /></button>
-                </div>
-                <div className="flex items-center justify-between">
-                  <button type="button" aria-label="Өмнөх сар" onClick={() => setMonth((value) => new Date(value.getFullYear(), value.getMonth() - 1, 1))} className="flex h-10 w-10 items-center justify-center rounded-xl bb-bg-FFF7FB text-slate-600"><ChevronLeft className="h-5 w-5" /></button>
-                  <p className="font-extrabold capitalize text-slate-700">{monthLabel}</p>
-                  <button type="button" aria-label="Дараагийн сар" onClick={() => setMonth((value) => new Date(value.getFullYear(), value.getMonth() + 1, 1))} className="flex h-10 w-10 items-center justify-center rounded-xl bb-bg-FFF7FB text-slate-600"><ChevronRight className="h-5 w-5" /></button>
-                </div>
-                <div className="mt-4 grid grid-cols-7 text-center text-xs font-extrabold text-slate-400">{WEEKDAYS.map((weekday) => <span key={weekday} className="py-2">{weekday}</span>)}</div>
-                <div className="grid grid-cols-7 gap-y-2 text-center">
-                  {dates.map((date) => {
-                    const key = dateKey(date);
-                    const isCurrentMonth = date.getMonth() === month.getMonth();
-                    const isPeriod = periodDay(date);
-                    const isToday = key === today;
-                    return <div key={key} className={`mx-auto flex h-11 w-11 items-center justify-center rounded-full text-sm font-bold ${isPeriod ? "bb-bg-FDE7F1 bb-text-B83B7E" : isCurrentMonth ? "text-slate-700" : "text-slate-300"} ${isToday ? "ring-2 ring-purple-300" : ""}`}>{date.getDate()}</div>;
-                  })}
-                </div>
-                <div className="mt-5 flex items-center gap-2 text-xs font-bold text-slate-500"><span className="h-3 w-3 rounded-full bb-bg-FDE7F1 border bb-border-F48FB1" />Сарын тэмдэг ирсэн эсвэл тооцоолсон өдөр</div>
-                <p className="mt-3 text-xs font-semibold text-slate-400">Өмнөх тэмдэглэсэн өдрөөр тооцоолсон тул дараагийн өдрүүд зөрж магадгүй.</p>
-              </div>
+      {/* ---------- Энэ 7 хоног ---------- */}
+      <Card>
+        <SectionTitle icon={CalendarDays} title="Энэ 7 хоног" />
+        {!shareWithMom ? (
+          <p className="flex items-start gap-2 text-sm font-semibold text-slate-500">
+            <Lock className="mt-0.5 h-4 w-4 shrink-0" /> {daughterName || "Охин"} бүртгэлээ хувьдаа хадгалсан байна. Энэ бол хэвийн 🌸
+          </p>
+        ) : week.length === 0 ? (
+          <p className="text-sm font-semibold text-slate-500">Энэ 7 хоногт бүртгэл алга.</p>
+        ) : (
+          <>
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded-full bb-bg-FDE7F1 bb-text-B83B7E px-3 py-1.5 text-xs font-extrabold">{week.length} өдөр бүртгэсэн</span>
+              {mood && <span className="rounded-full bb-bg-E9DDFC bb-text-7C4DCC px-3 py-1.5 text-xs font-extrabold">{EMOJI[mood[0]]} Ихэвчлэн {MN[mood[0]]}</span>}
+              {symptoms.map(([v, n]) => (
+                <span key={v} className="rounded-full bg-slate-100 text-slate-600 px-3 py-1.5 text-xs font-extrabold">{MN[v]} · {n} өдөр</span>
+              ))}
+              {flowDays > 0 && <span className="rounded-full bg-slate-100 text-slate-600 px-3 py-1.5 text-xs font-extrabold">🩸 {flowDays} өдөр</span>}
+              {sleep && <span className="rounded-full bg-slate-100 text-slate-600 px-3 py-1.5 text-xs font-extrabold">Нойр {MN[sleep[0]]}</span>}
             </div>
-          )}
-        </>
+
+            {ai?.summary ? (
+              <div className="mt-4 rounded-2xl bb-bg-FFF7FB p-3 space-y-2 bloom-pop">
+                <p className="text-sm font-bold text-slate-700 leading-relaxed">{ai.summary}</p>
+                {ai.tips?.map((t) => (
+                  <p key={t} className="text-sm font-semibold text-slate-600">💡 {t}</p>
+                ))}
+              </div>
+            ) : (
+              <button
+                onClick={askSummary}
+                disabled={aiLoading}
+                className="mt-4 w-full rounded-2xl bb-grad-sos text-white py-3 text-sm font-extrabold flex items-center justify-center gap-2 active:scale-95 transition disabled:opacity-60"
+              >
+                {aiLoading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                {aiLoading ? "Тойм гаргаж байна…" : "AI-аар 7 хоногийн тойм, зөвлөмж авах"}
+              </button>
+            )}
+            {aiError && <p className="mt-2 text-xs font-semibold bb-text-7C4DCC">{aiError}</p>}
+          </>
+        )}
+        <p className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+          <Lock className="h-3.5 w-3.5 shrink-0" /> Охины хувийн тэмдэглэл танд харагдахгүй.
+        </p>
+      </Card>
+
+      {/* ---------- Хуанли (бүтэн дэлгэц) ---------- */}
+      {calendarOpen && (
+        <div className="fixed inset-0 z-[60] flex justify-center" style={{ background: "rgba(43,34,48,0.4)" }} onClick={() => setCalendarOpen(false)}>
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Охины хуанли"
+            onClick={(e) => e.stopPropagation()}
+            className="bloom-fade w-full max-w-md h-full overflow-y-auto bb-bg-FFF7FB px-4 space-y-4"
+            style={{ paddingTop: "max(14px, env(safe-area-inset-top))", paddingBottom: "max(24px, env(safe-area-inset-bottom))" }}
+          >
+            <div className="flex items-center gap-3">
+              <button onClick={() => setCalendarOpen(false)} aria-label="Буцах" className="w-10 h-10 rounded-full bg-white border-2 border-slate-100 flex items-center justify-center text-slate-500">
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <h2 className="text-lg font-black text-slate-800">{daughterName ? genitive(daughterName) : "Охины"} хуанли</h2>
+            </div>
+      <Card className="!p-3">
+        <div className="mb-1 flex items-center justify-between">
+          <button type="button" aria-label="Өмнөх сар" onClick={() => setMonth((v) => new Date(v.getFullYear(), v.getMonth() - 1, 1))} className="rounded-xl p-2 text-slate-500">
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <p className="text-sm font-extrabold text-slate-700">{monthLabel}</p>
+          <button type="button" aria-label="Дараагийн сар" onClick={() => setMonth((v) => new Date(v.getFullYear(), v.getMonth() + 1, 1))} className="rounded-xl p-2 text-slate-500">
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="grid grid-cols-7 text-center text-xs font-extrabold text-slate-400">
+          {WEEKDAYS.map((w) => <span key={w} className="py-1.5">{w}</span>)}
+        </div>
+        <div className="grid grid-cols-7 gap-y-1">
+          {dates.map((date) => {
+            const key = toDateStr(date);
+            const { kind } = dayInfo(key);
+            const inMonth = date.getMonth() === month.getMonth();
+            const logged = Boolean(byDate[key]);
+            const style =
+              kind === "period"
+                ? "bb-bg-E0679F text-white font-extrabold"
+                : kind === "predicted"
+                  ? "border-2 border-dashed bb-border-F48FB1 bb-text-B83B7E"
+                  : kind === "ovulation"
+                    ? "bb-bg-E9DDFC bb-text-7C4DCC"
+                    : "text-slate-700";
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setSelected(key)}
+                aria-label={dateLabel(date)}
+                className={`relative mx-auto flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold active:scale-90 transition ${style} ${inMonth ? "" : "opacity-40"}`}
+                style={key === today ? { boxShadow: "0 0 0 2px #F48FB1" } : undefined}
+              >
+                {date.getDate()}
+                {logged && <span className={`absolute -bottom-1.5 h-1.5 w-1.5 rounded-full ${kind === "period" ? "bb-bg-FDE7F1" : "bb-bg-B794F4"}`} />}
+              </button>
+            );
+          })}
+        </div>
+        <div className="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs font-semibold text-slate-500">
+          <span className="flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full bb-bg-E0679F" /> Сарын тэмдэг</span>
+          <span className="flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full border-2 border-dashed bb-border-F48FB1" /> Таамаг</span>
+          <span className="flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full bb-bg-E9DDFC" /> Овуляци</span>
+          <span className="flex items-center gap-1"><i className="h-1.5 w-1.5 rounded-full bb-bg-B794F4" /> Бүртгэсэн</span>
+        </div>
+        {(noPeriodYet || !hasCycle) && (
+          <p className="mt-2 text-center text-xs font-semibold text-slate-400">Охины мөчлөгийн мэдээлэл хараахан ороогүй байна 🌱</p>
+        )}
+      </Card>
+          </div>
+        </div>
+      )}
+
+      {/* ---------- Өдөр дээр дарахад ---------- */}
+      {sel && (
+        <div className="fixed inset-0 z-[80] flex items-end justify-center" style={{ background: "rgba(43,34,48,0.4)" }} onClick={() => setSelected(null)}>
+          <div onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={dateLabel(sel.date)} className="bloom-pop w-full max-w-md rounded-t-[28px] bb-bg-FFF7FB px-4 pt-2" style={{ paddingBottom: "max(20px, env(safe-area-inset-bottom))" }}>
+            <span className="mx-auto mb-3 block h-1.5 w-10 rounded-full bg-slate-200" />
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 className="font-black text-slate-800">{dateLabel(sel.date)}</h2>
+                {sel.day && <p className="text-xs font-extrabold bb-text-B83B7E">Мөчлөгийн {sel.day}-р өдөр · {PHASES[getPhaseKey(sel.day, cycleLength, periodLength)]?.short}</p>}
+              </div>
+              <button onClick={() => setSelected(null)} aria-label="Хаах" className="w-9 h-9 rounded-full bg-white border-2 border-slate-100 flex items-center justify-center text-slate-500">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="mt-3 text-sm font-semibold text-slate-600">
+              {sel.kind === "predicted"
+                ? "Сарын тэмдэг энэ өдрүүдэд ирэх төлөвтэй. Хэрэглэл бэлэн байгааг шалгаарай."
+                : sel.kind === "period"
+                  ? "Сарын тэмдгийн өдөр. Халуун цай, амралт тустай байж болно."
+                  : sel.kind === "ovulation"
+                    ? "Мөчлөгийн дунд үе. Ихэвчлэн эрч хүч сайтай байдаг."
+                    : byDate[sel.key]
+                      ? "Охин энэ өдөр бүртгэл хийсэн байна."
+                      : "Онцгой тэмдэглэгээгүй өдөр."}
+            </p>
+            <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+              <Lock className="h-3.5 w-3.5" /> Өдрийн тэмдэглэл нь охины хувийнх.
+            </p>
+          </div>
+        </div>
       )}
     </div>
   );
