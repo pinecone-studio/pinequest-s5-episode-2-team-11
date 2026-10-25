@@ -6,7 +6,7 @@
 app/
   page.tsx                  → Application бүрхүүлийг дууддаг
   layout.tsx, manifest.ts   → апп-ын нэр, дүрс, PWA тохиргоо
-  api/ai/route.ts           → AI (Claude API) — СЕРВЕР дээр ажиллана, API key энд
+  api/ai/route.ts           → AI (Gemini API) — СЕРВЕР дээр ажиллана, API key энд
 components/
   Application.jsx           → контекст provider болон аппын бүрхүүлийг холбодог
   AppProviders.jsx          → Family, Friends provider-ууд

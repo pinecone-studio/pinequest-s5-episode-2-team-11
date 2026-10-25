@@ -9,7 +9,7 @@ import Card from "../ui/Card";
 import CycleRing from "./CycleRing";
 import HoroscopeCard from "./HoroscopeCard";
 import FriendsQuickCard from "../friends/FriendsQuickCard";
-import IncomingSosCard from "../friends/IncomingSosCard"; 
+import IncomingSosCard from "../friends/IncomingSosCard";
 import PeriodCycleTracker from "./PeriodCycleTracker";
 import CyclePredictionCard from "./CyclePredictionCard";
 
