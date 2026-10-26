@@ -86,6 +86,29 @@ const valueEmoji = {
   Irritable: "😠",
 };
 
+// Тэмдэглэлийн бичвэрээс сэтгэлийг зөвхөн утсан дээр таана (бичвэр хаашаа ч илгээгдэхгүй)
+const NOTE_MOOD_WORDS = {
+  Happy: ["баяр", "гоё", "сайхан", "хөгжилтэй", "инээ", "аз жарга", "хөөр", "дуртай", "😊", "😄", "🥰"],
+  Calm: ["тайван", "амар", "амарсан", "амраа", "зүгээр", "😌"],
+  Sad: ["гуни", "уйл", "гомд", "ганцаар", "гутар", "санаа унах", "😢", "😭"],
+  Anxious: ["санаа зов", "түгш", "айсан", "айж", "сандар", "стресс", "шалгалт", "😟", "😰"],
+  Embarrassed: ["ичи", "ичс", "эвгүй", "😳"],
+  Irritable: ["уур", "бухимд", "залхсан", "уцаар", "😠", "😡"],
+};
+const guessNoteMood = (text) => {
+  const lower = text.toLowerCase();
+  let best = null;
+  let bestHits = 0;
+  Object.entries(NOTE_MOOD_WORDS).forEach(([mood, words]) => {
+    const hits = words.filter((word) => lower.includes(word)).length;
+    if (hits > bestHits) {
+      best = mood;
+      bestHits = hits;
+    }
+  });
+  return best;
+};
+
 const mn = (value) => trackerValueMn[value] ?? value;
 // Хуучин бүртгэл { AM, PM } хэлбэртэй байсан — өдрийн нэг бүртгэл болгож нийлүүлнэ
 const flat = (log) => (log && (log.AM || log.PM) ? { ...(log.AM ?? {}), ...(log.PM ?? {}) } : log ?? {});
@@ -128,7 +151,7 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
   const [draftPeriodLength, setDraftPeriodLength] = useState(periodLength);
   const [editingStarts, setEditingStarts] = useState(false);
   const [note, setNote] = useState("");
-  const [noteDates, setNoteDates] = useState(() => new Set());
+  const [notes, setNotes] = useState({}); // огноо → тэмдэглэлийн бичвэр (зөвхөн энэ утсан дээр)
   const [activeCategory, setActiveCategory] = useState(null);
   const [showCorrection, setShowCorrection] = useState(false);
   const [cycleSummary, setCycleSummary] = useState(null);
@@ -160,7 +183,11 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
     setLogs(result);
     const since = localDateKey(new Date(Date.now() - 30 * 86400000));
     syncDays(Object.entries(result).filter(([d]) => d >= since).map(([d, v]) => [d, flat(v)]));
-    setNoteDates(new Set(Object.keys(window.localStorage).filter((k) => k.startsWith("bloom:private-note:")).map((k) => k.slice(19))));
+    setNotes(Object.fromEntries(
+      Object.keys(window.localStorage)
+        .filter((k) => k.startsWith("bloom:private-note:"))
+        .map((k) => [k.slice(19), window.localStorage.getItem(k) ?? ""]),
+    ));
     setNote(window.localStorage.getItem(`bloom:private-note:${selectedDate}`) ?? "");
   }, []);
 
@@ -257,15 +284,15 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
 
   const saveNote = () => {
     const key = `bloom:private-note:${selectedDate}`;
-    const nextDates = new Set(noteDates);
+    const nextNotes = { ...notes };
     if (note.trim()) {
       window.localStorage.setItem(key, note.trim());
-      nextDates.add(selectedDate);
+      nextNotes[selectedDate] = note.trim();
     } else {
       window.localStorage.removeItem(key);
-      nextDates.delete(selectedDate);
+      delete nextNotes[selectedDate];
     }
-    setNoteDates(nextDates);
+    setNotes(nextNotes);
     setToast("Тэмдэглэл хадгалагдлаа");
     setSheetOpen(false);
   };
@@ -354,9 +381,19 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
   };
 
   const monthLogDates = useMemo(
-    () => new Set([...Object.keys(logs).filter((k) => Object.keys(flat(logs[k])).length), ...noteDates]),
-    [logs, noteDates],
+    () => new Set([...Object.keys(logs).filter((k) => Object.keys(flat(logs[k])).length), ...Object.keys(notes)]),
+    [logs, notes],
   );
+
+  // Тэмдэглэлтэй өдрийн эможи: тэр өдөр сонгосон «Сэтгэл» → эс бөгөөс бичвэрээс таасан → 📝
+  const noteEmoji = useMemo(() => {
+    const result = {};
+    Object.entries(notes).forEach(([date, text]) => {
+      const mood = flat(logs[date]).emotion ?? guessNoteMood(text);
+      result[date] = valueEmoji[mood] ?? "📝";
+    });
+    return result;
+  }, [notes, logs]);
 
   return (
     <main data-theme={theme} className="cycle-tracker fixed inset-0 z-[70] overflow-y-auto overscroll-contain bg-[#111018] px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-[max(14px,env(safe-area-inset-top))] text-[#f4edf6]">
@@ -448,6 +485,11 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
                   style={logged ? { boxShadow: "0 0 0 1.5px rgb(244 161 186 / 65%)" } : undefined}
                   className={`cycle-day relative mx-auto flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold transition active:scale-90 ${style} ${!inMonth ? "opacity-40" : ""} ${editingStarts && key > today ? "cursor-not-allowed opacity-30" : ""} ${isToday ? "cycle-today outline outline-2 outline-offset-2 outline-white/70" : ""}`}>
                   <span>{date.getDate()}</span>
+                  {noteEmoji[key] && (
+                    <span aria-hidden className="pointer-events-none absolute -right-1.5 -top-1.5 text-[13px] leading-none drop-shadow">
+                      {noteEmoji[key]}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -457,6 +499,7 @@ export default function PeriodCycleTracker({ onBack, cycleLength, periodLength, 
             <span className="flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full border-2 border-dashed border-[#f4a1ba]" /> Таамаг</span>
             <span className="flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full bg-[#3a3158] ring-1 ring-[#cdb5ff]" /> Овуляци</span>
             <span className="flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full border border-[#f4a1ba]/70" /> Тэмдэглэсэн</span>
+            <span className="flex items-center gap-1"><span className="text-[11px] leading-none">😊</span> Тэмдэглэлийн сэтгэл</span>
           </div>
           <p className="mt-2 text-center text-[11px] text-[#7d7286]">{editingStarts ? "Ягаанаар тэмдэглэсэн өдрийг дахин дарж хасна" : "Өдөр дээр дарж тэмдэглэнэ"}</p>
         </section>
