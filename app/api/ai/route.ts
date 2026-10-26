@@ -1,20 +1,39 @@
 /**
- * POST /api/ai — Bloomy-ийн AI (Gemini эсвэл Claude API).
+ * POST /api/ai — Bloomy-ийн AI (Claude API, эсвэл OpenAI / Gemini).
  *
- * • API түлхүүр зөвхөн сервер дээр (.env.local → ``GEMINI_API_KEY`` эсвэл ANTHROPIC_API_KEY). Утсанд хэзээ ч очихгүй.
+ * • API түлхүүр зөвхөн сервер дээр (.env.local → ANTHROPIC_API_KEY). Утсанд хэзээ ч очихгүй.
  * • Зөвхөн нэвтэрсэн хэрэглэгч ашиглана (Supabase access token шалгана).
  * • Хариу JSON. Алдаа гарвал апп бэлэн текст рүү шилжинэ.
  */
+import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
 
-const MODEL = process.env.ANTHROPIC_MODEL || "claude-haiku-4-5-20251001";
+const MODEL = process.env.ANTHROPIC_MODEL || "claude-opus-5-5";
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite";
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
-// Дараалал: OPENAI_API_KEY (ChatGPT) → GEMINI_API_KEY → ANTHROPIC_API_KEY (Claude)
+// Дараалал: ANTHROPIC_API_KEY (Claude) → OPENAI_API_KEY (ChatGPT) → GEMINI_API_KEY
 async function generate(prompt: string, maxTokens: number): Promise<string> {
+  if (process.env.ANTHROPIC_API_KEY) {
+    const anthropic = new Anthropic({ timeout: 25000, maxRetries: 1 });
+    const response = await anthropic.beta.messages.create({
+      model: MODEL,
+      // Claude-ийн бодох (thinking) токен ч энэ хязгаарт орно
+      max_tokens: maxTokens * 4,
+      output_config: { effort: "low" },
+      betas: ["server-side-fallback-2026-07-01"],
+      fallbacks: "default",
+      system: SAFETY,
+      messages: [{ role: "user", content: prompt }],
+    });
+    if (response.stop_reason === "refusal") throw new Error(`Anthropic refusal: ${response.stop_details?.category}`);
+    return response.content
+      .filter((block): block is Anthropic.Beta.BetaTextBlock => block.type === "text")
+      .map((block) => block.text)
+      .join("");
+  }
   const openaiKey = process.env.OPENAI_API_KEY;
   if (openaiKey) {
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -54,27 +73,7 @@ async function generate(prompt: string, maxTokens: number): Promise<string> {
     const data = await res.json();
     return (data.candidates?.[0]?.content?.parts ?? []).filter((p: any) => !p.thought).map((p: any) => p.text ?? "").join("");
   }
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": process.env.ANTHROPIC_API_KEY ?? "",
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      max_tokens: maxTokens,
-      system: SAFETY,
-      messages: [{ role: "user", content: prompt }],
-    }),
-    signal: AbortSignal.timeout(25000),
-  });
-  if (!res.ok) throw new Error(`Anthropic ${res.status}: ${await res.text()}`);
-  const data = await res.json();
-  return (data.content ?? [])
-    .filter((block: any) => block.type === "text")
-    .map((block: any) => block.text ?? "")
-    .join("");
+  throw new Error("AI түлхүүр тохируулаагүй");
 }
 
 const PHASE_MN: Record<string, string> = {
@@ -303,7 +302,7 @@ function extractJson(text: string) {
 }
 
 export async function POST(req: Request) {
-  const apiKey = process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY || process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!apiKey || !url || !anon) return Response.json({ error: "ai_not_configured" }, { status: 503 });
@@ -325,7 +324,7 @@ export async function POST(req: Request) {
   const built = buildPrompt(body);
   if (!built) return Response.json({ error: "bad_type" }, { status: 400 });
 
-  // 3) AI (Gemini эсвэл Claude)
+  // 3) AI (Claude)
   try {
     const text = await generate(built.prompt, built.maxTokens);
     const json = extractJson(text);
