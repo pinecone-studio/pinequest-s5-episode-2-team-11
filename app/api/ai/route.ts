@@ -161,9 +161,9 @@ const SAFETY = `Чи "Bloomy" апп-ын зөөлөн, найрсаг тусл�
 - Бие махбодийг ичгүүртэй зүйл гэж бүү хандаарай; ичгүүргүй, эерэг байлга.
 - Хариугаа ЗӨВХӨН JSON хэлбэрээр, өөр текстгүй буцаа.`;
 
-// Асран хамгаалагчид: охины сүүлийн 7 хоногийн ангилсан бүртгэлийн тойм (хувийн тэмдэглэл ОРОХГҮЙ)
-function buildWeeklySummaryPrompt(body: any) {
-  const days = (Array.isArray(body.days) ? body.days.slice(-7) : []).flatMap((entry: any) => {
+// day_logs-ийн мөрүүдээс зөвхөн зөвшөөрөгдсөн ангиллын утгуудыг үлдээнэ
+function cleanDayLogs(raw: unknown, limit: number) {
+  return (Array.isArray(raw) ? raw.slice(-limit) : []).flatMap((entry: any) => {
     if (!entry || typeof entry.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(entry.date)) return [];
     const values: Record<string, string> = {};
     Object.entries(CYCLE_LOG_VALUES).forEach(([category, allowed]) => {
@@ -172,6 +172,26 @@ function buildWeeklySummaryPrompt(body: any) {
     });
     return Object.keys(values).length ? [{ date: entry.date, ...values }] : [];
   });
+}
+
+// Асран хамгаалагчид: охины сүүлийн 30 хоногийн бүртгэлээс халамжийн зөвлөгөө (хувийн тэмдэглэл ОРОХГҮЙ)
+function buildMonthlyCarePrompt(body: any) {
+  const days = cleanDayLogs(body.days, 31);
+  const name = String(body.daughterName || "Охин").slice(0, 40);
+  const phase = PHASE_MN[body.phase] ?? "тодорхойгүй үе";
+  return {
+    maxTokens: 400,
+    prompt: `Асран хамгаалагчид охин ${name}-ийн сүүлийн 1 сарын бүртгэлд дүн шинжилгээ хийж, түүнийг хэрхэн халамжлах талаар зөвлө. Охин одоо ${phase}-д байна.
+Доорх ангилсан өгөгдлийг л ашигла (сэтгэл, шинж тэмдэг, урсгал, арьс, нойр). Давтагдсан хэв маяг, мөчлөгийн аль үед юу өөрчлөгддөгийг болгоомжтой дурд; бүртгэгдээгүй зүйлийг бүү нэм, оношлохгүй. Охины хувийн орон зайг хүндэтгэсэн, буруутгаагүй өнгөөр бич. Зөвлөгөө нь Монгол гэр бүлд хэрэгжүүлж болох, тодорхой байг. Хүчтэй өвдөлт олон өдөр давтагдсан, нойр байнга муу бол эмчтэй зөвлөлдөхийг зөөлөн санал болго. Өгөгдөл цөөн бол тэгж хэл.
+МАШ ТОВЧ бич: summary нь 1 богино өгүүлбэр (хамгийн чухал хэв маяг), tips яг 3 ширхэг тус бүр 10 үгээс ихгүй, talk 12 үгээс ихгүй.
+Өгөгдөл: ${JSON.stringify(days)}
+ЗӨВХӨН JSON: {"summary":"...","tips":["...","...","..."],"talk":"охинтойгоо яриа эхлүүлэх зөөлөн асуулт"}`,
+  };
+}
+
+// Асран хамгаалагчид: охины сүүлийн 7 хоногийн ангилсан бүртгэлийн тойм (хувийн тэмдэглэл ОРОХГҮЙ)
+function buildWeeklySummaryPrompt(body: any) {
+  const days = cleanDayLogs(body.days, 7);
   const name = String(body.daughterName || "Охин").slice(0, 40);
   const phase = PHASE_MN[body.phase] ?? "тодорхойгүй үе";
   const daysUntil = Number.isFinite(Number(body.daysUntil)) ? Number(body.daysUntil) : null;
@@ -188,6 +208,7 @@ function buildWeeklySummaryPrompt(body: any) {
 
 function buildPrompt(body: any): { prompt: string; maxTokens: number } | null {
   if (body.type === "weekly_summary") return buildWeeklySummaryPrompt(body);
+  if (body.type === "monthly_care") return buildMonthlyCarePrompt(body);
   if (body.type === "cycle_summary") return buildCycleSummaryPrompt(body);
   if (body.type === "cycle_prediction") return buildCyclePredictionPrompt(body);
   const phase = PHASE_MN[body.phase] ?? "тодорхойгүй үе";
@@ -340,6 +361,13 @@ export async function POST(req: Request) {
       return Response.json({
         reply: typeof json.reply === "string" ? json.reply.slice(0, 1200) : "",
         chips: Array.isArray(json.chips) ? json.chips.filter((chip: unknown) => typeof chip === "string").slice(0, 2).map((chip: string) => chip.slice(0, 60)) : [],
+      });
+    }
+    if (body.type === "monthly_care") {
+      return Response.json({
+        summary: typeof json.summary === "string" ? json.summary.slice(0, 300) : "",
+        tips: Array.isArray(json.tips) ? json.tips.filter((tip: unknown) => typeof tip === "string").slice(0, 3).map((tip: string) => tip.slice(0, 120)) : [],
+        talk: typeof json.talk === "string" ? json.talk.slice(0, 160) : "",
       });
     }
     if (body.type === "weekly_summary") {
