@@ -1,39 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import {
-  Users,
-  Copy,
-  Check,
-  Share2,
-  AlertCircle,
-  Loader2,
-  Pencil,
-  LogOut,
-} from "lucide-react";
+import { Pencil, LogOut } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import Card from "../ui/Card";
 import SectionTitle from "../ui/SectionTitle";
 import PageHeader from "../ui/PageHeader";
 import MyFriendCode from "../friends/MyFriendCode";
+import FamilyLinkingSection from "./FamilyLinkingSection";
 
 export default function ProfileScreen() {
   const {
     profile,
     session,
     view,
-    familyCode,
-    linked,
-    daughterName,
-    copied,
-    copyCode,
-    shareCode,
-    codeInput,
-    setCodeInput,
-    codeError,
-    setCodeError,
-    joinFamily,
-    joining,
     updateName,
     updateEmail,
     setToast,
@@ -163,118 +143,8 @@ export default function ProfileScreen() {
         </div>
       </Card>
 
-              <MyFriendCode />
-      <Card>
-
-        <SectionTitle icon={Users} title="Гэр бүл" />
-        {isMother ? (linked ? (
-          <>
-            <p className="text-sm font-bold bb-text-B83B7E">✓ {daughterName} холбогдсон</p>
-            <div className="mt-3 flex items-center gap-2">
-              <span className="flex-1 rounded-2xl bb-bg-FFF7FB py-3 text-center text-lg font-black tracking-wider text-slate-600">
-                {familyCode || "…"}
-              </span>
-              <button
-                onClick={copyCode}
-                className="w-12 h-12 rounded-2xl bb-bg-FDE7F1 bb-text-B83B7E flex items-center justify-center active:scale-90"
-                aria-label="Кодыг хуулах"
-              >
-                {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-              </button>
-              <button
-                onClick={shareCode}
-                className="w-12 h-12 rounded-2xl bg-white border-2 border-slate-100 bb-text-B83B7E flex items-center justify-center active:scale-90"
-                aria-label="Кодыг хуваалцах"
-              >
-                <Share2 className="w-5 h-5" />
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="text-sm font-semibold text-slate-500">
-              Охиноосоо авсан урилгын кодыг оруулж холбоно уу.
-            </p>
-            <div className="mt-3 flex items-center rounded-2xl border-2 border-slate-100 bb-focus-within-border-F48FB1 bg-white overflow-hidden">
-              <span className="pl-4 font-black bb-text-F48FB1">BLOOM-</span>
-              <input
-                id="family-code"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={6}
-                value={codeInput}
-                onChange={(event) => {
-                  setCodeInput(event.target.value.replace(/\D/g, ""));
-                  setCodeError("");
-                }}
-                onKeyDown={(event) => event.key === "Enter" && joinFamily()}
-                className="flex-1 min-w-0 py-3 pr-4 pl-1 text-xl font-black tracking-widest text-slate-700 outline-none bg-transparent"
-                placeholder="000000"
-                aria-label="Охиныхоо урилгын код"
-              />
-            </div>
-            {codeError && (
-              <p className="mt-2 text-sm font-semibold bb-text-7C4DCC flex items-center gap-1">
-                <AlertCircle className="w-4 h-4" /> {codeError}
-              </p>
-            )}
-            <button
-              onClick={joinFamily}
-              disabled={codeInput.length !== 6 || joining}
-              className="mt-3 w-full bb-bg-E0679F bb-disabled-bg-F8D3E6 text-white font-extrabold rounded-2xl py-3 active:scale-95 transition flex items-center justify-center gap-2"
-            >
-              {joining && <Loader2 className="w-5 h-5 animate-spin" />}
-              Охинтойгоо холбогдох
-            </button>
-          </>
-        )) : linked ? (
-          <>
-            <p className="text-sm font-bold bb-text-B83B7E">✓ Асран хамгаалагчтайгаа холбогдсон</p>
-            <div className="mt-3 flex items-center gap-2">
-              <span className="flex-1 rounded-2xl bb-bg-FFF7FB py-3 text-center text-lg font-black tracking-wider text-slate-600">
-                {familyCode || "…"}
-              </span>
-              <button
-                onClick={copyCode}
-                className="w-12 h-12 rounded-2xl bb-bg-FDE7F1 bb-text-B83B7E flex items-center justify-center active:scale-90"
-                aria-label="Кодыг хуулах"
-              >
-                {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-              </button>
-              <button
-                onClick={shareCode}
-                className="w-12 h-12 rounded-2xl bg-white border-2 border-slate-100 bb-text-B83B7E flex items-center justify-center active:scale-90"
-                aria-label="Кодыг хуваалцах"
-              >
-                <Share2 className="w-5 h-5" />
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="text-sm font-semibold text-slate-500">Асран хамгаалагчдаа энэ кодыг оруулуулж холбогдоорой.</p>
-            <div className="mt-3 flex items-center gap-2">
-              <span className="flex-1 rounded-2xl bb-bg-FFF7FB py-3 text-center text-lg font-black tracking-wider text-slate-600">
-                {familyCode || "…"}
-              </span>
-              <button
-                onClick={copyCode}
-                className="w-12 h-12 rounded-2xl bb-bg-FDE7F1 bb-text-B83B7E flex items-center justify-center active:scale-90"
-                aria-label="Кодыг хуулах"
-              >
-                {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-              </button>
-              <button
-                onClick={shareCode}
-                className="w-12 h-12 rounded-2xl bg-white border-2 border-slate-100 bb-text-B83B7E flex items-center justify-center active:scale-90"
-                aria-label="Кодыг хуваалцах"
-              >
-                <Share2 className="w-5 h-5" />
-              </button>
-            </div>
-          </>
-        )}
-      </Card>
+      <MyFriendCode />
+      <FamilyLinkingSection />
       <button
         type="button"
         onClick={signOut}

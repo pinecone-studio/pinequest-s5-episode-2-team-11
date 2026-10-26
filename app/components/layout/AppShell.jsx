@@ -46,7 +46,6 @@ export default function AppShell() {
     toast,
     lowSupplyCount,
     showOnboarding,
-    needsMotherCode,
   } = family;
   // Охины хонхны тоо: асран хамгаалагчийн уншаагүй үг + хариулаагүй найзын SOS
   const teenUnread = (family.teenInbox ?? []).filter((n) => !n.read).length + (unansweredIncoming ?? 0);
@@ -59,13 +58,11 @@ export default function AppShell() {
     if (authLoading) return;
     if (!session && pathname !== "/") {
       router.replace("/");
-    } else if (session && ready && needsMotherCode && pathname !== "/profile") {
-      router.replace("/profile");
     } else if (session && ready && view && pathname === "/") {
       // Нэвтэрсэн бол нүүр хуудас руу шууд оруулна
       router.replace(view === "mother" ? "/mother" : "/daughter");
     }
-  }, [authLoading, session, ready, needsMotherCode, view, pathname, router]);
+  }, [authLoading, session, ready, view, pathname, router]);
 
   const navigateToTab = (nextTab) => {
     setTab(nextTab);
