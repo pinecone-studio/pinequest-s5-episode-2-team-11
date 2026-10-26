@@ -1,12 +1,12 @@
 "use client";
 
 /**
- * Найзууд · Хэрэглэлийн SOS — хэрэглэл дуусахад бүлгийн найзууддаа нэг товшилтоор дохио илгээнэ.
+ * Найзууд, хэрэглэл хүсэх болон тайвшрах дасгалын хэсэг.
  * Өгөгдөл: context/FriendsContext.jsx · Database: supabase/friends.sql
  */
 
 import { useState } from "react";
-import { Users, Plus, Lock, UserPlus, Loader2, ChevronRight, Phone, X } from "lucide-react";
+import { Users, Plus, Lock, UserPlus, Loader2, ChevronRight, Phone, Wind, X } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import { useFriends } from "../../../context/FriendsContext";
 import { GROUP_EMOJIS, PLACE_MAX } from "../../../lib/friends";
@@ -18,6 +18,7 @@ import FriendReplies from "./FriendReplies";
 import IncomingSosCard from "./IncomingSosCard";
 import AvatarCard from "../avatar/AvatarCard";
 import Avatar from "../avatar/Avatar";
+import SosModal from "../sos/SosModal";
 
 const Label = ({ children }) => (
   <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2">{children}</p>
@@ -55,7 +56,8 @@ export default function FriendsScreen() {
 
   const F = useFriends();
   const { friends, sosStage, outgoing, replyText } = F;
-  const [sheet, setSheet] = useState(null); // "sos" | "friends" | "groups"
+  const { openSos, sosOpen } = useFamily();
+  const [sheet, setSheet] = useState(null); // "supplies" | "friends" | "groups"
   const nameOf = (id) => friends.find((f) => f.id === id)?.display_name ?? "…";
   const firstReply = outgoing?.responses?.[0];
 
@@ -74,9 +76,25 @@ export default function FriendsScreen() {
 
       <IncomingSosCard />
 
-      {/* ---------- SOS (нэг мөр) ---------- */}
       <button
-        onClick={() => setSheet("sos")}
+        onClick={openSos}
+        className="w-full rounded-3xl bg-gradient-to-r from-[#e0679f] to-[#b83b7e] p-4 text-left text-white shadow-xl bb-shadow-F48FB1-30 active:scale-95 transition flex items-center gap-3 relative overflow-hidden"
+      >
+        <span className="relative w-12 h-12 shrink-0 rounded-2xl bg-white/15 flex items-center justify-center">
+          <Wind className="w-6 h-6 text-white" />
+        </span>
+        <span className="flex-1 relative min-w-0">
+          <span className="block font-black text-white">Сарын тэмдгийн өвдөлтийн үед</span>
+          <span className="block text-xs font-bold text-white/85">
+            Өвдөлт мэдрэгдэхэд хийх 3 минутын амьсгал, сунгалтын дасгал
+          </span>
+        </span>
+        <ChevronRight className="w-5 h-5 relative shrink-0 text-white" />
+      </button>
+
+      {/* ---------- Хэрэглэл хүсэх ---------- */}
+      <button
+        onClick={() => setSheet("supplies")}
         className="w-full flex items-center gap-3 rounded-3xl p-3 bb-grad-sos-soft border bb-border-F8D3E6 shadow-sm text-left active:scale-95 transition"
       >
         <span className="w-12 h-12 shrink-0 rounded-full bb-grad-sos text-white flex items-center justify-center shadow-md">
@@ -84,10 +102,10 @@ export default function FriendsScreen() {
         </span>
         <span className="flex-1 min-w-0">
           <span className="block font-black text-slate-800">
-            {sosStage === "sent" ? "Дохио очлоо 📣" : sosStage === "ringing" ? "Илгээж байна…" : "Пад хэрэгтэй юу?"}
+            {sosStage === "sent" ? "Хүсэлт илгээгдлээ 📣" : sosStage === "ringing" ? "Илгээж байна…" : "Хэрэглэл хүсэх"}
           </span>
           <span className="block text-xs font-semibold text-slate-500 bx-trunc">
-            {firstReply ? `${firstReply.responder_name}: ${replyText(firstReply.reply)}` : "Найзаа сонгоод дохио илгээ"}
+            {firstReply ? `${firstReply.responder_name}: ${replyText(firstReply.reply)}` : "Найзууддаа хэрэглэл хэрэгтэйгээ мэдэгд"}
           </span>
         </span>
         <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
@@ -128,9 +146,9 @@ export default function FriendsScreen() {
       {/* ---------- Миний дүр · Алхалт · Дэлгүүр ---------- */}
       <AvatarCard />
 
-      {sheet === "sos" && (
-        <Sheet title="Пад хэрэгтэй юу?" onClose={() => setSheet(null)}>
-          <SosPanel />
+      {sheet === "supplies" && (
+        <Sheet title="Хэрэглэл хүсэх" onClose={() => setSheet(null)}>
+          <SupplyRequestPanel />
         </Sheet>
       )}
       {sheet === "friends" && (
@@ -143,13 +161,14 @@ export default function FriendsScreen() {
           <MyGroups nameOf={nameOf} />
         </Sheet>
       )}
+      {sosOpen && <SosModal />}
     </div>
   );
 }
 
-/* ================= SOS илгээх ================= */
+/* ================= Хэрэглэл хүсэлт илгээх ================= */
 
-function SosPanel() {
+function SupplyRequestPanel() {
   const F = useFriends();
   const { friends, groups, sosStage, placeInfo } = F;
   const [ids, setIds] = useState([]);
@@ -443,7 +462,7 @@ function MyGroups({ nameOf }) {
       </div>
 
       <p className="mt-3 flex items-center gap-1.5 text-xs font-bold text-slate-400">
-        <Lock className="w-3.5 h-3.5 shrink-0" /> Бүлэгт чат байхгүй — зөвхөн SOS дохио очно.
+        <Lock className="w-3.5 h-3.5 shrink-0" /> Бүлэгт чат байхгүй — зөвхөн хэрэглэл хүссэн мэдэгдэл очно.
       </p>
 
       {creating && (
