@@ -41,7 +41,7 @@ const top = (rows, field) => {
 };
 
 export default function MotherCalendar() {
-  const { linked, daughterName, hasCycle, cycleLength, periodLength, lastPeriodStart, noPeriodYet, phaseKey, daysUntil, daysLate, day, shareWithMom, session, profile } =
+  const { linked, activeChildId, daughterName, hasCycle, cycleLength, periodLength, lastPeriodStart, noPeriodYet, phaseKey, daysUntil, daysLate, day, shareWithMom, session } =
     useFamily();
   const today = toDateStr();
   const [month, setMonth] = useState(() => {
@@ -57,25 +57,32 @@ export default function MotherCalendar() {
 
   // Сүүлийн 60 хоногийн ангилсан бүртгэл (RLS: охин хуваалцсан үед л ирнэ)
   useEffect(() => {
-    if (!supabase || !linked) return;
+    setRows([]);
+    setAi(null);
+    setAiError("");
+    if (!supabase || !linked || !activeChildId) return;
+    let cancelled = false;
     const since = toDateStr(new Date(Date.now() - 60 * 86400000));
     supabase
       .from("day_logs")
       .select("log_date, emotion, symptoms, period, skin, sleep")
+      .eq("user_id", activeChildId)
       .gte("log_date", since)
       .order("log_date")
       .then(({ data, error }) => {
+        if (cancelled) return;
         if (error) console.warn("[day_logs] mother:", error.message);
         setRows(data ?? []);
       });
-  }, [linked, shareWithMom]);
+    return () => { cancelled = true; };
+  }, [linked, activeChildId, shareWithMom]);
 
   const byDate = useMemo(() => Object.fromEntries(rows.map((r) => [r.log_date, r])), [rows]);
   const weekStart = toDateStr(new Date(Date.now() - 6 * 86400000));
   const week = rows.filter((r) => r.log_date >= weekStart && r.log_date <= today);
 
   // Өмнө гаргасан AI тоймыг энэ 7 хоногт дахин дуудахгүйн тулд хадгална
-  const cacheKey = `bloom:weekly-summary:${profile?.id ?? "x"}:${weekStart}`;
+  const cacheKey = `bloom:weekly-summary:${activeChildId ?? "x"}:${weekStart}`;
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(cacheKey) ?? "null");
