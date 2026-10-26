@@ -7,7 +7,6 @@ import { useFriends } from "../../../context/FriendsContext";
 import AppHeader from "./AppHeader";
 import BottomNavigation from "./BottomNavigation";
 import CurrentScreen from "./CurrentScreen";
-import SosModal from "../sos/SosModal";
 import { useTheme } from "../../../context/ThemeContext";
 
 // Хаяг → таб
@@ -42,7 +41,6 @@ export default function AppShell() {
     tab,
     setTab,
     momUnread,
-    sosOpen,
     toast,
     lowSupplyCount,
     showOnboarding,
@@ -128,7 +126,6 @@ export default function AppShell() {
             </div>
           </div>
         )}
-        {sosOpen && <SosModal />}
       </div>
     </div>
   );
