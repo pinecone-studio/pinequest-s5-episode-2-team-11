@@ -41,7 +41,6 @@ export default function AppShell() {
     linked,
     tab,
     setTab,
-    momUnread,
     sosOpen,
     toast,
     lowSupplyCount,
