@@ -1158,7 +1158,6 @@ export function FamilyProvider({ children }) {
     startPeriod,
     proposePeriodStart,
     respondPeriodEntry,
-    markChildPeriod,
     noPeriodYet,
     markNoPeriodYet,
     // сэтгэл санаа

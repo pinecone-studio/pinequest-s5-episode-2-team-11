@@ -9,7 +9,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Droplets, Lock, Sparkles, LoaderCircle, X } from "lucide-react";
-import { CalendarDays, ChevronLeft, ChevronRight, Droplets, Sparkles, LoaderCircle, X } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import { supabase } from "../../../lib/supabase";
 import { askAi } from "../../../lib/ai-client";
@@ -200,14 +199,6 @@ export default function MotherCalendar() {
                 {flowDays > 0 && <span className="rounded-full bg-slate-100 text-slate-600 px-3 py-1.5 text-xs font-extrabold">🩸 {flowDays} өдөр</span>}
                 {sleep && <span className="rounded-full bg-slate-100 text-slate-600 px-3 py-1.5 text-xs font-extrabold">Нойр {MN[sleep[0]]}</span>}
               </div>
-
-              {ai?.summary ? (
-                <div className="mt-4 rounded-2xl bb-bg-FFF7FB p-3 space-y-2 bloom-pop">
-                  <p className="text-sm font-bold text-slate-700 leading-relaxed">{ai.summary}</p>
-                  {ai.tips?.map((t) => (
-                    <p key={t} className="text-sm font-semibold text-slate-600">💡 {t}</p>
-                  ))}
-                </div>
               ) : (
                 <button
                   onClick={askSummary}
@@ -222,7 +213,6 @@ export default function MotherCalendar() {
             </>
           )}
         </Card>
-      )}
 
       {/* ---------- Хуанли (бүтэн дэлгэц) ---------- */}
       {calendarOpen && (
