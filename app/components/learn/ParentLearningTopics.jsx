@@ -75,7 +75,6 @@ const courseLessons = [
 export default function ParentLearningTopics() {
   const [expanded, setExpanded] = useState({});
   const [activePage, setActivePage] = useState(null);
-  const [expanded, setExpanded] = useState(null);
   const { theme } = useTheme();
   const headingColor = theme === "dark" ? "#d9a8bd" : "#a15f7c";
   const bodyColor = theme === "dark" ? "#ded5e2" : "#526070";
@@ -142,39 +141,9 @@ export default function ParentLearningTopics() {
             </p>
           )}
         </Card>
-  return (
-    <Card className="parent-learning-card">
-      <SectionTitle
-        icon={Sparkles}
-        title="Охиноо дэмжихэд туслах санаанууд 💗"
-        tone="peach"
-        titleStyle={{ color: headingColor }}
-      />
-      <div className="space-y-3">
-        {topics.map(({ icon: Icon, title, text }) => {
-          const isOpen = expanded === title;
-          return (
-            <section key={title} className={`parent-topic rounded-2xl bg-white p-4 ${isOpen ? "parent-topic-open" : ""}`}>
-              <button
-                type="button"
-                onClick={() => setExpanded((current) => (current === title ? null : title))}
-                aria-expanded={isOpen}
-                className="flex w-full items-center gap-3 text-left active:opacity-80"
-              >
-                <span className="parent-topic-title flex min-w-0 flex-1 items-center gap-2 font-extrabold" style={{ color: headingColor }}>
-                  <Icon className="h-4 w-4 shrink-0 bb-text-B83B7E" /> {title}
-                </span>
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bb-text-B83B7E" aria-hidden="true">
-                  <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-180" : ""}`} />
-                </span>
-              </button>
-              {isOpen && <p className="mt-3 text-sm font-semibold leading-relaxed text-slate-600" style={{ color: bodyColor }}>{text}</p>}
-            </section>
-          );
-        })}
-      </div>
-    );
-  }
+        </div>
+      );
+    }
 
   return (
     <div className="space-y-4">

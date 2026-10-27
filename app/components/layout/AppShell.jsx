@@ -132,7 +132,6 @@ export default function AppShell() {
             </label>
           </div>
         )}
-        <main className={`px-4 pt-4 ${showNav ? "pb-28" : "pb-10"}`}>
         <main className={isCompactLesson ? "learn-viewport-main" : `px-4 pt-4 ${showNav ? "pb-28" : "pb-10"}`}>
           {showNav && view === "mother" && CHILD_TABS.includes(tab) && <ChildSwitcher />}
           <CurrentScreen family={family} pathname={pathname} />

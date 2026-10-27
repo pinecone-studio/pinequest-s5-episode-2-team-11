@@ -9,8 +9,7 @@ import SchoolBagChecklist from "../supplies/SchoolBagChecklist";
 import AddSupplyForm from "../supplies/AddSupplyForm";
 
 export default function MotherSupplies() {
-  const { supplies, updateSupply, restock, daughterName } = useFamily();
-  const { supplies, updateSupply, restock, removeSupply } = useFamily();
+  const { supplies, updateSupply, restock, daughterName, removeSupply } = useFamily();
 
   return (
     <div className="space-y-4">
