@@ -2,9 +2,9 @@
 
 /**
  * Асран хамгаалагчийн «Календарь» — охины календарьтай ижил загвар.
- *   • Өдрийн өнгө: сарын тэмдэг · таамаг · овуляци · бүртгэсэн өдөр (цэг)
+ *   • Өдрийн өнгө: сарын тэмдэг · таамаг · бүртгэсэн өдөр (цэг)
  *   • Охины ХУВИЙН ТЭМДЭГЛЭЛ харагдахгүй. Зөвхөн «Энэ 7 хоног»-ийн тойм харуулна.
- *   • Өгөгдөл: Supabase day_logs (supabase/day-logs.sql) — охин хуваалцахыг зөвшөөрсөн үед л.
+ *   • Сэтгэл санааг зөвхөн тусгай RPC-ээр, охин хуваалцахыг зөвшөөрсөн үед харуулна.
  */
 
 import { useEffect, useMemo, useState } from "react";
@@ -13,32 +13,20 @@ import { useFamily } from "../../../context/FamilyContext";
 import { supabase } from "../../../lib/supabase";
 import { askAi } from "../../../lib/ai-client";
 import { toDateStr } from "../../../lib/dates";
-import { PHASE_COLORS, PHASES } from "../../../lib/data";
+import { periodDayKeys, predictPeriodRange } from "../../../lib/cycle";
 import CycleRing from "../daughter/CycleRing";
-import { genitive, getPhaseKey } from "../../../lib/helpers";
+import CycleLegend from "../daughter/CycleLegend";
+import { genitive } from "../../../lib/helpers";
 import Card from "../ui/Card";
 import PageHeader from "../ui/PageHeader";
 import SectionTitle from "../ui/SectionTitle";
 
 const WEEKDAYS = ["Да", "Мя", "Лх", "Пү", "Ба", "Бя", "Ня"];
-const WEEKDAY_LONG = ["Ням", "Даваа", "Мягмар", "Лхагва", "Пүрэв", "Баасан", "Бямба"];
 const parse = (key) => new Date(`${key}T00:00:00`);
 const dayDiff = (a, b) => Math.round((parse(b) - parse(a)) / 86400000);
-const dateLabel = (d) => `${d.getMonth() + 1}-р сарын ${d.getDate()}, ${WEEKDAY_LONG[d.getDay()]}`;
-
-const MN = {
-  Happy: "баяртай", Calm: "тайван", Sad: "гунигтай", Anxious: "түгшсэн", Embarrassed: "ичсэн", Irritable: "уурлангуй",
-  Cramps: "базлалт", Headache: "толгой өвдөлт", Bloating: "гэдэс дүүрэлт", Fatigue: "ядаргаа", Tenderness: "хөндүүр",
-  Poor: "муу", Okay: "дунд зэрэг", Good: "сайн", Great: "маш сайн",
-};
-const EMOJI = { Happy: "😊", Calm: "😌", Sad: "😢", Anxious: "😟", Embarrassed: "😳", Irritable: "😠" };
-const FLOW = ["Spotting", "Light", "Medium", "Heavy"];
-
-const top = (rows, field) => {
-  const count = {};
-  rows.forEach((r) => r[field] && (count[r[field]] = (count[r[field]] ?? 0) + 1));
-  return Object.entries(count).sort((a, b) => b[1] - a[1]);
-};
+const dateLabel = (d) => `${d.getMonth() + 1} сарын ${d.getDate()}`;
+const MOOD_LABEL = { 5: "маш сайхан", 4: "сайхан", 3: "дундаж", 2: "тавгүй", 1: "хэцүү" };
+const MOOD_EMOJI = { 5: "😄", 4: "🙂", 3: "😐", 2: "😟", 1: "😣" };
 
 export default function MotherCalendar() {
   const { linked, activeChildId, daughterName, hasCycle, cycleLength, periodLength, lastPeriodStart, noPeriodYet, phaseKey, daysUntil, daysLate, day, shareWithMom, session } =
@@ -64,11 +52,7 @@ export default function MotherCalendar() {
     let cancelled = false;
     const since = toDateStr(new Date(Date.now() - 60 * 86400000));
     supabase
-      .from("day_logs")
-      .select("log_date, emotion, symptoms, period, skin, sleep")
-      .eq("user_id", activeChildId)
-      .gte("log_date", since)
-      .order("log_date")
+      .rpc("get_shared_daily_moods", { p_child_id: activeChildId, p_from: since, p_to: today })
       .then(({ data, error }) => {
         if (cancelled) return;
         if (error) console.warn("[day_logs] mother:", error.message);
@@ -97,25 +81,19 @@ export default function MotherCalendar() {
   }, [month]);
   const monthLabel = `${month.getFullYear()} оны ${month.getMonth() + 1}-р сар`;
 
-  const dayInfo = (key) => {
-    if (FLOW.includes(byDate[key]?.period)) return { kind: "period", day: null };
-    if (!lastPeriodStart || !hasCycle) return { kind: null, day: null };
-    const diff = dayDiff(lastPeriodStart, key);
-    if (diff < -cycleLength * 3) return { kind: null, day: null };
-    const day = (((diff % cycleLength) + cycleLength) % cycleLength) + 1;
-    const phase = getPhaseKey(day, cycleLength, periodLength);
-    if (phase === "period") {
-      if (diff >= 0 && diff < periodLength && key <= today) return { kind: "period", day };
-      return { kind: key > today ? "predicted" : null, day };
-    }
-    return { kind: phase === "ovulation" ? "ovulation" : null, day };
-  };
-
-  // Дүрмээр гаргах тойм (AI-гүй үед ч ажиллана)
-  const mood = top(week, "emotion")[0];
-  const symptoms = top(week, "symptoms").slice(0, 2);
-  const sleep = top(week, "sleep")[0];
-  const flowDays = week.filter((r) => FLOW.includes(r.period)).length;
+  const childStarts = lastPeriodStart ? [lastPeriodStart] : [];
+  const periodDays = periodDayKeys(childStarts, periodLength, today);
+  const prediction = predictPeriodRange({ starts: childStarts, today, hasHadPeriod: Boolean(lastPeriodStart) && !noPeriodYet });
+  const rangeDates = useMemo(() => {
+    const keys = new Set();
+    if (!prediction.rangeStart || !prediction.rangeEnd) return keys;
+    for (let date = parse(prediction.rangeStart); toDateStr(date) <= prediction.rangeEnd; date.setDate(date.getDate() + 1)) keys.add(toDateStr(date));
+    return keys;
+  }, [prediction.rangeStart, prediction.rangeEnd]);
+  const dayInfo = (key) => periodDays.has(key) ? "period" : rangeDates.has(key) && key > today ? "predicted" : prediction.late && rangeDates.has(key) && key <= today ? "late" : null;
+  const moodCounts = {};
+  week.forEach((row) => row.mood && (moodCounts[row.mood] = (moodCounts[row.mood] ?? 0) + 1));
+  const commonMood = Object.entries(moodCounts).sort((a, b) => b[1] - a[1])[0];
 
   const askSummary = async () => {
     setAiLoading(true);
@@ -127,7 +105,7 @@ export default function MotherCalendar() {
         daughterName,
         phase: phaseKey,
         daysUntil,
-        days: week.map((r) => ({ date: r.log_date, emotion: r.emotion, symptoms: r.symptoms, period: r.period, skin: r.skin, sleep: r.sleep })),
+        days: week.map((r) => ({ date: r.log_date, mood: r.mood })),
       },
       25000,
       { detailed: true },
@@ -149,7 +127,7 @@ export default function MotherCalendar() {
       </div>
     );
 
-  const sel = selected ? { key: selected, date: parse(selected), ...dayInfo(selected) } : null;
+  const sel = selected ? { key: selected, date: parse(selected), kind: dayInfo(selected) } : null;
 
   return (
     <div className="space-y-4">
@@ -169,16 +147,9 @@ export default function MotherCalendar() {
         {hasCycle && !noPeriodYet ? (
           <>
             <button type="button" onClick={() => setCalendarOpen(true)} aria-label="Охины хуанли нээх" className="mx-auto block w-fit rounded-full active:scale-95 transition-transform">
-              <CycleRing day={day} cycleLength={cycleLength} periodLength={periodLength} phaseKey={phaseKey} daysUntil={daysUntil} daysLate={daysLate} />
+              <CycleRing day={day} cycleLength={cycleLength} periodLength={periodLength} phaseKey={phaseKey} daysUntil={prediction.rangeStart && prediction.rangeStart > today ? Math.max(0, dayDiff(today, prediction.rangeStart)) : daysUntil} daysLate={prediction.late ? Math.max(daysLate, 1) : 0} />
             </button>
-            <div className="mt-4 flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs font-bold text-slate-500">
-              {Object.entries(PHASE_COLORS).map(([key, color]) => (
-                <span key={key} className="flex items-center gap-1">
-                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />
-                  {PHASES[key].short}
-                </span>
-              ))}
-            </div>
+            <div className="mt-3"><CycleLegend compact /></div>
             <p className="mt-2 text-center text-xs font-semibold text-slate-400">Цагираг дээр дарж хуанли нээнэ</p>
           </>
         ) : (
@@ -199,12 +170,8 @@ export default function MotherCalendar() {
           <>
             <div className="flex flex-wrap gap-2">
               <span className="rounded-full bb-bg-FDE7F1 bb-text-B83B7E px-3 py-1.5 text-xs font-extrabold">{week.length} өдөр бүртгэсэн</span>
-              {mood && <span className="rounded-full bb-bg-E9DDFC bb-text-7C4DCC px-3 py-1.5 text-xs font-extrabold">{EMOJI[mood[0]]} Ихэвчлэн {MN[mood[0]]}</span>}
-              {symptoms.map(([v, n]) => (
-                <span key={v} className="rounded-full bg-slate-100 text-slate-600 px-3 py-1.5 text-xs font-extrabold">{MN[v]} · {n} өдөр</span>
-              ))}
-              {flowDays > 0 && <span className="rounded-full bg-slate-100 text-slate-600 px-3 py-1.5 text-xs font-extrabold">🩸 {flowDays} өдөр</span>}
-              {sleep && <span className="rounded-full bg-slate-100 text-slate-600 px-3 py-1.5 text-xs font-extrabold">Нойр {MN[sleep[0]]}</span>}
+              {commonMood && <span className="rounded-full bb-bg-E9DDFC bb-text-7C4DCC px-3 py-1.5 text-xs font-extrabold">{MOOD_EMOJI[commonMood[0]]} Ихэвчлэн {MOOD_LABEL[commonMood[0]]}</span>}
+              <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-extrabold text-slate-600">Зөвхөн сэтгэл санааг харуулж байна</span>
             </div>
 
             {ai?.summary ? (
@@ -265,7 +232,7 @@ export default function MotherCalendar() {
         <div className="grid grid-cols-7 gap-y-1">
           {dates.map((date) => {
             const key = toDateStr(date);
-            const { kind } = dayInfo(key);
+            const kind = dayInfo(key);
             const inMonth = date.getMonth() === month.getMonth();
             const logged = Boolean(byDate[key]);
             const style =
@@ -273,8 +240,8 @@ export default function MotherCalendar() {
                 ? "bb-bg-E0679F text-white font-extrabold"
                 : kind === "predicted"
                   ? "border-2 border-dashed bb-border-F48FB1 bb-text-B83B7E"
-                  : kind === "ovulation"
-                    ? "bb-bg-E9DDFC bb-text-7C4DCC"
+                  : kind === "late"
+                    ? "border-2 border-dashed border-slate-400 text-slate-500"
                     : "text-slate-700";
             return (
               <button
@@ -294,7 +261,7 @@ export default function MotherCalendar() {
         <div className="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs font-semibold text-slate-500">
           <span className="flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full bb-bg-E0679F" /> Сарын тэмдэг</span>
           <span className="flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full border-2 border-dashed bb-border-F48FB1" /> Таамаг</span>
-          <span className="flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full bb-bg-E9DDFC" /> Овуляци</span>
+          <span className="flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full border-2 border-dashed border-slate-400" /> Хоцорсон хугацаа</span>
           <span className="flex items-center gap-1"><i className="h-1.5 w-1.5 rounded-full bb-bg-B794F4" /> Бүртгэсэн</span>
         </div>
         {(noPeriodYet || !hasCycle) && (
@@ -313,7 +280,6 @@ export default function MotherCalendar() {
             <div className="flex items-start justify-between">
               <div>
                 <h2 className="font-black text-slate-800">{dateLabel(sel.date)}</h2>
-                {sel.day && <p className="text-xs font-extrabold bb-text-B83B7E">Мөчлөгийн {sel.day}-р өдөр · {PHASES[getPhaseKey(sel.day, cycleLength, periodLength)]?.short}</p>}
               </div>
               <button onClick={() => setSelected(null)} aria-label="Хаах" className="w-9 h-9 rounded-full bg-white border-2 border-slate-100 flex items-center justify-center text-slate-500">
                 <X className="w-4 h-4" />
@@ -321,17 +287,17 @@ export default function MotherCalendar() {
             </div>
             <p className="mt-3 text-sm font-semibold text-slate-600">
               {sel.kind === "predicted"
-                ? "Сарын тэмдэг энэ өдрүүдэд ирэх төлөвтэй. Хэрэглэл бэлэн байгааг шалгаарай."
-                : sel.kind === "period"
-                  ? "Сарын тэмдгийн өдөр. Халуун цай, амралт тустай байж болно."
-                  : sel.kind === "ovulation"
-                    ? "Мөчлөгийн дунд үе. Ихэвчлэн эрч хүч сайтай байдаг."
-                    : byDate[sel.key]
-                      ? "Охин энэ өдөр бүртгэл хийсэн байна."
-                      : "Онцгой тэмдэглэгээгүй өдөр."}
+                ? "Сарын тэмдэг энэ хугацаанд ирж магадгүй. Хугацаа хүн бүрт өөр байдаг."
+                : sel.kind === "late"
+                  ? "Энэ нь зөвхөн ойролцоо таамаг. Эхний жилүүдэд мөчлөг зөрөх нь хэвийн."
+                  : sel.kind === "period"
+                    ? "Сарын тэмдгийн өдрөөр тэмдэглэгдсэн байна."
+                    : byDate[sel.key]?.mood
+                      ? `Охин энэ өдрийн сэтгэл санааг хуваалцсан: ${MOOD_EMOJI[byDate[sel.key].mood]}`
+                      : "Энэ өдөрт хуваалцсан бүртгэл алга."}
             </p>
             <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-slate-400">
-              <Lock className="h-3.5 w-3.5" /> Өдрийн тэмдэглэл нь охины хувийнх.
+              <Lock className="h-3.5 w-3.5" /> Хувийн тэмдэглэл, биеийн шинж танд харагдахгүй.
             </p>
           </div>
         </div>
