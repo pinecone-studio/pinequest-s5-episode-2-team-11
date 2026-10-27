@@ -7,17 +7,25 @@
  */
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
+import { FORECAST_SYSTEM_PROMPT, forecastUserPrompt, sanitizeStats, validateForecast } from "../../../lib/forecast";
 
 export const runtime = "nodejs";
+
+const FORECAST_TIMEOUT_MS = 3000;
 
 const MODEL = process.env.ANTHROPIC_MODEL || "claude-opus-5-5";
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite";
 const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
 // Дараалал: ANTHROPIC_API_KEY (Claude) → OPENAI_API_KEY (ChatGPT) → GEMINI_API_KEY
-async function generate(prompt: string, maxTokens: number): Promise<string> {
+async function generate(
+  prompt: string,
+  maxTokens: number,
+  { system = SAFETY, timeoutMs = 25000 }: { system?: string; timeoutMs?: number } = {},
+): Promise<string> {
+  const retries = timeoutMs < 10000 ? 0 : 1;
   if (process.env.ANTHROPIC_API_KEY) {
-    const anthropic = new Anthropic({ timeout: 25000, maxRetries: 1 });
+    const anthropic = new Anthropic({ timeout: timeoutMs, maxRetries: retries });
     const response = await anthropic.beta.messages.create({
       model: MODEL,
       // Claude-ийн бодох (thinking) токен ч энэ хязгаарт орно
@@ -25,7 +33,7 @@ async function generate(prompt: string, maxTokens: number): Promise<string> {
       output_config: { effort: "low" },
       betas: ["server-side-fallback-2026-07-01"],
       fallbacks: "default",
-      system: SAFETY,
+      system,
       messages: [{ role: "user", content: prompt }],
     });
     if (response.stop_reason === "refusal") throw new Error(`Anthropic refusal: ${response.stop_details?.category}`);
@@ -44,11 +52,11 @@ async function generate(prompt: string, maxTokens: number): Promise<string> {
         max_completion_tokens: maxTokens * 2,
         response_format: { type: "json_object" },
         messages: [
-          { role: "system", content: SAFETY },
+          { role: "system", content: system },
           { role: "user", content: prompt },
         ],
       }),
-      signal: AbortSignal.timeout(25000),
+      signal: AbortSignal.timeout(timeoutMs),
     });
     if (!res.ok) throw new Error(`OpenAI ${res.status}: ${await res.text()}`);
     const data = await res.json();
@@ -62,11 +70,11 @@ async function generate(prompt: string, maxTokens: number): Promise<string> {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
         body: JSON.stringify({
-          systemInstruction: { parts: [{ text: SAFETY }] },
+          systemInstruction: { parts: [{ text: system }] },
           contents: [{ role: "user", parts: [{ text: prompt }] }],
           generationConfig: { maxOutputTokens: maxTokens * 4, responseMimeType: "application/json" },
         }),
-        signal: AbortSignal.timeout(25000),
+        signal: AbortSignal.timeout(timeoutMs),
       }
     );
     if (!res.ok) throw new Error(`Gemini ${res.status}: ${await res.text()}`);
@@ -96,28 +104,6 @@ const CYCLE_LOG_VALUES: Record<string, string[]> = {
   period: ["None", "Spotting", "Light", "Medium", "Heavy"],
   sleep: ["Poor", "Okay", "Good", "Great"],
 };
-
-function buildCyclePredictionPrompt(body: any) {
-  const rawEntries = Array.isArray(body.entries) ? body.entries.slice(-60) : [];
-  const entries = rawEntries.flatMap((entry: any) => {
-    if (!entry || typeof entry.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(entry.date)) return [];
-    const daysBeforePeriod = Number(entry.daysBeforePeriod);
-    if (![3, 4, 5].includes(daysBeforePeriod)) return [];
-    const values: Record<string, string> = {};
-    Object.entries(CYCLE_LOG_VALUES).forEach(([category, allowed]) => {
-      const value = entry.values?.[category];
-      if (typeof value === "string" && allowed.includes(value)) values[category] = value;
-    });
-    if (!Object.keys(values).length) return [];
-    return [{ date: entry.date, daysBeforePeriod, values }];
-  });
-  return {
-    maxTokens: 650,
-    prompt: `Чи өсвөр насны хэрэглэгчид зориулсан мөчлөгийн өмнөх хувийн ажиглалт гаргана. Оролтын бүртгэлүүд нь өмнөх мөчлөгүүдийн сарын тэмдэг ирэхээс 3–5 хоногийн өмнөх өдрүүдийнх. Зөвхөн өгөгдөлд байгаа давтагдсан хэв маягийг хэл; цөөн эсвэл нэг мөчлөгийн мэдээллээс баттай дүгнэлт бүү хий. Стресс, PMS зэрэг онош мэт үг бүү хэрэглэ, ирээдүйн мэдрэмжийг баталгаатай мэт бүү өгүүл. Таамаг гэдгийг зөөлөн тодотго. Зөвлөгөө нь энгийн, аюулгүй, өсвөр насанд тохирсон байг: тайван амьсгалах, амрах, унтахын өмнө дэлгэцээ багасгах, тогтмол хоол/ус уух зэрэг. Эм, эмчилгээ, калори эсвэл жин хасах зөвлөгөө өгөхгүй. Хүчтэй өвдөлт, их цус алдалт, ухаан балартах мэдээлэл байвал итгэдэг том хүн, эмчтэй ярилцахыг зөвлө.
-Өгөгдөл: ${JSON.stringify({ daysUntilExpectedPeriod: [3, 4, 5].includes(Number(body.daysUntil)) ? Number(body.daysUntil) : null, previousPrePeriodEntries: entries })}
-ЗӨВХӨН JSON буцаа: {"prediction":"ирэх хэд хоногийн болгоомжтой таамаг, 1-2 өгүүлбэр","pattern":"бүртгэлээс ажиглагдсан давтагдсан хэв маяг эсвэл өгөгдөл хүрэлцэхгүй тухай","tips":["хийж болох зөвлөгөө 1","зөвлөгөө 2","зөвлөгөө 3"],"confidence":"low эсвэл moderate","dataNote":"өгөгдлийн хүрэлцээ болон таамаг гэдгийг тайлбарласан богино өгүүлбэр"}`,
-  };
-}
 
 function buildCycleSummaryPrompt(body: any) {
   const rawLogs = Array.isArray(body.logs) ? body.logs.slice(-180) : [];
@@ -208,7 +194,6 @@ function buildPrompt(body: any): { prompt: string; maxTokens: number } | null {
   if (body.type === "weekly_summary") return buildWeeklySummaryPrompt(body);
   if (body.type === "monthly_care") return buildMonthlyCarePrompt(body);
   if (body.type === "cycle_summary") return buildCycleSummaryPrompt(body);
-  if (body.type === "cycle_prediction") return buildCyclePredictionPrompt(body);
   const phase = PHASE_MN[body.phase] ?? "тодорхойгүй үе";
   if (body.type === "insight") {
     return {
@@ -341,6 +326,21 @@ export async function POST(req: Request) {
   } catch {
     return Response.json({ error: "bad_request" }, { status: 400 });
   }
+  // Хувийн таамаг: зөвхөн статистикийн объект AI руу очно (нэр, огноо, id, тэмдэглэл ОРОХГҮЙ)
+  if (body?.type === "cycle_forecast") {
+    const stats = sanitizeStats(body.stats);
+    if (!stats) return Response.json({ error: "bad_request" }, { status: 400 });
+    try {
+      const text = await generate(forecastUserPrompt(stats), 200, { system: FORECAST_SYSTEM_PROMPT, timeoutMs: FORECAST_TIMEOUT_MS });
+      const forecast = validateForecast(extractJson(text), stats);
+      if (!forecast) return Response.json({ error: "bad_ai_output" }, { status: 502 });
+      return Response.json(forecast);
+    } catch (e: any) {
+      console.error("AI forecast error:", e?.message);
+      return Response.json({ error: "ai_failed" }, { status: 502 });
+    }
+  }
+
   const built = buildPrompt(body);
   if (!built) return Response.json({ error: "bad_type" }, { status: 400 });
 
@@ -373,15 +373,6 @@ export async function POST(req: Request) {
       return Response.json({
         summary: typeof json.summary === "string" ? json.summary.slice(0, 700) : "",
         tips: Array.isArray(json.tips) ? json.tips.filter((tip: unknown) => typeof tip === "string").slice(0, 3).map((tip: string) => tip.slice(0, 240)) : [],
-      });
-    }
-    if (body.type === "cycle_prediction") {
-      return Response.json({
-        prediction: typeof json.prediction === "string" ? json.prediction.slice(0, 500) : "",
-        pattern: typeof json.pattern === "string" ? json.pattern.slice(0, 500) : "",
-        tips: Array.isArray(json.tips) ? json.tips.filter((tip: unknown) => typeof tip === "string").slice(0, 3).map((tip: string) => tip.slice(0, 240)) : [],
-        confidence: json.confidence === "moderate" ? "moderate" : "low",
-        dataNote: typeof json.dataNote === "string" ? json.dataNote.slice(0, 300) : "",
       });
     }
     return Response.json(json);
