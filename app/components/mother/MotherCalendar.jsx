@@ -147,7 +147,7 @@ export default function MotherCalendar() {
         {hasCycle && !noPeriodYet ? (
           <>
             <button type="button" onClick={() => setCalendarOpen(true)} aria-label="Охины хуанли нээх" className="mx-auto block w-fit rounded-full active:scale-95 transition-transform">
-              <CycleRing day={day} cycleLength={cycleLength} periodLength={periodLength} phaseKey={phaseKey} daysUntil={prediction.rangeStart && prediction.rangeStart > today ? Math.max(0, dayDiff(today, prediction.rangeStart)) : daysUntil} daysLate={prediction.late ? Math.max(daysLate, 1) : 0} />
+              <CycleRing day={day} cycleLength={cycleLength} periodLength={periodLength} phaseKey={phaseKey} daysUntil={prediction.rangeStart && prediction.rangeStart > today ? Math.max(0, dayDiff(today, prediction.rangeStart)) : daysUntil} daysLate={prediction.late ? Math.max(daysLate, 1) : 0} periods={childStarts} hasHadPeriod={Boolean(lastPeriodStart) && !noPeriodYet} />
             </button>
             <div className="mt-3"><CycleLegend compact /></div>
             <p className="mt-2 text-center text-xs font-semibold text-slate-400">Цагираг дээр дарж хуанли нээнэ</p>
