@@ -16,7 +16,6 @@ import { toDateStr } from "../../../lib/dates";
 import { periodDayKeys, predictPeriodRange } from "../../../lib/cycle";
 import CycleRing from "../daughter/CycleRing";
 import CycleLegend from "../daughter/CycleLegend";
-import { genitive } from "../../../lib/helpers";
 import Card from "../ui/Card";
 import PageHeader from "../ui/PageHeader";
 import SectionTitle from "../ui/SectionTitle";
@@ -29,7 +28,7 @@ const MOOD_LABEL = { 5: "маш сайхан", 4: "сайхан", 3: "дунда
 const MOOD_EMOJI = { 5: "😄", 4: "🙂", 3: "😐", 2: "😟", 1: "😣" };
 
 export default function MotherCalendar() {
-  const { linked, activeChildId, daughterName, hasCycle, cycleLength, periodLength, lastPeriodStart, periodLogs, proposePeriodStart, noPeriodYet, phaseKey, daysUntil, daysLate, day, shareWithMom, session } =
+  const { linked, activeChildId, daughterName, nameGen, hasCycle, cycleLength, periodLength, lastPeriodStart, periodLogs, proposePeriodStart, noPeriodYet, phaseKey, daysUntil, daysLate, day, shareWithMom, session } =
     useFamily();
   const today = toDateStr();
   const [month, setMonth] = useState(() => {
@@ -174,13 +173,13 @@ export default function MotherCalendar() {
 
       {/* ---------- Энэ 7 хоног ---------- */}
       <Card>
-        <SectionTitle icon={CalendarDays} title="Энэ 7 хоног" />
+        <SectionTitle icon={CalendarDays} title={`${nameGen} энэ 7 хоног`} />
         {!shareWithMom ? (
           <p className="flex items-start gap-2 text-sm font-semibold text-slate-500">
             <Lock className="mt-0.5 h-4 w-4 shrink-0" /> {daughterName || "Охин"} бүртгэлээ хувьдаа хадгалсан байна. Энэ бол хэвийн 🌸
           </p>
         ) : week.length === 0 ? (
-          <p className="text-sm font-semibold text-slate-500">Энэ 7 хоногт бүртгэл алга.</p>
+          <p className="text-sm font-semibold text-slate-500">Бүртгэл одоогоор алга.</p>
         ) : (
           <>
             <div className="flex flex-wrap gap-2">
@@ -209,9 +208,6 @@ export default function MotherCalendar() {
             {aiError && <p className="mt-2 text-xs font-semibold bb-text-7C4DCC">{aiError}</p>}
           </>
         )}
-        <p className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-slate-400">
-          <Lock className="h-3.5 w-3.5 shrink-0" /> Охины хувийн тэмдэглэл танд харагдахгүй.
-        </p>
       </Card>
 
       {/* ---------- Хуанли (бүтэн дэлгэц) ---------- */}
@@ -229,7 +225,7 @@ export default function MotherCalendar() {
               <button onClick={() => setCalendarOpen(false)} aria-label="Буцах" className="w-10 h-10 rounded-full bg-white border-2 border-slate-100 flex items-center justify-center text-slate-500">
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <h2 className="text-lg font-black text-slate-800">{daughterName ? `${daughterName}-ийн хуанли` : "Охины хуанли"}</h2>
+              <h2 className="text-lg font-black text-slate-800">{nameGen} хуанли</h2>
             </div>
       <Card className="!p-3">
         <div className="mb-1 flex items-center justify-between">
