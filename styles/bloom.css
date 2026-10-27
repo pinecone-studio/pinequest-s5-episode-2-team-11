@@ -338,12 +338,12 @@
   animation: bloomAvatarFloat 3s ease-in-out infinite;
 }
 .parent-topic {
-  border: 1px solid #e8c3d0;
-  background-color: #fff !important;
+  border: 1px solid #e0959c;
+  background-color: #fadad9 !important;
 }
 .parent-topic-open {
-  border-color: #d98eae;
-  background-color: #fff4f8 !important;
+  border-color: #d78289;
+  background-color: #f3c3c5 !important;
 }
 .parent-ai-launcher {
   border: 1px solid #e7d9f2;
@@ -355,14 +355,14 @@
   box-shadow: 0 6px 18px rgba(124, 77, 204, 0.16);
 }
 .parent-learning-card {
-  border-color: #e7d9f2;
-  box-shadow: 0 5px 18px rgba(124, 77, 204, 0.08);
+  border-color: #e0959c;
+  box-shadow: 0 5px 18px rgba(198, 92, 105, 0.12);
 }
 .parent-ai-title {
   color: #a94775;
 }
 .parent-topic-title {
-  color: #a94775;
+  color: #8a3e46;
 }
 .theme-dark .parent-topic {
   border-color: #57404f;

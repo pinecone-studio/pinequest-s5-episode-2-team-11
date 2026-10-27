@@ -8,6 +8,7 @@ import Card from "../ui/Card";
 import PageHeader from "../ui/PageHeader";
 import SectionTitle from "../ui/SectionTitle";
 import PrivateNotePinSettings from "./PrivateNotePinSettings";
+import ChildPurchaseControls from "./ChildPurchaseControls";
 
 export default function SettingsScreen() {
   const { theme, setTheme } = useTheme();
@@ -87,6 +88,7 @@ export default function SettingsScreen() {
         <PrivateNotePinSettings />
         </>
       )}
+      {view === "mother" && <ChildPurchaseControls />}
 
       <div className="flex items-start gap-2.5 rounded-2xl bb-bg-FDE7F1-70 p-3">
         <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 bb-text-B83B7E" />
