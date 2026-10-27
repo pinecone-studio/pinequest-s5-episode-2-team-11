@@ -61,8 +61,6 @@ export default function DaughterHome() {
       <FriendsQuickCard />
 
       <HoroscopeCard />
-      {hasCycle && <CyclePredictionCard />}
-
       {/* Мөчлөгийн тойрог */}
       {hasCycle || noPeriodYet ? (
         <Card>
@@ -124,6 +122,9 @@ export default function DaughterHome() {
           </button>
         </Card>
       )}
+
+      {/* Хувийн таамаг — мөчлөгийн өдөр бүр, анхны сарын тэмдгээс өмнө ч харагдана */}
+      <CyclePredictionCard />
 
       <TodayMoodCard periodDay={periodDay} periodDayNumber={periodDayNumber} />
 
