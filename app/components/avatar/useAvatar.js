@@ -39,6 +39,7 @@ const normalizeBackground = (background) =>
 
 const fresh = () => ({
   xp: 0,
+  xpSpent: 0,
   petals: START_PETALS,
   skin: 0,
   owned: STARTER_OWNED,
@@ -56,6 +57,7 @@ const read = (key) => {
     return {
       ...fresh(),
       ...saved,
+      xpSpent: Number.isFinite(saved.xpSpent) ? Math.max(0, Math.floor(saved.xpSpent)) : 0,
       owned: Array.from(new Set([...STARTER_OWNED, ...(saved.owned ?? [])])),
       look: normalizeLook(saved.look),
       skin: normalizeSkin(saved.skin),
@@ -192,6 +194,14 @@ export function useAvatar(userId, onToast = () => {}) {
   };
 
   const level = levelOf(state.xp);
+  const availableXp = Math.max(0, state.xp - (state.xpSpent ?? 0));
+
+  const spendXp = (amount) => {
+    const cost = Math.max(0, Math.floor(Number(amount) || 0));
+    if (!cost || availableXp < cost) return false;
+    setState((current) => ({ ...current, xpSpent: (current.xpSpent ?? 0) + cost }));
+    return true;
+  };
 
   const buy = (id) => {
     const item = itemById(id);
@@ -227,6 +237,8 @@ export function useAvatar(userId, onToast = () => {}) {
     ...state,
     loaded,
     level,
+    availableXp,
+    spendXp,
     walkToday,
     giftReady,
     addSteps,

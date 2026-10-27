@@ -33,22 +33,34 @@ export default function MotherMessages() {
           <p className="text-sm text-slate-400 font-semibold py-6 text-center">Одоогоор мэдэгдэл алга 🌸</p>
         ) : (
           <div className="space-y-2">
-            {momInbox.map((n) => (
-              <div
-                key={n.id}
-                className={`flex items-start gap-3 rounded-2xl px-3 py-3 ${
-                  n.kind === "sos" ? "bb-bg-E9DDFC-50" : "bb-bg-FFF7FB"
-                }`}
-              >
-                <span className="text-xl">
-                  {n.kind === "sos" ? "🆘" : n.kind === "supply" ? "🛍️" : n.kind === "period" ? "🩸" : "🌸"}
-                </span>
-                <div className="flex-1">
-                  <p className="text-sm font-bold text-slate-700 leading-snug">{n.text}</p>
-                  <p className="text-xs font-bold text-slate-400 mt-0.5">{n.time}</p>
+            {momInbox.map((n) => {
+              const isOldGenericCareNote = n.text.startsWith("Охиндоо илгээсэн үг:");
+              const notificationText = isOldGenericCareNote
+                ? n.recipientName
+                  ? n.text.replace("Охиндоо", `${n.recipientName}-д`)
+                  : `Охидын бүлэгт илгээсэн хуучин мэдэгдэл: ${n.text.replace("Охиндоо илгээсэн үг: ", "")}`
+                : n.text;
+              return (
+                <div
+                  key={n.id}
+                  className={`flex items-start gap-3 rounded-2xl px-3 py-3 ${
+                    n.kind === "sos" ? "bb-bg-E9DDFC-50" : "bb-bg-FFF7FB"
+                  }`}
+                >
+                  <span className="text-xl">
+                    {n.kind === "sos" ? "🆘" : n.kind === "supply" ? "🛍️" : n.kind === "period" ? "🩸" : "🌸"}
+                  </span>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-slate-700 leading-snug">{notificationText}</p>
+                    <p className="text-xs font-bold text-slate-400 mt-0.5">
+                      {n.senderName ? `${n.senderName} · ` : ""}
+                      {n.recipientName ? `${n.recipientName}-д · ` : ""}
+                      {n.time}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </Card>
