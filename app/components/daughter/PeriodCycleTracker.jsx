@@ -5,11 +5,11 @@ import { CalendarDays, ChevronLeft, ChevronRight, Check, Clock3, Settings2, X } 
 import { useFamily } from "../../../context/FamilyContext";
 import { useTheme } from "../../../context/ThemeContext";
 import { addDaysToLocalDateKey, localDateKey, dateLabelMongolian } from "../../../lib/cycle";
+import { CATEGORIES, LOG_ENTRIES_CHANGED, categoriesByDate, categoryColor, fetchEntries } from "../../../lib/log-entries";
 import { toggleSelectedPeriodDay } from "../../../lib/period-edit";
 import { supabase } from "../../../lib/supabase";
 import BottomSheet from "../ui/BottomSheet";
 import DayDetailSheet from "./DayDetailSheet";
-import DayLogSheet from "./DayLogSheet";
 
 const WEEKDAYS = ["Да", "Мя", "Лх", "Пү", "Ба", "Бя", "Ня"];
 const DAY_MS = 86_400_000;
@@ -219,7 +219,8 @@ export default function PeriodCycleTracker({ onBack, onDayPress, cycleLength: cy
           : isLatePrediction ? "bg-slate-100 text-slate-400"
           : isPredicted ? "bg-pink-100 text-[#d95791]"
             : "text-slate-700";
-    const dateStyle = theme === "dark"
+    const dateStyle = isOpen && !isLogged ? { backgroundColor: "var(--selected-day)", color: theme === "dark" ? "#f2a5c9" : undefined }
+      : theme === "dark"
       ? isLatePrediction ? { backgroundColor: "#3a3242", color: "#a99aaf" }
         : isPredicted ? { backgroundColor: "#422a3c", color: "#f2a5c9" }
           : undefined
@@ -274,7 +275,7 @@ export default function PeriodCycleTracker({ onBack, onDayPress, cycleLength: cy
       <div className="mx-auto max-w-md">
         {months.map(({ date, key, dates }) => <section key={key} ref={(node) => { monthRefs.current[key] = node; }} className="py-2">
           <h2 className="mb-2 text-center text-base font-black text-slate-700">{monthTitle(date)}</h2>
-          <div className="grid grid-cols-7 gap-y-1">{dates.map((day, index) => day ? renderDay(day) : <span key={`${key}-blank-${index}`} aria-hidden="true" className="h-[54px]" />)}</div>
+          <div className="grid grid-cols-7 gap-y-1">{dates.map((day, index) => day ? renderDay(day) : <span key={`${key}-blank-${index}`} aria-hidden="true" className="h-[64px]" />)}</div>
         </section>)}
       </div>
     </> : <section className="mx-auto max-w-md pb-6">
@@ -295,12 +296,7 @@ export default function PeriodCycleTracker({ onBack, onDayPress, cycleLength: cy
       </div>
     </div>
 
-    {selectedDate && selectedPending ? <DayLogSheet key={selectedDate} date={selectedDate} isPeriodDay={false} pendingPeriod={selectedPending} onClose={() => { setSelectedDate(""); setSelectedPending(null); }} /> : selectedDate && <BottomSheet title={dateLabelWithMonth(new Date(`${selectedDate}T00:00:00`))} onClose={() => setSelectedDate("")}>
-      {selectedDate > today ? <p style={theme === "dark" ? { backgroundColor: "#392d3e", color: "#e8b8d0" } : undefined} className="rounded-2xl bg-purple-50 p-4 text-sm font-bold text-purple-700">Энэ өдөр хараахан болоогүй байна</p> : <div className="space-y-2 pb-2">
-        {actualPeriodDays.has(selectedDate) && <p style={theme === "dark" ? { backgroundColor: "#392d3e", color: "#f2a5c9" } : undefined} className="rounded-2xl bg-pink-50 p-4 text-sm font-bold text-[#b83b7e]">Сарын тэмдгийн {periodDayNumber(selectedDate, periodStarts)} дахь өдөр</p>}
-        <p className="text-sm font-semibold text-slate-500">Өдрийн тэмдэглэлийг энд оруулна.</p>
-      </div>}
-    </BottomSheet>}
+    {selectedDate && <DayDetailSheet key={selectedDate} date={selectedDate} pendingPeriod={selectedPending} onClose={() => { setSelectedDate(""); setSelectedPending(null); }} />}
 
     {settingsOpen && <BottomSheet title="Мөчлөгийн тохиргоо" onClose={() => setSettingsOpen(false)}>
       <div className="space-y-4 pb-2">
