@@ -42,24 +42,24 @@ const TONES = {
 const PENDING_GUIDE_PREFIX = "bloom:pending-guardian-guide:";
 
 const TOPIC_TILE_STYLES = {
-  what: { background: "#E44F7A", Icon: Droplets },
-  when: { background: "#A648A4", Icon: Venus },
-  cycle: { background: "#5366C8", Icon: Moon },
-  products: { background: "#4277B8", Icon: LockKeyhole },
-  kit: { background: "#B8750C", Icon: BookOpen },
-  hygiene: { background: "#1687A0", Icon: Sparkles },
-  body: { background: "#278563", Icon: ShieldCheck },
-  doctor: { background: "#CB3F56", Icon: TriangleAlert },
-  myths: { background: "#E37358", Icon: CircleHelp },
-  "guardian-talk-early": { background: "#8D45A6", Icon: MessageCircleHeart },
-  "guardian-calm-response": { background: "#D94F6C", Icon: HeartHandshake },
-  "guardian-growth": { background: "#21835D", Icon: Eye },
-  "guardian-teach": { background: "#4955B8", Icon: BookOpen },
-  "guardian-supplies": { background: "#A95E00", Icon: Package },
-  "guardian-pain-mood": { background: "#C94386", Icon: HeartPulse },
-  "guardian-privacy": { background: "#147B8C", Icon: LockKeyhole },
-  "guardian-family": { background: "#4B60A8", Icon: UsersRound },
-  "guardian-doctor": { background: "#BD354C", Icon: Stethoscope },
+  what: { background: "#FADAD9", Icon: Droplets },
+  when: { background: "#F3C3C5", Icon: Venus },
+  cycle: { background: "#E9ABAE", Icon: Moon },
+  products: { background: "#E0959C", Icon: LockKeyhole },
+  kit: { background: "#D78289", Icon: BookOpen },
+  hygiene: { background: "#CE6F79", Icon: Sparkles },
+  body: { background: "#C65C69", Icon: ShieldCheck },
+  doctor: { background: "#F3C3C5", Icon: TriangleAlert },
+  myths: { background: "#E9ABAE", Icon: CircleHelp },
+  "guardian-talk-early": { background: "#FADAD9", Icon: MessageCircleHeart },
+  "guardian-calm-response": { background: "#F3C3C5", Icon: HeartHandshake },
+  "guardian-growth": { background: "#E9ABAE", Icon: Eye },
+  "guardian-teach": { background: "#E0959C", Icon: BookOpen },
+  "guardian-supplies": { background: "#D78289", Icon: Package },
+  "guardian-pain-mood": { background: "#CE6F79", Icon: HeartPulse },
+  "guardian-privacy": { background: "#C65C69", Icon: LockKeyhole },
+  "guardian-family": { background: "#F3C3C5", Icon: UsersRound },
+  "guardian-doctor": { background: "#E9ABAE", Icon: Stethoscope },
 };
 
 function RoleChip({ children, tone }) {
@@ -83,16 +83,16 @@ function TopicCard({ category, index, onClick, tile = false }) {
         type="button"
         onClick={onClick}
         aria-label={`${category.title}. ${category.subtitle}`}
-        className="relative flex aspect-[0.88] min-h-32 w-full flex-col items-center justify-end gap-2 overflow-hidden rounded-2xl p-2.5 text-center text-white shadow-sm transition hover:brightness-105 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300 active:scale-[0.98]"
-        style={{ backgroundColor: tileStyle.background }}
+        className="relative flex aspect-[0.88] min-h-32 w-full flex-col items-center justify-end gap-2 overflow-hidden rounded-2xl p-2.5 text-center shadow-sm transition hover:brightness-105 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300 active:scale-[0.98]"
+        style={{ backgroundColor: tileStyle.background, color: "#501923" }}
       >
-        <span aria-hidden="true" className="absolute -right-4 -top-5 h-16 w-16 rounded-full bg-white/10" />
-        <span aria-hidden="true" className="absolute -bottom-5 -left-4 h-14 w-14 rounded-full bg-white/10" />
-        <span aria-hidden="true" className="absolute left-3 top-1/2 h-2 w-2 rounded-full bg-white/25" />
-        <span className="absolute left-2.5 top-2.5 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 ring-1 ring-white/30">
-          <Icon className="h-5 w-5 text-white" strokeWidth={2.2} aria-hidden="true" />
+        <span aria-hidden="true" className="absolute -right-4 -top-5 h-16 w-16 rounded-full bg-[#CE6F79]/10" />
+        <span aria-hidden="true" className="absolute -bottom-5 -left-4 h-14 w-14 rounded-full bg-[#CE6F79]/10" />
+        <span aria-hidden="true" className="absolute left-3 top-1/2 h-2 w-2 rounded-full bg-[#CE6F79]/25" />
+        <span className="absolute left-2.5 top-2.5 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/60 ring-1 ring-[#CE6F79]/25">
+          <Icon className="h-5 w-5" strokeWidth={2.2} aria-hidden="true" />
         </span>
-        <span className="relative z-10 line-clamp-3 w-full text-left text-xs font-black leading-tight drop-shadow-sm">
+        <span className="relative z-10 line-clamp-3 w-full text-left text-xs font-black leading-tight">
           {category.title}
         </span>
       </button>

@@ -41,19 +41,24 @@ export function FriendsProvider({ children }) {
   }, [setToast]);
 
   const loadGroups = useCallback(async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("friend_groups")
-      .select("id, name, emoji, created_at, friend_group_members(member_id)")
+      .select("id, owner_id, name, emoji, created_at, friend_group_members(member_id)")
       .order("created_at");
+    if (error) {
+      setToast(friendError(error));
+      return;
+    }
     const list = (data ?? []).map((g) => ({
       id: g.id,
+      ownerId: g.owner_id,
       name: g.name,
       emoji: g.emoji,
       members: (g.friend_group_members ?? []).map((m) => m.member_id),
     }));
     setGroups(list);
     setActiveGroupId((cur) => (list.some((g) => g.id === cur) ? cur : (list[0]?.id ?? null)));
-  }, []);
+  }, [setToast]);
 
   const loadOutgoing = useCallback(async () => {
     const { data } = await supabase
@@ -152,6 +157,7 @@ export function FriendsProvider({ children }) {
         { event: "*", schema: "public", table: "friendships", filter: `user_id=eq.${userId}` },
         () => loadFriends(),
       )
+      .on("postgres_changes", { event: "*", schema: "public", table: "friend_group_members" }, () => loadGroups())
       .subscribe();
     const onVisible = () => document.visibilityState === "visible" && loadAll();
     document.addEventListener("visibilitychange", onVisible);
@@ -159,7 +165,7 @@ export function FriendsProvider({ children }) {
       supabase.removeChannel(channel);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [active, userId, loadIncoming, loadOutgoing, loadFriends, loadAll, setToast]);
+  }, [active, userId, loadIncoming, loadOutgoing, loadFriends, loadGroups, loadAll, setToast]);
 
   /* ---------- Найз ---------- */
   const addFriend = async (code) => {
@@ -186,9 +192,14 @@ export function FriendsProvider({ children }) {
       .single();
     if (error) return (setToast(friendError(error)), false);
     if (memberIds.length) {
-      await supabase
+      const { error: memberError } = await supabase
         .from("friend_group_members")
         .insert(memberIds.map((member_id) => ({ group_id: data.id, member_id })));
+      if (memberError) {
+        await supabase.from("friend_groups").delete().eq("id", data.id);
+        setToast(friendError(memberError));
+        return false;
+      }
     }
     await loadGroups();
     setActiveGroupId(data.id);

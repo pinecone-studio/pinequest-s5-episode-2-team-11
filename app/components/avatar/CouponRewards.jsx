@@ -5,6 +5,7 @@ import { Check, ChevronRight, Copy, Tag, X } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import { useAvatar } from "./useAvatar";
 import Card from "../ui/Card";
+import StoreProductCatalog from "./StoreProductCatalog";
 
 const COUPONS = [
   { id: "bloom10", cost: 300, discount: "10%", title: "Хэрэгслийн худалдан авалтад" },
@@ -12,7 +13,7 @@ const COUPONS = [
 ];
 
 export default function CouponRewards({ featured = false }) {
-  const { profile, setToast } = useFamily();
+  const { profile, session, setToast } = useFamily();
   const avatar = useAvatar(profile?.id, setToast);
   const couponStorageKey = `bloom:claimed-coupons:${profile?.id ?? "guest"}`;
   const [claimedCoupons, setClaimedCoupons] = useState([]);
@@ -80,6 +81,7 @@ export default function CouponRewards({ featured = false }) {
                   </div>
                 ))}
               </div>
+              <StoreProductCatalog accessToken={session?.access_token} />
               {claimedCoupons.length > 0 && <div className="mt-4 space-y-2"><p className="text-xs font-extrabold text-slate-600">Миний купонууд</p>{claimedCoupons.map((coupon) => <div key={coupon.code} className="coupon-issued-code flex items-center justify-between gap-2 rounded-xl border border-dashed border-pink-200 bg-white px-3 py-2"><div><span className="font-mono text-xs font-black tracking-wider text-pink-700">{coupon.code}</span><span className="ml-2 text-[11px] font-semibold text-slate-500">{coupon.discount} · {coupon.title}</span></div><button type="button" onClick={() => copyCoupon(coupon.code)} aria-label={`${coupon.code} код хуулах`} className="flex shrink-0 items-center gap-1 text-xs font-bold text-slate-500">{copiedCoupon === coupon.code ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}{copiedCoupon === coupon.code ? "Хууллаа" : "Хуулах"}</button></div>)}</div>}
             </Card>
           </div>

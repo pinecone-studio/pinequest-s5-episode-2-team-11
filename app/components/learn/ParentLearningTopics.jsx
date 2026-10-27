@@ -76,7 +76,7 @@ export default function ParentLearningTopics() {
   const [expanded, setExpanded] = useState({});
   const [activePage, setActivePage] = useState(null);
   const { theme } = useTheme();
-  const headingColor = theme === "dark" ? "#d9a8bd" : "#a15f7c";
+  const headingColor = theme === "dark" ? "#d9a8bd" : "#8a3e46";
   const bodyColor = theme === "dark" ? "#ded5e2" : "#526070";
 
   if (activePage) {
