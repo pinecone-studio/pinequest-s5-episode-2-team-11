@@ -10,6 +10,7 @@ import {
 } from "../../../lib/log-entries";
 import { supabase } from "../../../lib/supabase";
 import BottomSheet from "../ui/BottomSheet";
+import { t } from "../../../lib/i18n";
 
 const chip = (active) => `rounded-full border px-3 py-2 text-xs font-extrabold transition ${active ? "bb-bg-FDE7F1 bb-border-E0679F bb-text-B83B7E" : "border-slate-200 bg-white text-slate-500"}`;
 const tile = (active) => `rounded-2xl px-1 py-2.5 text-xs font-extrabold transition ${active ? "bb-bg-FDE7F1 bb-text-B83B7E ring-1 ring-pink-300" : "bg-slate-50 text-slate-500"}`;
@@ -62,7 +63,7 @@ export default function CategoryLogSheet({ date, category, entry = null, isPerio
 
   const fail = (error) => {
     console.error(`[log_entries] ${category}:`, error);
-    setToast("Хадгалж чадсангүй. Дахин оролдоно уу.");
+    setToast(t("Хадгалж чадсангүй. Дахин оролдоно уу.", "Couldn't save. Please try again."));
   };
 
   const save = async () => {
@@ -77,7 +78,7 @@ export default function CategoryLogSheet({ date, category, entry = null, isPerio
       if (shareError) console.error("[day_logs] share_mood:", shareError);
     }
     setBusy(false);
-    setToast("Хадгаллаа");
+    setToast(t("Хадгаллаа", "Saved"));
     if (category === "period" && !entry && !isPeriodDay) setAskStart(true);
     else onClose();
   };
@@ -88,7 +89,7 @@ export default function CategoryLogSheet({ date, category, entry = null, isPerio
     const { error } = await deleteEntry(supabase, entry);
     setBusy(false);
     if (error) { fail(error); return; }
-    setToast("Устгалаа");
+    setToast(t("Устгалаа", "Deleted"));
     onClose();
   };
 
@@ -97,7 +98,7 @@ export default function CategoryLogSheet({ date, category, entry = null, isPerio
       setBusy(true);
       // Same period-start logic as the "Сарын тэмдэг маань өнөөдөр ирлээ" button.
       if (date === today) await startPeriod();
-      else if (await savePeriodStartDates([...periodStarts, date])) setToast("Сарын тэмдгийн эхлэлийг тэмдэглэлээ 🌸");
+      else if (await savePeriodStartDates([...periodStarts, date])) setToast(t("Сарын тэмдгийн эхлэлийг тэмдэглэлээ 🌸", "Period start logged 🌸"));
       setBusy(false);
     }
     onClose();
@@ -107,10 +108,10 @@ export default function CategoryLogSheet({ date, category, entry = null, isPerio
     <BottomSheet title={`${meta.emoji} ${meta.label}`} onClose={onClose} layer={90}>
       {askStart ? (
         <div className="space-y-3 pb-2">
-          <p className="text-base font-black text-slate-700">Сарын тэмдэг эхэлсэн үү?</p>
+          <p className="text-base font-black text-slate-700">{t("Сарын тэмдэг эхэлсэн үү?", "Did your period start?")}</p>
           <div className="grid grid-cols-2 gap-2">
-            <button type="button" disabled={busy} onClick={() => answerStart(false)} className="rounded-2xl bg-slate-50 py-3 text-sm font-extrabold text-slate-500 disabled:opacity-60">Үгүй</button>
-            <button type="button" disabled={busy} onClick={() => answerStart(true)} className="rounded-2xl bb-bg-E0679F py-3 text-sm font-extrabold text-white disabled:opacity-60">{busy ? "Хадгалж байна…" : "Тийм"}</button>
+            <button type="button" disabled={busy} onClick={() => answerStart(false)} className="rounded-2xl bg-slate-50 py-3 text-sm font-extrabold text-slate-500 disabled:opacity-60">{t("Үгүй", "No")}</button>
+            <button type="button" disabled={busy} onClick={() => answerStart(true)} className="rounded-2xl bb-bg-E0679F py-3 text-sm font-extrabold text-white disabled:opacity-60">{busy ? t("Хадгалж байна…", "Saving…") : t("Тийм", "Yes")}</button>
           </div>
         </div>
       ) : (
@@ -125,7 +126,7 @@ export default function CategoryLogSheet({ date, category, entry = null, isPerio
               ))}
             </div>
             <button type="button" role="switch" aria-checked={shareMood && shareWithMom && linked} disabled={!linked || !shareWithMom} onClick={() => setShareMood((current) => !current)} className="flex w-full items-center justify-between gap-3 rounded-2xl bg-slate-50 px-3 py-3 text-left disabled:opacity-60">
-              <span className="text-sm font-extrabold text-slate-600">{guardianName ? `${guardianName}-тай хуваалцах` : "Асран хамгаалагчтай хуваалцах"}<span className="mt-0.5 block text-[11px] font-semibold text-slate-400">Зөвхөн сэтгэл санаа хуваалцана</span></span>
+              <span className="text-sm font-extrabold text-slate-600">{guardianName ? t(`${guardianName}-тай хуваалцах`, `Share with ${guardianName}`) : t("Асран хамгаалагчтай хуваалцах", "Share with guardian")}<span className="mt-0.5 block text-[11px] font-semibold text-slate-400">{t("Зөвхөн сэтгэл санаа хуваалцана", "Only your mood is shared")}</span></span>
               <span className={`h-7 w-12 shrink-0 rounded-full p-1 ${shareMood && shareWithMom && linked ? "bb-bg-E0679F" : "bg-slate-200"}`}><span className={`block h-5 w-5 rounded-full bg-white shadow transition-transform ${shareMood && shareWithMom && linked ? "translate-x-5" : ""}`} /></span>
             </button>
           </>}
@@ -136,7 +137,7 @@ export default function CategoryLogSheet({ date, category, entry = null, isPerio
 
           {category === "symptoms" && <>
             <section>
-              <h3 className="mb-2 text-sm font-extrabold text-slate-700">Өвдөлт</h3>
+              <h3 className="mb-2 text-sm font-extrabold text-slate-700">{t("Өвдөлт", "Pain")}</h3>
               <div className="grid grid-cols-4 gap-2">
                 {PAINS.map(([key, label]) => <button key={key} type="button" aria-pressed={value.pain === key} onClick={() => setValue({ ...value, pain: value.pain === key ? null : key })} className={tile(value.pain === key)}>{label}</button>)}
               </div>
@@ -152,9 +153,9 @@ export default function CategoryLogSheet({ date, category, entry = null, isPerio
 
           {category === "sleep" && <>
             <div className="flex items-center justify-center gap-5">
-              <button type="button" aria-label="Хасах" disabled={value.hours <= SLEEP_MIN} onClick={() => setValue({ ...value, hours: Math.max(SLEEP_MIN, value.hours - 0.5) })} className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-50 text-slate-600 disabled:opacity-40"><Minus className="h-5 w-5" /></button>
-              <p className="min-w-24 text-center text-2xl font-black text-slate-700" aria-live="polite">{value.hours} <span className="text-sm">цаг</span></p>
-              <button type="button" aria-label="Нэмэх" disabled={value.hours >= SLEEP_MAX} onClick={() => setValue({ ...value, hours: Math.min(SLEEP_MAX, value.hours + 0.5) })} className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-50 text-slate-600 disabled:opacity-40"><Plus className="h-5 w-5" /></button>
+              <button type="button" aria-label={t("Хасах", "Decrease")} disabled={value.hours <= SLEEP_MIN} onClick={() => setValue({ ...value, hours: Math.max(SLEEP_MIN, value.hours - 0.5) })} className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-50 text-slate-600 disabled:opacity-40"><Minus className="h-5 w-5" /></button>
+              <p className="min-w-24 text-center text-2xl font-black text-slate-700" aria-live="polite">{value.hours} <span className="text-sm">{t("цаг", "h")}</span></p>
+              <button type="button" aria-label={t("Нэмэх", "Add")} disabled={value.hours >= SLEEP_MAX} onClick={() => setValue({ ...value, hours: Math.min(SLEEP_MAX, value.hours + 0.5) })} className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-50 text-slate-600 disabled:opacity-40"><Plus className="h-5 w-5" /></button>
             </div>
             <div className="grid grid-cols-3 gap-2">
               {SLEEP_QUALITY.map(([key, label, emoji]) => <button key={key} type="button" aria-pressed={value.quality === key} onClick={() => setValue({ ...value, quality: key })} className={tile(value.quality === key)}>{label} {emoji}</button>)}
@@ -163,16 +164,16 @@ export default function CategoryLogSheet({ date, category, entry = null, isPerio
 
           {confirmDelete ? (
             <div className="rounded-2xl bg-slate-50 p-3">
-              <p className="text-sm font-extrabold text-slate-700">Энэ бүртгэлийг устгах уу?</p>
+              <p className="text-sm font-extrabold text-slate-700">{t("Энэ бүртгэлийг устгах уу?", "Delete this entry?")}</p>
               <div className="mt-2 grid grid-cols-2 gap-2">
-                <button type="button" disabled={busy} onClick={() => setConfirmDelete(false)} className="rounded-xl bg-white py-2.5 text-xs font-extrabold text-slate-500">Болих</button>
-                <button type="button" disabled={busy} onClick={remove} className="rounded-xl bg-rose-500 py-2.5 text-xs font-extrabold text-white disabled:opacity-60">Устгах</button>
+                <button type="button" disabled={busy} onClick={() => setConfirmDelete(false)} className="rounded-xl bg-white py-2.5 text-xs font-extrabold text-slate-500">{t("Болих", "Cancel")}</button>
+                <button type="button" disabled={busy} onClick={remove} className="rounded-xl bg-rose-500 py-2.5 text-xs font-extrabold text-white disabled:opacity-60">{t("Устгах", "Delete")}</button>
               </div>
             </div>
           ) : (
             <div className="flex gap-2">
-              {entry && <button type="button" disabled={busy} onClick={() => setConfirmDelete(true)} className="rounded-2xl border-2 border-slate-100 bg-white px-4 py-3.5 text-sm font-extrabold text-rose-500">Устгах</button>}
-              <button type="button" onClick={save} disabled={busy || !ready(category, value)} className="flex-1 rounded-2xl bb-bg-E0679F py-3.5 text-sm font-extrabold text-white disabled:opacity-50">{busy ? "Хадгалж байна…" : "Хадгалах"}</button>
+              {entry && <button type="button" disabled={busy} onClick={() => setConfirmDelete(true)} className="rounded-2xl border-2 border-slate-100 bg-white px-4 py-3.5 text-sm font-extrabold text-rose-500">{t("Устгах", "Delete")}</button>}
+              <button type="button" onClick={save} disabled={busy || !ready(category, value)} className="flex-1 rounded-2xl bb-bg-E0679F py-3.5 text-sm font-extrabold text-white disabled:opacity-50">{busy ? t("Хадгалж байна…", "Saving…") : t("Хадгалах", "Save")}</button>
             </div>
           )}
         </div>

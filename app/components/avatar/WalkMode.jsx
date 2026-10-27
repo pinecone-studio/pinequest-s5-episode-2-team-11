@@ -11,6 +11,7 @@ import Avatar from "./Avatar";
 import { Cloud, Flower, PetalIcon, Tree, XpIcon } from "./icons";
 import { useStepCounter } from "./useStepCounter";
 import { REWARD_PER_STEP_BLOCK, STEPS_PER_REWARD, WALK_XP_DAILY_CAP } from "../../../lib/wardrobe";
+import { t } from "../../../lib/i18n";
 
 const SCENE = `
 .wk-strip{animation:wkMove 1.2s linear infinite}
@@ -100,7 +101,7 @@ export default function WalkMode({ av }) {
         </div>
         {moving && (
           <span className="absolute top-3 right-3 rounded-full bg-white/90 px-3 py-1 text-xs font-extrabold bb-text-B83B7E">
-            {demo ? "Демо алхалт" : "Алхаж байна…"}
+            {demo ? t("Демо алхалт", "Demo walk") : t("Алхаж байна…", "Walking…")}
           </span>
         )}
       </div>
@@ -109,26 +110,26 @@ export default function WalkMode({ av }) {
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-2xl bg-white border border-slate-100 p-3">
           <p className="text-xs font-extrabold text-slate-400 flex items-center gap-1">
-            <Footprints className="w-3.5 h-3.5" /> Өнөөдөр
+            <Footprints className="w-3.5 h-3.5" /> {t("Өнөөдөр", "Today")}
           </p>
           <p className="text-2xl font-black text-slate-800">{w.steps.toLocaleString()}</p>
-          <p className="text-xs font-semibold text-slate-400">алхам</p>
+          <p className="text-xs font-semibold text-slate-400">{t("алхам", "steps")}</p>
         </div>
         <div className="rounded-2xl bg-white border border-slate-100 p-3">
           <p className="text-xs font-extrabold text-slate-400 flex items-center gap-1">
-            <Sparkles className="w-3.5 h-3.5" /> Алхалтын XP
+            <Sparkles className="w-3.5 h-3.5" /> {t("Алхалтын XP", "Walking XP")}
           </p>
           <p className="text-2xl font-black text-slate-800">
             {w.xp}
             <span className="text-sm text-slate-400"> / {WALK_XP_DAILY_CAP}</span>
           </p>
-          <p className="text-xs font-semibold text-slate-400">өдрийн дээд хэмжээ</p>
+          <p className="text-xs font-semibold text-slate-400">{t("өдрийн дээд хэмжээ", "daily max")}</p>
         </div>
       </div>
 
       <div>
         <div className="flex justify-between text-xs font-extrabold text-slate-500 mb-1">
-          <span>{capped ? "Өнөөдрийн XP дүүрлээ" : `Дараагийн шагнал хүртэл ${toNext} алхам`}</span>
+          <span>{capped ? t("Өнөөдрийн XP дүүрлээ", "Today's XP is maxed out") : t(`Дараагийн шагнал хүртэл ${toNext} алхам`, `${toNext} steps to the next reward`)}</span>
           <span className="bb-text-B83B7E inline-flex items-center gap-1">
             <XpIcon size={12} /> +{REWARD_PER_STEP_BLOCK} <PetalIcon size={12} /> +{REWARD_PER_STEP_BLOCK}
           </span>
@@ -146,7 +147,7 @@ export default function WalkMode({ av }) {
         }`}
       >
         {running ? <Square className="w-4 h-4" /> : <Footprints className="w-5 h-5" />}
-        {running ? "Алхалт зогсоох" : "Алхалт эхлүүлэх"}
+        {running ? t("Алхалт зогсоох", "Stop walking") : t("Алхалт эхлүүлэх", "Start walking")}
       </button>
       <button
         onClick={toggleDemo}
@@ -155,21 +156,21 @@ export default function WalkMode({ av }) {
         }`}
       >
         {demo ? <Square className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-        {demo ? "Демо зогсоох" : "Демо алхалт (танилцуулгад)"}
+        {demo ? t("Демо зогсоох", "Stop demo") : t("Демо алхалт (танилцуулгад)", "Demo walk (for presentations)")}
       </button>
 
       {counter.status === "denied" && (
         <p className="text-xs font-semibold bb-text-7C4DCC text-center">
-          Хөдөлгөөн мэдрэгчийн зөвшөөрөл өгөөгүй байна. Демо алхалтаар үзүүлж болно.
+          {t("Хөдөлгөөн мэдрэгчийн зөвшөөрөл өгөөгүй байна. Демо алхалтаар үзүүлж болно.", "Motion sensor permission wasn't given. You can use the demo walk instead.")}
         </p>
       )}
       {counter.status === "nosensor" && (
         <p className="text-xs font-semibold bb-text-7C4DCC text-center">
-          Энэ төхөөрөмж алхам мэдрэхгүй байна (компьютер). Утсаар оролдох эсвэл демо алхалт ашиглаарай.
+          {t("Энэ төхөөрөмж алхам мэдрэхгүй байна (компьютер). Утсаар оролдох эсвэл демо алхалт ашиглаарай.", "This device can't count steps (computer). Try on a phone or use the demo walk.")}
         </p>
       )}
       <p className="text-xs font-semibold text-slate-400 text-center leading-relaxed">
-        Одоогоор апп нээлттэй үед л тоолно. Жинхэнэ апп болоход өдрийн бүх алхмыг утасны Health-ээс авна.
+        {t("Одоогоор апп нээлттэй үед л тоолно. Жинхэнэ апп болоход өдрийн бүх алхмыг утасны Health-ээс авна.", "For now steps are only counted while the app is open. The full app will read all daily steps from Health.")}
       </p>
     </div>
   );

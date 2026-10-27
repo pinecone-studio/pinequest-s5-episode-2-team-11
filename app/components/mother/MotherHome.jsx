@@ -8,6 +8,7 @@ import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
 import ChildrenOverview from "./ChildrenOverview";
 import MonthlyCareCarousel from "./MonthlyCareCarousel";
+import { t } from "../../../lib/i18n";
 
 export default function MotherHome() {
   const [customMessage, setCustomMessage] = useState("");
@@ -37,8 +38,8 @@ export default function MotherHome() {
   const sendCareMessage = async (message) => {
     const sentToDaughter = await sendToTeen(message, "care");
     if (!sentToDaughter) return false;
-    const savedCopy = await sendToMom(`${daughterName}-д илгээсэн үг: ${message}`, "care", selectedDaughterId);
-    setToast(savedCopy ? `${daughterName}-д илгээлээ 💌` : `${daughterName}-д илгээлээ, хуулбар мэдэгдэл хадгалагдсангүй.`);
+    const savedCopy = await sendToMom(t(`${daughterName}-д илгээсэн үг: ${message}`, `Message to ${daughterName}: ${message}`), "care", selectedDaughterId);
+    setToast(savedCopy ? t(`${daughterName}-д илгээлээ 💌`, `Sent to ${daughterName} 💌`) : t(`${daughterName}-д илгээлээ, хуулбар мэдэгдэл хадгалагдсангүй.`, `Sent to ${daughterName}, but the copy wasn't saved.`));
     return true;
   };
 
@@ -47,9 +48,9 @@ export default function MotherHome() {
       <div className="flex items-end justify-between bloom-fade">
         <div>
           <p className="text-sm font-bold text-slate-400">
-            Сайн байна уу{profile?.display_name ? `, ${profile.display_name}` : ""} 🤍
+            {t("Сайн байна уу", "Hello")}{profile?.display_name ? `, ${profile.display_name}` : ""} 🤍
           </p>
-          <h2 className="text-2xl font-black text-slate-700">Гэр бүлийн халамж</h2>
+          <h2 className="text-2xl font-black text-slate-700">{t("Гэр бүлийн халамж", "Family care")}</h2>
         </div>
       </div>
 
@@ -57,7 +58,7 @@ export default function MotherHome() {
 
       {!linked && (
         <Card className="bb-grad-5">
-          <SectionTitle icon={Users} title="Охидоо урих" />
+          <SectionTitle icon={Users} title={t("Охидоо урих", "Invite your daughters")} />
           <div className="flex items-center gap-2">
             <span className="flex-1 rounded-2xl bg-white border-2 border-dashed bb-border-CDB4F5 py-3 text-center text-lg font-black tracking-wider bb-text-B83B7E">
               {familyCode}
@@ -65,21 +66,20 @@ export default function MotherHome() {
             <button
               onClick={copyCode}
               className="w-12 h-12 rounded-2xl bb-bg-E0679F text-white flex items-center justify-center active:scale-90"
-              aria-label="Кодыг хуулах"
+              aria-label={t("Кодыг хуулах", "Copy code")}
             >
               {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
             </button>
             <button
               onClick={shareCode}
               className="w-12 h-12 rounded-2xl bg-white border-2 bb-border-CDB4F5 bb-text-B83B7E flex items-center justify-center active:scale-90"
-              aria-label="Кодыг хуваалцах"
+              aria-label={t("Кодыг хуваалцах", "Share code")}
             >
               <Share2 className="w-5 h-5" />
             </button>
           </div>
           <p className="mt-3 text-xs font-semibold text-slate-500">
-            Охинтойгоо холбогдох кодоо охиндоо илгээгээрэй. Охин тань Profile хэсэгт энэ кодыг
-            оруулснаар тантай холбогдоно.
+            {t("Охинтойгоо холбогдох кодоо охиндоо илгээгээрэй. Охин тань Profile хэсэгт энэ кодыг оруулснаар тантай холбогдоно.", "Send this code to your daughter. She connects with you by entering it in her Profile.")}
           </p>
         </Card>
       )}
@@ -94,14 +94,14 @@ export default function MotherHome() {
               isPeriod ? (
                 <>
                   <span className="text-2xl font-black leading-none">{day}</span>
-                  <span className="text-xs font-extrabold">дэх өдөр</span>
+                  <span className="text-xs font-extrabold">{t("дэх өдөр", "")}</span>
                 </>
               ) : daysLate > 0 || daysUntil === 0 ? (
                 <span className="text-2xl">⏳</span>
               ) : (
                 <>
                   <span className="text-2xl font-black leading-none">{daysUntil}</span>
-                  <span className="text-xs font-extrabold">хоног</span>
+                  <span className="text-xs font-extrabold">{t("хоног", "days")}</span>
                 </>
               )
             ) : linked ? (
@@ -112,7 +112,7 @@ export default function MotherHome() {
           </div>
           <div className="flex-1">
             <p className="text-xs font-extrabold uppercase tracking-widest text-white/80">
-              {daughterName} · халамжийн статус
+              {daughterName} {t("· халамжийн статус", "· care status")}
             </p>
             <p className="mt-1 font-extrabold text-lg leading-snug">{careMessage}</p>
             {linked && hasCycle && (
@@ -126,15 +126,14 @@ export default function MotherHome() {
           <div className="relative mt-4 rounded-2xl bg-white/15 px-4 py-3">
             {shareWithMom ? (
               <p className="text-xs font-bold">
-                Өнөөдрийн сэтгэл санаа:{" "}
+                {t("Өнөөдрийн сэтгэл санаа:", "Today's mood:")}{" "}
                 <span className="bg-white text-slate-700 rounded-full px-2.5 py-1 ml-1">
                   {selectedMood.emoji} {selectedMood.label}
                 </span>
               </p>
             ) : (
               <p className="text-xs font-bold text-white/90 flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5" /> {daughterName} өнөөдрийн мэдрэмжээ хувьдаа хадгалсан. Энэ бол
-                хэвийн 🌸
+                <Lock className="w-3.5 h-3.5" /> {daughterName} {t("өнөөдрийн мэдрэмжээ хувьдаа хадгалсан. Энэ бол хэвийн 🌸", "is keeping today's feelings private. That's normal 🌸")}
               </p>
             )}
           </div>
@@ -146,7 +145,7 @@ export default function MotherHome() {
 
       {linked && (
         <Card>
-          <SectionTitle icon={HeartHandshake} title={`${daughterName}-д зөөлөн үг илгээх`} />
+          <SectionTitle icon={HeartHandshake} title={t(`${daughterName}-д зөөлөн үг илгээх`, `Send ${daughterName} a kind word`)} />
           <div className="flex flex-wrap gap-2">
             {MOM_QUICK_NOTES.map((message) => (
               <button
@@ -172,14 +171,14 @@ export default function MotherHome() {
               value={customMessage}
               onChange={(event) => setCustomMessage(event.target.value)}
               maxLength={300}
-              placeholder="Өөрийн үгээ энд бичээрэй…"
-              aria-label={`${daughterName}-д илгээх зөөлөн үг`}
+              placeholder={t("Өөрийн үгээ энд бичээрэй…", "Write your own message…")}
+              aria-label={t(`${daughterName}-д илгээх зөөлөн үг`, `Kind word for ${daughterName}`)}
               className="min-w-0 flex-1 rounded-2xl border-2 border-pink-100 bg-white px-4 py-3 text-sm font-semibold text-slate-700 placeholder:text-slate-400 focus:border-pink-300 focus:outline-none"
             />
             <button
               type="submit"
               disabled={!customMessage.trim()}
-              aria-label={`${daughterName}-д илгээх`}
+              aria-label={t(`${daughterName}-д илгээх`, `Send to ${daughterName}`)}
               className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bb-bg-E0679F text-white disabled:cursor-not-allowed disabled:opacity-40 active:scale-95"
             >
               <Send className="h-4 w-4" />

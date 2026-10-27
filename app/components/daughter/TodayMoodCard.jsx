@@ -7,6 +7,7 @@ import { LOG_ENTRIES_CHANGED, MOODS, fetchEntries, latestOf, saveEntry } from ".
 import { supabase } from "../../../lib/supabase";
 import Card from "../ui/Card";
 import DayDetailSheet from "./DayDetailSheet";
+import { t } from "../../../lib/i18n";
 
 /** Today's quick mood (one tap = one mood entry) + the same day view the calendar opens. */
 export default function TodayMoodCard() {
@@ -34,19 +35,19 @@ export default function TodayMoodCard() {
     setSaving(false);
     if (error) {
       console.error("[log_entries] mood:", error);
-      setToast("Хадгалж чадсангүй. Дахин оролдоно уу.");
+      setToast(t("Хадгалж чадсангүй. Дахин оролдоно уу.", "Couldn't save. Please try again."));
       return;
     }
     setMood(value);
-    setToast("Хадгаллаа");
+    setToast(t("Хадгаллаа", "Saved"));
   };
 
   return (
     <>
       <Card className="!p-4">
         <div className="flex items-center justify-between gap-2">
-          <h2 className="text-sm font-extrabold text-slate-700">Өнөөдөр ямар байна?</h2>
-          <button type="button" onClick={() => setOpen(true)} className="text-xs font-extrabold bb-text-B83B7E">Өдрийн тэмдэглэл</button>
+          <h2 className="text-sm font-extrabold text-slate-700">{t("Өнөөдөр ямар байна?", "How are you today?")}</h2>
+          <button type="button" onClick={() => setOpen(true)} className="text-xs font-extrabold bb-text-B83B7E">{t("Өдрийн тэмдэглэл", "Daily log")}</button>
         </div>
         <div className="mt-3 grid grid-cols-5 gap-2">
           {MOODS.map(({ value, emoji, label }) => (

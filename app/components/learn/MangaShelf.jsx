@@ -10,13 +10,14 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, BookOpen, Check, ChevronRight, LockKeyhole } from "lucide-react";
 import { localDateKey } from "../../../lib/cycle";
 import Card from "../ui/Card";
+import { t } from "../../../lib/i18n";
 
 const page = (ch, n, w, h) => ({ src: `/manga/ch${ch}-${String(n).padStart(2, "0")}.webp`, w, h });
 
 const CHAPTERS = [
   {
     id: 1,
-    title: "Цонхны хажууд байгаа хүү",
+    get title() { return t("Цонхны хажууд байгаа хүү", "The Boy by the Window"); },
     release: null,
     pages: [
       page(1, 1, 909, 1215),
@@ -27,11 +28,11 @@ const CHAPTERS = [
       page(1, 6, 942, 1383),
       page(1, 7, 915, 1059),
     ],
-    bonus: { src: "/manga/ch1-bonus.webp", w: 960, h: 1113, title: "Мира ба Bloomy" },
+    bonus: { src: "/manga/ch1-bonus.webp", w: 960, h: 1113, get title() { return t("Мира ба Bloomy", "Mira and Bloomy"); } },
   },
   {
     id: 2,
-    title: "Бараг, гэхдээ одоо биш",
+    get title() { return t("Бараг, гэхдээ одоо биш", "Almost, But Not Yet"); },
     // 1-р бүлэг гарснаас 7 хоногийн дараа
     release: "2026-11-04",
     pages: [
@@ -50,13 +51,15 @@ const READ_KEY = "bloom:manga:read";
 const daysUntil = (release, today) =>
   Math.round((new Date(`${release}T00:00:00`) - new Date(`${today}T00:00:00`)) / 86_400_000);
 
+const chapterLabel = (id) => t(`${id}-р бүлэг`, `Chapter ${id}`);
+
 const isOpen = (chapter, today) => !chapter.release || chapter.release <= today;
 
 const releaseLabel = (release, today) => {
   const days = daysUntil(release, today);
-  if (days <= 1) return "Маргааш нээгдэнэ";
-  if (days === 7) return "7 хоногийн дараа нээгдэнэ";
-  return `${days} хоногийн дараа нээгдэнэ`;
+  if (days <= 1) return t("Маргааш нээгдэнэ", "Opens tomorrow");
+  if (days === 7) return t("7 хоногийн дараа нээгдэнэ", "Opens in 7 days");
+  return t(`${days} хоногийн дараа нээгдэнэ`, `Opens in ${days} days`);
 };
 
 export default function MangaShelf() {
@@ -101,19 +104,19 @@ export default function MangaShelf() {
       <div className="relative flex gap-3 p-4 bb-grad-sos-soft">
         <img
           src={CHAPTERS[0].pages[0].src}
-          alt="«Бидний хоорондох зай» мангагийн нүүр"
+          alt={t("«Бидний хоорондох зай» мангагийн нүүр", "Cover of the manga \"The Distance Between Us\"")}
           width={84}
           height={112}
           className="h-28 w-[84px] shrink-0 rounded-2xl object-cover shadow-md"
         />
         <div className="min-w-0 flex-1">
           <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-black bb-text-B83B7E">
-            <BookOpen className="h-3 w-3" aria-hidden="true" /> Манга
+            <BookOpen className="h-3 w-3" aria-hidden="true" /> {t("Манга", "Manga")}
           </span>
-          <h2 className="mt-1.5 text-lg font-black leading-tight text-slate-800">Бидний хоорондох зай</h2>
-          <p className="text-xs font-bold text-slate-500">Хоёр зүрх, нэг түүх</p>
+          <h2 className="mt-1.5 text-lg font-black leading-tight text-slate-800">{t("Бидний хоорондох зай", "The Distance Between Us")}</h2>
+          <p className="text-xs font-bold text-slate-500">{t("Хоёр зүрх, нэг түүх", "Two hearts, one story")}</p>
           <p className="mt-1.5 text-xs font-semibold leading-snug text-slate-500">
-            “Зарим хүмүүс зүгээр нэг өнгөрөхгүй… Тэд таны амьдралыг өнгөлөг болгодог.”
+            {t("“Зарим хүмүүс зүгээр нэг өнгөрөхгүй… Тэд таны амьдралыг өнгөлөг болгодог.”", "“Some people don't just pass by… They make your life colorful.”")}
           </p>
         </div>
       </div>
@@ -138,7 +141,7 @@ export default function MangaShelf() {
                   {open ? chapter.id : <LockKeyhole className="h-4 w-4" aria-hidden="true" />}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-xs font-bold text-slate-400">{chapter.id}-р бүлэг</span>
+                  <span className="block text-xs font-bold text-slate-400">{chapterLabel(chapter.id)}</span>
                   <span className={`block truncate text-sm font-extrabold ${open ? "text-slate-700" : "text-slate-400"}`}>
                     {chapter.title}
                   </span>
@@ -148,17 +151,17 @@ export default function MangaShelf() {
                     </span>
                   )}
                   {open && chapter.bonus && (
-                    <span className="mt-0.5 block text-[11px] font-bold bb-text-B83B7E">+ Чиби бонус хуудас 💗</span>
+                    <span className="mt-0.5 block text-[11px] font-bold bb-text-B83B7E">{t("+ Чиби бонус хуудас 💗", "+ Chibi bonus page 💗")}</span>
                   )}
                 </span>
                 {open &&
                   (read ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-black text-emerald-600">
-                      <Check className="h-3 w-3" aria-hidden="true" /> Уншсан
+                      <Check className="h-3 w-3" aria-hidden="true" /> {t("Уншсан", "Read")}
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-0.5 rounded-full bb-bg-FDE7F1 px-2.5 py-1 text-[11px] font-black bb-text-B83B7E">
-                      Унших <ChevronRight className="h-3 w-3" aria-hidden="true" />
+                      {t("Унших", "Read")} <ChevronRight className="h-3 w-3" aria-hidden="true" />
                     </span>
                   ))}
               </button>
@@ -175,8 +178,8 @@ export default function MangaShelf() {
 function MangaReader({ chapter, next, today, onEnd, onNext, onClose }) {
   // Хуудсууд + (бонус) + төгсгөлийн карт — нэг удаад нэг хуудас
   const slides = [
-    ...chapter.pages.map((p, i) => ({ ...p, alt: `${chapter.id}-р бүлэг, ${i + 1}-р хуудас` })),
-    ...(chapter.bonus ? [{ ...chapter.bonus, alt: `Бонус хуудас: ${chapter.bonus.title}`, isBonus: true }] : []),
+    ...chapter.pages.map((p, i) => ({ ...p, alt: t(`${chapter.id}-р бүлэг, ${i + 1}-р хуудас`, `Chapter ${chapter.id}, page ${i + 1}`) })),
+    ...(chapter.bonus ? [{ ...chapter.bonus, alt: t(`Бонус хуудас: ${chapter.bonus.title}`, `Bonus page: ${chapter.bonus.title}`), isBonus: true }] : []),
     { end: true },
   ];
   const [index, setIndex] = useState(0);
@@ -225,17 +228,17 @@ function MangaReader({ chapter, next, today, onEnd, onNext, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            aria-label="Буцах"
+            aria-label={t("Буцах", "Back")}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white active:scale-95"
           >
             <ArrowLeft className="h-5 w-5" aria-hidden="true" />
           </button>
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-bold text-white/60">Бидний хоорондох зай · {chapter.id}-р бүлэг</p>
+            <p className="text-[11px] font-bold text-white/60">{t("Бидний хоорондох зай", "The Distance Between Us")} · {chapterLabel(chapter.id)}</p>
             <p className="truncate text-sm font-black text-white">{chapter.title}</p>
           </div>
           <span className="shrink-0 rounded-full bg-white/10 px-2.5 py-1 text-xs font-black text-white/80">
-            {slide.end ? "Төгсгөл" : slide.isBonus ? "Бонус" : `${index + 1} / ${chapter.pages.length}`}
+            {slide.end ? t("Төгсгөл", "End") : slide.isBonus ? t("Бонус", "Bonus") : `${index + 1} / ${chapter.pages.length}`}
           </span>
         </header>
 
@@ -249,11 +252,11 @@ function MangaReader({ chapter, next, today, onEnd, onNext, onClose }) {
             onClick={onTap}
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
-            aria-label="Баруун тал: дараагийн хуудас, зүүн тал: өмнөх хуудас"
+            aria-label={t("Баруун тал: дараагийн хуудас, зүүн тал: өмнөх хуудас", "Right side: next page, left side: previous page")}
             className="relative flex min-h-0 flex-1 flex-col items-center justify-center px-2"
           >
             {slide.isBonus && (
-              <span className="mb-2 text-xs font-black tracking-widest text-pink-300">БОНУС ♡ ЧИБИ</span>
+              <span className="mb-2 text-xs font-black tracking-widest text-pink-300">{t("БОНУС ♡ ЧИБИ", "BONUS ♡ CHIBI")}</span>
             )}
             <img
               key={slide.src}
@@ -268,8 +271,8 @@ function MangaReader({ chapter, next, today, onEnd, onNext, onClose }) {
             />
             {index === 0 && (
               <span className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-between px-4 text-[11px] font-extrabold text-white/80">
-                <span className="rounded-full bg-black/40 px-2.5 py-1">‹ Өмнөх</span>
-                <span className="rounded-full bg-black/40 px-2.5 py-1">Дараах ›</span>
+                <span className="rounded-full bg-black/40 px-2.5 py-1">{t("‹ Өмнөх", "‹ Prev")}</span>
+                <span className="rounded-full bg-black/40 px-2.5 py-1">{t("Дараах ›", "Next ›")}</span>
               </span>
             )}
           </button>
@@ -295,10 +298,10 @@ function EndCard({ next, today, onNext, onClose, onBack }) {
   return (
     <div className="w-full px-5 text-center text-white">
       <p className="text-3xl">🌸</p>
-      <p className="mt-2 text-lg font-black">Бүлэг дууслаа</p>
+      <p className="mt-2 text-lg font-black">{t("Бүлэг дууслаа", "End of chapter")}</p>
       {next && !onNext && (
         <p className="mt-2 text-sm font-semibold text-white/70">
-          {next.id}-р бүлэг «{next.title}» — {releaseLabel(next.release, today).toLowerCase()} 💌
+          {chapterLabel(next.id)} «{next.title}» — {releaseLabel(next.release, today).toLowerCase()} 💌
         </p>
       )}
       <div className="mt-6 flex gap-2">
@@ -306,7 +309,7 @@ function EndCard({ next, today, onNext, onClose, onBack }) {
           type="button"
           onClick={onBack}
           className="rounded-2xl bg-white/10 px-4 py-3 text-sm font-extrabold text-white active:scale-95"
-          aria-label="Өмнөх хуудас"
+          aria-label={t("Өмнөх хуудас", "Previous page")}
         >
           ‹
         </button>
@@ -315,7 +318,7 @@ function EndCard({ next, today, onNext, onClose, onBack }) {
           onClick={onClose}
           className="flex-1 rounded-2xl bg-white/10 py-3 text-sm font-extrabold text-white active:scale-95"
         >
-          Буцах
+          {t("Буцах", "Back")}
         </button>
         {onNext && (
           <button
@@ -323,7 +326,7 @@ function EndCard({ next, today, onNext, onClose, onBack }) {
             onClick={onNext}
             className="flex-1 rounded-2xl bb-grad-sos py-3 text-sm font-extrabold text-white active:scale-95"
           >
-            {next.id}-р бүлэг →
+            {chapterLabel(next.id)} →
           </button>
         )}
       </div>

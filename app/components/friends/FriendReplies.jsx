@@ -1,6 +1,7 @@
 "use client";
 
 import { useFriends } from "../../../context/FriendsContext";
+import { t } from "../../../lib/i18n";
 
 /** Миний илгээсэн SOS-д найзуудын ирүүлсэн хариу */
 export default function FriendReplies() {
@@ -10,7 +11,7 @@ export default function FriendReplies() {
 
   if (!list.length) {
     return (
-      <div className="flex items-center justify-center gap-2 rounded-2xl bb-bg-FFF7FB px-3 py-3 text-xs font-bold text-slate-400"><span className="w-2 h-2 rounded-full bb-bg-F48FB1 animate-pulse" /> Найзуудын хариуг хүлээж байна…</div>
+      <div className="flex items-center justify-center gap-2 rounded-2xl bb-bg-FFF7FB px-3 py-3 text-xs font-bold text-slate-400"><span className="w-2 h-2 rounded-full bb-bg-F48FB1 animate-pulse" /> {t("Найзуудын хариуг хүлээж байна…", "Waiting for friends to reply…")}</div>
     );
   }
   return (

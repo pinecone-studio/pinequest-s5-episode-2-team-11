@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useFamily } from "../../../context/FamilyContext";
 import { supabase } from "../../../lib/supabase";
 import BottomSheet from "../ui/BottomSheet";
+import { t } from "../../../lib/i18n";
 
 /**
  * Private note for one day. The text is stored in day_logs.note and only read
@@ -32,7 +33,7 @@ export default function PrivateNoteSheet({ date, onClose }) {
     const result = await response.json();
     if (response.ok) setNote(result.note ?? "");
     else if (response.status === 423) setPinRequired(true);
-    else setError(result.error || "Тэмдэглэл ачаалж чадсангүй.");
+    else setError(result.error || t("Тэмдэглэл ачаалж чадсангүй.", "Couldn't load the note."));
   };
 
   useEffect(() => {
@@ -47,7 +48,7 @@ export default function PrivateNoteSheet({ date, onClose }) {
         setPinRequired(needsPin);
         if (!needsPin && lock.hasNote) await fetchNote(noteUnlockToken);
       } catch (e) {
-        if (!cancelled) setError("Тэмдэглэл ачаалж чадсангүй.");
+        if (!cancelled) setError(t("Тэмдэглэл ачаалж чадсангүй.", "Couldn't load the note."));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -63,7 +64,7 @@ export default function PrivateNoteSheet({ date, onClose }) {
     try {
       const response = await post({ action: "verify", pin });
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "PIN шалгаж чадсангүй.");
+      if (!response.ok) throw new Error(result.error || t("PIN шалгаж чадсангүй.", "Couldn't check the PIN."));
       unlockPrivateNotes(result.token);
       setPinRequired(false); setPin("");
       await fetchNote(result.token);
@@ -78,32 +79,32 @@ export default function PrivateNoteSheet({ date, onClose }) {
     setBusy(false);
     if (saveError) {
       console.error("[day_logs] note:", saveError);
-      setToast("Хадгалж чадсангүй. Дахин оролдоно уу.");
+      setToast(t("Хадгалж чадсангүй. Дахин оролдоно уу.", "Couldn't save. Please try again."));
       return;
     }
-    setToast("Хадгаллаа");
+    setToast(t("Хадгаллаа", "Saved"));
     onClose();
   };
 
   return (
-    <BottomSheet title="🔒 Нууц тэмдэглэл" onClose={onClose} layer={90}>
+    <BottomSheet title={t("🔒 Нууц тэмдэглэл", "🔒 Private note")} onClose={onClose} layer={90}>
       {loading ? (
-        <p className="py-6 text-center text-sm font-bold text-slate-400">Ачаалж байна…</p>
+        <p className="py-6 text-center text-sm font-bold text-slate-400">{t("Ачаалж байна…", "Loading…")}</p>
       ) : pinRequired ? (
         <form onSubmit={unlock} className="space-y-2 pb-2">
-          <p className="text-xs font-semibold text-slate-500">Хадгалсан тэмдэглэлээ үзэхийн тулд PIN-ээ оруулна уу.</p>
+          <p className="text-xs font-semibold text-slate-500">{t("Хадгалсан тэмдэглэлээ үзэхийн тулд PIN-ээ оруулна уу.", "Enter your PIN to see your saved note.")}</p>
           <div className="flex gap-2">
-            <input aria-label="Нууц тэмдэглэлийн PIN" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={pin} onChange={(event) => setPin(event.target.value.replace(/\D/g, ""))} className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm" placeholder="PIN" />
-            <button type="submit" disabled={busy} className="rounded-xl bb-bg-E0679F px-4 py-2 text-xs font-extrabold text-white disabled:opacity-50">{busy ? "Шалгаж байна…" : "Нээх"}</button>
+            <input aria-label={t("Нууц тэмдэглэлийн PIN", "Private note PIN")} inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={pin} onChange={(event) => setPin(event.target.value.replace(/\D/g, ""))} className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm" placeholder="PIN" />
+            <button type="submit" disabled={busy} className="rounded-xl bb-bg-E0679F px-4 py-2 text-xs font-extrabold text-white disabled:opacity-50">{busy ? t("Шалгаж байна…", "Checking…") : t("Нээх", "Open")}</button>
           </div>
           {error && <p role="alert" className="text-sm font-bold text-rose-600">{error}</p>}
         </form>
       ) : (
         <div className="space-y-2 pb-2">
-          <textarea value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} rows={4} placeholder="Өөр юу болсон бэ?" className="w-full resize-none rounded-2xl border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-700 outline-none focus:border-pink-300" />
-          <p className="text-xs font-semibold text-slate-400">{pinEnabled ? "PIN-ээр хамгаалагдсан. Зөвхөн чамд харагдана." : "Зөвхөн чамд харагдана"}</p>
+          <textarea value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} rows={4} placeholder={t("Өөр юу болсон бэ?", "What else happened?")} className="w-full resize-none rounded-2xl border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-700 outline-none focus:border-pink-300" />
+          <p className="text-xs font-semibold text-slate-400">{pinEnabled ? t("PIN-ээр хамгаалагдсан. Зөвхөн чамд харагдана.", "PIN protected. Only you can see it.") : t("Зөвхөн чамд харагдана", "Only you can see this")}</p>
           {error && <p role="alert" className="text-sm font-bold text-rose-600">{error}</p>}
-          <button type="button" onClick={save} disabled={busy || Boolean(error)} className="w-full rounded-2xl bb-bg-E0679F py-3.5 text-sm font-extrabold text-white disabled:opacity-60">{busy ? "Хадгалж байна…" : "Хадгалах"}</button>
+          <button type="button" onClick={save} disabled={busy || Boolean(error)} className="w-full rounded-2xl bb-bg-E0679F py-3.5 text-sm font-extrabold text-white disabled:opacity-60">{busy ? t("Хадгалж байна…", "Saving…") : t("Хадгалах", "Save")}</button>
         </div>
       )}
     </BottomSheet>
