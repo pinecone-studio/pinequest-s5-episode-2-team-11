@@ -124,6 +124,11 @@ export default function PeriodCycleTracker({ onBack, onDayPress, cycleLength: cy
 
   const beginEdit = () => {
     setDraftDays(new Set(actualPeriodDays));
+    if (viewMode === "year") {
+      const focus = selectedYear === currentMonth.getFullYear() ? currentMonth : new Date(selectedYear, 0, 1);
+      setAnchorMonth(focus);
+      setViewMode("month");
+    }
     setEditing(true);
   };
 
