@@ -113,6 +113,18 @@ body {
 .theme-dark .bg-slate-50,
 .theme-dark .bg-slate-100 { background-color: #3a3242; }
 .theme-dark .bg-slate-200 { background-color: #51465a; }
+.theme-dark .coupon-offer-card {
+  border-color: #68445e;
+  background-image: linear-gradient(115deg, #382b3a, #332b41);
+}
+.theme-dark .coupon-discount { background-color: #302638; color: #ff73b5; }
+.theme-dark .coupon-offer-detail { color: #c1b4c8; }
+.theme-dark .coupon-issued-code { border-color: #68445e; background-color: #302638; }
+.theme-dark .coupon-dialog-shell {
+  border-color: #68445e;
+  background-color: #302638;
+  color: #f4edf6;
+}
 .daughter-supply-request-card {
   background-image: linear-gradient(135deg, #e0679f, #b83b7e);
   border-color: #e0679f;

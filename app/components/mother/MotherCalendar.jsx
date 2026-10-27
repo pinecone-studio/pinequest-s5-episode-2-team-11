@@ -229,7 +229,7 @@ export default function MotherCalendar() {
               <button onClick={() => setCalendarOpen(false)} aria-label="Буцах" className="w-10 h-10 rounded-full bg-white border-2 border-slate-100 flex items-center justify-center text-slate-500">
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <h2 className="text-lg font-black text-slate-800">{daughterName ? genitive(daughterName) : "Охины"} хуанли</h2>
+              <h2 className="text-lg font-black text-slate-800">{daughterName ? `${daughterName}-ийн хуанли` : "Охины хуанли"}</h2>
             </div>
       <Card className="!p-3">
         <div className="mb-1 flex items-center justify-between">

@@ -95,7 +95,7 @@ export function FamilyProvider({ children }) {
 
   /* ================= Дэлгэцийн төлөв ================= */
   const [tab, setTab] = useState("home");
-  const [learnTab, setLearnTab] = useState("pad");
+  const [learnTab, setLearnTab] = useState("topics");
   const [codeInput, setCodeInput] = useState("");
   const [codeError, setCodeError] = useState("");
   const [joining, setJoining] = useState(false);
@@ -154,6 +154,9 @@ export function FamilyProvider({ children }) {
   const activeChild = childProfiles.find((child) => child.id === activeChildId) ?? (view === "mother" ? childProfiles[0] ?? null : null);
   const daughterProfile =
     view === "daughter" ? profile : activeChild;
+  // Tsetse-ийн кодтой нийцүүлэх нэрс (нэг л хэрэгжүүлэлт: activeChild)
+  const daughters = view === "mother" ? childProfiles : [];
+  const selectDaughter = setActiveChildId;
   const linked =
     view === "daughter"
       ? members.some((member) => member.role === "mother" && member.id !== userId)
@@ -218,7 +221,7 @@ export function FamilyProvider({ children }) {
 
   const phaseTips = phase.tips;
   const insightTips = aiTips ?? [0, 1, 2].map((i) => phaseTips[i % phaseTips.length]);
-  const fallbackNudges = getMomNudges(phaseKey, daysUntil, sharedMood);
+  const fallbackNudges = getMomNudges(phaseKey, daysUntil, sharedMood, daughterProfile?.display_name ?? "");
   const currentNudge = aiNudge ?? fallbackNudges[nudgeIndex % fallbackNudges.length];
   const sosStep = Math.min(SOS_STEPS.length - 1, Math.floor((SOS_TOTAL - sosSeconds) / 60));
 
@@ -314,8 +317,20 @@ export function FamilyProvider({ children }) {
       .select("*")
       .order("created_at", { ascending: false })
       .limit(50);
-    setNotifications(data ?? []);
-  }, []);
+    const decoded = (data ?? []).map((notification) => {
+      const encodedTarget = notification.kind?.match(/^target:([^:]+):(.+)$/);
+      return {
+        ...notification,
+        recipient_id: notification.recipient_id ?? encodedTarget?.[1] ?? null,
+        kind: encodedTarget?.[2] ?? notification.kind,
+      };
+    });
+    setNotifications(
+      view === "daughter"
+        ? decoded.filter((notification) => !notification.recipient_id || notification.recipient_id === userId)
+        : decoded,
+    );
+  }, [view, userId]);
 
   const loadMoods = useCallback(async () => {
     if (!supabase || !userId) return setMoodRows([]);
@@ -550,7 +565,7 @@ export function FamilyProvider({ children }) {
       if (error) setToast("Илгээж чадсангүй. Интернэтээ шалгаарай.");
       return !error;
     },
-    [familyId, userId],
+    [familyId, userId, loadNotifications],
   );
   const guardianId = view === "mother" ? userId : members.find((member) => member.role === "mother")?.id;
   const sendToMom = (text, kind) => notify("mother", text, kind, guardianId);
@@ -874,7 +889,7 @@ export function FamilyProvider({ children }) {
   const markNudgeDone = async () => {
     setNudgesDone((p) => [...p, currentNudge]);
     await sendToTeen("Ээж чамд зориулж жаахан халамж бэлдлээ 💗", "care");
-    setToast("Сайхан байна! Охиндоо мэдэгдэл очлоо 🌸");
+    setToast(`${daughterName}-д мэдэгдэл очлоо 🌸`);
     setTimeout(fetchNudge, 500);
   };
 
@@ -1112,6 +1127,9 @@ export function FamilyProvider({ children }) {
     activeChildId: activeChild?.id ?? activeChildId,
     setActiveChildId,
     linked,
+    daughters,
+    selectedDaughterId: daughterProfile?.id ?? "",
+    selectDaughter,
     daughterName,
     nameGen,
     codeInput,

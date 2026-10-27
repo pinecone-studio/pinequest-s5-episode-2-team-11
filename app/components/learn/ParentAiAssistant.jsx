@@ -7,20 +7,28 @@ import { askAi } from "../../../lib/ai-client";
 import Card from "../ui/Card";
 import ChatAvatar from "../daughter/ChatAvatar";
 
-const SUGGESTIONS = ["Яаж тайван ярилцах вэ?", "Охиноо яаж дэмжих вэ?"];
-const GREETING = "Сайн уу! Би Блүми, таны туслах 🌷 Охиноо дэмжих талаар юу асуух вэ?";
-
 export default function ParentAiAssistant() {
-  const { session } = useFamily();
+  const { session, daughterName, selectedDaughterId } = useFamily();
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const listRef = useRef(null);
+  const activeDaughterRef = useRef(selectedDaughterId);
+  activeDaughterRef.current = selectedDaughterId;
+  const suggestions = ["Яаж тайван ярилцах вэ?", `${daughterName}-г яаж дэмжих вэ?`];
 
   useEffect(() => {
     if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
   }, [messages, busy]);
+
+  useEffect(() => {
+    setMessages([]);
+    setDraft("");
+    setBusy(false);
+  }, [selectedDaughterId]);
+
+  const greeting = `Сайн уу! Би Блүми, таны туслах 🌷 ${daughterName}-д туслах талаар юу асуух вэ?`;
 
   const send = async (value) => {
     const content = value.trim();
@@ -29,8 +37,10 @@ export default function ParentAiAssistant() {
     setMessages(nextMessages);
     setDraft("");
     setBusy(true);
-    const result = await askAi(session, { type: "parent_chat", messages: nextMessages.slice(-8) });
-    const reply = result?.reply || "Охиноо тайван сонсоод, яг одоо түүнд юу хэрэгтэй байгааг асуугаарай. Сарын тэмдгийн талаар бол хамтдаа ярилцаж, хэрэгтэй зүйлсийг нь бэлдэж өгч болно. 💗";
+    const requestDaughterId = selectedDaughterId;
+    const result = await askAi(session, { type: "parent_chat", daughterName, messages: nextMessages.slice(-8) });
+    if (activeDaughterRef.current !== requestDaughterId) return;
+    const reply = result?.reply || `${daughterName}-г тайван сонсоод, яг одоо түүнд юу хэрэгтэй байгааг асуугаарай. Сарын тэмдгийн талаар бол хамтдаа ярилцаж, хэрэгтэй зүйлсийг нь бэлдэж өгч болно. 💗`;
     setMessages([...nextMessages, { role: "assistant", content: reply }]);
     setBusy(false);
   };
@@ -48,7 +58,7 @@ export default function ParentAiAssistant() {
           <span className="parent-ai-title flex items-center gap-1.5 text-sm font-black">
             Блүмигээс асуугаарай <Sparkles className="h-3.5 w-3.5 bb-text-B83B7E" />
           </span>
-          <span className="block text-xs font-semibold text-slate-500">Охиноо дэмжих санаа энд бий 🌷</span>
+          <span className="block text-xs font-semibold text-slate-500">{daughterName}-д туслах санаа энд бий 🌷</span>
         </span>
         <MessageCircle className="h-5 w-5 bb-text-B83B7E" />
       </button>
@@ -63,7 +73,7 @@ export default function ParentAiAssistant() {
           <p className="flex items-center gap-1.5 font-black text-slate-700">
             Таны туслах Блүми <Sparkles className="h-4 w-4 bb-text-B83B7E" />
           </p>
-          <p className="text-xs font-semibold text-slate-500">Охиноо дэмжих талаар хамтдаа ярилцъя 🌷</p>
+          <p className="text-xs font-semibold text-slate-500">{daughterName}-д туслах талаар хамтдаа ярилцъя 🌷</p>
         </div>
         {messages.length > 0 && (
           <button
@@ -84,7 +94,7 @@ export default function ParentAiAssistant() {
       </div>
 
       <div ref={listRef} className="mt-3 max-h-72 space-y-3 overflow-y-auto pr-1">
-        <ChatBubble role="assistant">{GREETING}</ChatBubble>
+        <ChatBubble role="assistant">{greeting}</ChatBubble>
         {messages.map((message, index) => (
           <ChatBubble key={`${index}-${message.role}`} role={message.role}>{message.content}</ChatBubble>
         ))}
@@ -99,7 +109,7 @@ export default function ParentAiAssistant() {
 
       {messages.length === 0 && !busy && (
         <div className="mt-3 flex flex-wrap gap-2">
-          {SUGGESTIONS.map((suggestion) => (
+          {suggestions.map((suggestion) => (
             <button
               key={suggestion}
               onClick={() => send(suggestion)}

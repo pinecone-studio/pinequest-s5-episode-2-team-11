@@ -9,11 +9,11 @@ import SchoolBagChecklist from "../supplies/SchoolBagChecklist";
 import AddSupplyForm from "../supplies/AddSupplyForm";
 
 export default function MotherSupplies() {
-  const { supplies, updateSupply, restock, removeSupply } = useFamily();
+  const { supplies, updateSupply, restock, removeSupply, daughterName } = useFamily();
 
   return (
     <div className="space-y-4">
-      <PageHeader sub="Охиныхоо хэрэгслийг хянаарай" title="Хэрэгслийн үлдэгдэл 📦" />
+      <PageHeader sub={`${daughterName} · хэрэгслийг хянаарай`} title="Хэрэгслийн үлдэгдэл 📦" />
 
       {/* Хэрэгслийн үлдэгдэл */}
       <Card>
