@@ -102,7 +102,7 @@ export default function DaughterHome() {
           {noPeriodYet && (
             <button
               onClick={() => {
-                setLearnTab("pad");
+                setLearnTab("pad-howto");
                 setTab("learn");
               }}
               className="mt-4 w-full flex items-center justify-center gap-2 rounded-2xl bg-white border-2 border-slate-100 py-3 text-sm font-extrabold text-slate-700 active:scale-95 transition"
@@ -127,7 +127,7 @@ export default function DaughterHome() {
       <CouponRewards featured />
 
       {cycleModalOpen && (
-        <PeriodCycleTracker onBack={() => setCycleModalOpen(false)} cycleLength={cycleLength} periodLength={periodLength} lastPeriodStart={lastPeriodStart} />
+        <PeriodCycleTracker onBack={() => setCycleModalOpen(false)} cycleLength={cycleLength} periodLength={periodLength} />
       )}
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Pencil, LogOut } from "lucide-react";
+import { AlertCircle, Check, Copy, Loader2, LogOut, Pencil, Share2, Users } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import Card from "../ui/Card";
 import SectionTitle from "../ui/SectionTitle";
@@ -14,7 +14,9 @@ export default function ProfileScreen() {
     profile,
     session,
     view,
+    guardianGender,
     updateName,
+    updateGuardianGender,
     updateEmail,
     setToast,
     signOut,
@@ -23,6 +25,7 @@ export default function ProfileScreen() {
   const [name, setName] = useState(profile?.display_name ?? "");
   const [emailInput, setEmailInput] = useState(session?.user?.email ?? "");
   const [savingProfile, setSavingProfile] = useState(false);
+  const [savingGender, setSavingGender] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState("");
   const photoInput = useRef(null);
   const isMother = view === "mother";
@@ -142,6 +145,46 @@ export default function ProfileScreen() {
           )}
         </div>
       </Card>
+
+      {isMother && (
+        <Card className="!p-4">
+          <h2 className="text-sm font-black text-slate-700">Танд тохирох зөвлөгөө</h2>
+          <p className="mt-1 text-xs font-semibold leading-relaxed text-slate-500">
+            Энэ мэдээлэл зөвхөн таны зөвлөгөөг тохируулахад ашиглагдана.
+          </p>
+          <div className="mt-3 grid grid-cols-1 gap-2">
+            {[
+              { value: "female", label: "Эмэгтэй" },
+              { value: "male", label: "Эрэгтэй" },
+              { value: "unspecified", label: "Хэлэхгүй байя" },
+            ].map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={guardianGender === option.value}
+                disabled={savingGender || guardianGender == null}
+                onClick={async () => {
+                  if (guardianGender === option.value) return;
+                  setSavingGender(true);
+                  try {
+                    await updateGuardianGender(option.value);
+                  } finally {
+                    setSavingGender(false);
+                  }
+                }}
+                className={`min-h-11 rounded-xl border px-4 py-2 text-left text-sm font-extrabold transition disabled:opacity-60 ${
+                  guardianGender === option.value
+                    ? "border-pink-300 bb-bg-FDE7F1 bb-text-B83B7E"
+                    : "border-slate-100 bg-white text-slate-600"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          {savingGender && <p role="status" className="mt-2 text-xs font-semibold text-slate-500">Хадгалж байна…</p>}
+        </Card>
+      )}
 
       <MyFriendCode />
       <FamilyLinkingSection />

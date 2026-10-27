@@ -19,23 +19,27 @@ import LearningLibrary from "./LearningLibrary";
 export default function LearnHub() {
   const { learnTab, setLearnTab, view } = useFamily();
   const isLegacy = view === "daughter"
-    ? ["pad", "food"].includes(learnTab)
+    ? ["pad", "pad-howto", "food"].includes(learnTab)
     : learnTab === "legacy";
 
   if (!isLegacy) {
-    return <LearningLibrary onMoreMaterials={() => setLearnTab(view === "daughter" ? "pad" : "legacy")} />;
+    return (
+      <LearningLibrary
+        onMoreMaterials={() => setLearnTab(view === "daughter" ? "pad" : "legacy")}
+      />
+    );
   }
 
   return (
-    <div className={view === "daughter" && learnTab === "pad" ? "flex h-full min-h-0 flex-col overflow-hidden" : "space-y-4"}>
+    <div className={view === "daughter" && ["pad", "pad-howto"].includes(learnTab) ? "flex h-full min-h-0 flex-col gap-3 overflow-hidden" : "flex flex-col gap-5"}>
       <button
         type="button"
         onClick={() => setLearnTab("topics")}
-        className="min-h-11 rounded-xl bg-white px-3 text-sm font-extrabold bb-text-B83B7E shadow-sm"
+        className="min-h-9 self-start rounded-xl bg-white px-3 py-1.5 text-xs font-bold bb-text-B83B7E shadow-sm"
       >
         ← Сэдвүүд рүү буцах
       </button>
-      <div className={view === "daughter" && learnTab === "pad" ? "min-h-0 flex-1" : ""}>
+      <div className={view === "daughter" && ["pad", "pad-howto"].includes(learnTab) ? "min-h-0 flex-1" : ""}>
         <LegacyLearnHub />
       </div>
     </div>
@@ -48,6 +52,7 @@ function LegacyLearnHub() {
     useFamily();
   const padDone = usePadGuideFinished();
   const isDaughter = view === "daughter";
+  const standalonePadGuide = isDaughter && learnTab === "pad-howto";
   const SelectedFoodIcon = selectedFoodTip?.icon;
   useEffect(() => {
     if (isDaughter && learnTab === "kit") setLearnTab("pad");
@@ -64,7 +69,7 @@ function LegacyLearnHub() {
     ...(isDaughter ? [["pad", padDone ? "Хэрэглэл ✓" : "Хэрэглэл 🌸"]] : []),
     ...(isDaughter ? [["food", "Хооллолт"]] : []),
   ];
-  const compactLesson = isDaughter && learnTab === "pad";
+  const compactLesson = isDaughter && ["pad", "pad-howto"].includes(learnTab);
   const foodTips = [
     {
       icon: Leaf,
@@ -114,7 +119,7 @@ function LegacyLearnHub() {
 
   return (
     <div className={compactLesson ? "flex h-full min-h-0 flex-col overflow-hidden" : "space-y-4 bloom-fade"}>
-      {isDaughter && (
+      {isDaughter && !standalonePadGuide && (
         <div className={`grid grid-cols-2 gap-1 rounded-2xl bb-bg-FDE7F1 p-1 ${compactLesson ? "mb-2 flex-none" : ""}`}>
           {tabs.map(([id, label]) => (
             <button
@@ -132,6 +137,9 @@ function LegacyLearnHub() {
 
       {isDaughter && learnTab === "pad" && (
         <PadGuide role={view} onAskFriends={() => setTab("friends")} />
+      )}
+      {standalonePadGuide && (
+        <PadGuide role={view} onAskFriends={() => setTab("friends")} standalone />
       )}
       {!isDaughter && (
         <>
