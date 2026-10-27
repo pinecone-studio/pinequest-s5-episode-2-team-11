@@ -16,7 +16,12 @@ export type Prediction = {
   rangeStart: string;
   rangeEnd: string;
   periodLength: number;
+  cycleLength: number;
   cycleLengths: number[];
+  nextStarts: string[];
+  predictedDays: string[];
+  overdueDays: string[];
+  late: boolean;
 };
 
 export type CycleInfo = {
@@ -47,19 +52,22 @@ export function localDateKey(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-const parseLocalDate = (value: string): Date => {
+export const dateFromLocalKey = (value: string): Date => {
   const [year, month, day] = value.split("-").map(Number);
   return new Date(year, month - 1, day);
 };
 
-const addDays = (value: string, amount: number): string => {
-  const date = parseLocalDate(value);
+export const addDaysToLocalDateKey = (value: string, amount: number): string => {
+  const date = dateFromLocalKey(value);
   date.setDate(date.getDate() + amount);
   return localDateKey(date);
 };
 
-const differenceInDays = (from: string, to: string): number =>
-  Math.round((parseLocalDate(to).getTime() - parseLocalDate(from).getTime()) / DAY_MS);
+export const daysBetweenLocalDateKeys = (from: string, to: string): number =>
+  Math.round((dateFromLocalKey(to).getTime() - dateFromLocalKey(from).getTime()) / DAY_MS);
+
+const addDays = addDaysToLocalDateKey;
+const differenceInDays = daysBetweenLocalDateKeys;
 
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
 
@@ -71,7 +79,7 @@ const periodStart = (period: PeriodLog): string | null => {
 const durationOf = (period: PeriodLog): number | null => {
   if (typeof period === "string") return null;
   const duration = period.duration ?? period.periodLength ?? period.period_length ?? period.length;
-  return typeof duration === "number" && Number.isFinite(duration) ? clamp(duration, 2, 7) : null;
+  return typeof duration === "number" && Number.isFinite(duration) ? duration : null;
 };
 
 export function getConfirmedPeriods(periods: PeriodLog[] = [], today = localDateKey(new Date())): PeriodLog[] {
@@ -93,7 +101,10 @@ export function getPrediction(confirmedPeriods: PeriodLog[] = [], today = localD
   const cycleLengths = starts.slice(1)
     .map((start, index) => differenceInDays(starts[index], start))
     .slice(-6)
-    .map((length) => clamp(length, 21, 45));
+    .filter((length) => length >= 15 && length <= 60);
+  const cycleLength = clamp(cycleLengths.length
+    ? Math.round(cycleLengths.reduce((sum, length) => sum + length, 0) / cycleLengths.length)
+    : 28, 21, 45);
   const periodLengths = periods.map(durationOf).filter((length): length is number => length !== null);
   const periodLength = clamp(
     periodLengths.length ? Math.round(periodLengths.reduce((sum, length) => sum + length, 0) / periodLengths.length) : 5,
@@ -101,38 +112,61 @@ export function getPrediction(confirmedPeriods: PeriodLog[] = [], today = localD
     7,
   );
 
-  let fromDays: number;
-  let toDays: number;
-  if (cycleLengths.length === 0) {
-    fromDays = 28 - 4;
-    toDays = 28 + 4;
-  } else {
-    fromDays = clamp(Math.min(...cycleLengths) - 2, 21, 45);
-    toDays = clamp(Math.max(...cycleLengths) + 2, 21, 45);
+  // A missed predicted start (no newer confirmed log) turns grey up to today;
+  // the following cycles keep stepping from that start.
+  const firstStart = addDays(lastStart, cycleLength);
+  const late = firstStart < today;
+  const overdueDays: string[] = [];
+  if (late) {
+    for (let date = firstStart; date <= today; date = addDays(date, 1)) overdueDays.push(date);
   }
+  const nextStarts: string[] = [];
+  for (let start = firstStart; nextStarts.length < 3; start = addDays(start, cycleLength)) {
+    if (!late || start > today) nextStarts.push(start);
+  }
+  const predictedDays = nextStarts
+    .flatMap((start) => Array.from({ length: periodLength }, (_, offset) => addDays(start, offset)))
+    .filter((date) => date > today);
 
   return {
     starts,
-    rangeStart: addDays(lastStart, fromDays),
-    rangeEnd: addDays(lastStart, toDays),
+    rangeStart: firstStart,
+    rangeEnd: addDays(firstStart, periodLength - 1),
     periodLength,
+    cycleLength,
     cycleLengths,
+    nextStarts,
+    predictedDays,
+    overdueDays,
+    late,
   };
 }
 
+/** Confirmed period_logs rows → periods with their logged duration (pending/removed rows are dropped). */
+export function periodsFromLogs(rows: { log_date: string; status?: string; period_length?: number | null }[] = []): PeriodLog[] {
+  return rows
+    .filter((row) => row.status === "confirmed")
+    .map((row) => ({ startDate: row.log_date, duration: row.period_length == null ? null : Number(row.period_length), status: "confirmed" as const }));
+}
+
 // Compatibility bridge for screens being migrated to the new cycle API.
-export function predictPeriodRange({ starts = [], today = localDateKey(new Date()), hasHadPeriod = true }: {
+export function predictPeriodRange({ starts = [], periods, today = localDateKey(new Date()), hasHadPeriod = true }: {
   starts?: string[];
+  periods?: PeriodLog[];
   today?: string;
   hasHadPeriod?: boolean;
 }) {
-  const prediction = hasHadPeriod ? getPrediction(starts, today) : null;
+  const prediction = hasHadPeriod ? getPrediction(periods?.length ? periods : starts, today) : null;
   return {
     starts: prediction?.starts ?? [],
     rangeStart: prediction?.rangeStart ?? null,
     rangeEnd: prediction?.rangeEnd ?? null,
     periodLength: prediction?.periodLength ?? 5,
-    late: Boolean(prediction && today > prediction.rangeEnd),
+    cycleLength: prediction?.cycleLength ?? 28,
+    nextStarts: prediction?.nextStarts ?? [],
+    predictedDays: prediction?.predictedDays ?? [],
+    overdueDays: prediction?.overdueDays ?? [],
+    late: Boolean(prediction?.late),
     overNinetyDays: Boolean(prediction?.starts.at(-1) && differenceInDays(prediction.starts.at(-1)!, today) > 90),
     cycleLengths: prediction?.cycleLengths ?? [],
   };
@@ -199,7 +233,7 @@ export function getLateStatus(today: string, prediction: Prediction | null, peri
   const lastStart = confirmed.length ? periodStart(confirmed.at(-1)!) : null;
   if (!lastStart || !prediction) return null;
   if (differenceInDays(lastStart, today) > 90) return "very_late";
-  if (today > prediction.rangeEnd) return "late";
+  if (prediction.late) return "late";
   return "on_time";
 }
 

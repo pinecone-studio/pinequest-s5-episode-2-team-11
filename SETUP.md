@@ -53,11 +53,12 @@ Supabase → **SQL Editor** дээр байгаа төслийн үндсэн sc
 1. `supabase/daily-logs-migration.sql`
 2. `supabase/cycle-calendar-migration.sql`
 3. `supabase/period-start-edit-migration.sql`
-4. `supabase/private-note-lock-migration.sql`
+4. `supabase/manual-period-date-edit-migration.sql`
+5. `supabase/private-note-lock-migration.sql`
 
 Өдрийн бүртгэлийн функц тэмдэглэлийн текстийг буцаахаа сүүлийн migration-оор больдог тул `private-note-lock-migration.sql`-ийг алгасаж болохгүй.
 
-Хэрэв календарийн болон нууц тэмдэглэлийн migration-ууд өмнө нь ажилласан бол хуанлийн өдөр хасалтыг синк хийхийн тулд зөвхөн `period-start-edit-migration.sql`-ийг дахин ажиллуулна.
+Хэрэв үндсэн календарийн migration өмнө нь ажилласан бол хуанлид сонгосон өдрүүдийг хадгалахын тулд `manual-period-date-edit-migration.sql`-ийг SQL Editor дээр ажиллуулна. `sync_my_period_days` олдохгүй (`PGRST202`) алдаа гарвал энэ migration ажиллаагүй эсвэл API-ийн schema cache шинэчлэгдээгүй байна. Хэдэн секунд хүлээгээд дахин оролдоно уу.
 
 ## 4. Интернэтэд гаргах — Vercel (5 мин)
 
