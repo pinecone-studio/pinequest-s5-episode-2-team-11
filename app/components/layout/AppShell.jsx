@@ -46,7 +46,6 @@ export default function AppShell() {
     tab,
     setTab,
     momUnread,
-    sosOpen,
     toast,
     lowSupplyCount,
     showOnboarding,
@@ -130,7 +129,6 @@ export default function AppShell() {
             </div>
           </div>
         )}
-        {sosOpen && <SosModal />}
       </div>
     </div>
   );

@@ -1049,6 +1049,7 @@ export function FamilyProvider({ children }) {
     daysUntil,
     saveCycle,
     startPeriod,
+    markChildPeriod,
     noPeriodYet,
     markNoPeriodYet,
     // сэтгэл санаа
