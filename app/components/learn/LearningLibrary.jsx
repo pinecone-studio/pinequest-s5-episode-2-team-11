@@ -2,22 +2,53 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  Activity,
   ArrowLeft,
+  Backpack,
+  Ban,
   BookOpen,
+  CalendarCheck,
+  CalendarDays,
   Check,
   ChevronRight,
+  CircleCheck,
   CircleHelp,
+  Clock,
+  Droplet,
   Droplets,
+  Dumbbell,
+  Flower2,
+  GlassWater,
   Heart,
+  HeartPulse,
+  Hourglass,
+  Layers,
   LockKeyhole,
+  MessageCircle,
   Moon,
+  Package,
+  Palette,
+  Pill,
+  Repeat,
+  Ruler,
   ShieldCheck,
+  Shirt,
+  ShowerHead,
+  Siren,
+  Smile,
   Sparkles,
+  Sprout,
   Sun,
+  Thermometer,
+  Timer,
+  Trash2,
   TriangleAlert,
+  Users,
   Venus,
+  Zap,
 } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
+import { useTheme } from "../../../context/ThemeContext";
 import { girlCategories, guardianRoles } from "../../../lib/learnContent";
 import { supabase } from "../../../lib/supabase";
 import { guardianMaleGuide } from "../../../src/content/guardian-male-guide";
@@ -33,6 +64,54 @@ const TONES = {
   rose: { background: "#F8D3E6", color: "#962D66" },
   alert: { background: "#FDE7F1", color: "#9F1239" },
 };
+
+// Бараан горимд цайвар pastel өнгө тод харагддаг тул бараан хувилбар
+const TONES_DARK = {
+  lilac: { background: "#3B2F55", color: "#D9C6FF" },
+  peach: { background: "#4A3A2C", color: "#FFD9A8" },
+  mint: { background: "#24413A", color: "#B9EBD2" },
+  sky: { background: "#283F5A", color: "#C4DCFF" },
+  butter: { background: "#43303B", color: "#F8C9DF" },
+  rose: { background: "#4A2C3D", color: "#F8C9DF" },
+  alert: { background: "#4E2733", color: "#FFC2CF" },
+};
+
+function useTones() {
+  const { theme } = useTheme();
+  return theme === "dark" ? TONES_DARK : TONES;
+}
+
+// Асран хамгаалагчийн сэдвүүдэд (охины тайлгүй) тон бүрийн тод өнгө
+const TONE_ACCENT = {
+  lilac: "#7C4DCC",
+  peach: "#E8756D",
+  mint: "#279B72",
+  sky: "#248FC5",
+  butter: "#D08712",
+  rose: "#B83B7E",
+  alert: "#D63D4D",
+};
+
+// Мөр бүрийн дүрс (сэдвийн дарааллаар). Дутвал сэдвийн дүрсийг ашиглана.
+const POINT_ICONS = {
+  what: [Sparkles, Smile, Layers, Droplets],
+  when: [CalendarDays, Flower2, Sprout, Droplet, Ruler],
+  cycle: [Clock, Repeat, CalendarCheck, Droplet, Palette],
+  products: [Package, Shirt, CircleCheck, Timer],
+  kit: [Backpack, MessageCircle, Shirt, CalendarDays],
+  hygiene: [ShowerHead, Ban, Trash2],
+  body: [Activity, Thermometer, GlassWater, Pill, Dumbbell],
+  doctor: [Hourglass, Clock, Droplets, Zap, HeartPulse, Siren],
+  myths: [Sparkles, MessageCircle, Users],
+};
+
+function topicLook(category) {
+  const girl = GIRL_TOPIC_STYLES[category.id];
+  return {
+    accent: girl?.background ?? TONE_ACCENT[category.tone] ?? "#B83B7E",
+    Icon: girl?.Icon ?? (category.isWarning ? TriangleAlert : BookOpen),
+  };
+}
 
 const STORAGE_PREFIX = "bloom:learn-progress:";
 const GUARDIAN_ROLE_STORAGE_PREFIX = "bloom:guardian-learning-role:";
@@ -55,6 +134,7 @@ function isGuardianRoleId(value) {
 }
 
 function RoleChip({ children, tone }) {
+  const TONES = useTones();
   return (
     <span
       className="inline-flex rounded-full px-3 py-1 text-xs font-extrabold"
@@ -66,33 +146,44 @@ function RoleChip({ children, tone }) {
 }
 
 function TopicCard({ category, index, read, onClick, guardian, tile = false }) {
-  const tone = TONES[category.tone];
+  const tone = useTones()[category.tone];
   if (tile) {
     const tileStyle = GIRL_TOPIC_STYLES[category.id] ?? { background: "#B83B7E", Icon: Sun };
     const Icon = tileStyle.Icon;
+    const accent = tileStyle.background;
     return (
       <button
         type="button"
         onClick={onClick}
         aria-label={`${category.title}. ${category.subtitle}${read ? ". Уншсан" : ""}`}
-        className="relative flex aspect-[0.88] min-h-32 w-full flex-col items-center justify-between overflow-hidden rounded-2xl p-2.5 text-center text-white shadow-sm transition hover:brightness-105 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300 active:scale-[0.98]"
-        style={{ backgroundColor: tileStyle.background }}
+        className="group relative flex min-h-[150px] w-full flex-col overflow-hidden rounded-3xl p-3.5 text-left text-white transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300 active:scale-[0.97]"
+        style={{
+          background: `linear-gradient(150deg, ${accent} 0%, ${accent}E6 55%, ${accent}B3 100%)`,
+          boxShadow: `0 10px 22px -10px ${accent}`,
+        }}
       >
-        <span className="flex w-full items-start justify-between">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
-            <Icon className="h-5 w-5 text-white" aria-hidden="true" />
+        {/* чимэглэл: том бүдэг дүрс + гэрлийн толбо */}
+        <Icon className="pointer-events-none absolute -right-5 -bottom-5 h-24 w-24 opacity-20 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6" aria-hidden="true" />
+        <span className="pointer-events-none absolute -left-6 -top-8 h-20 w-20 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.18)" }} aria-hidden="true" />
+
+        <span className="relative flex w-full items-start justify-between">
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl" style={{ backgroundColor: "rgba(255,255,255,0.25)" }}>
+            <Icon className="h-5 w-5 text-white" strokeWidth={2.3} aria-hidden="true" />
           </span>
-          <span
-            className={`flex h-5 w-5 items-center justify-center rounded-full ${
-              read ? "bg-emerald-300 text-emerald-950" : "bg-white/90 text-slate-400"
-            }`}
-            aria-hidden="true"
-          >
-            {read ? <Check className="h-3 w-3" strokeWidth={3} /> : <span className="h-1.5 w-1.5 rounded-full bg-current" />}
-          </span>
+          {read ? (
+            <span className="flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-black" style={{ backgroundColor: "#FFFFFF", color: accent }}>
+              <Check className="h-3 w-3" strokeWidth={3.5} aria-hidden="true" /> Уншсан
+            </span>
+          ) : (
+            <span className="rounded-full px-2 py-1 text-[10px] font-black text-white" style={{ backgroundColor: "rgba(255,255,255,0.25)" }}>
+              {String(index + 1).padStart(2, "0")}
+            </span>
+          )}
         </span>
-        <span className="line-clamp-3 w-full text-xs font-black leading-tight">
-          {category.title}
+
+        <span className="relative mt-auto pt-4">
+          <span className="block text-[15px] font-black leading-tight">{category.title}</span>
+          <span className="mt-1 block text-[11px] font-bold leading-snug text-white/85">{category.subtitle}</span>
         </span>
       </button>
     );
@@ -128,54 +219,83 @@ function TopicCard({ category, index, read, onClick, guardian, tile = false }) {
 }
 
 function TopicDetail({ category, index, total, counter, read, onBack, onToggleRead, onNext, nextLabel, onList }) {
-  const tone = TONES[category.tone];
+  const { accent, Icon } = topicLook(category);
+  const icons = POINT_ICONS[category.id] ?? [];
+  const glass = { backgroundColor: "rgba(255,255,255,0.22)" };
   return (
     <div className="space-y-4 pb-4">
       <header
-        className="rounded-b-[2rem] p-4 pb-6 shadow-sm"
-        style={{ backgroundColor: tone.background, color: tone.color }}
+        className="relative overflow-hidden rounded-[2rem] p-4 pb-5 text-white shadow-lg"
+        style={{ background: `linear-gradient(135deg, ${accent} 0%, ${accent}D9 100%)` }}
       >
-        <div className="flex items-start gap-3">
+        {/* чимэглэлийн том дүрс */}
+        <Icon className="pointer-events-none absolute -right-4 -bottom-6 h-32 w-32 opacity-15" aria-hidden="true" />
+        <div className="relative flex items-center justify-between">
           <button
             type="button"
             onClick={onBack}
             aria-label="Буцах"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/80"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-white active:scale-90 transition"
+            style={glass}
           >
             <ArrowLeft className="h-5 w-5" aria-hidden="true" />
           </button>
-          <div className="min-w-0 flex-1 pt-1">
-            <span className="inline-flex rounded-full bg-white/80 px-2.5 py-1 text-xs font-extrabold">
-              {counter ?? `${String(index + 1).padStart(2, "0")} / ${total}`}
-            </span>
-            <h1 className="mt-2 text-xl font-black leading-tight">{category.title}</h1>
-            <p className="mt-1 text-sm font-bold opacity-80">{category.subtitle}</p>
+          <span className="rounded-full px-3 py-1 text-xs font-extrabold text-white" style={glass}>
+            {counter ?? `${String(index + 1).padStart(2, "0")} / ${total}`}
+          </span>
+        </div>
+        <div className="relative mt-4 flex items-center gap-3">
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl" style={glass}>
+            <Icon className="h-7 w-7 text-white" aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <h1 className="text-xl font-black leading-tight text-white">{category.title}</h1>
+            <p className="mt-0.5 text-sm font-bold text-white/85">{category.subtitle}</p>
           </div>
         </div>
+        {total > 1 && (
+          <div className="relative mt-4 flex gap-1" aria-hidden="true">
+            {Array.from({ length: total }, (_, i) => (
+              <span
+                key={i}
+                className="h-1.5 flex-1 rounded-full"
+                style={{ backgroundColor: i <= index ? "#FFFFFF" : "rgba(255,255,255,0.3)" }}
+              />
+            ))}
+          </div>
+        )}
       </header>
 
       <div className="space-y-3 px-1">
         {category.isWarning && category.warningText && (
           <div
             role="note"
-            className="flex items-start gap-2 rounded-2xl border-2 p-3 text-sm font-extrabold leading-relaxed"
-            style={{ borderColor: tone.color, backgroundColor: tone.background, color: tone.color }}
+            className="flex items-start gap-3 rounded-2xl border-2 p-3 text-sm font-extrabold leading-relaxed"
+            style={{ borderColor: accent, backgroundColor: `${accent}1F` }}
           >
-            <TriangleAlert className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
-            <p>{category.warningText}</p>
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-white" style={{ backgroundColor: accent }}>
+              <TriangleAlert className="h-4 w-4" aria-hidden="true" />
+            </span>
+            <p className="text-slate-700">{category.warningText}</p>
           </div>
         )}
-        {category.points.map((point, pointIndex) => (
-          <Card key={`${category.id}-${pointIndex}`} className="!flex items-start gap-3 !rounded-2xl !p-4">
-            <span
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-black"
-              style={{ backgroundColor: tone.background, color: tone.color }}
+        {category.points.map((point, pointIndex) => {
+          const PointIcon = icons[pointIndex] ?? Icon;
+          return (
+            <Card
+              key={`${category.id}-${pointIndex}`}
+              className="!flex items-start gap-3 !rounded-2xl !p-4"
             >
-              {pointIndex + 1}
-            </span>
-            <p className="min-w-0 flex-1 text-sm font-semibold leading-relaxed text-slate-700">{point}</p>
-          </Card>
-        ))}
+              <span
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                style={{ backgroundColor: `${accent}26`, color: accent }}
+              >
+                <PointIcon className="h-5 w-5" strokeWidth={2.2} aria-hidden="true" />
+              </span>
+              <p className="min-w-0 flex-1 pt-0.5 text-sm font-semibold leading-relaxed text-slate-700">{point}</p>
+            </Card>
+          );
+        })}
       </div>
 
       <div className="space-y-2 px-1 pt-1">
@@ -218,6 +338,7 @@ function TopicDetail({ category, index, total, counter, read, onBack, onToggleRe
 
 export default function LearningLibrary({ onMoreMaterials }) {
   const { view, profile, session, guardianGender } = useFamily();
+  const tones = useTones();
   const isGirl = view === "daughter";
   const userId = profile?.id ?? session?.user?.id ?? "local";
   const storageKey = `${STORAGE_PREFIX}${userId}`;
@@ -235,9 +356,8 @@ export default function LearningLibrary({ onMoreMaterials }) {
   const role = guardianRoles.find((item) => item.id === roleId) ?? guardianRoles[0];
   const categories = isGirl ? girlCategories : role.categories;
   const readSet = useMemo(() => new Set(readIds), [readIds]);
-  const visibleCategories = isGirl
-    ? categories.filter((category) => !readSet.has(category.id))
-    : categories;
+  const visibleCategories = categories;
+  const readCount = isGirl ? categories.filter((category) => readSet.has(category.id)).length : 0;
   const selectedIndex = categories.findIndex((category) => category.id === selectedId);
   const selected = selectedIndex >= 0 ? categories[selectedIndex] : null;
 
@@ -453,7 +573,7 @@ export default function LearningLibrary({ onMoreMaterials }) {
           </div>
           <div
             className="rounded-3xl border border-slate-100 p-4 shadow-sm"
-            style={{ backgroundColor: TONES[role.tone].background, color: TONES[role.tone].color }}
+            style={{ backgroundColor: tones[role.tone].background, color: tones[role.tone].color }}
           >
             <div className="flex items-start gap-3">
               <Heart className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
@@ -467,13 +587,44 @@ export default function LearningLibrary({ onMoreMaterials }) {
         </>
       )}
 
+      {isGirl && (
+        <Card className="!p-4">
+          <div className="flex items-center gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bb-grad-sos text-white">
+              {readCount === categories.length ? <Sparkles className="h-5 w-5" aria-hidden="true" /> : <BookOpen className="h-5 w-5" aria-hidden="true" />}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-black text-slate-800">
+                {readCount === categories.length ? "Бүх сэдвийг уншиж дуусгалаа! 🎉" : `${readCount} / ${categories.length} сэдэв уншсан`}
+              </p>
+              <p className="mt-0.5 text-xs font-semibold text-slate-500">
+                {readCount === 0 ? "Эхний сэдвээсээ эхлээрэй 🌸" : readCount === categories.length ? "Чи үнэхээр гайхалтай байна" : "Сайн явж байна, үргэлжлүүлээрэй"}
+              </p>
+            </div>
+          </div>
+          <div
+            className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100"
+            role="progressbar"
+            aria-label="Уншсан сэдвийн явц"
+            aria-valuemin={0}
+            aria-valuemax={categories.length}
+            aria-valuenow={readCount}
+          >
+            <div className="h-full rounded-full bb-grad-sos transition-all" style={{ width: `${(readCount / categories.length) * 100}%` }} />
+          </div>
+        </Card>
+      )}
+
       <section
-        className={isGirl ? "grid grid-cols-3 gap-2" : "space-y-2.5"}
+        className={isGirl ? "grid grid-cols-2 gap-3" : "space-y-2.5"}
         aria-label="Сэдвүүд"
       >
-        {visibleCategories.map((category) => (
-          <TopicCard
+        {visibleCategories.map((category, position) => (
+          <div
             key={category.id}
+            className={isGirl && visibleCategories.length % 2 === 1 && position === visibleCategories.length - 1 ? "col-span-2" : undefined}
+          >
+          <TopicCard
             category={category}
             index={categories.findIndex((item) => item.id === category.id)}
             read={readSet.has(category.id)}
@@ -481,12 +632,8 @@ export default function LearningLibrary({ onMoreMaterials }) {
             tile={isGirl}
             onClick={() => setSelectedId(category.id)}
           />
+          </div>
         ))}
-        {isGirl && visibleCategories.length === 0 && (
-          <p className="col-span-3 rounded-2xl bg-white p-4 text-center text-sm font-bold text-slate-600">
-            Бүх сэдвийг уншиж дуусгалаа. Баяр хүргэе!
-          </p>
-        )}
       </section>
 
     </div>
