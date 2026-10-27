@@ -8,6 +8,7 @@ import SectionTitle from "../ui/SectionTitle";
 import PageHeader from "../ui/PageHeader";
 import MyFriendCode from "../friends/MyFriendCode";
 import FamilyLinkingSection from "./FamilyLinkingSection";
+import FeedbackCard from "./FeedbackCard";
 import { t } from "../../../lib/i18n";
 
 export default function ProfileScreen() {
@@ -189,6 +190,7 @@ export default function ProfileScreen() {
 
       <MyFriendCode />
       <FamilyLinkingSection />
+      <FeedbackCard />
       <button
         type="button"
         onClick={signOut}
