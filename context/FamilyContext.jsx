@@ -97,7 +97,6 @@ export function FamilyProvider({ children }) {
   const [tab, setTab] = useState("home");
   const [learnTab, setLearnTab] = useState("pad");
   const [selectedDaughterId, setSelectedDaughterId] = useState(null);
-  const [learnTab, setLearnTab] = useState("topics");
   const [codeInput, setCodeInput] = useState("");
   const [codeError, setCodeError] = useState("");
   const [joining, setJoining] = useState(false);
@@ -155,11 +154,9 @@ export function FamilyProvider({ children }) {
   }, [view, familyId, members]);
   const selectDaughter = (id) => {
     setSelectedDaughterId(id);
+    setActiveChildId(id);
     if (familyId) localStorage.setItem(`bloomy:selected-daughter:${familyId}`, id);
   };
-  const daughterProfile = view === "daughter"
-    ? profile
-    : (daughters.find((daughter) => daughter.id === selectedDaughterId) ?? daughters[0] ?? null);
   const guardianProfile = members.find((member) => member.role === "mother") ?? null;
   const guardianName = guardianProfile?.display_name || null;
   const childProfiles = members.filter((member) => member.role === "daughter");
@@ -226,9 +223,6 @@ export function FamilyProvider({ children }) {
     senderName: members.find((member) => member.id === n.sender_id)?.display_name ?? "",
     recipientName: members.find((member) => member.id === n.recipient_id)?.display_name ?? "",
   }));
-  const momInbox = view === "mother" ? inbox : [];
-  const teenInbox = view === "daughter" ? inbox : [];
-  const inbox = notifications.map((n) => ({ ...n, time: formatTime(n.created_at) }));
   const momInbox = view === "mother"
     ? inbox.filter((message) => message.recipient_role === "mother" && (message.sender_id === activeChild?.id || !message.sender_id))
     : [];
@@ -598,18 +592,10 @@ export function FamilyProvider({ children }) {
       } else {
         await loadNotifications();
       }
-      if (!familyId || !recipientId) return false;
-      const { error } = await supabase
-        .from("notifications")
-        .insert({ family_id: familyId, sender_id: userId, recipient_id: recipientId, recipient_role: recipientRole, kind, text });
-      if (error) setToast("Илгээж чадсангүй. Интернэтээ шалгаарай.");
       return !error;
     },
     [familyId, userId, loadNotifications],
   );
-  const sendToMom = (text, kind, aboutId = null) =>
-    notify("mother", text, aboutId ? `target:${aboutId}:${kind}` : kind);
-  const sendToTeen = (text, kind = "care") => notify("daughter", text, kind, daughterProfile?.id ?? null);
   const guardianId = view === "mother" ? userId : members.find((member) => member.role === "mother")?.id;
   const sendToMom = (text, kind) => notify("mother", text, kind, guardianId);
   const sendToTeen = (text, kind = "care") => notify("daughter", text, kind, view === "mother" ? activeChild?.id : null);

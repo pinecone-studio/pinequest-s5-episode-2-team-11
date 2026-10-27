@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { useFamily } from "../../../context/FamilyContext";
 import { Check, Backpack, Bell, ChevronRight, X } from "lucide-react";
 import { KIT_ITEMS } from "../../../lib/data";
-import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
 
 export default function SchoolBagChecklist({ daughter = false }) {
@@ -211,18 +210,63 @@ export default function SchoolBagChecklist({ daughter = false }) {
   }
 
   return (
-    <Card>
-      <SectionTitle
-        icon={Backpack}
-        title={daughter ? "Миний сургуулийн цүнх" : `${daughterName} · сургуулийн цүнх`}
-        right={<span className="text-xs font-extrabold bb-text-B83B7E">{checkedCount}/{KIT_ITEMS.length}</span>}
-      />
-      <div className="mb-4">{progressBar(checkedCount)}</div>
-      <div className="space-y-2">{rows}</div>
-      <p className="mt-3 rounded-2xl bb-bg-FFF7FB px-3 py-2.5 text-xs font-semibold leading-relaxed text-slate-500">
-        {daughter ? "Ямар нэг зүйлээ авахаа мартсан бол жагсаалтаас сонгоорой." : `${daughterName} ямар нэг зүйлээ авахаа мартсан бол тухайн зүйлийн хажуу дахь “Сануулах” товчийг дараарай. Сануулга зөвхөн ${daughterName}-д очно 💗`}
-      </p>
-      {completionMessage}
-    </Card>
+    <>
+      <Card className="!p-4">
+        <button type="button" onClick={() => setOpen(true)} className="w-full text-left" aria-haspopup="dialog">
+          <div className="flex items-center gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bb-bg-FDE7F1 bb-text-B83B7E">
+              <Backpack className="h-5 w-5" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-extrabold text-slate-700">{daughterName} · сургуулийн цүнх</span>
+              <span className="mt-0.5 block text-xs font-bold text-slate-400">Жагсаалтыг нээх, сануулах</span>
+            </span>
+            <span className="text-sm font-extrabold bb-text-B83B7E">{checkedCount}/{KIT_ITEMS.length}</span>
+            <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" />
+          </div>
+          <div className="mt-3">{progressBar(checkedCount)}</div>
+        </button>
+      </Card>
+
+      {open && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center p-3 sm:items-center sm:p-4">
+          <button
+            type="button"
+            aria-label="Цүнхний жагсаалт хаах"
+            onClick={() => setOpen(false)}
+            className="absolute inset-0 bg-slate-950/45 backdrop-blur-sm"
+          />
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="mother-school-bag-title"
+            className="relative z-10 max-h-[88dvh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-5 shadow-2xl bloom-pop"
+          >
+            <div className="mb-4 flex items-center gap-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bb-bg-FDE7F1 bb-text-B83B7E">
+                <Backpack className="h-5 w-5" />
+              </span>
+              <h2 id="mother-school-bag-title" className="flex-1 text-lg font-black text-slate-700">{daughterName} · сургуулийн цүнх</h2>
+              <span className="text-sm font-extrabold bb-text-B83B7E">{checkedCount}/{KIT_ITEMS.length}</span>
+              <button
+                type="button"
+                autoFocus
+                onClick={() => setOpen(false)}
+                aria-label="Хаах"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="mb-4">{progressBar(checkedCount)}</div>
+            <div className="space-y-2">{rows}</div>
+            <p className="mt-3 rounded-2xl bb-bg-FFF7FB px-3 py-2.5 text-xs font-semibold leading-relaxed text-slate-500">
+              {daughterName} ямар нэг зүйлээ авахаа мартсан бол тухайн зүйлийн хажуу дахь “Сануулах” товчийг дараарай. Сануулга зөвхөн {daughterName}-д очно 💗
+            </p>
+            {completionMessage}
+          </section>
+        </div>
+      )}
+    </>
   );
 }

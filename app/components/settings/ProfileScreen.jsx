@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Pencil, LogOut } from "lucide-react";
+import { AlertCircle, Check, Copy, Loader2, LogOut, Pencil, Share2, Users } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import Card from "../ui/Card";
 import SectionTitle from "../ui/SectionTitle";
 import PageHeader from "../ui/PageHeader";
 import MyFriendCode from "../friends/MyFriendCode";
 import Avatar from "../avatar/Avatar";
-import FamilyLinkingSection from "./FamilyLinkingSection";
 
 export default function ProfileScreen() {
   const {
@@ -282,7 +281,6 @@ export default function ProfileScreen() {
       </Card>
 
       <MyFriendCode />
-      <FamilyLinkingSection />
       <button
         type="button"
         onClick={signOut}
