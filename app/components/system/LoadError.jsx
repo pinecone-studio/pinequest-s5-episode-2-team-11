@@ -4,7 +4,9 @@ export default function LoadError({ kind, onRetry, onSignOut }) {
       <div className="text-5xl">🌧️</div>
       <h2 className="text-xl font-black text-slate-700">Мэдээллээ татаж чадсангүй</h2>
       <p className="text-sm font-semibold text-slate-500 leading-relaxed">
-        {kind === "no_profile"
+        {kind === "schema"
+          ? "Supabase-ийн профайл schema дутуу байна. supabase/schema.sql-ийг SQL Editor дээр бүрэн ажиллуулаад дахин оролдоно уу."
+          : kind === "no_profile"
           ? "Таны профайл олдсонгүй. Supabase дээр schema.sql бүрэн ажилласан эсэхийг шалгаад дахин оролдоно уу."
           : "Интернэт холболтоо шалгаад дахин оролдоно уу."}
       </p>

@@ -48,7 +48,6 @@ export default function AppShell() {
     momUnread,
     toast,
     lowSupplyCount,
-    showOnboarding,
   } = family;
   // Охины хонхны тоо: асран хамгаалагчийн уншаагүй үг + хариулаагүй найзын SOS
   const teenUnread = (family.teenInbox ?? []).filter((n) => !n.read).length + (unansweredIncoming ?? 0);
@@ -83,8 +82,8 @@ export default function AppShell() {
     router.push(routes[nextTab] ?? "/");
   };
 
-  const showNav = family.supabaseConfigured && session && family.profile && ready && !showOnboarding;
-  const isCompactLesson = pathname === "/learn" && view === "daughter" && family.learnTab === "pad" && showNav;
+  const showNav = family.supabaseConfigured && session && family.profile && ready;
+  const isCompactLesson = pathname === "/learn" && view === "daughter" && ["pad", "pad-howto"].includes(family.learnTab) && showNav;
 
 
   return (

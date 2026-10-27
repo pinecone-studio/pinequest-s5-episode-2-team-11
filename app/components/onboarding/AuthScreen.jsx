@@ -6,12 +6,17 @@ import { useFamily } from "../../../context/FamilyContext";
 import RoleSelect from "./RoleSelect";
 import BloomyLogo from "../ui/BloomyLogo";
 import { toDateStr } from "../../../lib/dates";
+import GuardianMaleGuide from "../learn/GuardianMaleGuide";
+
+const PENDING_GUIDE_PREFIX = "bloom:pending-guardian-guide:";
 
 /** Нэвтрэх / бүртгүүлэх. stage: "role" → "signup" | "login" */
 export default function AuthScreen() {
   const { signUp, signIn } = useFamily();
   const [stage, setStage] = useState("role");
   const [role, setRole] = useState(null);
+  const [guardianGender, setGuardianGender] = useState(null);
+  const [onboardingGuideCompleted, setOnboardingGuideCompleted] = useState([]);
   const [name, setName] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [email, setEmail] = useState("");
@@ -32,15 +37,31 @@ export default function AuthScreen() {
   if (stage === "role") {
     return (
       <RoleSelect
-        onPick={(r) => {
+        onPick={(r, selectedGuardianGender = null) => {
           setRole(r);
-          setStage("signup");
+          setGuardianGender(selectedGuardianGender);
+          setOnboardingGuideCompleted([]);
+          setStage(r === "mother" && selectedGuardianGender === "male" ? "male-guide" : "signup");
           setMessage("");
         }}
         onLogin={() => {
           setStage("login");
           setMessage("");
         }}
+      />
+    );
+  }
+
+  if (stage === "male-guide") {
+    return (
+      <GuardianMaleGuide
+        onboarding
+        completedIds={onboardingGuideCompleted}
+        onComplete={(cardId) => {
+          setOnboardingGuideCompleted((current) => current.includes(cardId) ? current : [...current, cardId]);
+          return true;
+        }}
+        onClose={() => setStage("signup")}
       />
     );
   }
@@ -57,7 +78,19 @@ export default function AuthScreen() {
     if (!canSubmit || busy) return;
     setBusy(true);
     setMessage("");
-    const err = isSignup ? await signUp({ role, name, birthDate: isDaughter ? birthDate : null, email, password }) : await signIn({ email, password });
+    if (isSignup && role === "mother" && guardianGender === "male" && onboardingGuideCompleted.length) {
+      try {
+        const key = `${PENDING_GUIDE_PREFIX}${email.trim().toLowerCase()}`;
+        const saved = JSON.parse(window.localStorage.getItem(key) ?? "[]");
+        const pending = Array.isArray(saved) ? saved : [];
+        window.localStorage.setItem(key, JSON.stringify([...new Set([...pending, ...onboardingGuideCompleted])]));
+      } catch {
+        setMessage("Танилцуулгын явцыг түр хадгалж чадсангүй. Зөвлөх хэсгээс картыг дахин үзэж болно.");
+      }
+    }
+    const err = isSignup
+      ? await signUp({ role, guardianGender, name, birthDate: isDaughter ? birthDate : null, email, password })
+      : await signIn({ email, password });
     setBusy(false);
     if (err) setMessage(err);
   };

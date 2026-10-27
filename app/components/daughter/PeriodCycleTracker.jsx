@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, CalendarDays, ChevronLeft, ChevronRight, LoaderCircle, Pencil, Plus, Sparkles, X } from "lucide-react";
+import { Activity, ArrowLeft, CalendarDays, ChevronLeft, ChevronRight, Droplets, Heart, LoaderCircle, Moon, Pencil, Plus, Sparkles, X } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import { askAi } from "../../../lib/ai-client";
 import { supabase } from "../../../lib/supabase";
@@ -10,13 +10,6 @@ import Card from "../ui/Card";
 import BottomSheet from "../ui/BottomSheet";
 import DayLogSheet from "./DayLogSheet";
 import CycleLegend from "./CycleLegend";
-
-const localDateKey = (date) => {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-};
 
 const sortPeriodStarts = (dates, today) => [...new Set((dates ?? []).filter((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date) && date <= today))].sort();
 const cycleGapsFromStarts = (dates) => dates.slice(1).map((date, index) => {
@@ -144,7 +137,6 @@ export default function PeriodCycleTracker({ onBack, cycleLength: _cycleLength, 
   const [cycleSummary, setCycleSummary] = useState(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summaryError, setSummaryError] = useState("");
-  const [summaryLoading, setSummaryLoading] = useState(false);
   const touchStartX = useRef(null);
 
   const monthOffset = (month.getDay() + 6) % 7;
@@ -184,49 +176,6 @@ export default function PeriodCycleTracker({ onBack, cycleLength: _cycleLength, 
     ));
     setNote(window.localStorage.getItem(`bloom:private-note:${selectedDate}`) ?? "");
   }, []);
-
-  const monthOffset = (month.getDay() + 6) % 7;
-  const dayCount = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
-  const calendarDays = Array.from(
-    { length: Math.ceil((monthOffset + dayCount) / 7) * 7 },
-    (_, i) => new Date(month.getFullYear(), month.getMonth(), i - monthOffset + 1),
-  );
-  const monthName = `${month.getFullYear()} оны ${month.getMonth() + 1}-р сар`;
-  const visiblePeriodStarts = editingStarts ? draftPeriodStarts : periodStarts;
-  const latestPeriodStart = visiblePeriodStarts.length ? visiblePeriodStarts[visiblePeriodStarts.length - 1] : editingStarts ? null : lastPeriodStart;
-  const cycleGaps = cycleGapsFromStarts(visiblePeriodStarts);
-  const hasMeasuredCycle = cycleGaps.length > 0;
-  const measuredCycleLength = cycleLengthFromStarts(visiblePeriodStarts, cycleLength);
-  const cycleStart = latestPeriodStart ? new Date(`${latestPeriodStart}T00:00:00`) : null;
-  const selected = new Date(`${selectedDate}T00:00:00`);
-  const selectedPeriodLength = cycleStart ? Math.round((selected - cycleStart) / 86400000) + 1 : 0;
-  const canCorrectStart = Boolean(latestPeriodStart) && selectedDate !== latestPeriodStart;
-  const canCorrectEnd = selectedPeriodLength > 0 && selectedPeriodLength <= 14 && selectedPeriodLength !== periodLength;
-  const cycleDay = cycleStart && hasMeasuredCycle
-    ? ((Math.floor((selected - cycleStart) / 86400000) % measuredCycleLength) + measuredCycleLength) % measuredCycleLength + 1
-    : null;
-  const selectedLog = flat(logs[selectedDate]);
-  const active = categories.find((category) => category.id === activeCategory);
-  const nextPeriodDate = cycleStart && hasMeasuredCycle
-    ? new Date(cycleStart.getFullYear(), cycleStart.getMonth(), cycleStart.getDate() + measuredCycleLength)
-    : null;
-  const nextPeriodLabel = nextPeriodDate ? dateLabel(nextPeriodDate) : null;
-  const daysToNext = nextPeriodDate ? Math.round((nextPeriodDate - new Date(`${today}T00:00:00`)) / 86400000) : null;
-  const prePeriodTrends = { emotion: {}, symptoms: {} };
-  if (cycleStart && hasMeasuredCycle) {
-    Object.entries(logs).forEach(([dateKey, dayLog]) => {
-      if (dateKey > today) return;
-      const date = new Date(`${dateKey}T00:00:00`);
-      const diff = Math.floor((date - cycleStart) / 86400000);
-      const cycleOffset = ((diff % measuredCycleLength) + measuredCycleLength) % measuredCycleLength;
-      if (cycleOffset < Math.max(0, measuredCycleLength - 7)) return;
-      ["emotion", "symptoms"].forEach((categoryId) => {
-        const value = flat(dayLog)[categoryId];
-        if (value) prePeriodTrends[categoryId][value] = (prePeriodTrends[categoryId][value] ?? 0) + 1;
-      });
-    });
-    return () => { cancelled = true; };
-  }, [profile?.id, firstCalendarDate, lastCalendarDate]);
 
   // Хуучин төхөөрөмжийн тэмдэглэлүүдийг шинэ хувийн RPC-р нэг удаа нүүлгэнэ.
   useEffect(() => {
@@ -422,7 +371,7 @@ export default function PeriodCycleTracker({ onBack, cycleLength: _cycleLength, 
             <span className="flex items-center gap-1"><span className="text-[11px] leading-none">😊</span> Тэмдэглэлийн сэтгэл</span>
           </div>
           <p className="mt-2 text-center text-[11px] text-[#7d7286]">{editingStarts ? "Ягаанаар тэмдэглэсэн өдрийг дахин дарж хасна" : "Өдөр дээр дарж тэмдэглэнэ"}</p>
-        </section>
+        </Card>
 
         {/* ---------- Дараагийн мөчлөг ---------- */}
         <section className="flex items-center gap-3 rounded-[24px] border border-[#49313f] bg-gradient-to-br from-[#2b202d] to-[#211b29] p-3">
@@ -459,84 +408,6 @@ export default function PeriodCycleTracker({ onBack, cycleLength: _cycleLength, 
             </div>
           )}
         </section>
-      </div>
-
-      {/* ---------- Өдөр дээр дарахад гарч ирэх цонх ---------- */}
-      {sheetOpen && (
-        <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/50" onClick={() => setSheetOpen(false)}>
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label={dateLabel(selected)}
-            onClick={(e) => e.stopPropagation()}
-            className="bloom-pop max-h-[88vh] w-full max-w-md overflow-y-auto rounded-t-[28px] border-t border-[#3b3242] bg-[#1a1721] px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-2"
-          >
-            <span className="mx-auto mb-3 block h-1.5 w-10 rounded-full bg-[#3b3242]" />
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <h2 className="font-black">{dateLabel(selected)}</h2>
-                {cycleDay && <p className="text-xs font-extrabold text-[#e58da9]">Мөчлөгийн {cycleDay}-р өдөр</p>}
-              </div>
-              <button type="button" onClick={() => setSheetOpen(false)} aria-label="Хаах" className="flex h-8 w-8 items-center justify-center rounded-full bg-[#292331] text-[#b9adbf]">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="mt-3 grid grid-cols-5 gap-1">
-              {categories.map(({ id, name, icon: Icon }) => {
-                const value = selectedLog[id];
-                return (
-                  <button key={key} type="button" onClick={() => editingStarts ? togglePeriodStart(date) : openDay(date)} disabled={editingStarts && key > today}
-                    aria-label={`${dateLabelMongolian(date)}${actualPeriod ? ", сарын тэмдэг" : predicted ? ", таамаг" : ""}${log ? ", тэмдэглэлтэй" : ""}`}
-                    className={`relative mx-auto flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition active:scale-90 ${style} ${!inMonth ? "opacity-40" : ""} ${key === today ? "outline outline-2 outline-offset-1 outline-pink-400" : ""} ${selected ? "ring-2 ring-purple-400" : ""} ${editingStarts && key > today ? "cursor-not-allowed opacity-30" : ""}`}>
-                    {date.getDate()}
-                    {log && <span className={`absolute -bottom-0.5 h-1.5 w-1.5 rounded-full ${actualPeriod ? "bg-white" : "bb-bg-B794F4"}`} />}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          <div className="mt-3"><CycleLegend compact /></div>
-          {loadingLogs && <p className="mt-2 text-center text-xs font-semibold text-slate-400">Өдрийн бүртгэл ачаалж байна…</p>}
-          {!periodStarts.length && <p className="mt-2 text-center text-xs font-semibold text-slate-400">Сарын тэмдэг хараахан ирээгүй бол зөвхөн өдрийн тэмдэглэл хөтөлж болно.</p>}
-        </Card>
-
-        <Card className="!p-3">
-          {editingStarts ? (
-            <div className="space-y-2">
-              <p className="text-xs font-semibold leading-relaxed text-slate-500">Календарь дээр эхэлсэн өдрүүдийг дарж сонгоно. Таамагт тасархай дугуйг ашиглана.</p>
-              <div className="grid grid-cols-2 gap-2">
-                <button type="button" onClick={() => setEditingStarts(false)} disabled={savingStarts} className="rounded-2xl bg-slate-100 py-3 text-sm font-extrabold text-slate-600">Болих</button>
-                <button type="button" onClick={() => savePeriodDates(draftStarts)} disabled={savingStarts || !draftStarts.length} className="rounded-2xl bb-bg-E0679F py-3 text-sm font-extrabold text-white disabled:opacity-50">{savingStarts ? "Хадгалж байна…" : "Хадгалах"}</button>
-              </div>
-            </div>
-          ) : startPickerOpen ? (
-            <div className="space-y-2">
-              <label htmlFor="period-start-date" className="block text-sm font-extrabold text-slate-700">Эхэлсэн өдрөө сонгоорой</label>
-              <input id="period-start-date" type="date" value={startDate} max={today} onChange={(event) => setStartDate(event.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm font-bold text-slate-700" />
-              <div className="grid grid-cols-2 gap-2">
-                <button type="button" onClick={() => setStartPickerOpen(false)} className="rounded-2xl bg-slate-100 py-3 text-sm font-extrabold text-slate-600">Болих</button>
-                <button type="button" onClick={addPeriodStart} disabled={savingStarts || !startDate || startDate > today} className="rounded-2xl bb-bg-E0679F py-3 text-sm font-extrabold text-white disabled:opacity-50">{savingStarts ? "Хадгалж байна…" : "Хадгалах"}</button>
-              </div>
-              <p className="text-center text-xs font-semibold text-slate-400">Үргэлжлэх хугацаа: {periodLength} хоног</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-2">
-              <button type="button" onClick={() => { setStartDate(today); setStartPickerOpen(true); }} className="flex items-center justify-center gap-1.5 rounded-2xl bb-bg-FDE7F1 py-3 text-xs font-extrabold bb-text-B83B7E"><Plus className="h-4 w-4" /> Сарын тэмдэг эхэлсэн</button>
-              <button type="button" onClick={() => { setDraftStarts(periodStarts); setEditingStarts(true); }} className="flex items-center justify-center gap-1.5 rounded-2xl bg-slate-100 py-3 text-xs font-extrabold text-slate-600"><Pencil className="h-4 w-4" /> Өдрүүдийг засах</button>
-            </div>
-          )}
-        </Card>
-
-        <Card className="!p-3">
-          <button type="button" onClick={generateSummary} disabled={summaryLoading} className="flex w-full items-center justify-center gap-2 rounded-2xl bb-bg-E9DDFC py-3 text-sm font-extrabold bb-text-7C4DCC disabled:opacity-60">
-            {summaryLoading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            {summaryLoading ? "Дүгнэж байна…" : "Мөчлөгийн тэмдэглэлээ дүгнүүлэх"}
-          </button>
-          <p className="mt-2 text-center text-[11px] font-semibold text-slate-400">Хувийн бичвэр хуваалцахгүй</p>
-          {summaryError && <p role="alert" className="mt-2 text-xs font-bold text-rose-600">{summaryError}</p>}
-          {summary?.summary && <div className="mt-3 space-y-2 rounded-2xl bb-bg-FFF7FB p-3 text-sm font-semibold leading-relaxed text-slate-600"><p>{summary.summary}</p>{[summary.beforePeriod, summary.duringPeriod, summary.afterPeriod, summary.mood, summary.body].filter(Boolean).map((item) => <p key={item}>{item}</p>)}</div>}
-        </Card>
       </div>
 
       {selectedDate && <DayLogSheet key={selectedDate} date={selectedDate} initialMood={logs[selectedDate]?.mood ?? null} isPeriodDay={periodDays.has(selectedDate)} onClose={() => setSelectedDate(null)} onSaved={saveDailyLog} />}
