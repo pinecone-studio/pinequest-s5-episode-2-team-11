@@ -24,6 +24,20 @@ const LOCAL_KIT_KEY = "bloomy:kit-checks";
 const LOCAL_CUSTOM_SUPPLIES_KEY = "bloomy:custom-supplies";
 const LOCAL_PERIOD_STARTS_PREFIX = "bloom:period-starts:";
 const DAILY_MOOD_EMOJI = { 1: "😣", 2: "😟", 3: "😐", 4: "🙂", 5: "😄" };
+const PROFILE_SAFE_COLUMNS = "id, role, display_name, family_id, cycle_length, period_length, last_period_start, share_mood, no_period_yet, birth_date, created_at";
+const PROFILE_CORE_COLUMNS = "id, role, display_name, family_id";
+
+const isProfileSchemaError = (error) =>
+  ["42703", "42P01", "42501", "PGRST204", "PGRST205"].includes(error?.code);
+
+const logSupabaseError = (label, error) => {
+  console.warn(label, {
+    code: error?.code ?? "unknown",
+    message: error?.message ?? String(error),
+    details: error?.details ?? "",
+    hint: error?.hint ?? "",
+  });
+};
 
 const AUTH_ERRORS = {
   "Invalid login credentials": "Имэйл эсвэл нууц үг буруу байна.",
@@ -40,6 +54,7 @@ export function FamilyProvider({ children }) {
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(supabaseConfigured);
   const [profile, setProfile] = useState(null);
+  const [guardianGender, setGuardianGender] = useState(null);
   const [family, setFamily] = useState(null); // { id, code }
   const [members, setMembers] = useState([]); // гэр бүлийн бүх профайл
   const [activeChildId, setActiveChildId] = useState(null);
@@ -123,6 +138,27 @@ export function FamilyProvider({ children }) {
 
   /* ================= Тооцоолсон утгууд ================= */
   const view = profile?.role ?? null; // "mother" | "daughter"
+  useEffect(() => {
+    if (view !== "mother" || !userId) {
+      setGuardianGender(null);
+      return;
+    }
+    let cancelled = false;
+    supabase.rpc("get_my_guardian_gender")
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) {
+          setToast("Хүйсийн мэдээлэл ачаалж чадсангүй. Дахин оролдоно уу.");
+          return;
+        }
+        setGuardianGender(data ?? "unspecified");
+      })
+      .catch(() => {
+        if (!cancelled) setToast("Хүйсийн мэдээлэл ачаалж чадсангүй. Дахин оролдоно уу.");
+      });
+    return () => { cancelled = true; };
+  }, [userId, view]);
+
   const guardianProfile = members.find((member) => member.role === "mother") ?? null;
   const guardianName = guardianProfile?.display_name || null;
   const childProfiles = members.filter((member) => member.role === "daughter");
@@ -244,7 +280,33 @@ export function FamilyProvider({ children }) {
     if (!userId) return null;
     // Trigger профайлыг үүсгэхэд хэдэн мс шаардагдаж магадгүй тул хэд дахин оролдоно
     for (let i = 0; i < 5; i++) {
-      const { data } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
+      let { data, error } = await supabase.from("profiles").select(PROFILE_SAFE_COLUMNS).eq("id", userId).maybeSingle();
+      if (error) {
+        logSupabaseError("Bloom profile read error:", error);
+        if (!["42703", "PGRST204"].includes(error.code)) {
+          setLoadError(isProfileSchemaError(error) ? "schema" : "network");
+          return null;
+        }
+
+        const coreResult = await supabase.from("profiles").select(PROFILE_CORE_COLUMNS).eq("id", userId).maybeSingle();
+        data = coreResult.data;
+        error = coreResult.error;
+        if (error) {
+          logSupabaseError("Bloom profile fallback read error:", error);
+          setLoadError(isProfileSchemaError(error) ? "schema" : "network");
+          return null;
+        }
+        data = {
+          ...data,
+          cycle_length: data?.cycle_length ?? 28,
+          period_length: data?.period_length ?? 5,
+          last_period_start: data?.last_period_start ?? null,
+          share_mood: data?.share_mood ?? true,
+          no_period_yet: data?.no_period_yet ?? false,
+          birth_date: data?.birth_date ?? null,
+          created_at: data?.created_at ?? null,
+        };
+      }
       if (data) {
         // Бүртгүүлэхдээ оруулсан төрсөн өдөр профайлд ороогүй бол нөхөж хадгална
         const metaBirth = metaRef.current.birth_date;
@@ -258,16 +320,22 @@ export function FamilyProvider({ children }) {
       // 2 удаа олдохгүй бол (schema-аас өмнө бүртгүүлсэн гэх мэт) өөрөө нөхөж үүсгэнэ
       if (i === 1) {
         const meta = metaRef.current;
-        await supabase.from("profiles").insert({
+        const { error: insertError } = await supabase.from("profiles").insert({
           id: userId,
           role: meta.role === "mother" ? "mother" : "daughter",
           display_name: meta.display_name ?? "",
           birth_date: meta.birth_date || null,
         });
+        if (insertError) {
+          logSupabaseError("Bloom profile recovery error:", insertError);
+          setLoadError(isProfileSchemaError(insertError) ? "schema" : "network");
+          return null;
+        }
         continue;
       }
       await new Promise((r) => setTimeout(r, 400));
     }
+    setLoadError("no_profile");
     return null;
   }, [userId]);
 
@@ -279,7 +347,7 @@ export function FamilyProvider({ children }) {
     }
     const [{ data: fam }, { data: mem }] = await Promise.all([
       supabase.from("families").select("id, code").eq("id", fid).maybeSingle(),
-      supabase.from("profiles").select("*").eq("family_id", fid).order("created_at"),
+      supabase.from("profiles").select(PROFILE_SAFE_COLUMNS).eq("family_id", fid).order("created_at"),
     ]);
     setFamily(fam ?? null);
     setMembers(mem ?? []);
@@ -339,10 +407,7 @@ export function FamilyProvider({ children }) {
 
   const loadAllInner = async () => {
     const p = await loadProfile();
-    if (!p) {
-      setLoadError("no_profile");
-      return;
-    }
+    if (!p) return;
     let fid = p?.family_id ?? null;
     // Асран хамгаалагч өөрийн кодтой гэр бүлийг үүсгэнэ. Охид асран хамгаалагчийн кодоор нэгдэнэ.
     if (p?.role === "mother" && !fid) {
@@ -505,11 +570,18 @@ export function FamilyProvider({ children }) {
   }, [view, tab, momUnread, momInbox]);
 
   /* ================= Нэвтрэлтийн үйлдлүүд ================= */
-  const signUp = async ({ role, name, birthDate, email, password }) => {
+  const signUp = async ({ role, guardianGender: selectedGuardianGender, name, birthDate, email, password }) => {
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      options: { data: { role, display_name: name.trim(), birth_date: birthDate || null } },
+      options: {
+        data: {
+          role,
+          guardian_gender: role === "mother" ? selectedGuardianGender ?? "unspecified" : "unspecified",
+          display_name: name.trim(),
+          birth_date: birthDate || null,
+        },
+      },
     });
     if (error) return authMessage(error);
     if (!data.session) return "Бүртгэл үүслээ! Имэйлээ шалгаж баталгаажуулаад нэвтэрнэ үү.";
@@ -518,7 +590,9 @@ export function FamilyProvider({ children }) {
 
   const signIn = async ({ email, password }) => {
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-    return error ? authMessage(error) : null;
+    if (error) return authMessage(error);
+    setTab("home");
+    return null;
   };
 
   const signOut = async () => {
@@ -951,6 +1025,23 @@ export function FamilyProvider({ children }) {
     return true;
   };
 
+  const updateGuardianGender = async (gender) => {
+    if (view !== "mother" || !["female", "male", "unspecified"].includes(gender)) return false;
+    try {
+      const { data, error } = await supabase.rpc("set_my_guardian_gender", { p_gender: gender });
+      if (error) {
+        setToast("Хүйсийн мэдээлэл хадгалж чадсангүй. Дахин оролдоно уу.");
+        return false;
+      }
+      setGuardianGender(data);
+      setToast("Хүйсийн мэдээлэл шинэчлэгдлээ.");
+      return true;
+    } catch {
+      setToast("Хүйсийн мэдээлэл хадгалж чадсангүй. Дахин оролдоно уу.");
+      return false;
+    }
+  };
+
   const updateEmail = async (email) => {
     const nextEmail = email.trim();
     if (!nextEmail || nextEmail === session?.user?.email) return true;
@@ -990,10 +1081,12 @@ export function FamilyProvider({ children }) {
     loadError,
     reload: () => loadAll(),
     profile,
+    guardianGender: view === "mother" ? guardianGender : null,
     signUp,
     signIn,
     signOut,
     updateName,
+    updateGuardianGender,
     updateEmail,
     birthDate,
     // гэр бүл
@@ -1049,7 +1142,6 @@ export function FamilyProvider({ children }) {
     daysUntil,
     saveCycle,
     startPeriod,
-    markChildPeriod,
     noPeriodYet,
     markNoPeriodYet,
     // сэтгэл санаа
