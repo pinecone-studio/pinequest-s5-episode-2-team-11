@@ -77,7 +77,7 @@ export function FamilyProvider({ children }) {
 
   /* ================= Дэлгэцийн төлөв ================= */
   const [tab, setTab] = useState("home");
-  const [learnTab, setLearnTab] = useState("pad");
+  const [learnTab, setLearnTab] = useState("topics");
   const [codeInput, setCodeInput] = useState("");
   const [codeError, setCodeError] = useState("");
   const [joining, setJoining] = useState(false);
