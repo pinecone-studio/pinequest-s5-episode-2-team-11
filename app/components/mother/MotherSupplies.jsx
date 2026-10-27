@@ -8,11 +8,11 @@ import PageHeader from "../ui/PageHeader";
 import SchoolBagChecklist from "../supplies/SchoolBagChecklist";
 
 export default function MotherSupplies() {
-  const { supplies, updateSupply, restock } = useFamily();
+  const { supplies, updateSupply, restock, daughterName } = useFamily();
 
   return (
     <div className="space-y-4">
-      <PageHeader sub="Охиныхоо хэрэгслийг хянаарай" title="Хэрэгслийн үлдэгдэл 📦" />
+      <PageHeader sub={`${daughterName} · хэрэгслийг хянаарай`} title="Хэрэгслийн үлдэгдэл 📦" />
 
       {/* Хэрэгслийн үлдэгдэл */}
       <Card>

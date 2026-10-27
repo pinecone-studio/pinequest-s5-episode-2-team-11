@@ -39,6 +39,10 @@ export default function AppShell() {
     session,
     view,
     linked,
+    daughters,
+    selectedDaughterId,
+    selectDaughter,
+    daughterName,
     tab,
     setTab,
     sosOpen,
@@ -103,6 +107,29 @@ export default function AppShell() {
             else window.dispatchEvent(new Event("bloomy-auth-back"));
           }}
         />
+        {showNav && view === "mother" && tab !== "me" && daughters.length > 0 && (
+          <div className="px-4 pt-2">
+            <label className="flex items-center gap-2 rounded-2xl border border-pink-100 bg-white px-3 py-2 shadow-sm">
+              <span className="shrink-0 text-xs font-extrabold text-slate-400">
+                {daughters.length > 1 ? "Хянаж буй охин" : "Охин"}
+              </span>
+              {daughters.length > 1 ? (
+                <select
+                  value={selectedDaughterId}
+                  onChange={(event) => selectDaughter(event.target.value)}
+                  aria-label="Хянах охиноо сонгох"
+                  className="min-w-0 flex-1 bg-transparent text-sm font-extrabold text-slate-700 outline-none"
+                >
+                  {daughters.map((daughter) => (
+                    <option key={daughter.id} value={daughter.id}>{daughter.display_name || "Охин"}</option>
+                  ))}
+                </select>
+              ) : (
+                <span className="min-w-0 flex-1 truncate text-sm font-extrabold text-slate-700">{daughterName}</span>
+              )}
+            </label>
+          </div>
+        )}
         <main className={`px-4 pt-4 ${showNav ? "pb-28" : "pb-10"}`}>
           <CurrentScreen family={family} pathname={pathname} />
         </main>
