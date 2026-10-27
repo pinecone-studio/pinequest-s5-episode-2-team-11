@@ -1,341 +1,285 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, CalendarDays, ChevronLeft, ChevronRight, Clock3, LoaderCircle, Pencil, Plus, Sparkles, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { CalendarDays, ChevronLeft, ChevronRight, Check, Clock3, Settings2, X } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
-import { askAi } from "../../../lib/ai-client";
+import { useTheme } from "../../../context/ThemeContext";
+import { localDateKey, periodDayKeys, predictPeriodRange, dateLabelMongolian } from "../../../lib/cycle";
 import { supabase } from "../../../lib/supabase";
-import { dateLabelMongolian, getCyclePatternInsight, localDateKey, periodDayKeys, predictPeriodRange } from "../../../lib/cycle";
-import Card from "../ui/Card";
 import BottomSheet from "../ui/BottomSheet";
 import DayLogSheet from "./DayLogSheet";
 
 const WEEKDAYS = ["Да", "Мя", "Лх", "Пү", "Ба", "Бя", "Ня"];
-const FLOW_MN = { light: "Бага", medium: "Дунд", heavy: "Их" };
-const EMOTION_VALUE = { 5: "Happy", 4: "Calm", 3: "Calm", 2: "Anxious", 1: "Sad" };
-const SYMPTOM_VALUE = {
-  cramps: "Cramps", tired: "Fatigue", acne: "Spots", bloating: "Bloating",
-  breast_tenderness: "Tenderness", headache: "Headache",
-};
+const DAY_MS = 86_400_000;
 
-function readLegacyLogs() {
-  const prefix = "bloom:tracker-log:";
-  const logs = new Map();
-  Object.keys(localStorage).filter((key) => key.startsWith(prefix)).forEach((key) => {
-    const date = key.slice(prefix.length);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date > localDateKey(new Date())) return;
-    try {
-      const raw = JSON.parse(localStorage.getItem(key));
-      logs.set(date, raw?.AM || raw?.PM ? { ...raw.AM, ...raw.PM } : raw ?? {});
-    } catch { /* хуучин бүртгэлийг алгасна */ }
-  });
-  const prefixes = ["bloom:private-note:", "bloom:checkin:"];
-  prefixes.forEach((itemPrefix) => Object.keys(localStorage).filter((key) => key.startsWith(itemPrefix)).forEach((key) => {
-    const date = key.slice(itemPrefix.length);
-    if (/^\d{4}-\d{2}-\d{2}$/.test(date) && date <= localDateKey(new Date()) && !logs.has(date)) logs.set(date, {});
-  }));
-  return [...logs.entries()];
+function monthKey(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
-export default function PeriodCycleTracker({ onBack, cycleLength: _cycleLength, periodLength, lastPeriodStart: _lastPeriodStart }) {
-  const { profile, session, linked, nameGen, sendToMom, setToast, periodStarts, periodLogs, noPeriodYet, savePeriodStartDates } = useFamily();
+function monthDates(date) {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const days = new Date(year, month + 1, 0).getDate();
+  const mondayOffset = (new Date(year, month, 1).getDay() + 6) % 7;
+  return [...Array(mondayOffset).fill(null), ...Array.from({ length: days }, (_, index) => new Date(year, month, index + 1))];
+}
+
+function shiftDateKey(key, amount) {
+  const date = new Date(`${key}T00:00:00`);
+  date.setDate(date.getDate() + amount);
+  return localDateKey(date);
+}
+
+function startsFromDays(days) {
+  return [...days].filter((key) => !days.has(shiftDateKey(key, -1))).sort();
+}
+
+function periodDayNumber(dateKey, starts) {
+  const start = [...starts].filter((item) => item <= dateKey).sort().at(-1);
+  return start ? Math.round((new Date(`${dateKey}T00:00:00`) - new Date(`${start}T00:00:00`)) / DAY_MS) + 1 : null;
+}
+
+function dateLabelWithMonth(date) {
+  return dateLabelMongolian(date);
+}
+
+export default function PeriodCycleTracker({ onBack, onDayPress, cycleLength: cycleLengthProp, periodLength: periodLengthProp }) {
+  const {
+    profile, session, periodStarts, periodLogs, noPeriodYet, savePeriodStartDates,
+    saveCycle, startPeriod, setToast,
+  } = useFamily();
+  const { theme } = useTheme();
   const today = localDateKey(new Date());
-  const [month, setMonth] = useState(() => { const now = new Date(); return new Date(now.getFullYear(), now.getMonth(), 1); });
+  const currentMonth = useMemo(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1), []);
+  const [anchorMonth, setAnchorMonth] = useState(currentMonth);
+  const [viewMode, setViewMode] = useState("month");
+  const [selectedYear, setSelectedYear] = useState(currentMonth.getFullYear());
+  const [selectedDate, setSelectedDate] = useState("");
   const [logs, setLogs] = useState({});
-  const [loadingLogs, setLoadingLogs] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [editingStarts, setEditingStarts] = useState(false);
-  const [draftStarts, setDraftStarts] = useState([]);
-  const [startPickerOpen, setStartPickerOpen] = useState(false);
-  const [startDate, setStartDate] = useState(today);
-  const [savingStarts, setSavingStarts] = useState(false);
-  const [summary, setSummary] = useState(null);
-  const [summaryError, setSummaryError] = useState("");
-  const [summaryLoading, setSummaryLoading] = useState(false);
-  const [insightLogs, setInsightLogs] = useState([]);
-  const [previewSeed, setPreviewSeed] = useState(null);
-  const touchStartX = useRef(null);
+  const [editing, setEditing] = useState(false);
+  const [draftDays, setDraftDays] = useState(new Set());
+  const [saving, setSaving] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [cycleDraft, setCycleDraft] = useState(cycleLengthProp ?? 28);
+  const [periodDraft, setPeriodDraft] = useState(periodLengthProp ?? 5);
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [selectedPending, setSelectedPending] = useState(null);
+  const mainRef = useRef(null);
+  const monthRefs = useRef({});
+
+  const months = useMemo(() => Array.from({ length: 16 }, (_, index) => {
+    const date = new Date(anchorMonth.getFullYear(), anchorMonth.getMonth() + index - 12, 1);
+    return { date, key: monthKey(date), dates: monthDates(date) };
+  }), [anchorMonth]);
+  const rangeStart = localDateKey(months[0].date);
+  const rangeEnd = localDateKey(new Date(months.at(-1).date.getFullYear(), months.at(-1).date.getMonth() + 1, 0));
+  const activeStarts = editing ? startsFromDays(draftDays) : periodStarts;
+  const hasPeriod = !noPeriodYet && activeStarts.length > 0;
+  const periodLength = Number(periodDraft || periodLengthProp || 5);
+  const prediction = predictPeriodRange({ starts: hasPeriod ? activeStarts : [], today, hasHadPeriod: hasPeriod });
+  const actualPeriodDays = useMemo(() => periodDayKeys(hasPeriod ? activeStarts : [], periodLength, today), [hasPeriod, activeStarts, periodLength, today]);
+  const predictedPeriodDays = useMemo(() => {
+    const days = new Set();
+    if (!hasPeriod || !prediction.rangeStart || !prediction.rangeEnd) return days;
+    for (let key = prediction.rangeStart; key <= prediction.rangeEnd; key = shiftDateKey(key, 1)) days.add(key);
+    return days;
+  }, [hasPeriod, prediction.rangeStart, prediction.rangeEnd]);
+  const pendingByDate = useMemo(() => Object.fromEntries((periodLogs ?? []).filter((item) => item.status === "pending").map((item) => [item.log_date, item])), [periodLogs]);
 
   useEffect(() => {
-    let cancelled = false;
-    if (!supabase || !profile?.id) return () => { cancelled = true; };
-    const fromDate = new Date();
-    fromDate.setDate(fromDate.getDate() - 365);
-    supabase.rpc("get_my_day_logs", { p_from: localDateKey(fromDate), p_to: today }).then(({ data, error }) => {
-      if (cancelled) return;
-      if (error) console.warn("[cycle-pattern]", error.message);
-      setInsightLogs((data ?? []).map((row) => ({ log_date: row.log_date, mood: row.mood, pain: row.pain })));
-    });
-    return () => { cancelled = true; };
-  }, [profile?.id, today]);
-
-  const monthOffset = (month.getDay() + 6) % 7;
-  const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
-  const calendarDays = useMemo(() => Array.from(
-    { length: Math.ceil((monthOffset + daysInMonth) / 7) * 7 },
-    (_, index) => new Date(month.getFullYear(), month.getMonth(), index - monthOffset + 1),
-  ), [month, monthOffset, daysInMonth]);
-  const visibleStarts = editingStarts ? draftStarts : periodStarts;
-  const usableStarts = noPeriodYet ? [] : visibleStarts;
-  const prediction = predictPeriodRange({ starts: usableStarts, today, hasHadPeriod: usableStarts.length > 0 });
-  const periodDays = periodDayKeys(usableStarts, periodLength, today);
-  const insight = useMemo(() => getCyclePatternInsight(previewSeed?.periods ?? periodStarts, previewSeed?.logs ?? insightLogs, today), [previewSeed, periodStarts, insightLogs, today]);
-  const pendingPeriods = useMemo(() => Object.fromEntries((periodLogs ?? []).filter((row) => row.status === "pending").map((row) => [row.log_date, row])), [periodLogs]);
-  const rangeDates = useMemo(() => {
-    const keys = new Set();
-    if (!prediction.rangeStart || !prediction.rangeEnd) return keys;
-    for (let date = new Date(`${prediction.rangeStart}T00:00:00`); localDateKey(date) <= prediction.rangeEnd; date.setDate(date.getDate() + 1)) keys.add(localDateKey(date));
-    return keys;
-  }, [prediction.rangeStart, prediction.rangeEnd]);
-  const firstCalendarDate = localDateKey(calendarDays[0]);
-  const lastCalendarDate = localDateKey(calendarDays.at(-1));
+    const target = monthRefs.current[monthKey(currentMonth)];
+    if (viewMode === "month" && target) requestAnimationFrame(() => target.scrollIntoView({ block: "start", behavior: "instant" }));
+  }, [viewMode, anchorMonth, currentMonth]);
 
   useEffect(() => {
+    if (!supabase || !profile?.id) return;
     let cancelled = false;
-    if (!supabase || !profile?.id) return () => { cancelled = true; };
-    setLoadingLogs(true);
-    supabase.rpc("get_my_day_logs", { p_from: firstCalendarDate, p_to: lastCalendarDate }).then(({ data, error }) => {
+    supabase.rpc("get_my_day_logs", { p_from: rangeStart, p_to: rangeEnd }).then(({ data, error }) => {
       if (cancelled) return;
-      if (error) console.warn("[day_logs] daughter's calendar:", error.message);
+      if (error) console.warn("[day_logs] calendar markers:", error.message);
       setLogs(Object.fromEntries((data ?? []).map((row) => [row.log_date, row])));
-      setLoadingLogs(false);
     });
     return () => { cancelled = true; };
-  }, [profile?.id, firstCalendarDate, lastCalendarDate]);
+  }, [profile?.id, rangeStart, rangeEnd]);
 
-  // Хуучин төхөөрөмжийн тэмдэглэлүүдийг шинэ хувийн RPC-р нэг удаа нүүлгэнэ.
   useEffect(() => {
-    if (!profile?.id || !supabase || localStorage.getItem("bloom:day-log-migrated:v1")) return;
-    let cancelled = false;
-    const migrate = async () => {
-      const legacy = readLegacyLogs();
-      let failed = false;
-      for (const [date, row] of legacy) {
-        if (cancelled) return;
-        let oldNote = "";
-        let checkin = null;
-        try {
-          oldNote = localStorage.getItem(`bloom:private-note:${date}`) ?? "";
-          checkin = JSON.parse(localStorage.getItem(`bloom:checkin:${date}`) ?? "null");
-        } catch { /* хуучин тэмдэглэлийг алгасна */ }
-        const symptoms = row.symptoms && SYMPTOM_VALUE[row.symptoms]
-          ? [Object.entries(SYMPTOM_VALUE).find(([, value]) => value === row.symptoms)?.[0]].filter(Boolean)
-          : checkin?.pain > 1 ? ["cramps"] : [];
-        const flow = ({ Light: "light", Medium: "medium", Heavy: "heavy", Spotting: "light" })[row.period] ?? null;
-        const { error } = await supabase.rpc("save_my_day_log", {
-          p_log_date: date,
-          p_mood: EMOTION_VALUE[row.emotion] ? Number(Object.keys(EMOTION_VALUE).find((value) => EMOTION_VALUE[value] === row.emotion)) : checkin?.mood ?? null,
-          p_symptoms: symptoms,
-          p_flow: flow,
-          p_note: oldNote.slice(0, 500) || null,
-          p_share_mood: false,
-        });
-        if (error) failed = true;
-      }
-      if (!cancelled && !failed) localStorage.setItem("bloom:day-log-migrated:v1", "true");
+    const scrollMain = mainRef.current;
+    if (!scrollMain) return;
+    const updateYear = () => {
+      const items = Object.entries(monthRefs.current).map(([key, element]) => ({ key, element })).filter(({ element }) => element);
+      const visible = items.find(({ element }) => element.getBoundingClientRect().bottom > 116);
+      if (visible) setSelectedYear(Number(visible.key.slice(0, 4)));
     };
-    migrate();
-    return () => { cancelled = true; };
-  }, [profile?.id]);
+    scrollMain.addEventListener("scroll", updateYear, { passive: true });
+    return () => scrollMain.removeEventListener("scroll", updateYear);
+  }, [viewMode, months]);
 
-  const openDay = (date) => setSelectedDate(localDateKey(date));
-  const periodDayNumberFor = (key) => {
-    if (!periodDays.has(key)) return 1;
-    const start = usableStarts.filter((value) => value <= key).at(-1);
-    return start ? Math.floor((new Date(`${key}T00:00:00`).getTime() - new Date(`${start}T00:00:00`).getTime()) / 86400000) + 1 : 1;
+  const openMonth = useCallback((date) => {
+    const first = new Date(date.getFullYear(), date.getMonth(), 1);
+    setAnchorMonth(first);
+    setSelectedYear(first.getFullYear());
+    setViewMode("month");
+    requestAnimationFrame(() => requestAnimationFrame(() => monthRefs.current[monthKey(first)]?.scrollIntoView({ block: "start", behavior: "instant" })));
+  }, []);
+
+  const beginEdit = () => {
+    setDraftDays(new Set(actualPeriodDays));
+    setEditing(true);
   };
-  const togglePeriodStart = (date) => {
+
+  const togglePeriodDay = (date) => {
     const key = localDateKey(date);
     if (key > today) return;
-    setDraftStarts((current) => [...new Set(current.includes(key) ? current.filter((value) => value !== key) : [...current, key])].sort());
-  };
-
-  const savePeriodDates = async (dates) => {
-    setSavingStarts(true);
-    const ok = await savePeriodStartDates(dates, periodLength);
-    setSavingStarts(false);
-    if (ok) {
-      setEditingStarts(false);
-      setStartPickerOpen(false);
-      setToast("Хадгаллаа");
-    }
-    return ok;
-  };
-
-  const addPeriodStart = async () => {
-    const starts = [...new Set([...periodStarts, startDate])].sort();
-    const ok = await savePeriodDates(starts);
-    if (ok && startDate === today && linked) await sendToMom(`${nameGen} сарын тэмдэг өнөөдөр ирлээ. Бага зэрэг илүү халамж хэрэгтэй 💗`, "period");
-  };
-
-  const saveDailyLog = (row) => setLogs((current) => ({ ...current, [row.log_date]: row }));
-
-  const makePreviewSeed = () => {
-    const starts = [-112, -84, -56, -28].map((offset) => {
-      const date = new Date(); date.setDate(date.getDate() + offset); return localDateKey(date);
+    setDraftDays((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else {
+        for (let offset = 0; offset < periodLength; offset += 1) {
+          const fill = shiftDateKey(key, offset);
+          if (fill <= today) next.add(fill);
+        }
+      }
+      return next;
     });
-    const rows = [];
-    starts.slice(0, -1).forEach((start, cycleIndex) => {
-      [2, 8, 16, 24].forEach((cycleDay) => {
-        const date = new Date(`${start}T00:00:00`); date.setDate(date.getDate() + cycleDay - 1);
-        rows.push({ log_date: localDateKey(date), mood: cycleDay === 24 ? 2 + (cycleIndex % 2) : cycleDay < 6 ? 3 : 4 + (cycleIndex % 2), pain: cycleDay <= 5 ? (cycleDay === 1 ? 2 : 1) : null });
-      });
-    });
-    setPreviewSeed({ periods: starts, logs: rows });
   };
 
-  const generateSummary = async () => {
-    if (!supabase || !profile?.id) return;
-    setSummaryLoading(true);
-    setSummaryError("");
-    const fromDate = new Date();
-    fromDate.setDate(fromDate.getDate() - 180);
-    const from = localDateKey(fromDate);
-    const { data, error } = await supabase.rpc("get_my_day_logs", { p_from: from, p_to: today });
-    if (error) {
-      setSummaryError("Тэмдэглэл ачаалж чадсангүй. Supabase шинэчлэлээ шалгана уу.");
-      setSummaryLoading(false);
+  const saveEditedDays = async () => {
+    const starts = startsFromDays(draftDays);
+    if (!starts.length) {
+      setToast("Ядаж нэг сарын тэмдгийн өдрийг сонгоно уу.");
       return;
     }
-    const aiLogs = (data ?? []).map((row) => {
-      const values = {};
-      if (row.mood) values.emotion = EMOTION_VALUE[row.mood] ?? "Calm";
-      const symptom = row.symptoms?.[0];
-      if (symptom) values.symptoms = SYMPTOM_VALUE[symptom];
-      if (row.flow) values.period = ({ light: "Light", medium: "Medium", heavy: "Heavy" })[row.flow];
-      return { date: row.log_date, AM: values, PM: {} };
-    }).filter((row) => Object.keys(row.AM).length);
-    const response = await askAi(session, {
-      type: "cycle_summary", cycleLength: _cycleLength || 28, periodLength,
-      lastPeriodStart: periodStarts.at(-1) ?? _lastPeriodStart,
-      logs: aiLogs,
-    }, 30000, { detailed: true });
-    if (response?.summary) setSummary(response);
-    else setSummaryError("Дүгнэлт гаргаж чадсангүй. Дараа дахин оролдоорой.");
-    setSummaryLoading(false);
+    setSaving(true);
+    const ok = await savePeriodStartDates(starts, periodLength);
+    setSaving(false);
+    if (ok) {
+      setEditing(false);
+      setToast("Хадгаллаа");
+    }
   };
 
-  const changeMonthBy = (amount) => setMonth((current) => new Date(current.getFullYear(), current.getMonth() + amount, 1));
-  const handleTouchStart = (event) => { touchStartX.current = event.touches[0]?.clientX ?? null; };
-  const handleTouchEnd = (event) => {
-    const endX = event.changedTouches[0]?.clientX;
-    if (touchStartX.current == null || endX == null) return;
-    const delta = endX - touchStartX.current;
-    if (Math.abs(delta) > 60) changeMonthBy(delta < 0 ? 1 : -1);
-    touchStartX.current = null;
+  const saveCycleSettings = async () => {
+    const cycle = Math.min(60, Math.max(15, Number(cycleDraft) || 28));
+    const period = Math.min(7, Math.max(2, Number(periodDraft) || 5));
+    setSettingsSaving(true);
+    const ok = await saveCycle({ lastPeriodStart: periodStarts.at(-1) ?? null, cycleLength: cycle, periodLength: period });
+    setSettingsSaving(false);
+    if (ok) {
+      setPeriodDraft(period);
+      setSettingsOpen(false);
+      setToast("Мөчлөгийн тохиргоог хадгаллаа");
+    }
   };
 
-  const monthName = `${month.getFullYear()} оны ${month.getMonth() + 1} сар`;
-  return (
-    <main className="fixed inset-0 z-[70] overflow-y-auto overscroll-contain bb-bg-FFF7FB px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-[max(14px,env(safe-area-inset-top))] text-slate-700">
-      <div className="mx-auto max-w-md space-y-3">
-        <header className="flex items-center gap-3">
-          <button type="button" onClick={onBack} aria-label="Буцах" className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm"><ArrowLeft className="h-5 w-5" /></button>
-          <h1 className="text-lg font-black">Миний мөчлөг</h1>
-        </header>
+  const handleDayPress = (date) => {
+    const key = localDateKey(date);
+    onDayPress?.(new Date(`${key}T00:00:00`));
+    setSelectedDate(key);
+    setSelectedPending(pendingByDate[key] ?? null);
+  };
 
-        {prediction.overNinetyDays && <Card className="!p-3"><p className="text-sm font-bold leading-relaxed text-amber-800">3 сараас удаан ирээгүй байна. Асран хамгаалагчтайгаа ярьж, эмчид үзүүлэхийг зөвлөж байна.</p></Card>}
-        {prediction.late && <Card className="!p-3"><p className="text-center text-sm font-extrabold bb-text-B83B7E">Хоцорч байна. Эхний жилүүдэд ингэх нь хэвийн 💗</p></Card>}
+  const renderDay = (date, miniature = false) => {
+    if (!date) return null;
+    const key = localDateKey(date);
+    const isToday = key === today;
+    const isLogged = actualPeriodDays.has(key);
+    const isSelected = draftDays.has(key);
+    const isPredicted = !editing && predictedPeriodDays.has(key) && !isLogged;
+    const isLatePrediction = isPredicted && prediction.late;
+    const cycleNumber = hasPeriod ? periodDayNumber(key, activeStarts) : null;
+    const periodNumber = isLogged ? periodDayNumber(key, periodStarts) : null;
+    const hasLog = Boolean(logs[key] && (logs[key].mood || logs[key].pain != null || logs[key].symptoms?.length || logs[key].flow));
+    const isPending = Boolean(pendingByDate[key]);
+    if (miniature) return <span key={key} className={`mx-auto flex h-5 w-5 items-center justify-center rounded-full text-[8px] font-bold ${isLogged ? "bg-[#e0679f] text-white" : isPredicted ? "bg-pink-100 text-[#d95791]" : isLatePrediction ? "bg-slate-100 text-slate-400" : "text-slate-500 dark:text-slate-300"}`}>{date.getDate()}</span>;
+    const dateClass = editing
+      ? isSelected ? "bg-[#e0679f] text-white" : "border border-slate-300 bg-transparent text-slate-500"
+      : isLogged ? "bg-[#e0679f] text-white"
+        : isLatePrediction ? "bg-slate-100 text-slate-400"
+          : isPredicted ? "bg-pink-100 text-[#d95791]"
+            : "text-slate-700 dark:text-slate-200";
 
-        <Card className="!p-3">
-          <div className="mb-1 flex items-center justify-between">
-            <button type="button" onClick={() => changeMonthBy(-1)} aria-label="Өмнөх сар" className="rounded-xl p-2 text-slate-500"><ChevronLeft className="h-5 w-5" /></button>
-            <p className="text-sm font-extrabold text-slate-700">{monthName}</p>
-            <button type="button" onClick={() => changeMonthBy(1)} aria-label="Дараагийн сар" className="rounded-xl p-2 text-slate-500"><ChevronRight className="h-5 w-5" /></button>
-          </div>
-          <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} className="select-none">
-            <div className="grid grid-cols-7 text-center text-xs font-extrabold text-slate-400">{WEEKDAYS.map((weekday) => <span key={weekday} className="py-1.5">{weekday}</span>)}</div>
-            <div className="grid grid-cols-7 gap-y-1">
-              {calendarDays.map((date) => {
-                const key = localDateKey(date);
-                const inMonth = date.getMonth() === month.getMonth();
-                const actualPeriod = periodDays.has(key);
-                const pendingPeriod = pendingPeriods[key];
-                const predicted = rangeDates.has(key) && key > today;
-                const lateDay = prediction.late && rangeDates.has(key) && key <= today && !actualPeriod;
-                const log = logs[key];
-                const selected = selectedDate === key;
-                let style = "text-slate-700 hover:bb-bg-FDE7F1";
-                if (actualPeriod) style = "bb-bg-E0679F font-extrabold text-white";
-                else if (pendingPeriod) style = "border-2 border-dashed border-amber-400 text-amber-600";
-                else if (lateDay) style = "border-2 border-dashed border-slate-400 text-slate-500";
-                else if (predicted) style = "border-2 border-dashed bb-border-F48FB1 bb-text-B83B7E";
-                if (editingStarts && visibleStarts.includes(key)) style = "bb-bg-E0679F font-extrabold text-white ring-2 ring-pink-300";
-                return (
-                  <button key={key} type="button" onClick={() => editingStarts ? togglePeriodStart(date) : openDay(date)} disabled={editingStarts && key > today}
-                    aria-label={`${dateLabelMongolian(date)}${actualPeriod ? ", сарын тэмдэг" : predicted ? ", таамаг" : ""}${log ? ", тэмдэглэлтэй" : ""}`}
-                    className={`relative mx-auto flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition active:scale-90 ${style} ${!inMonth ? "opacity-40" : ""} ${key === today ? "outline outline-2 outline-offset-1 outline-pink-400" : ""} ${selected ? "ring-2 ring-purple-400" : ""} ${editingStarts && key > today ? "cursor-not-allowed opacity-30" : ""}`}>
-                    {date.getDate()}
-                    {pendingPeriod && <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-white text-amber-500"><Clock3 className="h-3 w-3" /></span>}
-                    {log && <span className={`absolute -bottom-0.5 h-1.5 w-1.5 rounded-full ${actualPeriod ? "bg-white" : "bb-bg-B794F4"}`} />}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[10px] font-semibold text-slate-500">
-            <span><b className="bb-text-B83B7E">●</b> Болсон</span><span><b className="bb-text-B83B7E">◌</b> Таамаг</span><span><b className="bb-text-7C4DCC">•</b> Тэмдэглэлтэй</span>
-            {Object.keys(pendingPeriods).length > 0 && <span><Clock3 className="mr-0.5 inline h-3 w-3 text-amber-500" /> Батлах</span>}
-          </div>
-          {loadingLogs && <p className="mt-2 text-center text-xs font-semibold text-slate-400">Өдрийн бүртгэл ачаалж байна…</p>}
-          {!periodStarts.length && <p className="mt-2 text-center text-xs font-semibold text-slate-400">Сарын тэмдэг хараахан ирээгүй бол зөвхөн өдрийн тэмдэглэл хөтөлж болно.</p>}
-        </Card>
+    return <button
+      key={key}
+      type="button"
+      disabled={editing && key > today}
+      onClick={() => editing ? togglePeriodDay(date) : handleDayPress(date)}
+      aria-label={`${dateLabelWithMonth(date)}${isLogged ? `, сарын тэмдгийн ${periodNumber} дахь өдөр` : isPredicted ? ", таамагласан өдөр" : ""}${isToday ? ", өнөөдөр" : ""}${hasLog ? ", тэмдэглэлтэй" : ""}${isPending ? ", баталгаажуулах хүсэлттэй" : ""}`}
+      className={`relative mx-auto flex h-[54px] w-full max-w-[48px] flex-col items-center justify-start pt-1 ${editing && key > today ? "cursor-not-allowed opacity-25" : ""}`}
+    >
+      {!miniature && hasPeriod && (isLogged || isToday) && !editing && <span className={`absolute left-0 top-0 z-10 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-extrabold ${isLogged ? "bg-[#b83b7e] text-white" : "bg-slate-500 text-white"}`}>{isLogged ? periodNumber : cycleNumber}</span>}
+      {!miniature && editing && isSelected && <span className="absolute left-0 top-0 z-10 flex h-4 w-4 items-center justify-center rounded-full bg-[#b83b7e] text-white"><Check className="h-3 w-3" /></span>}
+      {!miniature && hasPeriod && !editing && !isLogged && !isToday && cycleNumber && <span className="absolute left-0 top-0 text-[9px] font-semibold text-slate-400 dark:text-slate-500">{cycleNumber}</span>}
+      <span className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold ${dateClass} ${isToday && !editing ? "outline outline-2 outline-dotted outline-[#d95791] outline-offset-1" : ""}`}>
+        {date.getDate()}
+        {!miniature && isPending && !isLogged && <Clock3 className="absolute -right-1 -top-1 h-3.5 w-3.5 rounded-full bg-white p-0.5 text-amber-500" />}
+      </span>
+      {!miniature && isToday && <span className="mt-0.5 text-[7px] font-black tracking-wide text-[#b83b7e]">ӨНӨӨДӨР</span>}
+      {!miniature && hasLog && <span className={`absolute bottom-0 h-1 w-1 rounded-full ${isLogged ? "bg-white" : "bg-[#b794f4]"}`} />}
+    </button>;
+  };
 
-        <Card className="!p-3">
-          {editingStarts ? (
-            <div className="space-y-2">
-              <p className="text-xs font-semibold leading-relaxed text-slate-500">Календарь дээр эхэлсэн өдрүүдийг дарж сонгоно. Таамагт тасархай дугуйг ашиглана.</p>
-              <div className="grid grid-cols-2 gap-2">
-                <button type="button" onClick={() => setEditingStarts(false)} disabled={savingStarts} className="rounded-2xl bg-slate-100 py-3 text-sm font-extrabold text-slate-600">Болих</button>
-                <button type="button" onClick={() => savePeriodDates(draftStarts)} disabled={savingStarts || !draftStarts.length} className="rounded-2xl bb-bg-E0679F py-3 text-sm font-extrabold text-white disabled:opacity-50">{savingStarts ? "Хадгалж байна…" : "Хадгалах"}</button>
-              </div>
-            </div>
-          ) : startPickerOpen ? (
-            <div className="space-y-2">
-              <label htmlFor="period-start-date" className="block text-sm font-extrabold text-slate-700">Эхэлсэн өдрөө сонгоорой</label>
-              <input id="period-start-date" type="date" value={startDate} max={today} onChange={(event) => setStartDate(event.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm font-bold text-slate-700" />
-              <div className="grid grid-cols-2 gap-2">
-                <button type="button" onClick={() => setStartPickerOpen(false)} className="rounded-2xl bg-slate-100 py-3 text-sm font-extrabold text-slate-600">Болих</button>
-                <button type="button" onClick={addPeriodStart} disabled={savingStarts || !startDate || startDate > today} className="rounded-2xl bb-bg-E0679F py-3 text-sm font-extrabold text-white disabled:opacity-50">{savingStarts ? "Хадгалж байна…" : "Хадгалах"}</button>
-              </div>
-              <p className="text-center text-xs font-semibold text-slate-400">Үргэлжлэх хугацаа: {periodLength} хоног</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-2">
-              <button type="button" onClick={() => { setStartDate(today); setStartPickerOpen(true); }} className="flex items-center justify-center gap-1.5 rounded-2xl bb-bg-FDE7F1 py-3 text-xs font-extrabold bb-text-B83B7E"><Plus className="h-4 w-4" /> Сарын тэмдэг эхэлсэн</button>
-              <button type="button" onClick={() => { setDraftStarts(periodStarts); setEditingStarts(true); }} className="flex items-center justify-center gap-1.5 rounded-2xl bg-slate-100 py-3 text-xs font-extrabold text-slate-600"><Pencil className="h-4 w-4" /> Өдрүүдийг засах</button>
-            </div>
-          )}
-        </Card>
+  const renderMiniMonth = (date) => {
+    const dates = monthDates(date);
+    return <button key={monthKey(date)} type="button" onClick={() => openMonth(date)} className="rounded-2xl p-2 text-left transition hover:bg-pink-50 dark:hover:bg-[#392d3e]">
+      <span className="mb-1 block text-center text-xs font-black text-slate-700 dark:text-slate-100">{date.getMonth() + 1} сар</span>
+      <span className="grid grid-cols-7 gap-y-0.5">{dates.map((day, index) => day ? renderDay(day, true) : <span key={`mini-empty-${monthKey(date)}-${index}`} aria-hidden="true" className="h-7" />)}</span>
+    </button>;
+  };
 
-        <Card className="!p-3">
-          <div className="mb-2 flex items-start justify-between gap-2">
-            <div><h2 className="text-sm font-extrabold text-slate-700">Миний бүртгэлийн хэв маяг</h2><p className="mt-1 text-[10px] font-semibold text-slate-400">Өөрийн тэмдэглэлээс тооцсон · онош биш</p></div>
-            {process.env.NODE_ENV === "development" && <button type="button" onClick={() => previewSeed ? setPreviewSeed(null) : makePreviewSeed()} className="shrink-0 rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-500">{previewSeed ? "Жишээг хаах" : "Жишээ харах"}</button>}
-          </div>
-          {insight.enoughData ? <div className="space-y-3">
-            <p className="text-xs font-semibold text-slate-500">Сүүлийн {insight.completedCycles} дууссан мөчлөг · {insight.loggedDays} сэтгэл санааны тэмдэглэл</p>
-            <div className="space-y-2">{insight.moodByPhase.map((item) => <div key={item.key}>
-              <div className="mb-1 flex items-center justify-between gap-2 text-[11px] font-bold text-slate-600"><span>{item.label}</span><span>{item.average.toFixed(1)}/5 · {item.count} өдөр</span></div>
-              <div className="h-2 overflow-hidden rounded-full bg-slate-100" role="img" aria-label={`${item.label}: дундаж ${item.average.toFixed(1)} оноо`}><div className="h-full rounded-full bb-bg-B794F4" style={{ width: `${Math.max(4, item.average / 5 * 100)}%` }} /></div>
-            </div>)}</div>
-            {insight.painByPeriodDay.length > 0 && <p className="rounded-xl bb-bg-FDE7F1-50 px-3 py-2 text-[11px] font-semibold leading-5 text-slate-600">Өвдөлтийн тэмдэглэл: {insight.painByPeriodDay.map((item) => `${item.day}-р өдөр ${item.average.toFixed(1)}/3 (${item.count})`).join(" · ")}</p>}
-            <p className="text-[10px] font-semibold text-slate-400">Энэ нь зөвхөн бүртгэлийн дундаж бөгөөд ирээдүйн мэдрэмжийг хэлэхгүй.</p>
-          </div> : <p className="text-xs font-semibold leading-5 text-slate-500">Хэв маяг харуулахад дор хаяж 2 дууссан мөчлөг, 10 өдрийн сэтгэл санааны тэмдэглэл хэрэгтэй. Одоогоор {insight.completedCycles} мөчлөг, {insight.loggedDays} тэмдэглэл байна.</p>}
-        </Card>
+  const monthTitle = (date) => `${date.getFullYear() !== currentMonth.getFullYear() ? `${date.getFullYear()} оны ` : ""}${date.getMonth() + 1} сар`;
 
-        <Card className="!p-3">
-          <button type="button" onClick={generateSummary} disabled={summaryLoading} className="flex w-full items-center justify-center gap-2 rounded-2xl bb-bg-E9DDFC py-3 text-sm font-extrabold bb-text-7C4DCC disabled:opacity-60">
-            {summaryLoading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            {summaryLoading ? "Дүгнэж байна…" : "Мөчлөгийн тэмдэглэлээ дүгнүүлэх"}
-          </button>
-          <p className="mt-2 text-center text-[11px] font-semibold text-slate-400">Хувийн бичвэр хуваалцахгүй</p>
-          {summaryError && <p role="alert" className="mt-2 text-xs font-bold text-rose-600">{summaryError}</p>}
-          {summary?.summary && <div className="mt-3 space-y-2 rounded-2xl bb-bg-FFF7FB p-3 text-sm font-semibold leading-relaxed text-slate-600"><p>{summary.summary}</p>{[summary.beforePeriod, summary.duringPeriod, summary.afterPeriod, summary.mood, summary.body].filter(Boolean).map((item) => <p key={item}>{item}</p>)}</div>}
-        </Card>
+  return <main ref={mainRef} style={{ backgroundColor: theme === "dark" ? "#211b29" : "#fff7fb" }} className="fixed inset-0 z-[70] overflow-x-hidden overflow-y-auto overscroll-contain px-4 pb-[calc(env(safe-area-inset-bottom)+96px)] pt-0 text-slate-700 dark:text-slate-100">
+    <header className="sticky top-0 z-30 -mx-4 flex h-14 items-center justify-between gap-3 bg-white/95 px-4 backdrop-blur dark:bg-[#211b29]/95">
+      <button type="button" onClick={onBack} aria-label="Хаах" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-600 hover:bg-pink-50 dark:text-slate-200 dark:hover:bg-[#392d3e]"><X className="h-5 w-5" /></button>
+      <div role="tablist" aria-label="Хуанлийн харагдац" className="grid grid-cols-2 rounded-full bg-pink-50 p-1 dark:bg-[#392d3e]">
+        {[{ id: "month", label: "Сар" }, { id: "year", label: "Жил" }].map((item) => <button key={item.id} type="button" role="tab" aria-selected={viewMode === item.id} disabled={editing} onClick={() => setViewMode(item.id)} className={`rounded-full px-5 py-1.5 text-xs font-extrabold disabled:opacity-50 ${viewMode === item.id ? "bg-white text-[#b83b7e] shadow-sm dark:bg-[#514054] dark:text-pink-200" : "text-slate-500 dark:text-slate-300"}`}>{item.label}</button>)}
       </div>
+      <button type="button" aria-label="Мөчлөгийн тохиргоо" onClick={() => { setCycleDraft(cycleLengthProp ?? 28); setPeriodDraft(periodLengthProp ?? 5); setSettingsOpen(true); }} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-600 hover:bg-pink-50 dark:text-slate-200 dark:hover:bg-[#392d3e]"><Settings2 className="h-5 w-5" /></button>
+    </header>
 
-      {selectedDate && <DayLogSheet key={selectedDate} date={selectedDate} initialMood={logs[selectedDate]?.mood ?? null} isPeriodDay={periodDays.has(selectedDate)} periodDayNumber={periodDayNumberFor(selectedDate)} pendingPeriod={pendingPeriods[selectedDate] ?? null} onClose={() => setSelectedDate(null)} onSaved={saveDailyLog} />}
-    </main>
-  );
+    {viewMode === "month" ? <>
+      <div className="sticky top-14 z-20 -mx-4 grid grid-cols-7 bg-white/95 px-4 py-2 text-center text-[11px] font-extrabold text-slate-500 backdrop-blur dark:bg-[#211b29]/95 dark:text-slate-300">{WEEKDAYS.map((day) => <span key={day}>{day}</span>)}</div>
+      <div className="mx-auto max-w-md">
+        {months.map(({ date, key, dates }) => <section key={key} ref={(node) => { monthRefs.current[key] = node; }} className="scroll-mt-28 py-2" style={{ contentVisibility: "auto", containIntrinsicSize: "340px" }}>
+          <h2 className="mb-2 text-center text-base font-black text-slate-700 dark:text-slate-100">{monthTitle(date)}</h2>
+          <div className="grid grid-cols-7 gap-y-1">{dates.map((day, index) => day ? renderDay(day) : <span key={`${key}-blank-${index}`} aria-hidden="true" className="h-[54px]" />)}</div>
+        </section>)}
+      </div>
+    </> : <section className="mx-auto max-w-md pb-6">
+      <div className="sticky top-14 z-20 flex items-center justify-center gap-6 bg-white/95 py-3 backdrop-blur dark:bg-[#211b29]/95">
+        <button type="button" aria-label="Өмнөх жил" onClick={() => setSelectedYear((year) => year - 1)} className="rounded-full p-2 text-slate-500 dark:text-slate-300"><ChevronLeft className="h-5 w-5" /></button>
+        <h2 className="text-base font-black text-slate-700 dark:text-slate-100">{selectedYear} он</h2>
+        <button type="button" aria-label="Дараагийн жил" onClick={() => setSelectedYear((year) => year + 1)} className="rounded-full p-2 text-slate-500 dark:text-slate-300"><ChevronRight className="h-5 w-5" /></button>
+      </div>
+      <div className="grid grid-cols-3 gap-1">{Array.from({ length: 12 }, (_, index) => renderMiniMonth(new Date(selectedYear, index, 1)))}</div>
+    </section>}
+
+    <div style={{ background: theme === "dark" ? "linear-gradient(to top, #211b29, rgb(33 27 41 / 95%), transparent)" : "linear-gradient(to top, #fff7fb, rgb(255 247 251 / 95%), transparent)" }} className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[max(14px,env(safe-area-inset-bottom))] pt-7">
+      <div className="pointer-events-auto flex w-full max-w-md items-center justify-center gap-2">
+        {editing ? <>
+          <button type="button" onClick={() => setEditing(false)} disabled={saving} className="flex-1 rounded-full bg-white px-4 py-3 text-sm font-extrabold text-slate-600 shadow-md dark:bg-[#392d3e] dark:text-slate-100">Болих</button>
+          <button type="button" onClick={saveEditedDays} disabled={saving} className="flex-1 rounded-full bg-[#e0679f] px-4 py-3 text-sm font-extrabold text-white shadow-md disabled:opacity-60">{saving ? "Хадгалж байна…" : "Хадгалах"}</button>
+        </> : hasPeriod ? <button type="button" onClick={beginEdit} className="flex items-center justify-center gap-2 rounded-full bg-[#e0679f] px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-pink-300/40"><CalendarDays className="h-4 w-4" /> Сарын тэмдгийн өдрүүдийг засах</button> : <button type="button" onClick={startPeriod} className="rounded-full bg-[#e0679f] px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-pink-300/40">🩸 Сарын тэмдэг маань ирлээ</button>}
+      </div>
+    </div>
+
+    {selectedDate && selectedPending ? <DayLogSheet key={selectedDate} date={selectedDate} isPeriodDay={false} pendingPeriod={selectedPending} onClose={() => { setSelectedDate(""); setSelectedPending(null); }} /> : selectedDate && <BottomSheet title={dateLabelWithMonth(new Date(`${selectedDate}T00:00:00`))} onClose={() => setSelectedDate("")}>
+      {selectedDate > today ? <p className="rounded-2xl bg-purple-50 p-4 text-sm font-bold text-purple-700 dark:bg-[#392d3e] dark:text-purple-200">Энэ өдөр хараахан болоогүй байна</p> : <div className="space-y-2 pb-2">
+        {actualPeriodDays.has(selectedDate) && <p className="rounded-2xl bg-pink-50 p-4 text-sm font-bold text-[#b83b7e] dark:bg-[#392d3e] dark:text-pink-200">Сарын тэмдгийн {periodDayNumber(selectedDate, periodStarts)} дахь өдөр</p>}
+        <p className="text-sm font-semibold text-slate-500 dark:text-slate-300">Өдрийн тэмдэглэлийг энд оруулна.</p>
+      </div>}
+    </BottomSheet>}
+
+    {settingsOpen && <BottomSheet title="Мөчлөгийн тохиргоо" onClose={() => setSettingsOpen(false)}>
+      <div className="space-y-4 pb-2">
+        <label className="block text-sm font-bold text-slate-600 dark:text-slate-200">Мөчлөгийн үргэлжлэх хугацаа
+          <span className="mt-1 flex items-center gap-2"><input type="number" min={15} max={60} value={cycleDraft} onChange={(event) => setCycleDraft(Number(event.target.value))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-700 dark:border-slate-600 dark:bg-[#302638] dark:text-white" /><span className="text-xs">хоног</span></span>
+        </label>
+        <label className="block text-sm font-bold text-slate-600 dark:text-slate-200">Сарын тэмдгийн үргэлжлэх хугацаа
+          <span className="mt-1 flex items-center gap-2"><input type="number" min={2} max={7} value={periodDraft} onChange={(event) => setPeriodDraft(Number(event.target.value))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-700 dark:border-slate-600 dark:bg-[#302638] dark:text-white" /><span className="text-xs">хоног</span></span>
+        </label>
+        <button type="button" disabled={settingsSaving} onClick={saveCycleSettings} className="w-full rounded-2xl bg-[#e0679f] py-3 text-sm font-extrabold text-white disabled:opacity-60">{settingsSaving ? "Хадгалж байна…" : "Хадгалах"}</button>
+      </div>
+    </BottomSheet>}
+  </main>;
 }
