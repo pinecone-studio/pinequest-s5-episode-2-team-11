@@ -4,6 +4,7 @@
  * Avatar — Bloomy-ийн пиксел дүр (SVG, 4px-ийн торон дээр давхаргаар зурна).
  *   look    = { hair, top, bottom, shoes, acc }  (lib/wardrobe.js-ийн id-ууд)
  *   skin    = SKIN_TONES-ийн индекс
+ *   mood    = өнөөдрийн сэтгэл санаа (1–5) → царайны илэрхийлэл; null бол энгийн инээмсэглэл
  *   walking = true бол хөл, гар хөдөлж алхана
  *   idle    = true бол зөөлөн хөвж, нүдээ анивчина
  *   crop    = "x y w h" — зөвхөн тухайн хэсгийг харуулна (дэлгүүрийн жижиг зураг)
@@ -82,61 +83,86 @@ const both = (rows) => [...rows, ...rows.map(([y, a, b]) => [y, 29 - b, 29 - a])
 const wave = (y) => Math.floor(y / 2) % 2;
 
 /* ---------------- Үс ---------------- */
-const DOME = [[3, 10, 19], [4, 8, 21], [5, 7, 22], [6, 6, 23]];
+const DOME = [[2, 12, 17], [3, 9, 20], [4, 7, 22], [5, 6, 23], [6, 6, 23]];
+// Үзүүртэй, бага зэрэг хажуу тийш эргэсэн үсний зулай
 const BANGS = [
   ...DOME,
   [7, 6, 23],
-  [8, 6, 13], [8, 15, 23],
-  [9, 6, 12], [9, 16, 23],
-  [10, 6, 9], [10, 11, 12], [10, 17, 18], [10, 20, 23],
-  [11, 6, 8], [11, 21, 23],
+  [8, 6, 23],
+  [9, 6, 11], [9, 13, 17], [9, 19, 23],
+  [10, 6, 10], [10, 14, 16], [10, 20, 23],
+  [11, 6, 8], [11, 15, 15], [11, 21, 23],
 ];
+// Долгионтой хажуу үс, доод үзүүр нь шовх болж нарийсна
 const locks = (y0, y1) =>
-  both(Array.from({ length: y1 - y0 + 1 }, (_, i) => [y0 + i, 4 + wave(y0 + i), 6 + wave(y0 + i)]));
+  both([
+    ...Array.from({ length: y1 - y0 + 1 }, (_, i) => [y0 + i, 4 + wave(y0 + i), 6 + wave(y0 + i)]),
+    [y1 + 1, 5 + wave(y1 + 1), 6 + wave(y1 + 1)],
+    [y1 + 2, 5 + wave(y1 + 2), 5 + wave(y1 + 2)],
+  ]);
+// Урт үс доошоо бага зэрэг дэлгэрч, үзүүр нь хэдэн салаа болно
+const LONG_BACK = [
+  ...DOME,
+  ...Array.from({ length: 24 }, (_, i) => {
+    const y = 7 + i;
+    const flare = y > 21 ? 1 : 0;
+    return [y, 4 + wave(y) - flare, 25 - wave(y) + flare];
+  }),
+  ...both([[31, 3, 9], [32, 3, 5], [32, 7, 9], [33, 4, 4], [33, 8, 8]]),
+  [31, 10, 19],
+];
+const LONG_STRANDS = both(Array.from({ length: 15 }, (_, i) => [15 + i, 7 + wave(15 + i), 7 + wave(15 + i)]));
 
 function HairBack({ item }) {
   const c = shade(item.color, -0.12);
   const line = shade(item.color, -0.45);
+  const dark = shade(item.color, -0.28);
+  const light = shade(item.color, 0.22);
   switch (item.kind) {
     case "long":
       return (
-        <Px
-          rows={[
-            ...DOME,
-            ...Array.from({ length: 27 }, (_, i) => [7 + i, 4 + wave(7 + i), 25 - wave(7 + i)]),
-            [34, 5, 10],
-            [34, 19, 24],
-          ]}
-          fill={c}
-          line={line}
-        />
+        <g>
+          <Px rows={LONG_BACK} fill={c} line={line} />
+          <Px rows={LONG_STRANDS} fill={dark} />
+          <Px rows={both([[31, 4, 4], [30, 5, 5]])} fill={light} />
+        </g>
       );
     case "bob":
-      return <Px rows={[...DOME, ...block(7, 21, 5, 24), [22, 6, 23]]} fill={c} line={line} />;
-    case "buns":
       return (
-        <Px
-          rows={[...DOME, ...block(7, 13, 5, 24), ...both([[0, 6, 8], [1, 5, 9], [2, 5, 9], [3, 6, 8]])]}
-          fill={c}
-          line={line}
-        />
+        <g>
+          <Px rows={[...DOME, ...block(7, 17, 5, 24), ...block(18, 20, 4, 25), [21, 5, 24]]} fill={c} line={line} />
+          <Px rows={both([[19, 5, 6], [20, 6, 7]])} fill={light} />
+        </g>
       );
-    case "pony":
+    case "buns":
       return (
         <g>
           <Px
-            rows={[
-              ...DOME,
-              ...block(7, 14, 5, 24),
-              ...Array.from({ length: 23 }, (_, i) => [6 + i, 23 + wave(6 + i), 26 + wave(6 + i)]),
-              [29, 24, 26],
-            ]}
+            rows={[...DOME, ...block(7, 13, 5, 24), ...both([[0, 6, 8], [1, 5, 9], [2, 5, 9], [3, 6, 8]])]}
             fill={c}
             line={line}
           />
+          {/* боодлын эргэлт ба гялбаа */}
+          <Px rows={both([[2, 8, 9], [3, 7, 8]])} fill={dark} />
+          <Px rows={both([[1, 6, 6], [0, 7, 7]])} fill={light} />
+        </g>
+      );
+    case "pony": {
+      // сүүл дундаа өргөн, доошоо шовх болж нарийсна
+      const tail = Array.from({ length: 23 }, (_, i) => {
+        const y = 6 + i;
+        const w = wave(y);
+        return [y, 23 + w, (i < 14 ? 26 : i < 19 ? 25 : 24) + w];
+      });
+      return (
+        <g>
+          <Px rows={[...DOME, ...block(7, 14, 5, 24), ...tail, [29, 24, 24]]} fill={c} line={line} />
+          <Px rows={tail.slice(3, 18).map(([y, a]) => [y, a + 1, a + 1])} fill={dark} />
+          <Px rows={tail.slice(3, 12).map(([y, a]) => [y, a, a])} fill={light} />
           <Px rows={[[6, 23, 25], [7, 23, 25]]} fill="#F48FB1" line="#D86A93" />
         </g>
       );
+    }
     default:
       return null;
   }
@@ -146,20 +172,24 @@ function HairFront({ item }) {
   const c = item.color;
   const sides =
     item.kind === "long"
-      ? locks(12, 24)
+      ? locks(12, 22)
       : item.kind === "bob"
         ? both([...block(12, 19, 5, 7), [20, 5, 8], [21, 6, 8]])
-        : locks(12, 16);
+        : locks(12, 15);
   return (
     <g>
       <Px rows={[...BANGS, ...sides]} fill={c} line={shade(c, -0.45)} />
       {/* нүүр талын сүүдэр, үсний ширхэг */}
       <Px rows={sides.map(([y, a, b]) => (a < 15 ? [y, b, b] : [y, a, a]))} fill={shade(c, -0.16)} />
-      <Px rows={[[7, 14, 14], [8, 9, 9], [8, 20, 20], [9, 8, 8], [9, 21, 21], [9, 13, 13], [9, 16, 16]]} fill={shade(c, -0.2)} />
+      <Px
+        rows={[[6, 14, 14], [7, 13, 13], [8, 12, 12], [7, 17, 17], [8, 18, 18], [8, 8, 8], [9, 7, 7], [8, 21, 21], [9, 22, 22]]}
+        fill={shade(c, -0.22)}
+      />
       {/* гялбаа (анимэ маягийн цагираг) */}
-      <Px rows={[[5, 9, 11], [5, 18, 20], [6, 8, 8], [6, 21, 21]]} fill={shade(c, 0.3)} />
-      <Sprite map={["WW.", ".W."]} x={20} y={10} colors={{ W: shade(c, 0.6) }} />
-      <Sprite map={[".WW", ".W."]} x={37} y={10} colors={{ W: shade(c, 0.6) }} />
+      <Px rows={[[4, 10, 11], [4, 18, 19], [5, 8, 12], [5, 17, 21], [6, 7, 7], [6, 22, 22]]} fill={shade(c, 0.32)} />
+      <Sprite map={["WWW.", ".WW."]} x={18} y={10} colors={{ W: shade(c, 0.62) }} />
+      <Sprite map={[".WWW", ".WW."]} x={37} y={10} colors={{ W: shade(c, 0.62) }} />
+      <Px rows={[[9, 15, 15], [10, 15, 15]]} fill={shade(c, 0.18)} />
     </g>
   );
 }
@@ -190,19 +220,39 @@ const eyeColors = (eye) => ({
 const BLUSH_MAP = ["..PPPP..", ".PWPPPP.", "..PPPP.."];
 const MOUTH_MAP = ["M..M", ".MM."];
 
-function Face({ skin, eye }) {
+// Сэтгэл санааны царай (lib/log-entries MOODS: 5 маш сайхан … 1 хэцүү).
+// eyes = нүдний зураг, brow = хөмсөг (заавал биш), mouth, blush = хацрын тод байдал
+const HAPPY_EYE = ["........", "........", "........", "..LLLL..", ".LL..LL.", ".L....L.", "........", "........", "........", "........"];
+const SQUEEZE_EYE = ["........", "........", ".LL.....", "...LL...", ".....LL.", "...LL...", ".LL.....", "........", "........", "........"];
+const MOOD_FACES = {
+  5: { eyes: HAPPY_EYE, mouth: ["MMMM", "MTTM", ".MM."], blush: 0.95 },
+  4: { eyes: EYE_MAP, mouth: MOUTH_MAP, blush: 0.75 },
+  3: { eyes: EYE_MAP, mouth: [".MM."], blush: 0.4 },
+  2: { eyes: EYE_MAP, brow: ["....LL", "LLLL.."], mouth: [".MM.", "M..M"], blush: 0.35 },
+  1: { eyes: SQUEEZE_EYE, brow: ["....LL", "LLLL.."], mouth: [".MM.", "M..M"], blush: 0.5, sweat: true },
+};
+
+function Face({ skin, eye, mood }) {
   const colors = eyeColors(eye);
+  const f = MOOD_FACES[mood] ?? MOOD_FACES[4];
   return (
     <g>
       {/* хацрын бүдэг сүүдэр */}
       <Px rows={[[20, 10, 19]]} fill={shade(skin, -0.06)} />
       <g className="av-eyes" style={{ transformOrigin: `60px ${(14 + OFF) * U}px` }}>
-        <Sprite map={EYE_MAP} x={15} y={24} colors={colors} />
-        <Sprite map={EYE_MAP} x={37} y={24} colors={colors} flip />
+        <Sprite map={f.eyes} x={15} y={24} colors={colors} />
+        <Sprite map={f.eyes} x={37} y={24} colors={colors} flip />
       </g>
-      <Sprite map={BLUSH_MAP} x={13} y={34} colors={{ P: "#F59DB2", W: "#FFFFFF" }} opacity={0.75} />
-      <Sprite map={BLUSH_MAP} x={39} y={34} colors={{ P: "#F59DB2", W: "#FFFFFF" }} opacity={0.75} flip />
-      <Sprite map={MOUTH_MAP} x={28} y={38} colors={{ M: "#C25A6A" }} />
+      {f.brow && (
+        <>
+          <Sprite map={f.brow} x={16} y={22} colors={{ L: "#2E2228" }} />
+          <Sprite map={f.brow} x={38} y={22} colors={{ L: "#2E2228" }} flip />
+        </>
+      )}
+      <Sprite map={BLUSH_MAP} x={13} y={34} colors={{ P: "#F59DB2", W: "#FFFFFF" }} opacity={f.blush} />
+      <Sprite map={BLUSH_MAP} x={39} y={34} colors={{ P: "#F59DB2", W: "#FFFFFF" }} opacity={f.blush} flip />
+      <Sprite map={f.mouth} x={28} y={38} colors={{ M: "#C25A6A", T: "#F48FB1" }} />
+      {f.sweat && <Sprite map={[".S.", "SSS", "SWS", ".S."]} x={44} y={28} colors={{ S: "#8EC9F5", W: "#FFFFFF" }} />}
     </g>
   );
 }
@@ -385,6 +435,7 @@ function Waist({ bottom }) {
 export default function Avatar({
   look = STARTER_LOOK,
   skin = 0,
+  mood = null,
   walking = false,
   idle = false,
   label = "Миний дүр",
@@ -428,7 +479,7 @@ export default function Avatar({
         <Px rows={FACE} fill={s} line={sl} />
         <Px rows={[[12, 8, 21]]} fill={shade(s, -0.08)} />
         <HairFront item={hair} />
-        <Face skin={s} eye={eyes.color} />
+        <Face skin={s} eye={eyes.color} mood={mood} />
         <Accessory item={acc} />
       </g>
     </svg>
