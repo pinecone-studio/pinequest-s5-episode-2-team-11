@@ -1,13 +1,12 @@
 "use client";
 
 /**
- * Найзууд, хэрэглэл хүсэх болон тайвшрах дасгалын хэсэг.
+ * Найзууд болон хэрэглэл хүсэх хэсэг.
  * Өгөгдөл: context/FriendsContext.jsx · Database: supabase/friends.sql
  */
 
 import { useState } from "react";
-import { Users, Plus, Lock, UserPlus, Loader2, ChevronRight, Phone, Wind, X } from "lucide-react";
-import { useFamily } from "../../../context/FamilyContext";
+import { Users, Plus, Lock, UserPlus, Loader2, ChevronRight, Phone, X } from "lucide-react";
 import { useFriends } from "../../../context/FriendsContext";
 import { GROUP_EMOJIS, PLACE_MAX } from "../../../lib/friends";
 import { AVATAR_BACKGROUNDS } from "../../../lib/wardrobe";
@@ -18,7 +17,6 @@ import FriendReplies from "./FriendReplies";
 import IncomingSosCard from "./IncomingSosCard";
 import AvatarCard from "../avatar/AvatarCard";
 import Avatar from "../avatar/Avatar";
-import SosModal from "../sos/SosModal";
 
 const Label = ({ children }) => (
   <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2">{children}</p>
@@ -56,7 +54,6 @@ export default function FriendsScreen() {
 
   const F = useFriends();
   const { friends, sosStage, outgoing, replyText } = F;
-  const { openSos, sosOpen } = useFamily();
   const [sheet, setSheet] = useState(null); // "supplies" | "friends" | "groups"
   const nameOf = (id) => friends.find((f) => f.id === id)?.display_name ?? "…";
   const firstReply = outgoing?.responses?.[0];
@@ -75,22 +72,6 @@ export default function FriendsScreen() {
       </div>
 
       <IncomingSosCard />
-
-      <button
-        onClick={openSos}
-        className="w-full rounded-3xl bg-gradient-to-r from-[#e0679f] to-[#b83b7e] p-4 text-left text-white shadow-xl bb-shadow-F48FB1-30 active:scale-95 transition flex items-center gap-3 relative overflow-hidden"
-      >
-        <span className="relative w-12 h-12 shrink-0 rounded-2xl bg-white/15 flex items-center justify-center">
-          <Wind className="w-6 h-6 text-white" />
-        </span>
-        <span className="flex-1 relative min-w-0">
-          <span className="block font-black text-white">Сарын тэмдгийн өвдөлтийн үед</span>
-          <span className="block text-xs font-bold text-white/85">
-            Өвдөлт мэдрэгдэхэд хийх 3 минутын амьсгал, сунгалтын дасгал
-          </span>
-        </span>
-        <ChevronRight className="w-5 h-5 relative shrink-0 text-white" />
-      </button>
 
       {/* ---------- Хэрэглэл хүсэх ---------- */}
       <button
@@ -161,7 +142,6 @@ export default function FriendsScreen() {
           <MyGroups nameOf={nameOf} />
         </Sheet>
       )}
-      {sosOpen && <SosModal />}
     </div>
   );
 }
