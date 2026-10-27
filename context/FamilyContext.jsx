@@ -765,11 +765,6 @@ export function FamilyProvider({ children }) {
     setNudgeLoading(false);
   }, [session, view, linked, phaseKey, daysUntil, sharedMood, daughterProfile?.display_name]);
 
-  useEffect(() => {
-    if (view === "mother" && linked) fetchNudge();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, linked, activeChildId, phaseKey, sharedMood]);
-
   const refreshNudge = () => !nudgeLoading && fetchNudge();
 
   const markNudgeDone = async () => {
