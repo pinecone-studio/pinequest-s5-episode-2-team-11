@@ -15,7 +15,11 @@ const AI_TIMEOUT_MS = 5000; // server gives the AI 3 s; this covers the round tr
 const TRANSIENT_ERRORS = new Set(["timeout", "network_error"]);
 
 const normalizePeriods = (periods) => (periods ?? [])
-  .map((period) => typeof period === "string" ? { startDate: period, duration: null } : { startDate: period.startDate ?? period.log_date, duration: period.duration ?? null })
+  .map((period) =>
+    typeof period === "string"
+      ? { startDate: period, duration: null }
+      : { startDate: period.startDate ?? period.log_date, duration: period.duration ?? null }
+  )
   .filter((period) => period.startDate);
 
 /**
