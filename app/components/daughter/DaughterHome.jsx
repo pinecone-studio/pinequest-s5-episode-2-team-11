@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useFamily } from "../../../context/FamilyContext";
 import { Users, Droplets, BookOpen, CalendarDays } from "lucide-react";
-import { localDateKey, periodDayKeys } from "../../../lib/cycle";
+import { localDateKey } from "../../../lib/cycle";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
 import CycleRing from "./CycleRing";
@@ -34,14 +34,10 @@ export default function DaughterHome() {
     isPeriod,
     daysUntil,
     lastPeriodStart,
-    periodStarts,
     cyclePeriods,
     periodPrediction,
     startPeriod,
   } = useFamily();
-  const periodDay = periodDayKeys(periodStarts, periodLength, localDateKey(new Date())).has(localDateKey(new Date()));
-  const lastConfirmedStart = periodStarts.filter((start) => start <= localDateKey(new Date())).at(-1);
-  const periodDayNumber = periodDay && lastConfirmedStart ? Math.floor((new Date(`${localDateKey(new Date())}T00:00:00`).getTime() - new Date(`${lastConfirmedStart}T00:00:00`).getTime()) / 86400000) + 1 : 1;
   return (
     <div className="space-y-4">
       <div className="flex items-end justify-between gap-2 bloom-fade">
@@ -126,7 +122,7 @@ export default function DaughterHome() {
       {/* Хувийн таамаг — мөчлөгийн өдөр бүр, анхны сарын тэмдгээс өмнө ч харагдана */}
       <CyclePredictionCard />
 
-      <TodayMoodCard periodDay={periodDay} periodDayNumber={periodDayNumber} />
+      <TodayMoodCard />
 
       <CouponRewards featured />
 
