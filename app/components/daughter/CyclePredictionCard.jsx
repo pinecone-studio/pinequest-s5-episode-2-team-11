@@ -12,7 +12,11 @@ const AI_TIMEOUT_MS = 5000; // server gives the AI 3 s; this covers the round tr
 const TRANSIENT_ERRORS = new Set(["timeout", "network_error"]);
 
 const normalizePeriods = (periods) => (periods ?? [])
-  .map((period) => typeof period === "string" ? { startDate: period, duration: null } : { startDate: period.startDate ?? period.log_date, duration: period.duration ?? null })
+  .map((period) =>
+    typeof period === "string"
+      ? { startDate: period, duration: null }
+      : { startDate: period.startDate ?? period.log_date, duration: period.duration ?? null }
+  )
   .filter((period) => period.startDate);
 
 /**
@@ -52,7 +56,9 @@ export default function CyclePredictionCard() {
     nextStart: periodPrediction?.rangeStart ?? null,
     late: Boolean(periodPrediction?.late),
   }), [today, periods, periodPrediction?.rangeStart, periodPrediction?.late]);
+
   const stats = useMemo(() => (target && logs ? statsForTarget(target, periods, logs) : null), [target, periods, logs]);
+
   const safety = useMemo(() => {
     if (!target || !logs) return [];
     const currentStart = target.phase === "pre" ? periodPrediction?.rangeStart ?? target.cycleStart : target.cycleStart;
