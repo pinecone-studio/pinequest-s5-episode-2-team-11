@@ -197,11 +197,40 @@ export function getSeason(date: string | Date, cycleInfo: CycleInfo): Season {
   const dayIndex = differenceInDays(lastStart, key);
   if (dayIndex < 0) return "spring";
   const autumnFromDay = Math.max(Math.ceil(length * 0.7), (cycleInfo.prediction ? differenceInDays(lastStart, cycleInfo.prediction.rangeStart) - 7 : length - 7));
+  return seasonForCycleDay(dayIndex, length, duration, autumnFromDay);
+}
+
+/** Season of a 0-based day inside a cycle of `cycleLength` days; also used to split past cycles into seasons. */
+export function seasonForCycleDay(dayIndex: number, cycleLength: number, periodLength: number, autumnFromDay = Math.max(Math.ceil(cycleLength * 0.7), cycleLength - 7)): Season {
   if (dayIndex >= autumnFromDay) return "autumn";
-  if (dayIndex < duration) return "winter";
-  if (dayIndex < length * 0.45) return "spring";
-  if (dayIndex < length * 0.7) return "summer";
+  if (dayIndex < periodLength) return "winter";
+  if (dayIndex < cycleLength * 0.45) return "spring";
+  if (dayIndex < cycleLength * 0.7) return "summer";
   return "autumn";
+}
+
+export type CyclePosition =
+  | { phase: "before_first" }
+  | { phase: "cycle"; season: Season; cycleDay: number; daysUntilNext: number | null; cycleStart: string; late: boolean };
+
+/**
+ * Where today sits in the cycle. Uses the same inputs as CycleRing
+ * (context cycleLength, predicted period length) so both show the same season.
+ */
+export function getCyclePosition(today: string, periods: PeriodLog[] = [], { cycleLength, periodLength }: { cycleLength?: number; periodLength?: number } = {}): CyclePosition {
+  const confirmed = getConfirmedPeriods(periods, today);
+  if (!confirmed.length) return { phase: "before_first" };
+  const prediction = getPrediction(confirmed, today);
+  const cycleStart = periodStart(confirmed.at(-1)!)!;
+  const season = getSeason(today, { periods: confirmed, cycleLength: cycleLength ?? prediction?.cycleLength, periodLength: prediction?.periodLength ?? periodLength, prediction });
+  return {
+    phase: "cycle",
+    season,
+    cycleDay: differenceInDays(cycleStart, today) + 1,
+    daysUntilNext: prediction ? differenceInDays(today, prediction.rangeStart) : null,
+    cycleStart,
+    late: Boolean(prediction?.late),
+  };
 }
 
 export function getBloomLevel(today: string, cycleInfo: CycleInfo): number {
