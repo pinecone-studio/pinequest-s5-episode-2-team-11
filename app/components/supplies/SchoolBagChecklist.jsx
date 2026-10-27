@@ -13,7 +13,16 @@ export default function SchoolBagChecklist({ daughter = false }) {
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
   savingRef.current = saving;
-  const { kitChecked, saveKit, sendToTeen, setToast, linked } = useFamily();
+  const {
+    kitChecked,
+    saveKit,
+    sendToTeen,
+    sendToMom,
+    setToast,
+    linked,
+    daughterName,
+    selectedDaughterId,
+  } = useFamily();
   const checkedCount = kitChecked.length;
   const draftCount = draftKit.length;
 
@@ -34,7 +43,18 @@ export default function SchoolBagChecklist({ daughter = false }) {
   const remindDaughter = async (item) => {
     const itemName = item.label.replace(/\s*\([^)]*\)/g, "").trim();
     const sent = await sendToTeen(`Цүнхэндээ “${itemName}” хийгээрэй 🎒`, "kit");
-    if (sent) setToast("Сануулагч охинд очлоо 🎒");
+    if (sent) {
+      const savedCopy = await sendToMom(
+        `${daughterName}-д цүнхний сануулга илгээлээ: ${itemName} 🎒`,
+        "kit",
+        selectedDaughterId,
+      );
+      setToast(
+        savedCopy
+          ? `${daughterName}-д сануулагч очлоо 🎒`
+          : `${daughterName}-д сануулагч очсон ч мэдэгдлийн түүхэд хадгалж чадсангүй.`,
+      );
+    }
   };
 
   const progressBar = (count) => (
@@ -76,7 +96,7 @@ export default function SchoolBagChecklist({ daughter = false }) {
             onClick={() => remindDaughter(item)}
             disabled={!linked}
             className="flex shrink-0 items-center gap-1 rounded-full bb-bg-FDE7F1 px-2.5 py-1.5 text-xs font-extrabold bb-text-B83B7E disabled:opacity-50"
-            aria-label={`${item.label}-ийг охинд сануулах`}
+            aria-label={`${item.label}-ийг ${daughterName}-д сануулах`}
           >
             <Bell className="h-3.5 w-3.5" /> Сануулах
           </button>
@@ -194,13 +214,13 @@ export default function SchoolBagChecklist({ daughter = false }) {
     <Card>
       <SectionTitle
         icon={Backpack}
-        title="Охины сургуулийн цүнх"
+        title={daughter ? "Миний сургуулийн цүнх" : `${daughterName} · сургуулийн цүнх`}
         right={<span className="text-xs font-extrabold bb-text-B83B7E">{checkedCount}/{KIT_ITEMS.length}</span>}
       />
       <div className="mb-4">{progressBar(checkedCount)}</div>
       <div className="space-y-2">{rows}</div>
       <p className="mt-3 rounded-2xl bb-bg-FFF7FB px-3 py-2.5 text-xs font-semibold leading-relaxed text-slate-500">
-        Охин тань ямар нэг зүйлээ авахаа мартсан бол тухайн зүйлийн хажуу дахь “Сануулах” товчийг дараарай. Охинд тань сануулга очно 💗
+        {daughter ? "Ямар нэг зүйлээ авахаа мартсан бол жагсаалтаас сонгоорой." : `${daughterName} ямар нэг зүйлээ авахаа мартсан бол тухайн зүйлийн хажуу дахь “Сануулах” товчийг дараарай. Сануулга зөвхөн ${daughterName}-д очно 💗`}
       </p>
       {completionMessage}
     </Card>
