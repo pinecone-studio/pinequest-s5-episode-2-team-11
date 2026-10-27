@@ -28,7 +28,8 @@ export default function CycleRing({ day = 1, cycleLength = 28, periodLength = 5,
   }).at(-1);
   const startKey = typeof currentPeriodStart === "string" ? currentPeriodStart : currentPeriodStart?.startDate ?? currentPeriodStart?.log_date ?? currentPeriodStart?.date;
   const periodOffset = startKey ? Math.floor((new Date(`${today}T00:00:00`).getTime() - new Date(`${startKey}T00:00:00`).getTime()) / DAY_MS) : -1;
-  const periodDay = hasHadPeriod && periodOffset >= 0 && periodOffset < (prediction?.periodLength ?? periodLength) ? periodOffset + 1 : phaseKey === "period" ? day : 0;
+  const currentDuration = typeof currentPeriodStart === "object" && currentPeriodStart?.duration != null ? currentPeriodStart.duration : (prediction?.periodLength ?? periodLength);
+  const periodDay = hasHadPeriod && periodOffset >= 0 && periodOffset < currentDuration ? periodOffset + 1 : phaseKey === "period" ? day : 0;
   const calculatedDaysUntil = prediction?.rangeStart ? Math.max(0, Math.round((new Date(`${prediction.rangeStart}T00:00:00`).getTime() - new Date(`${today}T00:00:00`).getTime()) / DAY_MS)) : daysUntil;
   const [displayBloom, setDisplayBloom] = useState(0.1);
 
