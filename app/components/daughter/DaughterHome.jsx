@@ -36,7 +36,6 @@ export default function DaughterHome() {
     periodStarts,
     periodPrediction,
     startPeriod,
-    openSos,
   } = useFamily();
   const periodDay = periodDayKeys(periodStarts, periodLength, localDateKey(new Date())).has(localDateKey(new Date()));
   return (

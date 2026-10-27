@@ -8,11 +8,12 @@
  */
 
 import { useState } from "react";
-import { MessageCircleHeart, Package } from "lucide-react";
+import { ChevronRight, MessageCircleHeart, Package, Wind } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import PageHeader from "../ui/PageHeader";
 import AiChat from "./AiChat";
 import DaughterSupplies from "./DaughterSupplies";
+import SosModal from "../sos/SosModal";
 
 const SECTIONS = [
   { id: "chat", label: "Блүми эгч", Icon: MessageCircleHeart },
@@ -20,7 +21,7 @@ const SECTIONS = [
 ];
 
 export default function DaughterHelper({ initial = "chat" }) {
-  const { lowSupplyCount } = useFamily();
+  const { lowSupplyCount, openSos, sosOpen } = useFamily();
   const [section, setSection] = useState(initial);
 
   return (
@@ -53,6 +54,24 @@ export default function DaughterHelper({ initial = "chat" }) {
       </div>
 
       {section === "chat" ? <AiChat /> : <DaughterSupplies embedded />}
+
+      <button
+        onClick={openSos}
+        className="w-full rounded-3xl bg-gradient-to-r from-[#e0679f] to-[#b83b7e] p-4 text-left text-white shadow-xl bb-shadow-F48FB1-30 active:scale-95 transition flex items-center gap-3 relative overflow-hidden"
+      >
+        <span className="relative w-12 h-12 shrink-0 rounded-2xl bg-white/15 flex items-center justify-center">
+          <Wind className="w-6 h-6 text-white" />
+        </span>
+        <span className="flex-1 relative min-w-0">
+          <span className="block font-black text-white">Сарын тэмдгийн өвдөлтийн үед</span>
+          <span className="block text-xs font-bold text-white/85">
+            Өвдөлт мэдрэгдэхэд хийх 3 минутын амьсгал, сунгалтын дасгал
+          </span>
+        </span>
+        <ChevronRight className="w-5 h-5 relative shrink-0 text-white" />
+      </button>
+
+      {sosOpen && <SosModal />}
     </div>
   );
 }
