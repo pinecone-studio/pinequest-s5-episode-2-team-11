@@ -95,8 +95,7 @@ export function FamilyProvider({ children }) {
 
   /* ================= Дэлгэцийн төлөв ================= */
   const [tab, setTab] = useState("home");
-  const [learnTab, setLearnTab] = useState("pad");
-  const [selectedDaughterId, setSelectedDaughterId] = useState(null);
+  const [learnTab, setLearnTab] = useState("topics");
   const [codeInput, setCodeInput] = useState("");
   const [codeError, setCodeError] = useState("");
   const [joining, setJoining] = useState(false);
@@ -142,20 +141,6 @@ export function FamilyProvider({ children }) {
 
   /* ================= Тооцоолсон утгууд ================= */
   const view = profile?.role ?? null; // "mother" | "daughter"
-  const daughters = view === "mother" ? members.filter((member) => member.role === "daughter" && member.id !== userId) : [];
-  useEffect(() => {
-    if (view !== "mother") return;
-    const savedId = familyId ? localStorage.getItem(`bloomy:selected-daughter:${familyId}`) : null;
-    setSelectedDaughterId((currentId) => {
-      if (daughters.some((daughter) => daughter.id === currentId)) return currentId;
-      if (daughters.some((daughter) => daughter.id === savedId)) return savedId;
-      return daughters[0]?.id ?? null;
-    });
-  }, [view, familyId, members]);
-  const selectDaughter = (id) => {
-    setSelectedDaughterId(id);
-    if (familyId) localStorage.setItem(`bloomy:selected-daughter:${familyId}`, id);
-  };
   const guardianProfile = members.find((member) => member.role === "mother") ?? null;
   const guardianName = guardianProfile?.display_name || null;
   const childProfiles = members.filter((member) => member.role === "daughter");
@@ -169,6 +154,9 @@ export function FamilyProvider({ children }) {
   const activeChild = childProfiles.find((child) => child.id === activeChildId) ?? (view === "mother" ? childProfiles[0] ?? null : null);
   const daughterProfile =
     view === "daughter" ? profile : activeChild;
+  // Tsetse-ийн кодтой нийцүүлэх нэрс (нэг л хэрэгжүүлэлт: activeChild)
+  const daughters = view === "mother" ? childProfiles : [];
+  const selectDaughter = setActiveChildId;
   const linked =
     view === "daughter"
       ? members.some((member) => member.role === "mother" && member.id !== userId)
@@ -440,7 +428,6 @@ export function FamilyProvider({ children }) {
       return;
     }
     let fid = p?.family_id ?? null;
-    // Асран хамгаалагч гэр бүлийн код үүсгээд охидоо урина.
     // Асран хамгаалагч өөрийн кодтой гэр бүлийг үүсгэнэ. Охид асран хамгаалагчийн кодоор нэгдэнэ.
     if (p?.role === "mother" && !fid) {
       const { error } = await supabase.rpc("create_family");
@@ -571,28 +558,18 @@ export function FamilyProvider({ children }) {
   /* ================= Мэдэгдэл ================= */
   const notify = useCallback(
     async (recipientRole, text, kind = "info", recipientId = null) => {
-      if (!familyId) return false;
-      const payload = { family_id: familyId, sender_id: userId, recipient_role: recipientRole, kind, text };
-      let { error } = recipientId
-        ? await supabase.from("notifications").insert({ ...payload, recipient_id: recipientId })
-        : await supabase.from("notifications").insert(payload);
-      if (recipientId && (error?.code === "PGRST204" || error?.code === "42703" || error?.message?.includes("recipient_id"))) {
-        ({ error } = await supabase
-          .from("notifications")
-          .insert({ ...payload, kind: `target:${recipientId}:${kind}` }));
-      }
-      if (error) {
-        setToast("Сануулагч илгээж чадсангүй. Дахин оролдоорой.");
-      } else {
-        await loadNotifications();
-      }
+      if (!familyId || !recipientId) return false;
+      const { error } = await supabase
+        .from("notifications")
+        .insert({ family_id: familyId, sender_id: userId, recipient_id: recipientId, recipient_role: recipientRole, kind, text });
+      if (error) setToast("Илгээж чадсангүй. Интернэтээ шалгаарай.");
       return !error;
     },
     [familyId, userId, loadNotifications],
   );
-  const sendToMom = (text, kind, aboutId = null) =>
-    notify("mother", text, aboutId ? `target:${aboutId}:${kind}` : kind);
-  const sendToTeen = (text, kind = "care") => notify("daughter", text, kind, daughterProfile?.id ?? null);
+  const guardianId = view === "mother" ? userId : members.find((member) => member.role === "mother")?.id;
+  const sendToMom = (text, kind) => notify("mother", text, kind, guardianId);
+  const sendToTeen = (text, kind = "care") => notify("daughter", text, kind, view === "mother" ? activeChild?.id : null);
 
   const markRead = async (id) => {
     setNotifications((p) => p.map((n) => (n.id === id ? { ...n, read: true } : n)));
@@ -679,7 +656,6 @@ export function FamilyProvider({ children }) {
     setCodeError("");
     setCodeInput("");
     await loadAll();
-    setToast(view === "mother" ? "Охин тань гэр бүлд холбогдлоо 💗" : "Асран хамгаалагчтайгаа гэр бүлд холбогдлоо 💗");
     setToast("Асран хамгаалагчтайгаа амжилттай холбогдлоо 💗");
   };
 
@@ -908,11 +884,6 @@ export function FamilyProvider({ children }) {
     }
     setNudgeLoading(false);
   }, [session, view, linked, phaseKey, daysUntil, sharedMood, daughterProfile?.display_name]);
-
-  useEffect(() => {
-    if (view === "mother" && linked) fetchNudge();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, linked, phaseKey, `${sharedMood ?? ""}:${daughterProfile?.id ?? ""}`]);
 
   const refreshNudge = () => !nudgeLoading && fetchNudge();
 
