@@ -31,6 +31,7 @@
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...
+SUPABASE_SERVICE_ROLE_KEY=зөвхөн-серверийн-service-role-key
 GEMINI_API_KEY=таны-gemini-api-key
 # GEMINI_MODEL=gemini-3.8-flash  # заавал биш
 ```
@@ -42,6 +43,18 @@ npm run phone    # утаснаас турших (next.config.ts-д IP-гаа н
 ```
 
 ⚠️ `.env.local`-ийг **хэзээ ч GitHub руу бүү оруулаарай** (`.gitignore`-д орсон). Багийн гишүүд өөрсдийн `.env.local`-ийг үүсгэнэ — утгуудыг нь чатаар хувааж өгөөрэй.
+
+`SUPABASE_SERVICE_ROLE_KEY`-г Supabase-ийн **Project Settings → API Keys** хэсгээс авна. Энэ нууц түлхүүр сервер талын хувийн тэмдэглэлийн API-д хэрэгтэй. `NEXT_PUBLIC_` гэж нэрлэж болохгүй, клиент кодонд бүү оруул.
+
+## Өдрийн бүртгэл ба мөчлөгийн хуанлийн SQL
+
+Supabase → **SQL Editor** дээр байгаа төслийн үндсэн schema болон гэр бүлийн миграцуудын дараа дараах файлуудыг тус тусад нь дарааллаар ажиллуулна:
+
+1. `supabase/daily-logs-migration.sql`
+2. `supabase/cycle-calendar-migration.sql`
+3. `supabase/private-note-lock-migration.sql`
+
+Өдрийн бүртгэлийн функц тэмдэглэлийн текстийг буцаахаа сүүлийн migration-оор больдог тул `private-note-lock-migration.sql`-ийг алгасаж болохгүй.
 
 ## 4. Интернэтэд гаргах — Vercel (5 мин)
 
