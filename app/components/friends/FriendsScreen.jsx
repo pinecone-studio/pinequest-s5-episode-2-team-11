@@ -17,6 +17,8 @@ import FriendReplies from "./FriendReplies";
 import IncomingSosCard from "./IncomingSosCard";
 import AvatarCard from "../avatar/AvatarCard";
 import Avatar from "../avatar/Avatar";
+import { friendMoodToday } from "../avatar/useTodayMood";
+import { MOODS } from "../../../lib/log-entries";
 import BottomSheet from "../ui/BottomSheet";
 
 const Label = ({ children }) => (
@@ -26,10 +28,42 @@ const Label = ({ children }) => (
 const chip = (on, onCls, offCls = "bg-white border-slate-100 text-slate-500") =>
   `px-3 py-1.5 rounded-full text-xs font-extrabold border-2 transition ${on ? onCls : offCls}`;
 
+// Найзын сонгосон өрөө (vibe). Танихгүй утга бол useAvatar-тай адил "room" руу буцна
+const sceneOf = (id) =>
+  AVATAR_BACKGROUNDS.find((o) => o.id === id) ?? AVATAR_BACKGROUNDS.find((o) => o.id === "room");
+
+// Найзын дүрийн жижиг дугуй зураг (өрөөний дэвсгэртэй)
+function FriendFace({ friend, size = 36, className = "" }) {
+  return (
+    <span
+      className={`rounded-full overflow-hidden flex justify-center border-2 border-white shrink-0 ${className}`}
+      style={{ width: size, height: size, background: sceneOf(friend.avatar_background).background }}
+    >
+      <Avatar look={friend.avatar_look} skin={friend.avatar_skin} mood={friendMoodToday(friend)} label={`${friend.display_name}-ийн дүр`} size={size - 4} crop="10 12 100 100" />
+    </span>
+  );
+}
+
+function MemberFaces({ ids, friends }) {
+  const members = ids.map((id) => friends.find((f) => f.id === id)).filter(Boolean);
+  return (
+    <span className="flex items-center">
+      {members.slice(0, 3).map((f, i) => (
+        <FriendFace key={f.id} friend={f} size={24} className={i ? "-ml-2" : ""} />
+      ))}
+      {members.length > 3 && (
+        <span className="-ml-2 w-6 h-6 rounded-full border-2 border-white bb-bg-E9DDFC bb-text-7C4DCC text-[9px] font-black flex items-center justify-center">
+          +{members.length - 3}
+        </span>
+      )}
+    </span>
+  );
+}
+
 export default function FriendsScreen() {
 
   const F = useFriends();
-  const { friends, sosStage, outgoing, replyText } = F;
+  const { friends, groups, sosStage, outgoing, replyText } = F;
   const [sheet, setSheet] = useState(null); // "supplies" | "friends" | "groups"
   const nameOf = (id) => friends.find((f) => f.id === id)?.display_name ?? "…";
   const firstReply = outgoing?.responses?.[0];
@@ -74,30 +108,77 @@ export default function FriendsScreen() {
           <p className="font-black text-slate-800">
             Миний найзууд <span className="text-slate-400">· {friends.length}</span>
           </p>
-          <button onClick={() => setSheet("groups")} className="text-xs font-extrabold bb-text-B83B7E">
-            Бүлгүүд
+          <button
+            onClick={() => setSheet("groups")}
+            className="inline-flex items-center gap-1.5 rounded-full bb-bg-E9DDFC bb-text-7C4DCC px-3 py-1.5 text-xs font-extrabold shadow-sm active:scale-95 transition"
+          >
+            <Users className="w-3.5 h-3.5" /> Бүлгүүд
+            {groups.length > 0 && (
+              <span className="min-w-5 h-5 px-1 rounded-full bg-white text-[10px] font-black flex items-center justify-center">
+                {groups.length}
+              </span>
+            )}
           </button>
         </div>
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {friends.map((friend) => (
-            <div key={friend.id} className="w-20 shrink-0 text-center">
-              <div
-                className="rounded-2xl overflow-hidden flex justify-center pt-1.5 border border-slate-100"
-                style={{ background: AVATAR_BACKGROUNDS.find((o) => o.id === friend.avatar_background)?.background ?? AVATAR_BACKGROUNDS[0].background }}
-              >
-                <Avatar look={friend.avatar_look} skin={friend.avatar_skin} label={`${friend.display_name}-ийн дүр`} idle size={56} />
+        <div className="flex gap-2.5 overflow-x-auto pb-1">
+          {friends.map((friend) => {
+            const scene = sceneOf(friend.avatar_background);
+            const mood = MOODS.find((m) => m.value === friendMoodToday(friend));
+            return (
+              <div key={friend.id} className="w-24 shrink-0 text-center">
+                <div
+                  className="relative rounded-2xl overflow-hidden flex justify-center items-end pt-3 border-2 border-white shadow-sm"
+                  style={{ background: scene.background, height: 116 }}
+                >
+                  <Avatar look={friend.avatar_look} skin={friend.avatar_skin} mood={mood?.value} label={`${friend.display_name}-ийн дүр`} idle size={64} />
+                  {mood && (
+                    <span
+                      title={mood.label}
+                      className="absolute right-1 top-1 w-6 h-6 rounded-full flex items-center justify-center text-sm shadow-sm"
+                      style={{ background: "rgba(255,255,255,0.9)" }}
+                    >
+                      {mood.emoji}
+                    </span>
+                  )}
+                  <span
+                    className="absolute left-1 right-1 bottom-1 truncate rounded-full px-1.5 py-0.5 text-[9px] font-extrabold"
+                    style={{ background: "rgba(255,255,255,0.84)", color: "#554454" }}
+                  >
+                    {scene.label}
+                  </span>
+                </div>
+                <p className="mt-1 truncate text-xs font-extrabold text-slate-600">{friend.display_name}</p>
               </div>
-              <p className="mt-1 truncate text-xs font-extrabold text-slate-600">{friend.display_name}</p>
-            </div>
-          ))}
+            );
+          })}
           <button
             onClick={() => setSheet("friends")}
-            className="w-20 shrink-0 flex flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed bb-border-F8D3E6 bb-text-B83B7E text-xs font-extrabold"
-            style={{ minHeight: 112 }}
+            className="w-24 shrink-0 flex flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed bb-border-F8D3E6 bb-text-B83B7E text-xs font-extrabold active:scale-95 transition"
+            style={{ height: 116 }}
           >
             <Plus className="w-5 h-5" /> Нэмэх
           </button>
         </div>
+
+        {/* ---------- Бүлгүүд: товч хэлбэрээр ---------- */}
+        {groups.length > 0 && (
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+            {groups.map((g) => (
+              <button
+                key={g.id}
+                onClick={() => setSheet("groups")}
+                className="shrink-0 flex items-center gap-2 rounded-2xl border-2 bb-border-F8D3E6 bg-white pl-1.5 pr-3 py-1.5 shadow-sm active:scale-95 transition"
+              >
+                <span className="w-8 h-8 rounded-xl bb-bg-FDE7F1 flex items-center justify-center text-lg">{g.emoji}</span>
+                <span className="text-left">
+                  <span className="block text-xs font-extrabold text-slate-700 max-w-28 truncate">{g.name}</span>
+                  <span className="block text-[10px] font-bold text-slate-400">{g.members.length} найз</span>
+                </span>
+                <MemberFaces ids={g.members} friends={friends} />
+              </button>
+            ))}
+          </div>
+        )}
       </Card>
 
       {/* ---------- Миний дүр · Алхалт · Дэлгүүр ---------- */}
@@ -249,9 +330,7 @@ function MyFriends() {
         ) : (
           friends.map((f) => (
             <div key={f.id} className="flex items-center gap-3 rounded-2xl bg-slate-50 px-3 py-2">
-              <span className="w-9 h-9 rounded-full bb-bg-E9DDFC bb-text-7C4DCC font-black flex items-center justify-center shrink-0">
-                {f.display_name.charAt(0)}
-              </span>
+              <FriendFace friend={f} size={40} />
               <span className="flex-1 min-w-0 font-extrabold text-slate-700 bx-trunc">{f.display_name}</span>
               <button
                 onClick={() => {
