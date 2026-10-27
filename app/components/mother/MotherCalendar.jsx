@@ -3,19 +3,18 @@
 /**
  * Асран хамгаалагчийн «Календарь» — охины календарьтай ижил загвар.
  *   • Өдрийн өнгө: сарын тэмдэг · таамаг · овуляци · бүртгэсэн өдөр (цэг)
- *   • Охины ХУВИЙН ТЭМДЭГЛЭЛ харагдахгүй. Зөвхөн «Энэ 7 хоног»-ийн тойм харуулна.
  *   • Өгөгдөл: Supabase day_logs (supabase/day-logs.sql) — охин хуваалцахыг зөвшөөрсөн үед л.
  */
 
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, Droplets, Lock, Sparkles, LoaderCircle, X } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Droplets, Sparkles, LoaderCircle, X } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import { supabase } from "../../../lib/supabase";
 import { askAi } from "../../../lib/ai-client";
 import { toDateStr } from "../../../lib/dates";
 import { PHASE_COLORS, PHASES } from "../../../lib/data";
 import CycleRing from "../daughter/CycleRing";
-import { genitive, getPhaseKey } from "../../../lib/helpers";
+import { getPhaseKey } from "../../../lib/helpers";
 import Card from "../ui/Card";
 import PageHeader from "../ui/PageHeader";
 import SectionTitle from "../ui/SectionTitle";
@@ -41,7 +40,7 @@ const top = (rows, field) => {
 };
 
 export default function MotherCalendar() {
-  const { linked, daughterName, hasCycle, cycleLength, periodLength, lastPeriodStart, noPeriodYet, phaseKey, daysUntil, daysLate, day, shareWithMom, session, profile } =
+  const { linked, activeChildId, daughterName, hasCycle, cycleLength, periodLength, lastPeriodStart, noPeriodYet, phaseKey, daysUntil, daysLate, day, shareWithMom, session, markChildPeriod } =
     useFamily();
   const today = toDateStr();
   const [month, setMonth] = useState(() => {
@@ -54,28 +53,36 @@ export default function MotherCalendar() {
   const [ai, setAi] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState("");
+  const [markingPeriod, setMarkingPeriod] = useState(false);
 
   // Сүүлийн 60 хоногийн ангилсан бүртгэл (RLS: охин хуваалцсан үед л ирнэ)
   useEffect(() => {
-    if (!supabase || !linked) return;
+    setRows([]);
+    setAi(null);
+    setAiError("");
+    if (!supabase || !linked || !activeChildId) return;
+    let cancelled = false;
     const since = toDateStr(new Date(Date.now() - 60 * 86400000));
     supabase
       .from("day_logs")
       .select("log_date, emotion, symptoms, period, skin, sleep")
+      .eq("user_id", activeChildId)
       .gte("log_date", since)
       .order("log_date")
       .then(({ data, error }) => {
+        if (cancelled) return;
         if (error) console.warn("[day_logs] mother:", error.message);
         setRows(data ?? []);
       });
-  }, [linked, shareWithMom]);
+    return () => { cancelled = true; };
+  }, [linked, activeChildId, shareWithMom]);
 
   const byDate = useMemo(() => Object.fromEntries(rows.map((r) => [r.log_date, r])), [rows]);
   const weekStart = toDateStr(new Date(Date.now() - 6 * 86400000));
   const week = rows.filter((r) => r.log_date >= weekStart && r.log_date <= today);
 
   // Өмнө гаргасан AI тоймыг энэ 7 хоногт дахин дуудахгүйн тулд хадгална
-  const cacheKey = `bloom:weekly-summary:${profile?.id ?? "x"}:${weekStart}`;
+  const cacheKey = `bloom:weekly-summary:${activeChildId ?? "x"}:${weekStart}`;
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(cacheKey) ?? "null");
@@ -179,51 +186,45 @@ export default function MotherCalendar() {
         )}
       </Card>
 
-      {/* ---------- Энэ 7 хоног ---------- */}
-      <Card>
-        <SectionTitle icon={CalendarDays} title="Энэ 7 хоног" />
-        {!shareWithMom ? (
-          <p className="flex items-start gap-2 text-sm font-semibold text-slate-500">
-            <Lock className="mt-0.5 h-4 w-4 shrink-0" /> {daughterName || "Охин"} бүртгэлээ хувьдаа хадгалсан байна. Энэ бол хэвийн 🌸
-          </p>
-        ) : week.length === 0 ? (
-          <p className="text-sm font-semibold text-slate-500">Энэ 7 хоногт бүртгэл алга.</p>
-        ) : (
-          <>
-            <div className="flex flex-wrap gap-2">
-              <span className="rounded-full bb-bg-FDE7F1 bb-text-B83B7E px-3 py-1.5 text-xs font-extrabold">{week.length} өдөр бүртгэсэн</span>
-              {mood && <span className="rounded-full bb-bg-E9DDFC bb-text-7C4DCC px-3 py-1.5 text-xs font-extrabold">{EMOJI[mood[0]]} Ихэвчлэн {MN[mood[0]]}</span>}
-              {symptoms.map(([v, n]) => (
-                <span key={v} className="rounded-full bg-slate-100 text-slate-600 px-3 py-1.5 text-xs font-extrabold">{MN[v]} · {n} өдөр</span>
-              ))}
-              {flowDays > 0 && <span className="rounded-full bg-slate-100 text-slate-600 px-3 py-1.5 text-xs font-extrabold">🩸 {flowDays} өдөр</span>}
-              {sleep && <span className="rounded-full bg-slate-100 text-slate-600 px-3 py-1.5 text-xs font-extrabold">Нойр {MN[sleep[0]]}</span>}
-            </div>
-
-            {ai?.summary ? (
-              <div className="mt-4 rounded-2xl bb-bg-FFF7FB p-3 space-y-2 bloom-pop">
-                <p className="text-sm font-bold text-slate-700 leading-relaxed">{ai.summary}</p>
-                {ai.tips?.map((t) => (
-                  <p key={t} className="text-sm font-semibold text-slate-600">💡 {t}</p>
+      {shareWithMom && (
+        <Card>
+          <SectionTitle icon={CalendarDays} title="Энэ 7 хоног" />
+          {week.length === 0 ? (
+            <p className="text-sm font-semibold text-slate-500">Энэ 7 хоногт бүртгэл алга.</p>
+          ) : (
+            <>
+              <div className="flex flex-wrap gap-2">
+                <span className="rounded-full bb-bg-FDE7F1 bb-text-B83B7E px-3 py-1.5 text-xs font-extrabold">{week.length} өдөр бүртгэсэн</span>
+                {mood && <span className="rounded-full bb-bg-E9DDFC bb-text-7C4DCC px-3 py-1.5 text-xs font-extrabold">{EMOJI[mood[0]]} Ихэвчлэн {MN[mood[0]]}</span>}
+                {symptoms.map(([v, n]) => (
+                  <span key={v} className="rounded-full bg-slate-100 text-slate-600 px-3 py-1.5 text-xs font-extrabold">{MN[v]} · {n} өдөр</span>
                 ))}
+                {flowDays > 0 && <span className="rounded-full bg-slate-100 text-slate-600 px-3 py-1.5 text-xs font-extrabold">🩸 {flowDays} өдөр</span>}
+                {sleep && <span className="rounded-full bg-slate-100 text-slate-600 px-3 py-1.5 text-xs font-extrabold">Нойр {MN[sleep[0]]}</span>}
               </div>
-            ) : (
-              <button
-                onClick={askSummary}
-                disabled={aiLoading}
-                className="mt-4 w-full rounded-2xl bb-grad-sos text-white py-3 text-sm font-extrabold flex items-center justify-center gap-2 active:scale-95 transition disabled:opacity-60"
-              >
-                {aiLoading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                {aiLoading ? "Тойм гаргаж байна…" : "AI-аар 7 хоногийн тойм, зөвлөмж авах"}
-              </button>
-            )}
-            {aiError && <p className="mt-2 text-xs font-semibold bb-text-7C4DCC">{aiError}</p>}
-          </>
-        )}
-        <p className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-slate-400">
-          <Lock className="h-3.5 w-3.5 shrink-0" /> Охины хувийн тэмдэглэл танд харагдахгүй.
-        </p>
-      </Card>
+
+              {ai?.summary ? (
+                <div className="mt-4 rounded-2xl bb-bg-FFF7FB p-3 space-y-2 bloom-pop">
+                  <p className="text-sm font-bold text-slate-700 leading-relaxed">{ai.summary}</p>
+                  {ai.tips?.map((t) => (
+                    <p key={t} className="text-sm font-semibold text-slate-600">💡 {t}</p>
+                  ))}
+                </div>
+              ) : (
+                <button
+                  onClick={askSummary}
+                  disabled={aiLoading}
+                  className="mt-4 w-full rounded-2xl bb-grad-sos text-white py-3 text-sm font-extrabold flex items-center justify-center gap-2 active:scale-95 transition disabled:opacity-60"
+                >
+                  {aiLoading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                  {aiLoading ? "Тойм гаргаж байна…" : "AI-аар 7 хоногийн тойм, зөвлөмж авах"}
+                </button>
+              )}
+              {aiError && <p className="mt-2 text-xs font-semibold bb-text-7C4DCC">{aiError}</p>}
+            </>
+          )}
+        </Card>
+      )}
 
       {/* ---------- Хуанли (бүтэн дэлгэц) ---------- */}
       {calendarOpen && (
@@ -240,7 +241,7 @@ export default function MotherCalendar() {
               <button onClick={() => setCalendarOpen(false)} aria-label="Буцах" className="w-10 h-10 rounded-full bg-white border-2 border-slate-100 flex items-center justify-center text-slate-500">
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <h2 className="text-lg font-black text-slate-800">{daughterName ? genitive(daughterName) : "Охины"} хуанли</h2>
+              <h2 className="text-lg font-black text-slate-800">{daughterName ? `${daughterName}-ийн хуанли` : "Охины хуанли"}</h2>
             </div>
       <Card className="!p-3">
         <div className="mb-1 flex items-center justify-between">
@@ -323,9 +324,21 @@ export default function MotherCalendar() {
                       ? "Охин энэ өдөр бүртгэл хийсэн байна."
                       : "Онцгой тэмдэглэгээгүй өдөр."}
             </p>
-            <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-slate-400">
-              <Lock className="h-3.5 w-3.5" /> Өдрийн тэмдэглэл нь охины хувийнх.
-            </p>
+            {sel.key <= today && sel.kind !== "period" && (
+              <button
+                type="button"
+                disabled={markingPeriod}
+                onClick={async () => {
+                  setMarkingPeriod(true);
+                  const ok = await markChildPeriod(sel.key);
+                  setMarkingPeriod(false);
+                  if (ok) setSelected(null);
+                }}
+                className="mt-4 w-full rounded-2xl bb-grad-sos py-3 text-sm font-extrabold text-white active:scale-95 transition disabled:opacity-60"
+              >
+                {markingPeriod ? "Хадгалж байна…" : "Охины сарын тэмдэг ирснийг тэмдэглэх"}
+              </button>
+            )}
           </div>
         </div>
       )}

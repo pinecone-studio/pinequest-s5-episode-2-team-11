@@ -5,6 +5,7 @@ import { MessageCircleHeart, Send, Trash2, ShieldCheck } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import { autoReply } from "../../../lib/chat-replies";
 import { askAi } from "../../../lib/ai-client";
+import { supabase } from "../../../lib/supabase";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
 import ChatAvatar from "./ChatAvatar";
@@ -21,7 +22,10 @@ const GREETING =
 
 export default function AiChat() {
   const { session } = useFamily();
-  const storageKey = `bloom:chat:${session?.user?.id ?? "guest"}`;
+  const userId = session?.user?.id;
+  const storageKey = `bloom:chat:${userId ?? "guest"}`;
+  // Нэвтэрсэн үед Supabase-ийн chat_messages (supabase/chat-messages.sql), эс бөгөөс энэ утсан дээр
+  const useDb = Boolean(supabase && userId);
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState("");
   const [thinking, setThinking] = useState(false);
@@ -29,23 +33,45 @@ export default function AiChat() {
   const [chips, setChips] = useState([]);
   const listRef = useRef(null);
 
-  // Яриа зөвхөн энэ утсан дээр хадгалагдана
   useEffect(() => {
+    if (useDb) {
+      let cancelled = false;
+      supabase
+        .from("chat_messages")
+        .select("role, content")
+        .eq("user_id", userId)
+        .order("id", { ascending: false })
+        .limit(40)
+        .then(({ data, error }) => {
+          if (error) console.warn("[chat_messages] load:", error.message);
+          if (!cancelled && data) setMessages(data.reverse());
+        });
+      return () => {
+        cancelled = true;
+      };
+    }
     try {
       const saved = JSON.parse(localStorage.getItem(storageKey) ?? "[]");
       if (Array.isArray(saved)) setMessages(saved);
     } catch {
       /* localStorage боломжгүй */
     }
-  }, [storageKey]);
+  }, [storageKey, useDb, userId]);
 
   useEffect(() => {
+    if (useDb) return;
     try {
       localStorage.setItem(storageKey, JSON.stringify(messages.slice(-40)));
     } catch {
       /* localStorage боломжгүй */
     }
-  }, [messages, storageKey]);
+  }, [messages, storageKey, useDb]);
+
+  const saveToDb = async (rows) => {
+    if (!useDb) return;
+    const { error } = await supabase.from("chat_messages").insert(rows.map((m) => ({ ...m, user_id: userId })));
+    if (error) console.warn("[chat_messages] save:", error.message);
+  };
 
   // Хариуг үсэг үсгээр гаргана — энэ үед аватар ярьж байгаа мэт хөдөлнө
   useEffect(() => {
@@ -91,12 +117,25 @@ export default function AiChat() {
     setMessages([...next, { role: "assistant", content: reply }]);
     setChips(nextChips);
     setTyping({ index: next.length, shown: 0 });
+    saveToDb([
+      { role: "user", content },
+      { role: "assistant", content: reply },
+    ]);
   };
 
   const clear = () => {
     setMessages([]);
     setTyping(null);
     setChips([]);
+    if (useDb) {
+      supabase
+        .from("chat_messages")
+        .delete()
+        .eq("user_id", userId)
+        .then(({ error }) => {
+          if (error) console.warn("[chat_messages] clear:", error.message);
+        });
+    }
     try {
       localStorage.removeItem(storageKey);
     } catch {
