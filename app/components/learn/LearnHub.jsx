@@ -14,8 +14,35 @@ import {
 import PadGuide, { usePadGuideFinished } from "./PadGuide";
 import ParentAiAssistant from "./ParentAiAssistant";
 import ParentLearningTopics from "./ParentLearningTopics";
+import LearningLibrary from "./LearningLibrary";
 
 export default function LearnHub() {
+  const { learnTab, setLearnTab, view } = useFamily();
+  const isLegacy = view === "daughter"
+    ? ["pad", "food"].includes(learnTab)
+    : learnTab === "legacy";
+
+  if (!isLegacy) {
+    return <LearningLibrary onMoreMaterials={() => setLearnTab(view === "daughter" ? "pad" : "legacy")} />;
+  }
+
+  return (
+    <div className={view === "daughter" && learnTab === "pad" ? "flex h-full min-h-0 flex-col overflow-hidden" : "space-y-4"}>
+      <button
+        type="button"
+        onClick={() => setLearnTab("topics")}
+        className="min-h-11 rounded-xl bg-white px-3 text-sm font-extrabold bb-text-B83B7E shadow-sm"
+      >
+        ← Сэдвүүд рүү буцах
+      </button>
+      <div className={view === "daughter" && learnTab === "pad" ? "min-h-0 flex-1" : ""}>
+        <LegacyLearnHub />
+      </div>
+    </div>
+  );
+}
+
+function LegacyLearnHub() {
   const [selectedFoodTip, setSelectedFoodTip] = useState(null);
   const { learnTab, setLearnTab, view, setTab } =
     useFamily();

@@ -44,7 +44,6 @@ export default function MotherCalendar() {
   const [aiError, setAiError] = useState("");
   const [proposalDate, setProposalDate] = useState(today);
   const [proposalLoading, setProposalLoading] = useState(false);
-  const [markingPeriod, setMarkingPeriod] = useState(false);
 
   // Сүүлийн 60 хоногийн ангилсан бүртгэл (RLS: охин хуваалцсан үед л ирнэ)
   useEffect(() => {
@@ -196,8 +195,6 @@ export default function MotherCalendar() {
                 {ai.tips?.map((t) => (
                   <p key={t} className="text-sm font-semibold text-slate-600">💡 {t}</p>
                 ))}
-                {flowDays > 0 && <span className="rounded-full bg-slate-100 text-slate-600 px-3 py-1.5 text-xs font-extrabold">🩸 {flowDays} өдөр</span>}
-                {sleep && <span className="rounded-full bg-slate-100 text-slate-600 px-3 py-1.5 text-xs font-extrabold">Нойр {MN[sleep[0]]}</span>}
               </div>
               ) : (
                 <button
@@ -213,6 +210,23 @@ export default function MotherCalendar() {
             </>
           )}
         </Card>
+            ) : (
+              <button
+                onClick={askSummary}
+                disabled={aiLoading}
+                className="mt-4 w-full rounded-2xl bb-grad-sos text-white py-3 text-sm font-extrabold flex items-center justify-center gap-2 active:scale-95 transition disabled:opacity-60"
+              >
+                {aiLoading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                {aiLoading ? "Тойм гаргаж байна…" : "AI-аар 7 хоногийн тойм, зөвлөмж авах"}
+              </button>
+            )}
+            {aiError && <p className="mt-2 text-xs font-semibold bb-text-7C4DCC">{aiError}</p>}
+          </>
+        )}
+        <p className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+          <Lock className="h-3.5 w-3.5 shrink-0" /> Охины хувийн тэмдэглэл танд харагдахгүй.
+        </p>
+      </Card>
 
       {/* ---------- Хуанли (бүтэн дэлгэц) ---------- */}
       {calendarOpen && (
