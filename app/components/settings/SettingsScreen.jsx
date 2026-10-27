@@ -7,6 +7,7 @@ import { useTheme } from "../../../context/ThemeContext";
 import Card from "../ui/Card";
 import PageHeader from "../ui/PageHeader";
 import SectionTitle from "../ui/SectionTitle";
+import PrivateNotePinSettings from "./PrivateNotePinSettings";
 
 export default function SettingsScreen() {
   const { theme, setTheme } = useTheme();
@@ -62,6 +63,7 @@ export default function SettingsScreen() {
       </Card>
 
       {view === "daughter" && (
+        <>
         <Card className="p-3">
           <div className="mb-2 flex items-center gap-2">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bb-bg-FDE7F1">
@@ -82,6 +84,8 @@ export default function SettingsScreen() {
             </span>
           </button>
         </Card>
+        <PrivateNotePinSettings />
+        </>
       )}
 
       <div className="flex items-start gap-2.5 rounded-2xl bb-bg-FDE7F1-70 p-3">

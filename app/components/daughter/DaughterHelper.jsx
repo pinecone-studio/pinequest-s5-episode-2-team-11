@@ -13,7 +13,6 @@ import { useFamily } from "../../../context/FamilyContext";
 import PageHeader from "../ui/PageHeader";
 import AiChat from "./AiChat";
 import DaughterSupplies from "./DaughterSupplies";
-import SosModal from "../sos/SosModal";
 
 const SECTIONS = [
   { id: "chat", label: "Блүми эгч", Icon: MessageCircleHeart },
@@ -21,7 +20,7 @@ const SECTIONS = [
 ];
 
 export default function DaughterHelper({ initial = "chat" }) {
-  const { lowSupplyCount, openSos, sosOpen } = useFamily();
+  const { lowSupplyCount, openSos } = useFamily();
   const [section, setSection] = useState(initial);
 
   return (
@@ -72,7 +71,6 @@ export default function DaughterHelper({ initial = "chat" }) {
 
       {section === "chat" ? <AiChat /> : <DaughterSupplies embedded />}
 
-      {sosOpen && <SosModal />}
     </div>
   );
 }

@@ -29,7 +29,7 @@ const TAB_BY_PATH = {
 };
 
 // Асран хамгаалагчийн эдгээр таб сонгосон охиных нь мэдээллийг харуулна
-const CHILD_TABS = ["home", "calendar", "supplies", "messages"];
+const CHILD_TABS = ["home", "calendar", "supplies", "messages", "learn"];
 
 export default function AppShell() {
   const router = useRouter();
@@ -43,11 +43,16 @@ export default function AppShell() {
     session,
     view,
     linked,
+    daughters,
+    selectedDaughterId,
+    selectDaughter,
+    daughterName,
     tab,
     setTab,
     momUnread,
     toast,
     lowSupplyCount,
+    sosOpen,
   } = family;
   // Охины хонхны тоо: асран хамгаалагчийн уншаагүй үг + хариулаагүй найзын SOS
   const teenUnread = (family.teenInbox ?? []).filter((n) => !n.read).length + (unansweredIncoming ?? 0);
@@ -118,6 +123,7 @@ export default function AppShell() {
             onNavigate={navigateToTab}
           />
         )}
+        {sosOpen && <SosModal />}
         {toast && (
           <div
             className="fixed top-20 left-0 right-0 flex justify-center px-4 pointer-events-none"

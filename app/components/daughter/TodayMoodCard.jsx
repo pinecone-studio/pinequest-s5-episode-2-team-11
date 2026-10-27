@@ -9,7 +9,7 @@ import DayLogSheet from "./DayLogSheet";
 
 const MOODS = [{ value: 5, emoji: "😄" }, { value: 4, emoji: "🙂" }, { value: 3, emoji: "😐" }, { value: 2, emoji: "😟" }, { value: 1, emoji: "😣" }];
 
-export default function TodayMoodCard({ periodDay = false }) {
+export default function TodayMoodCard({ periodDay = false, periodDayNumber = 1 }) {
   const { profile } = useFamily();
   const date = localDateKey(new Date());
   const [mood, setMood] = useState(null);
@@ -44,7 +44,7 @@ export default function TodayMoodCard({ periodDay = false }) {
           ))}
         </div>
       </Card>
-      {open && <DayLogSheet date={date} initialMood={mood} isPeriodDay={periodDay} onClose={() => setOpen(false)} onSaved={(row) => { setMood(row.mood); setHasLog(true); }} />}
+      {open && <DayLogSheet date={date} initialMood={mood} isPeriodDay={periodDay} periodDayNumber={periodDayNumber} onClose={() => setOpen(false)} onSaved={(row) => { setMood(row.mood); setHasLog(true); }} />}
     </>
   );
 }

@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, Droplets, Sparkles, LoaderCircle, X } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Droplets, Lock, Sparkles, LoaderCircle, X } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import { supabase } from "../../../lib/supabase";
 import { askAi } from "../../../lib/ai-client";
@@ -29,7 +29,7 @@ const MOOD_LABEL = { 5: "маш сайхан", 4: "сайхан", 3: "дунда
 const MOOD_EMOJI = { 5: "😄", 4: "🙂", 3: "😐", 2: "😟", 1: "😣" };
 
 export default function MotherCalendar() {
-  const { linked, activeChildId, daughterName, hasCycle, cycleLength, periodLength, lastPeriodStart, noPeriodYet, phaseKey, daysUntil, daysLate, day, shareWithMom, session } =
+  const { linked, activeChildId, daughterName, hasCycle, cycleLength, periodLength, lastPeriodStart, periodLogs, proposePeriodStart, noPeriodYet, phaseKey, daysUntil, daysLate, day, shareWithMom, session } =
     useFamily();
   const today = toDateStr();
   const [month, setMonth] = useState(() => {
@@ -42,7 +42,8 @@ export default function MotherCalendar() {
   const [ai, setAi] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState("");
-  const [markingPeriod, setMarkingPeriod] = useState(false);
+  const [proposalDate, setProposalDate] = useState(today);
+  const [proposalLoading, setProposalLoading] = useState(false);
 
   // Сүүлийн 60 хоногийн ангилсан бүртгэл (RLS: охин хуваалцсан үед л ирнэ)
   useEffect(() => {
@@ -82,7 +83,8 @@ export default function MotherCalendar() {
   }, [month]);
   const monthLabel = `${month.getFullYear()} оны ${month.getMonth() + 1}-р сар`;
 
-  const childStarts = lastPeriodStart ? [lastPeriodStart] : [];
+  const childStarts = [...new Set([lastPeriodStart, ...(periodLogs ?? []).filter((row) => row.status === "confirmed").map((row) => row.log_date)].filter(Boolean))].sort();
+  const pendingDates = new Set((periodLogs ?? []).filter((row) => row.status === "pending").map((row) => row.log_date));
   const periodDays = periodDayKeys(childStarts, periodLength, today);
   const prediction = predictPeriodRange({ starts: childStarts, today, hasHadPeriod: Boolean(lastPeriodStart) && !noPeriodYet });
   const rangeDates = useMemo(() => {
@@ -91,7 +93,13 @@ export default function MotherCalendar() {
     for (let date = parse(prediction.rangeStart); toDateStr(date) <= prediction.rangeEnd; date.setDate(date.getDate() + 1)) keys.add(toDateStr(date));
     return keys;
   }, [prediction.rangeStart, prediction.rangeEnd]);
-  const dayInfo = (key) => periodDays.has(key) ? "period" : rangeDates.has(key) && key > today ? "predicted" : prediction.late && rangeDates.has(key) && key <= today ? "late" : null;
+  const dayInfo = (key) => periodDays.has(key) ? "period" : pendingDates.has(key) ? "pending" : rangeDates.has(key) && key > today ? "predicted" : prediction.late && rangeDates.has(key) && key <= today ? "late" : null;
+  const submitPeriodProposal = async () => {
+    if (!activeChildId || !proposalDate || proposalDate > today || proposalLoading) return;
+    setProposalLoading(true);
+    await proposePeriodStart(activeChildId, proposalDate);
+    setProposalLoading(false);
+  };
   const moodCounts = {};
   week.forEach((row) => row.mood && (moodCounts[row.mood] = (moodCounts[row.mood] ?? 0) + 1));
   const commonMood = Object.entries(moodCounts).sort((a, b) => b[1] - a[1])[0];
@@ -148,7 +156,7 @@ export default function MotherCalendar() {
         {hasCycle && !noPeriodYet ? (
           <>
             <button type="button" onClick={() => setCalendarOpen(true)} aria-label="Охины хуанли нээх" className="mx-auto block w-fit rounded-full active:scale-95 transition-transform">
-              <CycleRing day={day} cycleLength={cycleLength} periodLength={periodLength} phaseKey={phaseKey} daysUntil={prediction.rangeStart && prediction.rangeStart > today ? Math.max(0, dayDiff(today, prediction.rangeStart)) : daysUntil} daysLate={prediction.late ? Math.max(daysLate, 1) : 0} />
+              <CycleRing day={day} cycleLength={cycleLength} periodLength={periodLength} phaseKey={phaseKey} daysUntil={prediction.rangeStart && prediction.rangeStart > today ? Math.max(0, dayDiff(today, prediction.rangeStart)) : daysUntil} daysLate={prediction.late ? Math.max(daysLate, 1) : 0} periods={childStarts} hasHadPeriod={Boolean(lastPeriodStart) && !noPeriodYet} />
             </button>
             <div className="mt-3"><CycleLegend compact /></div>
             <p className="mt-2 text-center text-xs font-semibold text-slate-400">Цагираг дээр дарж хуанли нээнэ</p>
@@ -157,6 +165,12 @@ export default function MotherCalendar() {
           <p className="text-sm font-semibold text-slate-500">Охины мөчлөгийн мэдээлэл хараахан ороогүй байна 🌱</p>
         )}
       </Card>
+
+      {linked && activeChildId && <Card className="!p-3">
+        <p className="text-xs font-extrabold text-slate-600">Сарын тэмдэг эхэлсэн өдрийг санал болгох</p>
+        <div className="mt-2 flex gap-2"><input aria-label="Санал болгох өдөр" type="date" value={proposalDate} max={today} onChange={(event) => setProposalDate(event.target.value)} className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-2 py-2 text-xs font-bold text-slate-600" /><button type="button" disabled={proposalLoading || !proposalDate || proposalDate > today} onClick={submitPeriodProposal} className="rounded-xl bb-bg-E0679F px-3 py-2 text-xs font-extrabold text-white disabled:opacity-50">{proposalLoading ? "Илгээж байна…" : "Санал илгээх"}</button></div>
+        <p className="mt-1 text-[10px] font-semibold text-slate-400">Охин тань баталсны дараа бүртгэгдэнэ.</p>
+      </Card>}
 
       {/* ---------- Энэ 7 хоног ---------- */}
       <Card>
@@ -181,8 +195,6 @@ export default function MotherCalendar() {
                 {ai.tips?.map((t) => (
                   <p key={t} className="text-sm font-semibold text-slate-600">💡 {t}</p>
                 ))}
-                {flowDays > 0 && <span className="rounded-full bg-slate-100 text-slate-600 px-3 py-1.5 text-xs font-extrabold">🩸 {flowDays} өдөр</span>}
-                {sleep && <span className="rounded-full bg-slate-100 text-slate-600 px-3 py-1.5 text-xs font-extrabold">Нойр {MN[sleep[0]]}</span>}
               </div>
             ) : (
               <button
@@ -195,9 +207,12 @@ export default function MotherCalendar() {
               </button>
             )}
             {aiError && <p className="mt-2 text-xs font-semibold bb-text-7C4DCC">{aiError}</p>}
-            </>
-          )}
-        </Card>
+          </>
+        )}
+        <p className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-slate-400">
+          <Lock className="h-3.5 w-3.5 shrink-0" /> Охины хувийн тэмдэглэл танд харагдахгүй.
+        </p>
+      </Card>
 
       {/* ---------- Хуанли (бүтэн дэлгэц) ---------- */}
       {calendarOpen && (
@@ -238,6 +253,8 @@ export default function MotherCalendar() {
             const style =
               kind === "period"
                 ? "bb-bg-E0679F text-white font-extrabold"
+                : kind === "pending"
+                  ? "border-2 border-dashed border-amber-400 text-amber-600"
                 : kind === "predicted"
                   ? "border-2 border-dashed bb-border-F48FB1 bb-text-B83B7E"
                   : kind === "late"
@@ -253,6 +270,7 @@ export default function MotherCalendar() {
                 style={key === today ? { boxShadow: "0 0 0 2px #F48FB1" } : undefined}
               >
                 {date.getDate()}
+                {kind === "pending" && <Clock3 className="absolute -right-0.5 -top-0.5 h-3.5 w-3.5 rounded-full bg-white p-0.5 text-amber-500" />}
                 {logged && <span className={`absolute -bottom-1.5 h-1.5 w-1.5 rounded-full ${kind === "period" ? "bb-bg-FDE7F1" : "bb-bg-B794F4"}`} />}
               </button>
             );
@@ -286,7 +304,9 @@ export default function MotherCalendar() {
               </button>
             </div>
             <p className="mt-3 text-sm font-semibold text-slate-600">
-              {sel.kind === "predicted"
+              {sel.kind === "pending"
+                ? "Асран хамгаалагч энэ өдрийг санал болгосон. Охин баталгаажуулсны дараа бүртгэгдэнэ."
+                : sel.kind === "predicted"
                 ? "Сарын тэмдэг энэ хугацаанд ирж магадгүй. Хугацаа хүн бүрт өөр байдаг."
                 : sel.kind === "late"
                   ? "Энэ нь зөвхөн ойролцоо таамаг. Эхний жилүүдэд мөчлөг зөрөх нь хэвийн."
