@@ -9,7 +9,6 @@ import { dateLabelMongolian, localDateKey, periodDayKeys, predictPeriodRange } f
 import Card from "../ui/Card";
 import BottomSheet from "../ui/BottomSheet";
 import DayLogSheet from "./DayLogSheet";
-import CycleLegend from "./CycleLegend";
 
 const localDateKey = (date) => {
   const y = date.getFullYear();
@@ -264,6 +263,11 @@ export default function PeriodCycleTracker({ onBack, cycleLength: _cycleLength, 
   }, [profile?.id]);
 
   const openDay = (date) => setSelectedDate(localDateKey(date));
+  const periodDayNumberFor = (key) => {
+    if (!periodDays.has(key)) return 1;
+    const start = usableStarts.filter((value) => value <= key).at(-1);
+    return start ? Math.floor((new Date(`${key}T00:00:00`).getTime() - new Date(`${start}T00:00:00`).getTime()) / 86400000) + 1 : 1;
+  };
   const togglePeriodStart = (date) => {
     const key = localDateKey(date);
     if (key > today) return;
@@ -496,7 +500,6 @@ export default function PeriodCycleTracker({ onBack, cycleLength: _cycleLength, 
               })}
             </div>
           </div>
-          <div className="mt-3"><CycleLegend compact /></div>
           {loadingLogs && <p className="mt-2 text-center text-xs font-semibold text-slate-400">Өдрийн бүртгэл ачаалж байна…</p>}
           {!periodStarts.length && <p className="mt-2 text-center text-xs font-semibold text-slate-400">Сарын тэмдэг хараахан ирээгүй бол зөвхөн өдрийн тэмдэглэл хөтөлж болно.</p>}
         </Card>
@@ -539,7 +542,7 @@ export default function PeriodCycleTracker({ onBack, cycleLength: _cycleLength, 
         </Card>
       </div>
 
-      {selectedDate && <DayLogSheet key={selectedDate} date={selectedDate} initialMood={logs[selectedDate]?.mood ?? null} isPeriodDay={periodDays.has(selectedDate)} onClose={() => setSelectedDate(null)} onSaved={saveDailyLog} />}
+      {selectedDate && <DayLogSheet key={selectedDate} date={selectedDate} initialMood={logs[selectedDate]?.mood ?? null} isPeriodDay={periodDays.has(selectedDate)} periodDayNumber={periodDayNumberFor(selectedDate)} onClose={() => setSelectedDate(null)} onSaved={saveDailyLog} />}
     </main>
   );
 }
