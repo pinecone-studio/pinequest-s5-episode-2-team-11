@@ -43,6 +43,15 @@ function dateLabelWithMonth(date) {
   return dateLabelMongolian(date);
 }
 
+function scrollMonthBelowStickyBars(container, target) {
+  if (!container || !target) return;
+  const safeTop = Number.parseFloat(getComputedStyle(container).getPropertyValue("--calendar-safe-top")) || 0;
+  const stickyHeight = safeTop + 56 + 32;
+  const containerTop = container.getBoundingClientRect().top;
+  const targetTop = target.getBoundingClientRect().top;
+  container.scrollTo({ top: container.scrollTop + targetTop - containerTop - stickyHeight, behavior: "auto" });
+}
+
 export default function PeriodCycleTracker({ onBack, onDayPress, cycleLength: cycleLengthProp, periodLength: periodLengthProp }) {
   const {
     profile, session, periodStarts, periodLogs, noPeriodYet, savePeriodStartDates,
@@ -88,7 +97,7 @@ export default function PeriodCycleTracker({ onBack, onDayPress, cycleLength: cy
 
   useEffect(() => {
     const target = monthRefs.current[monthKey(currentMonth)];
-    if (viewMode === "month" && target) requestAnimationFrame(() => target.scrollIntoView({ block: "start", behavior: "instant" }));
+    if (viewMode === "month" && target) requestAnimationFrame(() => scrollMonthBelowStickyBars(mainRef.current, target));
   }, [viewMode, anchorMonth, currentMonth]);
 
   useEffect(() => {
@@ -119,7 +128,7 @@ export default function PeriodCycleTracker({ onBack, onDayPress, cycleLength: cy
     setAnchorMonth(first);
     setSelectedYear(first.getFullYear());
     setViewMode("month");
-    requestAnimationFrame(() => requestAnimationFrame(() => monthRefs.current[monthKey(first)]?.scrollIntoView({ block: "start", behavior: "instant" })));
+    requestAnimationFrame(() => requestAnimationFrame(() => scrollMonthBelowStickyBars(mainRef.current, monthRefs.current[monthKey(first)])));
   }, []);
 
   const beginEdit = () => {
@@ -233,8 +242,8 @@ export default function PeriodCycleTracker({ onBack, onDayPress, cycleLength: cy
 
   const monthTitle = (date) => `${date.getFullYear() !== currentMonth.getFullYear() ? `${date.getFullYear()} оны ` : ""}${date.getMonth() + 1} сар`;
 
-  return <main ref={mainRef} style={{ backgroundColor: theme === "dark" ? "#211b29" : "#fff7fb" }} className="fixed inset-0 z-[70] overflow-x-hidden overflow-y-auto overscroll-contain px-4 pb-[calc(env(safe-area-inset-bottom)+96px)] pt-0 text-slate-700 dark:text-slate-100">
-    <header className="sticky top-0 z-30 -mx-4 flex h-14 items-center justify-between gap-3 bg-white/95 px-4 backdrop-blur dark:bg-[#211b29]/95">
+  return <main ref={mainRef} style={{ backgroundColor: theme === "dark" ? "#211b29" : "#fff7fb", "--calendar-safe-top": "env(safe-area-inset-top)" }} className="fixed inset-0 z-[70] overflow-x-hidden overflow-y-auto overscroll-contain px-4 pb-[calc(env(safe-area-inset-bottom)+96px)] pt-0 text-slate-700 dark:text-slate-100">
+    <header style={{ height: "calc(56px + env(safe-area-inset-top))", paddingTop: "env(safe-area-inset-top)" }} className="sticky top-0 z-30 -mx-4 flex box-border items-center justify-between gap-3 bg-white/95 px-4 backdrop-blur dark:bg-[#211b29]/95">
       <button type="button" onClick={onBack} aria-label="Хаах" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-600 hover:bg-pink-50 dark:text-slate-200 dark:hover:bg-[#392d3e]"><X className="h-5 w-5" /></button>
       <div role="tablist" aria-label="Хуанлийн харагдац" className="grid grid-cols-2 rounded-full bg-pink-50 p-1 dark:bg-[#392d3e]">
         {[{ id: "month", label: "Сар" }, { id: "year", label: "Жил" }].map((item) => <button key={item.id} type="button" role="tab" aria-selected={viewMode === item.id} disabled={editing} onClick={() => setViewMode(item.id)} className={`rounded-full px-5 py-1.5 text-xs font-extrabold disabled:opacity-50 ${viewMode === item.id ? "bg-white text-[#b83b7e] shadow-sm dark:bg-[#514054] dark:text-pink-200" : "text-slate-500 dark:text-slate-300"}`}>{item.label}</button>)}
@@ -243,15 +252,15 @@ export default function PeriodCycleTracker({ onBack, onDayPress, cycleLength: cy
     </header>
 
     {viewMode === "month" ? <>
-      <div className="sticky top-14 z-20 -mx-4 grid grid-cols-7 bg-white/95 px-4 py-2 text-center text-[11px] font-extrabold text-slate-500 backdrop-blur dark:bg-[#211b29]/95 dark:text-slate-300">{WEEKDAYS.map((day) => <span key={day}>{day}</span>)}</div>
+      <div style={{ top: "calc(56px + env(safe-area-inset-top))" }} className="sticky z-20 -mx-4 grid grid-cols-7 bg-white/95 px-4 py-2 text-center text-[11px] font-extrabold text-slate-500 backdrop-blur dark:bg-[#211b29]/95 dark:text-slate-300">{WEEKDAYS.map((day) => <span key={day}>{day}</span>)}</div>
       <div className="mx-auto max-w-md">
-        {months.map(({ date, key, dates }) => <section key={key} ref={(node) => { monthRefs.current[key] = node; }} className="scroll-mt-28 py-2" style={{ contentVisibility: "auto", containIntrinsicSize: "340px" }}>
+        {months.map(({ date, key, dates }) => <section key={key} ref={(node) => { monthRefs.current[key] = node; }} className="py-2">
           <h2 className="mb-2 text-center text-base font-black text-slate-700 dark:text-slate-100">{monthTitle(date)}</h2>
           <div className="grid grid-cols-7 gap-y-1">{dates.map((day, index) => day ? renderDay(day) : <span key={`${key}-blank-${index}`} aria-hidden="true" className="h-[54px]" />)}</div>
         </section>)}
       </div>
     </> : <section className="mx-auto max-w-md pb-6">
-      <div className="sticky top-14 z-20 flex items-center justify-center gap-6 bg-white/95 py-3 backdrop-blur dark:bg-[#211b29]/95">
+      <div style={{ top: "calc(56px + env(safe-area-inset-top))" }} className="sticky z-20 flex items-center justify-center gap-6 bg-white/95 py-3 backdrop-blur dark:bg-[#211b29]/95">
         <button type="button" aria-label="Өмнөх жил" onClick={() => setSelectedYear((year) => year - 1)} className="rounded-full p-2 text-slate-500 dark:text-slate-300"><ChevronLeft className="h-5 w-5" /></button>
         <h2 className="text-base font-black text-slate-700 dark:text-slate-100">{selectedYear} он</h2>
         <button type="button" aria-label="Дараагийн жил" onClick={() => setSelectedYear((year) => year + 1)} className="rounded-full p-2 text-slate-500 dark:text-slate-300"><ChevronRight className="h-5 w-5" /></button>
