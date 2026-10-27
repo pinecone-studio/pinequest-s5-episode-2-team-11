@@ -94,6 +94,24 @@ body {
   .lesson-slide-copy { font-size: 13px; line-height: 1.32; }
 }
 
+/* Day-log category colors: calendar dots and day-view circles (soft pastels, both themes). */
+:root {
+  --cat-mood: #8ec9f0;
+  --cat-skin: #f9b99a;
+  --cat-symptoms: #9fd89a;
+  --cat-period: #c7a6f2;
+  --cat-sleep: #9aa6f0;
+  --selected-day: #fbd3e6;
+}
+.theme-dark {
+  --cat-mood: #6aa8d4;
+  --cat-skin: #d9957a;
+  --cat-symptoms: #76b571;
+  --cat-period: #a387d6;
+  --cat-sleep: #7d8ad8;
+  --selected-day: #5c3651;
+}
+
 /* Dark mode is scoped to the app shell so the selected theme covers every tab. */
 .theme-dark {
   color: #f1e8f4;

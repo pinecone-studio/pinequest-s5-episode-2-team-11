@@ -8,6 +8,7 @@ import { addDaysToLocalDateKey, localDateKey, dateLabelMongolian } from "../../.
 import { toggleSelectedPeriodDay } from "../../../lib/period-edit";
 import { supabase } from "../../../lib/supabase";
 import BottomSheet from "../ui/BottomSheet";
+import DayDetailSheet from "./DayDetailSheet";
 import DayLogSheet from "./DayLogSheet";
 
 const WEEKDAYS = ["Да", "Мя", "Лх", "Пү", "Ба", "Бя", "Ня"];
@@ -61,7 +62,7 @@ export default function PeriodCycleTracker({ onBack, onDayPress, cycleLength: cy
   const [viewMode, setViewMode] = useState("month");
   const [selectedYear, setSelectedYear] = useState(currentMonth.getFullYear());
   const [selectedDate, setSelectedDate] = useState("");
-  const [logs, setLogs] = useState({});
+  const [dots, setDots] = useState({});
   const [editing, setEditing] = useState(false);
   const [draftDays, setDraftDays] = useState(new Set());
   const [saving, setSaving] = useState(false);
@@ -107,15 +108,18 @@ export default function PeriodCycleTracker({ onBack, onDayPress, cycleLength: cy
     if (viewMode === "month" && target) requestAnimationFrame(() => scrollMonthBelowStickyBars(mainRef.current, target));
   }, [viewMode, anchorMonth, currentMonth]);
 
+  // One dot per logged category; refetched as soon as any entry is saved or deleted.
   useEffect(() => {
     if (!supabase || !profile?.id) return;
     let cancelled = false;
-    supabase.rpc("get_my_day_logs", { p_from: rangeStart, p_to: rangeEnd }).then(({ data, error }) => {
+    const load = () => fetchEntries(supabase, rangeStart, rangeEnd).then(({ data, error }) => {
       if (cancelled) return;
-      if (error) console.warn("[day_logs] calendar markers:", error.message);
-      setLogs(Object.fromEntries((data ?? []).map((row) => [row.log_date, row])));
+      if (error) console.warn("[log_entries] calendar dots:", error.message);
+      setDots(categoriesByDate(data));
     });
-    return () => { cancelled = true; };
+    load();
+    window.addEventListener(LOG_ENTRIES_CHANGED, load);
+    return () => { cancelled = true; window.removeEventListener(LOG_ENTRIES_CHANGED, load); };
   }, [profile?.id, rangeStart, rangeEnd]);
 
   useEffect(() => {
@@ -203,13 +207,16 @@ export default function PeriodCycleTracker({ onBack, onDayPress, cycleLength: cy
     const isLatePrediction = !editing && overduePeriodDays.has(key) && !isLogged;
     const cycleNumber = hasPeriod ? cycleDayNumber(key, activeStarts, Number(cycleLengthProp ?? 28)) : null;
     const periodNumber = isLogged ? periodDayNumber(key, periodStarts) : null;
-    const hasLog = Boolean(logs[key] && (logs[key].mood || logs[key].pain != null || logs[key].symptoms?.length || logs[key].flow));
+    const dayDots = dots[key];
+    const hasLog = Boolean(dayDots?.size);
+    const isOpen = !editing && selectedDate === key;
     const isPending = Boolean(pendingByDate[key]);
     if (miniature) return <span key={key} style={theme === "dark" && isPredicted ? { backgroundColor: "#422a3c", color: "#f2a5c9" } : undefined} className={`mx-auto flex h-5 w-5 items-center justify-center rounded-full text-[8px] font-bold ${isLogged ? "bg-[#e0679f] text-white" : isPredicted ? "bg-pink-100 text-[#d95791]" : isLatePrediction ? "bg-slate-100 text-slate-400" : "text-slate-500"}`}>{date.getDate()}</span>;
     const dateClass = editing
       ? isSelected ? "bg-[#e0679f] text-white" : "border border-slate-300 bg-transparent text-slate-500"
       : isLogged ? "bg-[#e0679f] text-white"
-        : isLatePrediction ? "bg-slate-100 text-slate-400"
+        : isOpen ? "text-[#b83b7e]"
+          : isLatePrediction ? "bg-slate-100 text-slate-400"
           : isPredicted ? "bg-pink-100 text-[#d95791]"
             : "text-slate-700";
     const dateStyle = theme === "dark"
@@ -224,7 +231,7 @@ export default function PeriodCycleTracker({ onBack, onDayPress, cycleLength: cy
       disabled={editing && key > today}
       onClick={() => editing ? togglePeriodDay(date) : handleDayPress(date)}
       aria-label={`${dateLabelWithMonth(date)}${isLogged ? `, сарын тэмдгийн ${periodNumber} дахь өдөр` : isPredicted ? ", таамагласан өдөр" : ""}${isToday ? ", өнөөдөр" : ""}${hasLog ? ", тэмдэглэлтэй" : ""}${isPending ? ", баталгаажуулах хүсэлттэй" : ""}`}
-      className={`relative mx-auto flex h-[54px] w-full max-w-[48px] flex-col items-center justify-start pt-1 ${editing && key > today ? "cursor-not-allowed opacity-25" : ""}`}
+      className={`relative mx-auto flex h-[64px] w-full max-w-[48px] flex-col items-center justify-start pt-1 ${editing && key > today ? "cursor-not-allowed opacity-25" : ""}`}
     >
       {!miniature && hasPeriod && (isLogged || isToday) && !editing && <span className={`absolute left-0 top-0 z-10 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-extrabold ${isLogged ? "bg-[#b83b7e] text-white" : "bg-slate-500 text-white"}`}>{isLogged ? periodNumber : cycleNumber}</span>}
       {!miniature && editing && isSelected && <span className="absolute left-0 top-0 z-10 flex h-4 w-4 items-center justify-center rounded-full bg-[#b83b7e] text-white"><Check className="h-3 w-3" /></span>}
@@ -233,8 +240,11 @@ export default function PeriodCycleTracker({ onBack, onDayPress, cycleLength: cy
         {date.getDate()}
         {!miniature && isPending && !isLogged && <Clock3 className="absolute -right-1 -top-1 h-3.5 w-3.5 rounded-full bg-white p-0.5 text-amber-500" />}
       </span>
-      {!miniature && isToday && <span className="mt-0.5 text-[7px] font-black tracking-wide text-[#b83b7e]">ӨНӨӨДӨР</span>}
-      {!miniature && hasLog && <span className={`absolute bottom-0 h-1 w-1 rounded-full ${isLogged ? "bg-white" : "bg-[#b794f4]"}`} />}
+      {!miniature && <span aria-hidden="true" className="mt-0.5 flex h-2.5 items-center gap-[2px]">
+        {dayDots?.has("period") && <span className="text-[8px] leading-none">🩸</span>}
+        {CATEGORIES.filter(({ key: category }) => category !== "period" && dayDots?.has(category)).map(({ key: category }) => <span key={category} className="h-[5px] w-[5px] rounded-full" style={{ backgroundColor: categoryColor(category) }} />)}
+      </span>}
+      {!miniature && isToday && <span className="text-[7px] font-black leading-none tracking-wide text-[#b83b7e]">ӨНӨӨДӨР</span>}
     </button>;
   };
 
