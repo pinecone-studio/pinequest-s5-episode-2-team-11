@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useFamily } from "../../../context/FamilyContext";
-import { Users, Droplets, BookOpen, CalendarDays } from "lucide-react";
-import { PHASE_COLORS, PHASES } from "../../../lib/data";
+import { Users, ChevronRight, AlertCircle, Droplets, BookOpen, CalendarDays } from "lucide-react";
+import { localDateKey, periodDayKeys } from "../../../lib/cycle";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
 import CycleRing from "./CycleRing";
@@ -12,6 +12,8 @@ import FriendsQuickCard from "../friends/FriendsQuickCard";
 import IncomingSosCard from "../friends/IncomingSosCard";
 import PeriodCycleTracker from "./PeriodCycleTracker";
 import CyclePredictionCard from "./CyclePredictionCard";
+import TodayMoodCard from "./TodayMoodCard";
+import CycleLegend from "./CycleLegend";
 
 export default function DaughterHome() {
   const [cycleModalOpen, setCycleModalOpen] = useState(false);
@@ -31,9 +33,11 @@ export default function DaughterHome() {
     isPeriod,
     daysUntil,
     lastPeriodStart,
+    periodStarts,
+    periodPrediction,
     startPeriod,
   } = useFamily();
-
+  const periodDay = periodDayKeys(periodStarts, periodLength, localDateKey(new Date())).has(localDateKey(new Date()));
   return (
     <div className="space-y-4">
       <div className="flex items-end justify-between gap-2 bloom-fade">
@@ -69,23 +73,13 @@ export default function DaughterHome() {
               cycleLength={cycleLength}
               periodLength={periodLength}
               phaseKey={phaseKey}
-              daysUntil={daysUntil}
-              daysLate={daysLate}
+              daysUntil={periodPrediction.late ? 0 : periodPrediction.rangeStart ? Math.max(0, Math.round((new Date(`${periodPrediction.rangeStart}T00:00:00`) - new Date(`${localDateKey(new Date())}T00:00:00`)) / 86400000)) : daysUntil}
+              daysLate={periodPrediction.late ? Math.max(daysLate, 1) : 0}
             />
           </button>
-          <div className="mt-3 flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs font-bold text-slate-500">
-            {Object.entries(PHASE_COLORS).map(([k, c]) => (
-              <span key={k} className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full" style={{ background: c }} /> {PHASES[k].short}
-              </span>
-            ))}
-          </div>
-          {daysLate > 0 && (
-            <p className="mt-4 text-xs font-semibold text-slate-500 bb-bg-FFF7FB rounded-2xl px-4 py-3 leading-relaxed">
-              Өсвөр насанд мөчлөг хэдэн хоногоор зөрөх нь хэвийн. Ирэхээр нь доорх товчийг дараарай. 3 сараас
-              удаан ирэхгүй бол асран хамгаалагчдаа хэлээд эмчид үзүүлээрэй.
-            </p>
-          )}
+          <div className="mt-3"><CycleLegend compact /></div>
+          {periodPrediction.late && <p className="mt-3 rounded-2xl bb-bg-FDE7F1 px-3 py-2 text-center text-xs font-bold bb-text-B83B7E">Хоцорч байна. Эхний жилүүдэд ингэх нь хэвийн 💗</p>}
+          {periodPrediction.overNinetyDays && <p className="mt-2 rounded-2xl bb-bg-FDE7F1 px-3 py-2 text-xs font-semibold leading-relaxed bb-text-B83B7E">3 сараас удаан ирээгүй байна. Асран хамгаалагчтайгаа ярьж, эмчид үзүүлэхийг зөвлөж байна.</p>}
           {!isPeriod && (
             <button
               onClick={startPeriod}
@@ -97,7 +91,7 @@ export default function DaughterHome() {
         </Card>
       ) : (
         <Card className="bb-grad-4">
-          <SectionTitle icon={Droplets} title={noPeriodYet ? "Анхны сарын тэмдэгт бэлдье" : "Миний мөчлөг"} />
+          <SectionTitle icon={Droplets} title={noPeriodYet ? "Анхны сарын тэмдэгт бэлдье" : "Миний мөчлөг"} right={<button type="button" onClick={() => setCycleModalOpen(true)} className="flex items-center gap-1 rounded-full bb-bg-E9DDFC-50 px-3 py-1.5 text-xs font-extrabold bb-text-7C4DCC"><CalendarDays className="h-3.5 w-3.5" /> Хуанли</button>} />
           <p className="text-sm font-semibold text-slate-600 leading-relaxed">
             {noPeriodYet
               ? "Анхны сарын тэмдэг ихэвчлэн 10–15 насанд ирдэг. Энэ бол өсөлтийн хэвийн, сайхан үе шат 🌱 Сургуулийн цүнхэндээ бэлтгэл хийчихвэл санаа амар байна."
@@ -122,6 +116,26 @@ export default function DaughterHome() {
           </button>
         </Card>
       )}
+
+      <TodayMoodCard periodDay={periodDay} />
+
+      {/* SOS */}
+      <button
+        onClick={openSos}
+        className="w-full rounded-3xl bg-gradient-to-r from-[#e0679f] to-[#b83b7e] p-5 text-left text-white shadow-xl bb-shadow-F48FB1-30 active:scale-95 transition flex items-center gap-4 relative overflow-hidden bloom-fade"
+      >
+        <span className="relative w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center">
+          <span className="absolute inset-0 rounded-2xl bg-white/10 animate-ping" />
+          <AlertCircle className="w-7 h-7 text-white" />
+        </span>
+        <span className="flex-1 relative">
+          <span className="block text-xl font-black text-white">SOS</span>
+          <span className="block text-sm font-bold text-white/85">
+            3 минутын амьсгал ба сунгалтын дасгал
+          </span>
+        </span>
+        <ChevronRight className="w-6 h-6 relative text-white" />
+      </button>
 
       {cycleModalOpen && (
         <PeriodCycleTracker onBack={() => setCycleModalOpen(false)} cycleLength={cycleLength} periodLength={periodLength} lastPeriodStart={lastPeriodStart} />

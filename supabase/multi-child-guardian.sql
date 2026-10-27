@@ -180,31 +180,6 @@ begin
 end;
 $$;
 
-create or replace function public.guardian_mark_child_period(p_child_id uuid, p_start_date date)
-returns boolean language plpgsql security definer set search_path = public as $$
-declare
-  v_family uuid;
-begin
-  if auth.uid() is null then raise exception 'not_authenticated'; end if;
-  if p_start_date is null or p_start_date > current_date then raise exception 'invalid_period_date'; end if;
-
-  select family_id into v_family
-  from public.profiles
-  where id = auth.uid() and role = 'mother';
-  if v_family is null then raise exception 'guardian_only'; end if;
-
-  update public.profiles
-  set last_period_start = p_start_date, no_period_yet = false
-  where id = p_child_id and role = 'daughter' and family_id = v_family;
-  if not found then raise exception 'child_not_in_family'; end if;
-
-  return true;
-end;
-$$;
-
-revoke all on function public.guardian_mark_child_period(uuid, date) from public;
-grant execute on function public.guardian_mark_child_period(uuid, date) to authenticated;
-
 drop policy if exists "notif: read mine" on public.notifications;
 create policy "notif: read mine" on public.notifications
   for select to authenticated

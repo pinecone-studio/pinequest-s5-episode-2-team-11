@@ -29,11 +29,16 @@ create table if not exists public.profiles (
 create table if not exists public.supplies (
   family_id  uuid not null references public.families (id) on delete cascade,
   kind       text not null,                       -- day | night | liner
+  label      text,
+  emoji      text,
   count      int  not null default 0 check (count >= 0),
   max        int  not null default 10 check (max > 0),
   updated_at timestamptz not null default now(),
   primary key (family_id, kind)
 );
+
+alter table public.supplies add column if not exists label text;
+alter table public.supplies add column if not exists emoji text;
 
 create table if not exists public.mood_logs (
   id         bigint generated always as identity primary key,
@@ -198,31 +203,6 @@ begin
 end;
 $$;
 
-create or replace function public.guardian_mark_child_period(p_child_id uuid, p_start_date date)
-returns boolean language plpgsql security definer set search_path = public as $$
-declare
-  v_family uuid;
-begin
-  if auth.uid() is null then raise exception 'not_authenticated'; end if;
-  if p_start_date is null or p_start_date > current_date then raise exception 'invalid_period_date'; end if;
-
-  select family_id into v_family
-  from public.profiles
-  where id = auth.uid() and role = 'mother';
-  if v_family is null then raise exception 'guardian_only'; end if;
-
-  update public.profiles
-  set last_period_start = p_start_date, no_period_yet = false
-  where id = p_child_id and role = 'daughter' and family_id = v_family;
-  if not found then raise exception 'child_not_in_family'; end if;
-
-  return true;
-end;
-$$;
-
-revoke all on function public.guardian_mark_child_period(uuid, date) from public;
-grant execute on function public.guardian_mark_child_period(uuid, date) to authenticated;
-
 -- ---------- Хүүхэд асран хамгаалагчийн кодоор гэр бүлд нэгдэх ----------
 
 create or replace function public.join_family(p_code text)
@@ -351,6 +331,15 @@ create policy "supplies: family update" on public.supplies
   for update to authenticated
   using (family_id = public.my_family_id())
   with check (family_id = public.my_family_id());
+
+drop policy if exists "supplies: family insert" on public.supplies;
+create policy "supplies: family insert" on public.supplies
+  for insert to authenticated
+  with check (family_id = public.my_family_id());
+
+drop policy if exists "supplies: family delete" on public.supplies;
+create policy "supplies: family delete" on public.supplies
+  for delete to authenticated using (family_id = public.my_family_id());
 
 -- mood_logs: өөрийнхөө бүгдийг; гэр бүлийн гишүүнийх — тэр хуваалцахыг зөвшөөрсөн бол
 drop policy if exists "mood: read own or shared" on public.mood_logs;
