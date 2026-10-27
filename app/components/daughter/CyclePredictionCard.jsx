@@ -102,7 +102,7 @@ export default function CyclePredictionCard({ daysUntil, cycleLength, lastPeriod
         <span className="flex h-10 w-10 items-center justify-center rounded-2xl bb-bg-FDE7F1 bb-text-B83B7E"><Sparkles className="h-5 w-5" /></span>
         <div className="min-w-0 flex-1">
           <h2 className="font-black text-slate-700">Мөчлөгийн өмнөх хувийн таамаг</h2>
-          <p className="text-xs font-bold bb-text-B83B7E">Сарын тэмдэг ойролцоогоор {daysUntil} хоногийн дараа</p>
+          <p className="text-xs font-bold bb-text-B83B7E">Сарын тэмдэг ойртож байна</p>
         </div>
       </div>
 
