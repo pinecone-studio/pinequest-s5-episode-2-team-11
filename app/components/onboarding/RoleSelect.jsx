@@ -27,31 +27,29 @@ export default function RoleSelect({ onPick, onLogin }) {
       </p>
 
       <div className="space-y-4">
-        <button
-          onClick={() => onPick("daughter")}
-          className="w-full text-left bg-white rounded-3xl p-5 border-2 bb-border-FDE7F1 bb-hover-border-F48FB1 active:scale-95 transition-all shadow-sm flex items-center gap-4 group"
-        >
-          <span className="w-14 h-14 rounded-2xl bb-bg-E8F5E9 flex items-center justify-center text-3xl">
-                        <Sprout className="w-7 h-7 bb-text-4F8A55" />
-          </span>
-          <span className="flex-1">
-            <span className="block font-extrabold text-slate-700 text-lg">Охин</span>
-          </span>
-          <ChevronRight className="w-5 h-5 text-slate-300 bb-group-hover-text-B83B7E transition" />
-        </button>
+          <button
+            type="button"
+            onClick={() => onPick("daughter")}
+            className="group flex w-full items-center gap-4 rounded-3xl border-2 bb-border-FDE7F1 bg-white p-5 text-left shadow-sm transition bb-hover-border-F48FB1 active:scale-95"
+          >
+            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bb-bg-E8F5E9">
+              <Sprout className="h-7 w-7 bb-text-4F8A55" aria-hidden="true" />
+            </span>
+            <span className="flex-1 font-extrabold text-lg text-slate-700">Охин</span>
+            <ChevronRight className="h-5 w-5 text-slate-300" aria-hidden="true" />
+          </button>
 
-        <button
-          onClick={() => onPick("mother")}
-          className="w-full text-left bg-white rounded-3xl p-5 border-2 bb-border-E9DDFC-70 bb-hover-border-B794F4 active:scale-95 transition-all shadow-sm flex items-center gap-4 group"
-        >
-          <span className="w-14 h-14 rounded-2xl bb-bg-FFD8CC-50 flex items-center justify-center text-3xl">
-                        <HeartHandshake className="w-7 h-7 bb-text-C2674F" />
-          </span>
-          <span className="flex-1">
-            <span className="block font-extrabold text-slate-700 text-lg">Асран хамгаалагч</span>
-          </span>
-          <ChevronRight className="w-5 h-5 text-slate-300 bb-group-hover-text-7C4DCC transition" />
-        </button>
+          <button
+            type="button"
+            onClick={() => onPick("mother")}
+            className="group flex w-full items-center gap-4 rounded-3xl border-2 bb-border-E9DDFC-70 bg-white p-5 text-left shadow-sm transition bb-hover-border-B794F4 active:scale-95"
+          >
+            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bb-bg-FFD8CC-50">
+              <HeartHandshake className="h-7 w-7 bb-text-C2674F" aria-hidden="true" />
+            </span>
+            <span className="flex-1 font-extrabold text-lg text-slate-700">Асран хамгаалагч</span>
+            <ChevronRight className="h-5 w-5 text-slate-300" aria-hidden="true" />
+          </button>
       </div>
 
       <InstallAppButton />
