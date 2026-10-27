@@ -6,6 +6,7 @@ import { useFamily } from "../../../context/FamilyContext";
 import { askAi } from "../../../lib/ai-client";
 import Card from "../ui/Card";
 import ChatAvatar from "../daughter/ChatAvatar";
+import { t } from "../../../lib/i18n";
 
 export default function ParentAiAssistant() {
   const { session, daughterName, selectedDaughterId } = useFamily();
@@ -16,7 +17,7 @@ export default function ParentAiAssistant() {
   const listRef = useRef(null);
   const activeDaughterRef = useRef(selectedDaughterId);
   activeDaughterRef.current = selectedDaughterId;
-  const suggestions = ["Яаж тайван ярилцах вэ?", `${daughterName}-г яаж дэмжих вэ?`];
+  const suggestions = [t("Яаж тайван ярилцах вэ?", "How do I talk calmly?"), t(`${daughterName}-г яаж дэмжих вэ?`, `How can I support ${daughterName}?`)];
 
   useEffect(() => {
     if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
@@ -28,7 +29,7 @@ export default function ParentAiAssistant() {
     setBusy(false);
   }, [selectedDaughterId]);
 
-  const greeting = `Сайн уу! Би Блүми, таны туслах 🌷 ${daughterName}-д туслах талаар юу асуух вэ?`;
+  const greeting = t(`Сайн уу! Би Блүми, таны туслах 🌷 ${daughterName}-д туслах талаар юу асуух вэ?`, `Hi! I'm Bloomy, your helper 🌷 What would you like to ask about helping ${daughterName}?`);
 
   const send = async (value) => {
     const content = value.trim();
@@ -40,7 +41,7 @@ export default function ParentAiAssistant() {
     const requestDaughterId = selectedDaughterId;
     const result = await askAi(session, { type: "parent_chat", daughterName, messages: nextMessages.slice(-8) });
     if (activeDaughterRef.current !== requestDaughterId) return;
-    const reply = result?.reply || `${daughterName}-г тайван сонсоод, яг одоо түүнд юу хэрэгтэй байгааг асуугаарай. Сарын тэмдгийн талаар бол хамтдаа ярилцаж, хэрэгтэй зүйлсийг нь бэлдэж өгч болно. 💗`;
+    const reply = result?.reply || t(`${daughterName}-г тайван сонсоод, яг одоо түүнд юу хэрэгтэй байгааг асуугаарай. Сарын тэмдгийн талаар бол хамтдаа ярилцаж, хэрэгтэй зүйлсийг нь бэлдэж өгч болно. 💗`, `Listen to ${daughterName} calmly and ask what she needs right now. If it's about her period, you can talk it through together and get what she needs ready. 💗`);
     setMessages([...nextMessages, { role: "assistant", content: reply }]);
     setBusy(false);
   };
@@ -56,9 +57,9 @@ export default function ParentAiAssistant() {
         </span>
         <span className="min-w-0 flex-1">
           <span className="parent-ai-title flex items-center gap-1.5 text-sm font-black">
-            Блүмигээс асуугаарай <Sparkles className="h-3.5 w-3.5 bb-text-B83B7E" />
+            {t("Блүмигээс асуугаарай", "Ask Bloomy")} <Sparkles className="h-3.5 w-3.5 bb-text-B83B7E" />
           </span>
-          <span className="block text-xs font-semibold text-slate-500">{daughterName}-д туслах санаа энд бий 🌷</span>
+          <span className="block text-xs font-semibold text-slate-500">{daughterName}{t("-д туслах санаа энд бий 🌷", ": ideas to help her are here 🌷")}</span>
         </span>
         <MessageCircle className="h-5 w-5 bb-text-B83B7E" />
       </button>
@@ -71,15 +72,15 @@ export default function ParentAiAssistant() {
         <ChatAvatar talking={busy} size={54} />
         <div className="min-w-0 flex-1">
           <p className="flex items-center gap-1.5 font-black text-slate-700">
-            Таны туслах Блүми <Sparkles className="h-4 w-4 bb-text-B83B7E" />
+            {t("Таны туслах Блүми", "Bloomy, your helper")} <Sparkles className="h-4 w-4 bb-text-B83B7E" />
           </p>
-          <p className="text-xs font-semibold text-slate-500">{daughterName}-д туслах талаар хамтдаа ярилцъя 🌷</p>
+          <p className="text-xs font-semibold text-slate-500">{daughterName}{t("-д туслах талаар хамтдаа ярилцъя 🌷", ": let's talk about how to help 🌷")}</p>
         </div>
         {messages.length > 0 && (
           <button
             onClick={() => setMessages([])}
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-slate-400 active:scale-90"
-            aria-label="Чатыг цэвэрлэх"
+            aria-label={t("Чатыг цэвэрлэх", "Clear chat")}
           >
             <Trash2 className="h-4 w-4" />
           </button>
@@ -87,7 +88,7 @@ export default function ParentAiAssistant() {
         <button
           onClick={() => setOpen(false)}
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-slate-400 active:scale-90"
-          aria-label="Чатыг хураах"
+          aria-label={t("Чатыг хураах", "Collapse chat")}
         >
           <ChevronDown className="h-4 w-4" />
         </button>
@@ -101,7 +102,7 @@ export default function ParentAiAssistant() {
         {busy && (
           <div className="flex justify-start">
             <div className="rounded-3xl rounded-bl-lg border border-slate-100 bg-white px-4 py-3 text-xs font-semibold text-slate-400">
-              Блүми бодож байна… 💭
+              {t("Блүми бодож байна… 💭", "Bloomy is thinking… 💭")}
             </div>
           </div>
         )}
@@ -133,21 +134,21 @@ export default function ParentAiAssistant() {
           onChange={(event) => setDraft(event.target.value)}
           maxLength={600}
           rows={2}
-          placeholder="Блүмигээс асуугаарай…"
-          aria-label="AI туслахаас асуух"
+          placeholder={t("Блүмигээс асуугаарай…", "Ask Bloomy…")}
+          aria-label={t("AI туслахаас асуух", "Ask the AI helper")}
           className="min-w-0 flex-1 resize-none rounded-2xl bb-bg-FFF7FB border-2 bb-border-E9DDFC px-3 py-2.5 text-sm font-semibold outline-none bb-focus-border-F48FB1"
         />
         <button
           type="submit"
           disabled={!draft.trim() || busy}
-          aria-label="Асуулт илгээх"
+          aria-label={t("Асуулт илгээх", "Send question")}
           className="flex h-11 w-11 items-center justify-center rounded-2xl bb-bg-E0679F text-white active:scale-95 disabled:opacity-40"
         >
           <Send className="h-4 w-4" />
         </button>
       </form>
       <p className="mt-2 flex items-center justify-center gap-1 text-[11px] font-semibold text-slate-400">
-        <MessageCircle className="h-3 w-3" /> Яриагаа үргэлжлүүлэн асуугаарай
+        <MessageCircle className="h-3 w-3" /> {t("Яриагаа үргэлжлүүлэн асуугаарай", "Keep the conversation going")}
       </p>
     </Card>
   );

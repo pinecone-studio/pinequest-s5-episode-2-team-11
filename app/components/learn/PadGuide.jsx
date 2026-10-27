@@ -10,6 +10,7 @@ import { BookOpen, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { PAD_GUIDE, PAD_USAGE_DISPOSAL_GUIDE } from "../../../lib/padGuide";
 import PadIllustration from "./PadIllustration";
 import Card from "../ui/Card";
+import { t } from "../../../lib/i18n";
 
 const STORAGE_KEY = "bloomy:padGuide";
 const USAGE_DISPOSAL_STORAGE_KEY = "bloomy:padUsageDisposalGuide";
@@ -146,22 +147,22 @@ export default function PadGuide({ role, onAskFriends, standalone = false }) {
   };
 
   const nextLabel = pageIndex < pages.length - 1 || T.step < total - 1
-    ? "Дараах"
-    : "Дуусгах ✓";
+    ? t("Дараах", "Next")
+    : t("Дуусгах ✓", "Finish ✓");
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2 overflow-hidden">
       <div className="flex flex-none items-center justify-between gap-2 px-1">
         <h1 className="flex min-w-0 flex-1 items-center gap-2 text-base font-black text-slate-700">
           <BookOpen className="h-5 w-5 shrink-0 bb-text-B83B7E" />
-          <span className="truncate">{standalone ? "Хэрэглэл хэрэглэх, хаях заавар" : "Ариун цэврийн хэрэглэл"}</span>
+          <span className="truncate">{standalone ? t("Хэрэглэл хэрэглэх, хаях заавар", "How to use and dispose of supplies") : t("Ариун цэврийн хэрэглэл", "Hygiene supplies")}</span>
         </h1>
       </div>
 
       <Card className="lesson-card min-h-0 flex-1 !p-3 sm:!p-4">
         <div className="h-full min-h-0 overflow-y-auto overscroll-contain pr-1">
-          <p className="mb-2 px-1 text-xs font-bold text-slate-500">Үзэх сэдвээ сонгоорой</p>
-          <nav aria-label="Хэрэглэлийн сэдвүүд" className="flex flex-col gap-2">
+          <p className="mb-2 px-1 text-xs font-bold text-slate-500">{t("Үзэх сэдвээ сонгоорой", "Pick a topic")}</p>
+          <nav aria-label={t("Хэрэглэлийн сэдвүүд", "Supply topics")} className="flex flex-col gap-2">
             {guide.map((p, i) => {
               const isExpanded = expandedPart === i;
               const topicSteps = p.steps;
@@ -210,19 +211,19 @@ export default function PadGuide({ role, onAskFriends, standalone = false }) {
                         <div className="lesson-info-card lesson-info-card-first w-full max-w-full rounded-2xl px-3 py-2">
                           <p className={`lesson-slide-copy font-semibold text-slate-600 ${topicStep.d.includes("\n") ? "whitespace-pre-line text-left" : "text-center"}`}>{topicPages[topicPageIndex]}</p>
                         </div>
-                        <div className="mt-2 flex items-center justify-center gap-1.5" aria-label={`${topicTotal} мэдээлэл`}>
+                        <div className="mt-2 flex items-center justify-center gap-1.5" aria-label={t(`${topicTotal} мэдээлэл`, `${topicTotal} facts`)}>
                           {topicSteps.map((_, index) => <span key={index} className={`h-1.5 rounded-full transition-all ${index === T.step ? "w-4 bb-grad-guide" : "w-1.5 bg-violet-200"}`} />)}
                         </div>
                       </div>
                       {((standalone && i === 0) || (!standalone && i === 2)) && T.step === topicTotal - 1 && topicPageIndex === topicPages.length - 1 && role !== "mother" && onAskFriends && (
-                        <button onClick={onAskFriends} className="mt-2 min-h-9 w-full rounded-xl border-2 bb-border-F8D3E6 bb-bg-FDE7F1 px-2 text-[11px] font-extrabold bb-text-B83B7E">Хэрэглэл дууссан уу? Найзаасаа асуух →</button>
+                        <button onClick={onAskFriends} className="mt-2 min-h-9 w-full rounded-xl border-2 bb-border-F8D3E6 bb-bg-FDE7F1 px-2 text-[11px] font-extrabold bb-text-B83B7E">{t("Хэрэглэл дууссан уу? Найзаасаа асуух →", "Out of supplies? Ask a friend →")}</button>
                       )}
                       <div className="mt-2 flex gap-2">
-                        <button onClick={topicPrev} disabled={topicFirst} aria-label="Өмнөх" className={`flex min-h-11 flex-1 items-center justify-center gap-1 rounded-xl text-sm font-extrabold ${topicFirst ? "bg-slate-100 text-slate-300" : "bg-slate-100 text-slate-600 active:scale-95"}`}>
-                          <ChevronLeft className="h-4 w-4" /> Өмнөх
+                        <button onClick={topicPrev} disabled={topicFirst} aria-label={t("Өмнөх", "Previous")} className={`flex min-h-11 flex-1 items-center justify-center gap-1 rounded-xl text-sm font-extrabold ${topicFirst ? "bg-slate-100 text-slate-300" : "bg-slate-100 text-slate-600 active:scale-95"}`}>
+                          <ChevronLeft className="h-4 w-4" /> {t("Өмнөх", "Previous")}
                         </button>
                         <button onClick={topicNext} className="flex min-h-11 flex-1 items-center justify-center gap-1 rounded-xl text-sm font-extrabold text-white bb-grad-guide shadow-md active:scale-95">
-                          {topicIsCurrent ? nextLabel : "Дэлгэрэнгүй"} <ChevronRight className="h-4 w-4" />
+                          {topicIsCurrent ? nextLabel : t("Дэлгэрэнгүй", "More")} <ChevronRight className="h-4 w-4" />
                         </button>
                       </div>
                     </div>

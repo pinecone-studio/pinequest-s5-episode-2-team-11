@@ -7,17 +7,18 @@ import Card from "../ui/Card";
 import PageHeader from "../ui/PageHeader";
 import SchoolBagChecklist from "../supplies/SchoolBagChecklist";
 import AddSupplyForm from "../supplies/AddSupplyForm";
+import { t } from "../../../lib/i18n";
 
 export default function MotherSupplies() {
   const { supplies, updateSupply, restock, removeSupply, daughterName } = useFamily();
 
   return (
     <div className="space-y-4">
-      <PageHeader sub={`${daughterName} · хэрэгслийг хянаарай`} title="Хэрэгслийн үлдэгдэл 📦" />
+      <PageHeader sub={t(`${daughterName} · хэрэгслийг хянаарай`, `${daughterName} · keep track of supplies`)} title={t("Хэрэгслийн үлдэгдэл 📦", "Supplies left 📦")} />
 
       {/* Хэрэгслийн үлдэгдэл */}
       <Card>
-        <SectionTitle icon={Package} title="Ариун цэврийн хэрэгсэл" />
+        <SectionTitle icon={Package} title={t("Ариун цэврийн хэрэгсэл", "Hygiene supplies")} />
         <div className="space-y-3">
           {Object.entries(supplies).map(([key, s]) => {
             const pct = s.count / s.max;
@@ -33,14 +34,14 @@ export default function MotherSupplies() {
                       <span className="truncate text-sm font-extrabold text-slate-700">{s.label}</span>
                       {low && (
                         <span className="shrink-0 rounded-full bb-bg-E9DDFC px-2 py-0.5 text-[10px] font-black bb-text-6A3BB8">
-                          Бага
+                          {t("Бага", "Low")}
                         </span>
                       )}
                     </div>
                     <div className="mt-1.5 flex items-center gap-2">
                       <div
                         role="progressbar"
-                        aria-label={`${s.label}-ийн үлдэгдэл`}
+                        aria-label={t(`${s.label}-ийн үлдэгдэл`, `${s.label} remaining`)}
                         aria-valuemin={0}
                         aria-valuemax={s.max}
                         aria-valuenow={s.count}
@@ -63,7 +64,7 @@ export default function MotherSupplies() {
                     onClick={() => updateSupply(key, -1)}
                     disabled={s.count <= 0}
                     className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-slate-500 shadow-sm active:scale-90 disabled:opacity-40"
-                    aria-label="Хасах"
+                    aria-label={t("Хасах", "Decrease")}
                   >
                     <Minus className="h-4 w-4" />
                   </button>
@@ -71,7 +72,7 @@ export default function MotherSupplies() {
                     onClick={() => updateSupply(key, 1)}
                     disabled={s.count >= s.max}
                     className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-slate-500 shadow-sm active:scale-90 disabled:opacity-40"
-                    aria-label="Нэмэх"
+                    aria-label={t("Нэмэх", "Add")}
                   >
                     <Plus className="h-4 w-4" />
                   </button>
@@ -82,10 +83,10 @@ export default function MotherSupplies() {
                   >
                     {s.count === s.max ? (
                       <>
-                        <Check className="h-3.5 w-3.5" /> Дүүрсэн
+                        <Check className="h-3.5 w-3.5" /> {t("Дүүрсэн", "Full")}
                       </>
                     ) : (
-                      "Нөхөж дүүргэх"
+                      t("Нөхөж дүүргэх", "Restock")
                     )}
                   </button>
                   {key.startsWith("custom_") && (
@@ -93,7 +94,7 @@ export default function MotherSupplies() {
                       type="button"
                       onClick={() => removeSupply(key)}
                       className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-slate-400 shadow-sm transition hover:text-rose-500"
-                      aria-label={`${s.label} устгах`}
+                      aria-label={t(`${s.label} устгах`, `Delete ${s.label}`)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>

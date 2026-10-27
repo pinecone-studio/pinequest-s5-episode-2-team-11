@@ -20,6 +20,7 @@ import Avatar from "../avatar/Avatar";
 import { friendMoodToday } from "../avatar/useTodayMood";
 import { MOODS } from "../../../lib/log-entries";
 import BottomSheet from "../ui/BottomSheet";
+import { t } from "../../../lib/i18n";
 
 const Label = ({ children }) => (
   <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2">{children}</p>
@@ -39,7 +40,7 @@ function FriendFace({ friend, size = 36, className = "" }) {
       className={`rounded-full overflow-hidden flex justify-center border-2 border-white shrink-0 ${className}`}
       style={{ width: size, height: size, background: sceneOf(friend.avatar_background).background }}
     >
-      <Avatar look={friend.avatar_look} skin={friend.avatar_skin} mood={friendMoodToday(friend)} label={`${friend.display_name}-ийн дүр`} size={size - 4} crop="10 12 100 100" />
+      <Avatar look={friend.avatar_look} skin={friend.avatar_skin} mood={friendMoodToday(friend)} label={t(`${friend.display_name}-ийн дүр`, `${friend.display_name}'s avatar`)} size={size - 4} crop="10 12 100 100" />
     </span>
   );
 }
@@ -72,12 +73,12 @@ export default function FriendsScreen() {
     <div className="space-y-4 pb-2">
       {/* ---------- Гарчиг ---------- */}
       <div className="flex items-center justify-between gap-3 bloom-fade">
-        <h2 className="text-2xl font-black text-slate-800">Найзууд</h2>
+        <h2 className="text-2xl font-black text-slate-800">{t("Найзууд", "Friends")}</h2>
         <button
           onClick={() => setSheet("friends")}
           className="inline-flex items-center gap-1.5 rounded-full bb-bg-FDE7F1 bb-text-B83B7E px-3 py-2 text-xs font-extrabold active:scale-95 transition"
         >
-          <UserPlus className="w-4 h-4" /> Найз нэмэх
+          <UserPlus className="w-4 h-4" /> {t("Найз нэмэх", "Add friend")}
         </button>
       </div>
 
@@ -93,10 +94,10 @@ export default function FriendsScreen() {
         </span>
         <span className="flex-1 min-w-0">
           <span className="block font-black text-slate-800">
-            {sosStage === "sent" ? "Дохио очлоо 📣" : sosStage === "ringing" ? "Илгээж байна…" : "хэрэглэл хэрэгтэй юу?"}
+            {sosStage === "sent" ? t("Дохио очлоо 📣", "Alert sent 📣") : sosStage === "ringing" ? t("Илгээж байна…", "Sending…") : t("хэрэглэл хэрэгтэй юу?", "Need supplies?")}
           </span>
           <span className="block text-xs font-semibold text-slate-500 bx-trunc">
-            {firstReply ? `${firstReply.responder_name}: ${replyText(firstReply.reply)}` : "Найзууддаа хэрэглэл хэрэгтэйгээ мэдэгд"}
+            {firstReply ? `${firstReply.responder_name}: ${replyText(firstReply.reply)}` : t("Найзууддаа хэрэглэл хэрэгтэйгээ мэдэгд", "Let your friends know you need supplies")}
           </span>
         </span>
         <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
@@ -106,13 +107,13 @@ export default function FriendsScreen() {
       <Card className="!p-4">
         <div className="mb-3 flex items-center justify-between">
           <p className="font-black text-slate-800">
-            Миний найзууд <span className="text-slate-400">· {friends.length}</span>
+            {t("Миний найзууд", "My friends")} <span className="text-slate-400">· {friends.length}</span>
           </p>
           <button
             onClick={() => setSheet("groups")}
             className="inline-flex items-center gap-1.5 rounded-full bb-bg-E9DDFC bb-text-7C4DCC px-3 py-1.5 text-xs font-extrabold shadow-sm active:scale-95 transition"
           >
-            <Users className="w-3.5 h-3.5" /> Бүлгүүд
+            <Users className="w-3.5 h-3.5" /> {t("Бүлгүүд", "Groups")}
             {groups.length > 0 && (
               <span className="min-w-5 h-5 px-1 rounded-full bg-white text-[10px] font-black flex items-center justify-center">
                 {groups.length}
@@ -130,7 +131,7 @@ export default function FriendsScreen() {
                   className="relative rounded-2xl overflow-hidden flex justify-center items-end pt-3 border-2 border-white shadow-sm"
                   style={{ background: scene.background, height: 116 }}
                 >
-                  <Avatar look={friend.avatar_look} skin={friend.avatar_skin} mood={mood?.value} label={`${friend.display_name}-ийн дүр`} idle size={64} />
+                  <Avatar look={friend.avatar_look} skin={friend.avatar_skin} mood={mood?.value} label={t(`${friend.display_name}-ийн дүр`, `${friend.display_name}'s avatar`)} idle size={64} />
                   {mood && (
                     <span
                       title={mood.label}
@@ -156,7 +157,7 @@ export default function FriendsScreen() {
             className="w-24 shrink-0 flex flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed bb-border-F8D3E6 bb-text-B83B7E text-xs font-extrabold active:scale-95 transition"
             style={{ height: 116 }}
           >
-            <Plus className="w-5 h-5" /> Нэмэх
+            <Plus className="w-5 h-5" /> {t("Нэмэх", "Add")}
           </button>
         </div>
 
@@ -172,7 +173,7 @@ export default function FriendsScreen() {
                 <span className="w-8 h-8 rounded-xl bb-bg-FDE7F1 flex items-center justify-center text-lg">{g.emoji}</span>
                 <span className="text-left">
                   <span className="block text-xs font-extrabold text-slate-700 max-w-28 truncate">{g.name}</span>
-                  <span className="block text-[10px] font-bold text-slate-400">{g.members.length} найз</span>
+                  <span className="block text-[10px] font-bold text-slate-400">{g.members.length} {t("найз", "friends")}</span>
                 </span>
                 <MemberFaces ids={g.members} friends={friends} />
               </button>
@@ -185,17 +186,17 @@ export default function FriendsScreen() {
       <AvatarCard />
 
       {sheet === "supplies" && (
-        <BottomSheet title="хэрэглэл хэрэгтэй юу?" onClose={() => setSheet(null)}>
+        <BottomSheet title={t("хэрэглэл хэрэгтэй юу?", "Need supplies?")} onClose={() => setSheet(null)}>
           <SupplyRequestPanel />
         </BottomSheet>
       )}
       {sheet === "friends" && (
-        <BottomSheet title="Найз нэмэх" onClose={() => setSheet(null)}>
+        <BottomSheet title={t("Найз нэмэх", "Add friend")} onClose={() => setSheet(null)}>
           <MyFriends />
         </BottomSheet>
       )}
       {sheet === "groups" && (
-        <BottomSheet title="Бүлгүүд" onClose={() => setSheet(null)}>
+        <BottomSheet title={t("Бүлгүүд", "Groups")} onClose={() => setSheet(null)}>
           <MyGroups nameOf={nameOf} />
         </BottomSheet>
       )}
@@ -212,13 +213,13 @@ function SupplyRequestPanel() {
   const toggle = (id) => setIds((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
 
   if (!friends.length) {
-    return <p className="py-6 text-center text-sm font-semibold text-slate-400">Эхлээд найзаа кодоор нэмээрэй 🌸</p>;
+    return <p className="py-6 text-center text-sm font-semibold text-slate-400">{t("Эхлээд найзаа кодоор нэмээрэй 🌸", "First add a friend with their code 🌸")}</p>;
   }
 
   return (
     <div className="space-y-4">
       <div>
-        <Label>Хэнд?</Label>
+        <Label>{t("Хэнд?", "To whom?")}</Label>
         <div className="flex flex-wrap gap-2">
           {groups.map((g) => {
             const on = g.members.length > 0 && g.members.length === ids.length && g.members.every((id) => ids.includes(id));
@@ -241,8 +242,8 @@ function SupplyRequestPanel() {
         value={F.place}
         onChange={(e) => F.setPlace(e.target.value.slice(0, PLACE_MAX))}
         maxLength={PLACE_MAX}
-        placeholder="📍 Хаана байна? (заавал биш)"
-        aria-label="Хаана байна?"
+        placeholder={t("📍 Хаана байна? (заавал биш)", "📍 Where are you? (optional)")}
+        aria-label={t("Хаана байна?", "Where are you?")}
         autoComplete="off"
         className="w-full rounded-2xl border-2 border-slate-100 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 outline-none bb-focus-border-F48FB1"
       />
@@ -251,21 +252,21 @@ function SupplyRequestPanel() {
         <SosCallButton size={72} stage={sosStage} disabled={!ids.length} onClick={() => F.sendSos(ids)} />
         <p className="flex-1 text-sm font-semibold text-slate-500 leading-snug">
           {sosStage === "ringing"
-            ? "Дохио илгээж байна…"
+            ? t("Дохио илгээж байна…", "Sending alert…")
             : sosStage === "sent"
               ? placeInfo.short
-                ? `📍 ${placeInfo.short} — найзууддаа мэдэгдлээ.`
-                : "Найзууддаа мэдэгдлээ."
+                ? t(`📍 ${placeInfo.short} — найзууддаа мэдэгдлээ.`, `📍 ${placeInfo.short} — your friends were notified.`)
+                : t("Найзууддаа мэдэгдлээ.", "Your friends were notified.")
               : ids.length
-                ? `${ids.length} найзад дохио очно. Товчийг дар.`
-                : "Хэнд илгээхээ сонго."}
+                ? t(`${ids.length} найзад дохио очно. Товчийг дар.`, `${ids.length} friend(s) will get the alert. Tap the button.`)
+                : t("Хэнд илгээхээ сонго.", "Choose who to send it to.")}
         </p>
       </div>
 
       <FriendReplies />
       {sosStage === "sent" && (
         <button onClick={F.resolveSos} className="w-full rounded-2xl py-3 font-extrabold bb-bg-FDE7F1 bb-text-B83B7E active:scale-95 transition">
-          Болсон, баярлалаа 💗
+          {t("Болсон, баярлалаа 💗", "All good, thanks 💗")}
         </button>
       )}
     </div>
@@ -294,7 +295,7 @@ function MyFriends() {
   return (
     <div>
       <p className="text-xs font-semibold text-slate-400">
-        Найзынхаа кодыг оруулаарай. Өөрийн код чинь <b>Профайл</b> хэсэгт байгаа.
+        {t("Найзынхаа кодыг оруулаарай. Өөрийн код чинь", "Enter your friend's code. Your own code is in")} <b>{t("Профайл", "Profile")}</b> {t("хэсэгт байгаа.", ".")}
       </p>
 
       <form onSubmit={submit} className="mt-3 flex gap-2">
@@ -310,23 +311,23 @@ function MyFriends() {
             );
             setError("");
           }}
-          placeholder="Найзын код"
+          placeholder={t("Найзын код", "Friend code")}
           autoComplete="off"
-          aria-label="Найзын код"
+          aria-label={t("Найзын код", "Friend code")}
           className="flex-1 min-w-0 rounded-2xl border-2 border-slate-100 bg-white px-4 py-3 font-black tracking-widest text-slate-700 outline-none bb-focus-border-F48FB1"
         />
         <button
           disabled={code.length !== 6 || busy}
           className="px-4 rounded-2xl bb-grad-sos text-white font-extrabold disabled:opacity-50 flex items-center gap-1"
         >
-          {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} Нэмэх
+          {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} {t("Нэмэх", "Add")}
         </button>
       </form>
       {error && <p className="mt-2 text-sm font-semibold bb-text-7C4DCC">{error}</p>}
 
       <div className="mt-4 space-y-2">
         {friends.length === 0 ? (
-          <p className="text-sm font-semibold text-slate-400 text-center py-2">Одоогоор найз алга байна 🌸</p>
+          <p className="text-sm font-semibold text-slate-400 text-center py-2">{t("Одоогоор найз алга байна 🌸", "No friends yet 🌸")}</p>
         ) : (
           friends.map((f) => (
             <div key={f.id} className="flex items-center gap-3 rounded-2xl bg-slate-50 px-3 py-2">
@@ -342,7 +343,7 @@ function MyFriends() {
                   confirmId === f.id ? "bb-bg-F48FB1 text-white" : "bg-white text-slate-400"
                 }`}
               >
-                {confirmId === f.id ? "Дахин дарж хас" : "Хасах"}
+                {confirmId === f.id ? t("Дахин дарж хас", "Tap again to remove") : t("Хасах", "Decrease")}
               </button>
             </div>
           ))
@@ -376,7 +377,7 @@ function MyGroups({ nameOf }) {
     <div>
       <SectionTitle
         icon={Users}
-        title="Миний бүлгүүд"
+        title={t("Миний бүлгүүд", "My groups")}
         right={
           !creating && (
             <button
@@ -384,7 +385,7 @@ function MyGroups({ nameOf }) {
               disabled={!friends.length}
               className="text-xs font-extrabold bb-text-B83B7E bb-bg-FDE7F1 rounded-full px-3 py-1.5 flex items-center gap-1 active:scale-95 disabled:opacity-50"
             >
-              <Plus className="w-3 h-3" /> Бүлэг үүсгэх
+              <Plus className="w-3 h-3" /> {t("Бүлэг үүсгэх", "Create group")}
             </button>
           )
         }
@@ -412,7 +413,7 @@ function MyGroups({ nameOf }) {
                   <div className="flex-1 min-w-0">
                     <p className="font-extrabold text-slate-700">{g.name}</p>
                     <p className="text-xs font-semibold text-slate-400 bx-trunc">
-                      {g.members.length} найз · {g.members.map(nameOf).join(", ")}
+                      {g.members.length} {t("найз ·", "friends ·")} {g.members.map(nameOf).join(", ")}
                     </p>
                   </div>
                 </button>
@@ -425,21 +426,21 @@ function MyGroups({ nameOf }) {
                     editing ? "bb-bg-F48FB1 text-white" : "bb-bg-E9DDFC bb-text-7C4DCC"
                   }`}
                 >
-                  {editing ? "Болсон" : "Засах"}
+                  {editing ? t("Болсон", "Done") : t("Засах", "Edit")}
                 </button>
               </div>
 
               {editing && (
                 <div className="px-3 pb-3 space-y-3 bloom-pop">
                   <div>
-                    <Label>Гишүүд · дарж хасна</Label>
+                    <Label>{t("Гишүүд · дарж хасна", "Members · tap to remove")}</Label>
                     <div className="flex flex-wrap gap-2">
                       {g.members.map((id) => (
                         <button
                           key={id}
                           onClick={() => toggleMember(g, { id, display_name: nameOf(id) })}
                           disabled={last}
-                          aria-label={`${nameOf(id)}-г бүлгээс хасах`}
+                          aria-label={t(`${nameOf(id)}-г бүлгээс хасах`, `Remove ${nameOf(id)} from group`)}
                           className={`px-3 py-1.5 rounded-full text-xs font-extrabold border-2 border-transparent bb-bg-B794F4 text-white transition ${
                             last ? "opacity-60" : "active:scale-95"
                           }`}
@@ -451,12 +452,12 @@ function MyGroups({ nameOf }) {
                     </div>
                     {last && (
                       <p className="mt-2 text-xs font-semibold text-slate-400">
-                        Бүлэгт хамгийн багадаа 1 найз байх ёстой.
+                        {t("Бүлэгт хамгийн багадаа 1 найз байх ёстой.", "A group needs at least 1 friend.")}
                       </p>
                     )}
                   </div>
                   <div>
-                    <Label>Найз нэмэх</Label>
+                    <Label>{t("Найз нэмэх", "Add friend")}</Label>
                     {others.length ? (
                       <div className="flex flex-wrap gap-2">
                         {others.map((f) => (
@@ -471,7 +472,7 @@ function MyGroups({ nameOf }) {
                       </div>
                     ) : (
                       <p className="text-xs font-semibold text-slate-400">
-                        Бүх найз чинь энэ бүлэгт байна 💗
+                        {t("Бүх найз чинь энэ бүлэгт байна 💗", "All your friends are in this group 💗")}
                       </p>
                     )}
                   </div>
@@ -487,7 +488,7 @@ function MyGroups({ nameOf }) {
                         : "bg-white border-2 bb-border-F8D3E6 bb-text-B83B7E"
                     }`}
                   >
-                    {confirmDel === g.id ? "Дахин дарж устгана уу" : "Бүлэг устгах"}
+                    {confirmDel === g.id ? t("Дахин дарж устгана уу", "Tap again to delete") : t("Бүлэг устгах", "Delete group")}
                   </button>
                 </div>
               )}
@@ -497,17 +498,17 @@ function MyGroups({ nameOf }) {
       </div>
 
       <p className="mt-3 flex items-center gap-1.5 text-xs font-bold text-slate-400">
-        <Lock className="w-3.5 h-3.5 shrink-0" /> Бүлэгт чат байхгүй — зөвхөн хэрэглэл хүссэн мэдэгдэл очно.
+        <Lock className="w-3.5 h-3.5 shrink-0" /> {t("Бүлэгт чат байхгүй — зөвхөн хэрэглэл хүссэн мэдэгдэл очно.", "Groups have no chat — only supply alerts are sent.")}
       </p>
 
       {creating && (
         <div className="mt-4 rounded-2xl border-2 border-dashed bb-border-F8D3E6 p-4 space-y-3 bloom-pop">
-          <p className="font-extrabold text-slate-700">Шинэ бүлэг</p>
+          <p className="font-extrabold text-slate-700">{t("Шинэ бүлэг", "New group")}</p>
           <input
             id="group-name"
             value={draft.name}
             onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
-            placeholder="Бүлгийн нэр (ж: Ангийн охид)"
+            placeholder={t("Бүлгийн нэр (ж: Ангийн охид)", "Group name (e.g. Class girls)")}
             maxLength={24}
             className="w-full rounded-xl border-2 border-slate-100 bg-white px-3 py-2.5 font-bold text-slate-700 outline-none bb-focus-border-F48FB1"
           />
@@ -516,7 +517,7 @@ function MyGroups({ nameOf }) {
               <button
                 key={em}
                 onClick={() => setDraft((d) => ({ ...d, emoji: em }))}
-                aria-label={"Бүлгийн тэмдэг " + em}
+                aria-label={t("Бүлгийн тэмдэг ", "Group icon ") + em}
                 className={`w-10 h-10 rounded-xl text-xl flex items-center justify-center border-2 ${
                   draft.emoji === em ? "bb-border-F48FB1 bb-bg-FDE7F1" : "border-slate-100 bg-white"
                 }`}
@@ -525,7 +526,7 @@ function MyGroups({ nameOf }) {
               </button>
             ))}
           </div>
-          <Label>Найзуудаа сонго</Label>
+          <Label>{t("Найзуудаа сонго", "Choose friends")}</Label>
           <div className="flex flex-wrap gap-2">
             {friends.map((f) => {
               const on = draft.members.includes(f.id);
@@ -551,7 +552,7 @@ function MyGroups({ nameOf }) {
               onClick={() => setCreating(false)}
               className="flex-1 rounded-2xl py-3 font-extrabold bg-slate-100 text-slate-500"
             >
-              Болих
+              {t("Болих", "Cancel")}
             </button>
             <button
               onClick={create}
@@ -560,7 +561,7 @@ function MyGroups({ nameOf }) {
                 canCreate ? "active:scale-95" : "opacity-60"
               }`}
             >
-              Үүсгэх
+              {t("Үүсгэх", "Create")}
             </button>
           </div>
         </div>

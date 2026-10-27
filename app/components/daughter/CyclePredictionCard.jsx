@@ -10,6 +10,7 @@ import {
 import { LOG_ENTRIES_CHANGED, dayLogsFromEntries, fetchEntries } from "../../../lib/log-entries";
 import { supabase } from "../../../lib/supabase";
 import { useFamily } from "../../../context/FamilyContext";
+import { t } from "../../../lib/i18n";
 
 const AI_TIMEOUT_MS = 5000; // server gives the AI 3 s; this covers the round trip
 const TRANSIENT_ERRORS = new Set(["timeout", "network_error"]);
@@ -118,7 +119,7 @@ export default function CyclePredictionCard() {
       <h2 className="font-black text-slate-700">{forecastTitle(position)}</h2>
 
       {loading ? (
-        <p className="mt-3 flex items-center gap-2 text-sm font-bold text-slate-500"><LoaderCircle className="h-4 w-4 animate-spin" /> Өмнөх бүртгэлээ харж байна…</p>
+        <p className="mt-3 flex items-center gap-2 text-sm font-bold text-slate-500"><LoaderCircle className="h-4 w-4 animate-spin" /> {t("Өмнөх бүртгэлээ харж байна…", "Looking at your past logs…")}</p>
       ) : (
         <div className="mt-3 space-y-3">
           {local ? (
@@ -137,7 +138,7 @@ export default function CyclePredictionCard() {
       )}
 
       <p className="mt-3 border-t border-slate-100 pt-2 text-xs font-semibold text-slate-400">
-        🔒 Зөвхөн чамд харагдана{stats ? ` · Өмнөх ${stats.cyclesUsed} мөчлөгөөс` : ""}
+        {t("🔒 Зөвхөн чамд харагдана", "🔒 Only you can see this")}{stats ? t(` · Өмнөх ${stats.cyclesUsed} мөчлөгөөс`, ` · From your last ${stats.cyclesUsed} cycles`) : ""}
       </p>
     </section>
   );
