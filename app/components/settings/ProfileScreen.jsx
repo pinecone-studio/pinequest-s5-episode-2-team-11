@@ -7,7 +7,6 @@ import Card from "../ui/Card";
 import SectionTitle from "../ui/SectionTitle";
 import PageHeader from "../ui/PageHeader";
 import MyFriendCode from "../friends/MyFriendCode";
-import Avatar from "../avatar/Avatar";
 import FamilyLinkingSection from "./FamilyLinkingSection";
 
 export default function ProfileScreen() {
@@ -15,21 +14,6 @@ export default function ProfileScreen() {
     profile,
     session,
     view,
-    familyCode,
-    linked,
-    daughterName,
-    daughters,
-    selectedDaughterId,
-    selectDaughter,
-    copied,
-    copyCode,
-    shareCode,
-    codeInput,
-    setCodeInput,
-    codeError,
-    setCodeError,
-    joinFamily,
-    joining,
     updateName,
     updateEmail,
     setToast,
@@ -157,128 +141,6 @@ export default function ProfileScreen() {
             </>
           )}
         </div>
-      </Card>
-
-              <MyFriendCode />
-      <Card>
-        
-        <SectionTitle icon={Users} title="Гэр бүл" />
-        {isMother ? (
-          <>
-            <p className="text-sm font-bold bb-text-B83B7E">
-              {linked
-                ? `✓ ${daughters.length} охин холбогдсон`
-                : "Охидоо урих гэр бүлийн код"}
-            </p>
-            {daughters.length > 1 && (
-              <div className="mt-4">
-                <p className="mb-2 text-xs font-extrabold text-slate-500">Хянах охиноо сонгоно уу</p>
-                <div className="flex flex-wrap gap-2">
-                  {daughters.map((daughter) => (
-                    <button
-                      key={daughter.id}
-                      type="button"
-                      onClick={() => selectDaughter(daughter.id)}
-                      aria-pressed={selectedDaughterId === daughter.id}
-                      className={`flex items-center gap-2 rounded-full py-2 pl-2 pr-4 text-sm font-extrabold transition ${selectedDaughterId === daughter.id ? "bb-bg-E0679F text-white" : "bb-bg-FFF7FB bb-text-B83B7E"}`}
-                    >
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/90">
-                        <Avatar
-                          look={daughter.avatar_look}
-                          skin={daughter.avatar_skin}
-                          crop="12 8 96 96"
-                          size={36}
-                          label={`${daughter.display_name || "Охин"}-ы дүр`}
-                        />
-                      </span>
-                      <span>{daughter.display_name || "Охин"}</span>
-                    </button>
-                  ))}
-                </div>
-                <p className="mt-2 text-xs font-semibold text-slate-400">Сонгосон охины мөчлөг, халамжийн мэдээлэл харагдана.</p>
-              </div>
-            )}
-            <div className="mt-3 flex items-center gap-2">
-              <span className="flex-1 rounded-2xl bb-bg-FFF7FB py-3 text-center text-lg font-black tracking-wider text-slate-600">
-                {familyCode || "…"}
-              </span>
-              <button
-                onClick={copyCode}
-                className="w-12 h-12 rounded-2xl bb-bg-FDE7F1 bb-text-B83B7E flex items-center justify-center active:scale-90"
-                aria-label="Кодыг хуулах"
-              >
-                {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-              </button>
-              <button
-                onClick={shareCode}
-                className="w-12 h-12 rounded-2xl bg-white border-2 border-slate-100 bb-text-B83B7E flex items-center justify-center active:scale-90"
-                aria-label="Кодыг хуваалцах"
-              >
-                <Share2 className="w-5 h-5" />
-              </button>
-            </div>
-          </>
-        ) : linked ? (
-          <>
-            <p className="text-sm font-bold bb-text-B83B7E">✓ Асран хамгаалагчтайгаа холбогдсон</p>
-            <div className="mt-3 flex items-center gap-2">
-              <span className="flex-1 rounded-2xl bb-bg-FFF7FB py-3 text-center text-lg font-black tracking-wider text-slate-600">
-                {familyCode || "…"}
-              </span>
-              <button
-                onClick={copyCode}
-                className="w-12 h-12 rounded-2xl bb-bg-FDE7F1 bb-text-B83B7E flex items-center justify-center active:scale-90"
-                aria-label="Кодыг хуулах"
-              >
-                {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-              </button>
-              <button
-                onClick={shareCode}
-                className="w-12 h-12 rounded-2xl bg-white border-2 border-slate-100 bb-text-B83B7E flex items-center justify-center active:scale-90"
-                aria-label="Кодыг хуваалцах"
-              >
-                <Share2 className="w-5 h-5" />
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="text-sm font-semibold leading-relaxed text-slate-500">
-              Асран хамгаалагчийнхаа Bloomy профайлаас гэр бүлийн кодыг аваад энд оруулж холбогдоорой.
-            </p>
-            <div className="mt-3 flex items-center rounded-2xl border-2 border-slate-100 bb-focus-within-border-F48FB1 bg-white overflow-hidden">
-              <span className="pl-4 font-black bb-text-F48FB1">BLOOM-</span>
-              <input
-                id="family-code-join"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={6}
-                value={codeInput}
-                onChange={(event) => {
-                  setCodeInput(event.target.value.replace(/\D/g, ""));
-                  setCodeError("");
-                }}
-                onKeyDown={(event) => event.key === "Enter" && joinFamily()}
-                className="flex-1 min-w-0 py-3 pr-4 pl-1 text-xl font-black tracking-widest text-slate-700 outline-none bg-transparent"
-                placeholder="000000"
-                aria-label="Асран хамгаалагчийн гэр бүлийн код"
-              />
-            </div>
-            {codeError && (
-              <p className="mt-2 text-sm font-semibold bb-text-7C4DCC flex items-center gap-1">
-                <AlertCircle className="w-4 h-4" /> {codeError}
-              </p>
-            )}
-            <button
-              onClick={joinFamily}
-              disabled={codeInput.length !== 6 || joining}
-              className="mt-3 w-full bb-bg-E0679F bb-disabled-bg-F8D3E6 text-white font-extrabold rounded-2xl py-3 active:scale-95 transition flex items-center justify-center gap-2"
-            >
-              {joining && <Loader2 className="w-5 h-5 animate-spin" />}
-              Гэр бүлийн кодоор холбогдох
-            </button>
-          </>
-        )}
       </Card>
 
       <MyFriendCode />
