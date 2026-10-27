@@ -7,6 +7,7 @@ import RoleSelect from "./RoleSelect";
 import BloomyLogo from "../ui/BloomyLogo";
 import { toDateStr } from "../../../lib/dates";
 import GuardianMaleGuide from "../learn/GuardianMaleGuide";
+import { t } from "../../../lib/i18n";
 
 const PENDING_GUIDE_PREFIX = "bloom:pending-guardian-guide:";
 
@@ -85,7 +86,7 @@ export default function AuthScreen() {
         const pending = Array.isArray(saved) ? saved : [];
         window.localStorage.setItem(key, JSON.stringify([...new Set([...pending, ...onboardingGuideCompleted])]));
       } catch {
-        setMessage("Танилцуулгын явцыг түр хадгалж чадсангүй. Зөвлөх хэсгээс картыг дахин үзэж болно.");
+        setMessage(t("Танилцуулгын явцыг түр хадгалж чадсангүй. Зөвлөх хэсгээс картыг дахин үзэж болно.", "Couldn't save the intro progress. You can view the cards again in the guide section."));
       }
     }
     let err;
@@ -114,13 +115,13 @@ export default function AuthScreen() {
       )}
       {isSignup && (
         <span className="mb-3 inline-flex items-center gap-1.5 rounded-full bb-bg-FDE7F1 px-3 py-1.5 text-xs font-extrabold bb-text-B83B7E">
-          <Heart className="h-3.5 w-3.5 fill-current" /> Bloomy · Шинэ бүртгэл
+          <Heart className="h-3.5 w-3.5 fill-current" /> {t("Bloomy · Шинэ бүртгэл", "Bloomy · Sign up")}
         </span>
       )}
       <h2 className="text-2xl font-black text-slate-700">
-        {isSignup ? (role === "mother" ? "Асран хамгаалагчийн бүртгэл" : "Өсвөр насны охины бүртгэл") : "Тавтай морил"}
+        {isSignup ? (role === "mother" ? t("Асран хамгаалагчийн бүртгэл", "Guardian account") : t("Өсвөр насны охины бүртгэл", "Teen girl account")) : t("Тавтай морил", "Welcome")}
       </h2>
-      {!isSignup && <p className="mt-1 text-lg text-slate-500 font-semibold">Имэйл, нууц үгээрээ нэвтэрнэ үү.</p>}
+      {!isSignup && <p className="mt-1 text-lg text-slate-500 font-semibold">{t("Имэйл, нууц үгээрээ нэвтэрнэ үү.", "Sign in with your email and password.")}</p>}
 
       <div className="mt-6 space-y-4">
         {isSignup && (
@@ -129,7 +130,7 @@ export default function AuthScreen() {
               htmlFor="name"
               className="block text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2"
             >
-              {role === "mother" ? "Таны нэр" : "Чиний нэр"}
+              {role === "mother" ? t("Таны нэр", "Your name") : t("Чиний нэр", "Your name")}
             </label>
             <input
               id="name"
@@ -147,7 +148,7 @@ export default function AuthScreen() {
               htmlFor="birth-date"
               className="block text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2"
             >
-              Төрсөн өдөр
+              {t("Төрсөн өдөр", "Birthday")}
             </label>
             <input
               id="birth-date"
@@ -166,7 +167,7 @@ export default function AuthScreen() {
             htmlFor="email"
             className="block text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2"
           >
-            Имэйл
+            {t("Имэйл", "Email")}
           </label>
           <input
             id="email"
@@ -183,7 +184,7 @@ export default function AuthScreen() {
             htmlFor="password"
             className="block text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2"
           >
-            Нууц үг
+            {t("Нууц үг", "Password")}
           </label>
           <div className="relative">
             <input
@@ -198,7 +199,7 @@ export default function AuthScreen() {
               type="button"
               onClick={() => setShowPw((s) => !s)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 p-1"
-              aria-label={showPw ? "Нууц үг нуух" : "Нууц үг харах"}
+              aria-label={showPw ? t("Нууц үг нуух", "Hide password") : t("Нууц үг харах", "Show password")}
             >
               {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
@@ -218,7 +219,7 @@ export default function AuthScreen() {
         className="mt-6 w-full bb-grad-sos bb-disabled-bg-F8D3E6 text-white font-extrabold rounded-2xl py-4 active:scale-95 transition shadow-lg bb-shadow-F48FB1-30 flex items-center justify-center gap-2"
       >
         {busy && <Loader2 className="w-5 h-5 animate-spin" />}
-        {isSignup ? "Бүртгүүлэх" : "Нэвтрэх"}
+        {isSignup ? t("Бүртгүүлэх", "Sign up") : t("Нэвтрэх", "Sign in")}
       </button>
 
       <button
@@ -229,7 +230,7 @@ export default function AuthScreen() {
         }}
         className="mt-4 w-full text-sm font-bold text-slate-500"
       >
-        {isSignup ? "Бүртгэлтэй юу? Нэвтрэх" : "Бүртгэлгүй юу? Шинээр бүртгүүлэх"}
+        {isSignup ? t("Бүртгэлтэй юу? Нэвтрэх", "Have an account? Sign in") : t("Бүртгэлгүй юу? Шинээр бүртгүүлэх", "No account? Sign up")}
       </button>
     </form>
   );
