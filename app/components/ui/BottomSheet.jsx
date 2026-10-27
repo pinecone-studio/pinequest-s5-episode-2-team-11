@@ -16,8 +16,10 @@ export default function BottomSheet({ title, onClose, children, className = "", 
   const [dragY, setDragY] = useState(0);
   const startRef = useRef(null);
 
-  const onPointerDown = (event) => {
+    const onPointerDown = (event) => {
     if (!draggable) return;
+    // Товч (X, aside) дээр дарахад чирэхгүй, ингэснээр товчны click ажиллана
+    if (event.target.closest("button")) return;
     startRef.current = event.clientY;
     event.currentTarget.setPointerCapture?.(event.pointerId);
   };
