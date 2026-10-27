@@ -1,24 +1,29 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   BookOpen,
-  Check,
+  HeartHandshake,
+  HeartPulse,
   ChevronRight,
   CircleHelp,
   Droplets,
-  Heart,
+  Eye,
   LockKeyhole,
+  MessageCircleHeart,
   Moon,
+  Package,
   ShieldCheck,
   Sparkles,
   Sun,
+  Stethoscope,
   TriangleAlert,
+  UsersRound,
   Venus,
 } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
-import { girlCategories, guardianRoles } from "../../../lib/learnContent";
+import { girlCategories, guardianCategories } from "../../../lib/learnContent";
 import { supabase } from "../../../lib/supabase";
 import { guardianMaleGuide } from "../../../src/content/guardian-male-guide";
 import GuardianMaleGuide from "./GuardianMaleGuide";
@@ -34,25 +39,28 @@ const TONES = {
   alert: { background: "#FDE7F1", color: "#9F1239" },
 };
 
-const STORAGE_PREFIX = "bloom:learn-progress:";
-const GUARDIAN_ROLE_STORAGE_PREFIX = "bloom:guardian-learning-role:";
 const PENDING_GUIDE_PREFIX = "bloom:pending-guardian-guide:";
 
-const GIRL_TOPIC_STYLES = {
-  what: { background: "#E94E78", Icon: Droplets },
-  when: { background: "#A64FAD", Icon: Venus },
-  cycle: { background: "#5B68D8", Icon: Moon },
-  products: { background: "#575BC8", Icon: LockKeyhole },
-  kit: { background: "#D08712", Icon: BookOpen },
-  hygiene: { background: "#248FC5", Icon: Sparkles },
-  body: { background: "#279B72", Icon: ShieldCheck },
-  doctor: { background: "#D63D4D", Icon: TriangleAlert },
-  myths: { background: "#E8756D", Icon: CircleHelp },
+const TOPIC_TILE_STYLES = {
+  what: { background: "#E44F7A", Icon: Droplets },
+  when: { background: "#A648A4", Icon: Venus },
+  cycle: { background: "#5366C8", Icon: Moon },
+  products: { background: "#4277B8", Icon: LockKeyhole },
+  kit: { background: "#B8750C", Icon: BookOpen },
+  hygiene: { background: "#1687A0", Icon: Sparkles },
+  body: { background: "#278563", Icon: ShieldCheck },
+  doctor: { background: "#CB3F56", Icon: TriangleAlert },
+  myths: { background: "#E37358", Icon: CircleHelp },
+  "guardian-talk-early": { background: "#8D45A6", Icon: MessageCircleHeart },
+  "guardian-calm-response": { background: "#D94F6C", Icon: HeartHandshake },
+  "guardian-growth": { background: "#21835D", Icon: Eye },
+  "guardian-teach": { background: "#4955B8", Icon: BookOpen },
+  "guardian-supplies": { background: "#A95E00", Icon: Package },
+  "guardian-pain-mood": { background: "#C94386", Icon: HeartPulse },
+  "guardian-privacy": { background: "#147B8C", Icon: LockKeyhole },
+  "guardian-family": { background: "#4B60A8", Icon: UsersRound },
+  "guardian-doctor": { background: "#BD354C", Icon: Stethoscope },
 };
-
-function isGuardianRoleId(value) {
-  return guardianRoles.some((role) => role.id === value);
-}
 
 function RoleChip({ children, tone }) {
   return (
@@ -65,33 +73,26 @@ function RoleChip({ children, tone }) {
   );
 }
 
-function TopicCard({ category, index, read, onClick, guardian, tile = false }) {
+function TopicCard({ category, index, onClick, tile = false }) {
   const tone = TONES[category.tone];
   if (tile) {
-    const tileStyle = GIRL_TOPIC_STYLES[category.id] ?? { background: "#B83B7E", Icon: Sun };
+    const tileStyle = TOPIC_TILE_STYLES[category.id] ?? { background: "#B83B7E", Icon: Sun };
     const Icon = tileStyle.Icon;
     return (
       <button
         type="button"
         onClick={onClick}
-        aria-label={`${category.title}. ${category.subtitle}${read ? ". Уншсан" : ""}`}
-        className="relative flex aspect-[0.88] min-h-32 w-full flex-col items-center justify-between overflow-hidden rounded-2xl p-2.5 text-center text-white shadow-sm transition hover:brightness-105 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300 active:scale-[0.98]"
+        aria-label={`${category.title}. ${category.subtitle}`}
+        className="relative flex aspect-[0.88] min-h-32 w-full flex-col items-center justify-end gap-2 overflow-hidden rounded-2xl p-2.5 text-center text-white shadow-sm transition hover:brightness-105 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300 active:scale-[0.98]"
         style={{ backgroundColor: tileStyle.background }}
       >
-        <span className="flex w-full items-start justify-between">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
-            <Icon className="h-5 w-5 text-white" aria-hidden="true" />
-          </span>
-          <span
-            className={`flex h-5 w-5 items-center justify-center rounded-full ${
-              read ? "bg-emerald-300 text-emerald-950" : "bg-white/90 text-slate-400"
-            }`}
-            aria-hidden="true"
-          >
-            {read ? <Check className="h-3 w-3" strokeWidth={3} /> : <span className="h-1.5 w-1.5 rounded-full bg-current" />}
-          </span>
+        <span aria-hidden="true" className="absolute -right-4 -top-5 h-16 w-16 rounded-full bg-white/10" />
+        <span aria-hidden="true" className="absolute -bottom-5 -left-4 h-14 w-14 rounded-full bg-white/10" />
+        <span aria-hidden="true" className="absolute left-3 top-1/2 h-2 w-2 rounded-full bg-white/25" />
+        <span className="absolute left-2.5 top-2.5 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 ring-1 ring-white/30">
+          <Icon className="h-5 w-5 text-white" strokeWidth={2.2} aria-hidden="true" />
         </span>
-        <span className="line-clamp-3 w-full text-xs font-black leading-tight">
+        <span className="relative z-10 line-clamp-3 w-full text-left text-xs font-black leading-tight drop-shadow-sm">
           {category.title}
         </span>
       </button>
@@ -114,20 +115,12 @@ function TopicCard({ category, index, read, onClick, guardian, tile = false }) {
         <span className="block text-sm font-black leading-snug text-slate-800">{category.title}</span>
         <span className="mt-0.5 block text-xs font-semibold text-slate-500">{category.subtitle}</span>
       </span>
-      {guardian ? (
-        <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" aria-hidden="true" />
-      ) : read ? (
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-800" aria-label="Уншсан">
-          <Check className="h-4 w-4" aria-hidden="true" />
-        </span>
-      ) : (
-        <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" aria-hidden="true" />
-      )}
+      <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" aria-hidden="true" />
     </button>
   );
 }
 
-function TopicDetail({ category, index, total, counter, read, onBack, onToggleRead, onNext, nextLabel, onList }) {
+function TopicDetail({ category, index, total, counter, onBack, onNext, nextLabel }) {
   const tone = TONES[category.tone];
   return (
     <div className="space-y-4 pb-4">
@@ -179,36 +172,13 @@ function TopicDetail({ category, index, total, counter, read, onBack, onToggleRe
       </div>
 
       <div className="space-y-2 px-1 pt-1">
-        {onToggleRead ? (
-          <button
-            type="button"
-            onClick={onToggleRead}
-            aria-pressed={read}
-            className={`min-h-12 w-full rounded-2xl px-4 py-3 text-sm font-extrabold transition active:scale-[0.99] ${
-              read ? "bg-emerald-100 text-emerald-800" : "bb-grad-sos text-white"
-            }`}
-          >
-            {read ? "Уншсан ✓" : "Уншсан гэж тэмдэглэх"}
-          </button>
-        ) : null}
         {onNext && (
           <button
             type="button"
             onClick={onNext}
-            className={`min-h-12 w-full rounded-2xl px-4 py-3 text-sm font-extrabold transition active:scale-[0.99] ${
-              onToggleRead ? "bg-slate-100 text-slate-700" : "bb-grad-sos text-white"
-            }`}
+            className="min-h-12 w-full rounded-2xl bb-grad-sos px-4 py-3 text-sm font-extrabold text-white transition active:scale-[0.99]"
           >
             {nextLabel}
-          </button>
-        )}
-        {onList && (
-          <button
-            type="button"
-            onClick={onList}
-            className="min-h-12 w-full rounded-2xl bg-slate-100 px-4 py-3 text-sm font-extrabold text-slate-700 transition active:scale-[0.99]"
-          >
-            Бүх сэдэв рүү буцах
           </button>
         )}
       </div>
@@ -219,50 +189,13 @@ function TopicDetail({ category, index, total, counter, read, onBack, onToggleRe
 export default function LearningLibrary({ onMoreMaterials }) {
   const { view, profile, session, guardianGender } = useFamily();
   const isGirl = view === "daughter";
-  const userId = profile?.id ?? session?.user?.id ?? "local";
-  const storageKey = `${STORAGE_PREFIX}${userId}`;
-  const guardianRoleStorageKey = `${GUARDIAN_ROLE_STORAGE_PREFIX}${userId}`;
-  const [readIds, setReadIds] = useState([]);
-  const [storageError, setStorageError] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
-  const [roleId, setRoleId] = useState(() => {
-    const initialRole = session?.user?.user_metadata?.guardian_type;
-    return isGuardianRoleId(initialRole) ? initialRole : "mom";
-  });
   const [guideCompletedIds, setGuideCompletedIds] = useState([]);
   const [guideError, setGuideError] = useState("");
   const [showMaleGuide, setShowMaleGuide] = useState(false);
-  const role = guardianRoles.find((item) => item.id === roleId) ?? guardianRoles[0];
-  const categories = isGirl ? girlCategories : role.categories;
-  const readSet = useMemo(() => new Set(readIds), [readIds]);
-  const visibleCategories = isGirl
-    ? categories.filter((category) => !readSet.has(category.id))
-    : categories;
+  const categories = isGirl ? girlCategories : guardianCategories;
   const selectedIndex = categories.findIndex((category) => category.id === selectedId);
   const selected = selectedIndex >= 0 ? categories[selectedIndex] : null;
-
-  useEffect(() => {
-    if (!isGirl) return;
-    try {
-      const saved = JSON.parse(window.localStorage.getItem(storageKey) ?? "[]");
-      setReadIds(Array.isArray(saved) ? saved.filter((id) => girlCategories.some((category) => category.id === id)) : []);
-      setStorageError(false);
-    } catch {
-      setReadIds([]);
-      setStorageError(true);
-    }
-  }, [isGirl, storageKey]);
-
-  useEffect(() => {
-    if (isGirl) return;
-    const initialRole = session?.user?.user_metadata?.guardian_type;
-    try {
-      const savedRole = window.localStorage.getItem(guardianRoleStorageKey);
-      setRoleId(guardianGender === "male" ? "dad" : isGuardianRoleId(savedRole) ? savedRole : isGuardianRoleId(initialRole) ? initialRole : "mom");
-    } catch {
-      setRoleId(guardianGender === "male" ? "dad" : isGuardianRoleId(initialRole) ? initialRole : "mom");
-    }
-  }, [guardianGender, guardianRoleStorageKey, isGirl, session?.user?.user_metadata?.guardian_type]);
 
   useEffect(() => {
     if (isGirl || guardianGender !== "male" || !profile?.id) {
@@ -333,30 +266,6 @@ export default function LearningLibrary({ onMoreMaterials }) {
     return true;
   };
 
-  const selectGuardianRole = (nextRoleId) => {
-    setRoleId(nextRoleId);
-    setSelectedId(null);
-    try {
-      window.localStorage.setItem(guardianRoleStorageKey, nextRoleId);
-    } catch {
-      // Сонгосон төрөл тухайн дэлгэцэд идэвхтэй хэвээр байна.
-    }
-  };
-
-  const toggleRead = () => {
-    if (!selected) return;
-    const next = readSet.has(selected.id)
-      ? readIds.filter((id) => id !== selected.id)
-      : [...readIds, selected.id];
-    setReadIds(next);
-    try {
-      window.localStorage.setItem(storageKey, JSON.stringify(next));
-      setStorageError(false);
-    } catch {
-      setStorageError(true);
-    }
-  };
-
   const openNext = () => {
     if (selectedIndex < categories.length - 1) setSelectedId(categories[selectedIndex + 1].id);
   };
@@ -367,13 +276,10 @@ export default function LearningLibrary({ onMoreMaterials }) {
         category={selected}
         index={selectedIndex}
         total={categories.length}
-        counter={!isGirl ? `${role.label} · ${String(selectedIndex + 1).padStart(2, "0")} / ${categories.length}` : undefined}
-        read={readSet.has(selected.id)}
+        counter={!isGirl ? `Асран хамгаалагч · ${String(selectedIndex + 1).padStart(2, "0")} / ${categories.length}` : undefined}
         onBack={() => setSelectedId(null)}
-        onToggleRead={isGirl ? toggleRead : null}
         onNext={selectedIndex < categories.length - 1 ? openNext : null}
         nextLabel="Дараагийн сэдэв →"
-        onList={!isGirl ? () => setSelectedId(null) : null}
       />
     );
   }
@@ -436,57 +342,22 @@ export default function LearningLibrary({ onMoreMaterials }) {
               {guideError && <p role="status" className="mt-2 text-xs font-semibold text-rose-700">{guideError}</p>}
             </Card>
           )}
-          <div role="group" aria-label="Асран хамгаалагчийн үүрэг" className="grid grid-cols-3 gap-1 rounded-2xl bb-bg-FDE7F1 p-1">
-            {guardianRoles.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                aria-pressed={roleId === item.id}
-                onClick={() => selectGuardianRole(item.id)}
-                className={`min-h-11 rounded-xl px-2 py-2 text-sm font-extrabold transition ${
-                  roleId === item.id ? "bg-white bb-text-B83B7E shadow-sm" : "text-slate-500"
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-          <div
-            className="rounded-3xl border border-slate-100 p-4 shadow-sm"
-            style={{ backgroundColor: TONES[role.tone].background, color: TONES[role.tone].color }}
-          >
-            <div className="flex items-start gap-3">
-              <Heart className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
-              <p className="text-sm font-bold leading-relaxed">{role.intro}</p>
-            </div>
-          </div>
-          <div className="flex items-center justify-between gap-2 px-1">
-            <h2 className="text-sm font-black text-slate-700">{role.sectionLabel}</h2>
-            <span className="text-xs font-bold text-slate-500">{categories.length} сэдэв</span>
-          </div>
         </>
       )}
 
       <section
-        className={isGirl ? "grid grid-cols-3 gap-2" : "space-y-2.5"}
+        className="grid grid-cols-3 gap-2"
         aria-label="Сэдвүүд"
       >
-        {visibleCategories.map((category) => (
+        {categories.map((category) => (
           <TopicCard
             key={category.id}
             category={category}
             index={categories.findIndex((item) => item.id === category.id)}
-            read={readSet.has(category.id)}
-            guardian={!isGirl}
-            tile={isGirl}
+            tile
             onClick={() => setSelectedId(category.id)}
           />
         ))}
-        {isGirl && visibleCategories.length === 0 && (
-          <p className="col-span-3 rounded-2xl bg-white p-4 text-center text-sm font-bold text-slate-600">
-            Бүх сэдвийг уншиж дуусгалаа. Баяр хүргэе!
-          </p>
-        )}
       </section>
 
     </div>
