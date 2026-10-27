@@ -20,6 +20,8 @@ import { persistPeriodDays } from "../lib/period-edit";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { askAi } from "../lib/ai-client";
 
+const AVATAR_SETUP_KEY = "bloomy:avatar-setup";
+
 const FamilyContext = createContext(null);
 const LOCAL_KIT_KEY = "bloomy:kit-checks";
 const LOCAL_CUSTOM_SUPPLIES_KEY = "bloomy:custom-supplies";
@@ -43,7 +45,7 @@ export function FamilyProvider({ children }) {
   const [profile, setProfile] = useState(null);
   const [family, setFamily] = useState(null); // { id, code }
   const [members, setMembers] = useState([]); // гэр бүлийн бүх профайл
-  const [activeChildId, setActiveChildId] = useState(null);
+  const [activeChildId, setActiveChildIdState] = useState(null);
   const [dataLoading, setDataLoading] = useState(false);
   const [ready, setReady] = useState(false); // эхний бүрэн ачаалалт дууссан эсэх
   const [loadError, setLoadError] = useState(null); // "no_profile" | "network"
@@ -150,11 +152,31 @@ export function FamilyProvider({ children }) {
   const childProfiles = members.filter((member) => member.role === "daughter");
   useEffect(() => {
     if (view !== "mother") {
-      setActiveChildId(null);
+      setActiveChildIdState(null);
       return;
     }
-    setActiveChildId((current) => childProfiles.some((child) => child.id === current) ? current : (childProfiles[0]?.id ?? null));
-  }, [view, members]);
+    let savedId = null;
+    if (familyId) {
+      try {
+        savedId = localStorage.getItem(`bloomy:selected-daughter:${familyId}`);
+      } catch { /* localStorage боломжгүй */ }
+    }
+    setActiveChildIdState((current) =>
+      childProfiles.some((child) => child.id === current)
+        ? current
+        : childProfiles.some((child) => child.id === savedId)
+          ? savedId
+          : (childProfiles[0]?.id ?? null),
+    );
+  }, [view, familyId, members]);
+  const setActiveChildId = useCallback((id) => {
+    setActiveChildIdState(id);
+    if (familyId && id) {
+      try {
+        localStorage.setItem(`bloomy:selected-daughter:${familyId}`, id);
+      } catch { /* localStorage боломжгүй */ }
+    }
+  }, [familyId]);
   const activeChild = childProfiles.find((child) => child.id === activeChildId) ?? (view === "mother" ? childProfiles[0] ?? null : null);
   const daughterProfile =
     view === "daughter" ? profile : activeChild;
@@ -243,7 +265,22 @@ export function FamilyProvider({ children }) {
     hasHadPeriod: Boolean(lastPeriodStart) && !noPeriodYet,
   });
   const needsCycleSetup = view === "daughter" && !lastPeriodStart && !profile?.no_period_yet;
-  const showOnboarding = !session || !profile || !ready || needsCycleSetup;
+
+  // Шинээр бүртгүүлсэн охин эхлээд өөрийн дүрийг бүтээнэ (энэ төхөөрөмж дээр тэмдэглэнэ)
+  const [avatarSetupPending, setAvatarSetupPending] = useState(false);
+  useEffect(() => {
+    try {
+      setAvatarSetupPending(window.localStorage.getItem(AVATAR_SETUP_KEY) === "1");
+    } catch {}
+  }, [session?.user?.id]);
+  const finishAvatarSetup = () => {
+    try {
+      window.localStorage.removeItem(AVATAR_SETUP_KEY);
+    } catch {}
+    setAvatarSetupPending(false);
+  };
+  const needsAvatarSetup = view === "daughter" && avatarSetupPending;
+  const showOnboarding = !session || !profile || !ready || needsAvatarSetup || needsCycleSetup;
 
   /* ================= Нэвтрэлтийг сонсох ================= */
   useEffect(() => {
@@ -604,12 +641,22 @@ export function FamilyProvider({ children }) {
 
   /* ================= Нэвтрэлтийн үйлдлүүд ================= */
   const signUp = async ({ role, name, birthDate, email, password }) => {
+    // Сесс үүсэхээс өмнө тэмдэглэнэ — тэгэхгүй бол дүр бүтээх алхам алгасагдана
+    try {
+      if (role === "daughter") window.localStorage.setItem(AVATAR_SETUP_KEY, "1");
+    } catch {}
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
       options: { data: { role, display_name: name.trim(), birth_date: birthDate || null } },
     });
-    if (error) return authMessage(error);
+    if (error) {
+      try {
+        window.localStorage.removeItem(AVATAR_SETUP_KEY);
+      } catch {}
+      if (error.message === "User already registered") return "existing_user";
+      return authMessage(error);
+    }
     if (!data.session) return "Бүртгэл үүслээ! Имэйлээ шалгаж баталгаажуулаад нэвтэрнэ үү.";
     return null;
   };
@@ -640,7 +687,7 @@ export function FamilyProvider({ children }) {
   };
 
   const shareCode = async () => {
-    const text = `Bloomy 🌸 Guardian Access Code-оор гэр бүлийн бүлэгт холбогдоорой: ${family?.code}`;
+    const text = `Bloomy 🌸 Гэр бүлийн урилгын кодоор холбогдоорой: ${family?.code}`;
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
         await navigator.share({ title: "Bloomy", text, url: window.location.origin });
@@ -1193,6 +1240,8 @@ export function FamilyProvider({ children }) {
     copyCode,
     shareCode,
     needsCycleSetup,
+    needsAvatarSetup,
+    finishAvatarSetup,
     showOnboarding,
     // навигаци
     tab,

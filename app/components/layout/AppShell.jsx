@@ -29,7 +29,7 @@ const TAB_BY_PATH = {
 };
 
 // Асран хамгаалагчийн эдгээр таб сонгосон охиных нь мэдээллийг харуулна
-const CHILD_TABS = ["home", "calendar", "supplies", "messages"];
+const CHILD_TABS = ["home", "calendar", "supplies", "messages", "learn"];
 
 export default function AppShell() {
   const router = useRouter();
