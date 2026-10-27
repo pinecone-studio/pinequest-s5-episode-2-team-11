@@ -38,6 +38,7 @@ export function FamilyProvider({ children }) {
   const [profile, setProfile] = useState(null);
   const [family, setFamily] = useState(null); // { id, code }
   const [members, setMembers] = useState([]); // гэр бүлийн бүх профайл
+  const [activeChildId, setActiveChildId] = useState(null);
   const [dataLoading, setDataLoading] = useState(false);
   const [ready, setReady] = useState(false); // эхний бүрэн ачаалалт дууссан эсэх
   const [loadError, setLoadError] = useState(null); // "no_profile" | "network"
@@ -65,6 +66,7 @@ export function FamilyProvider({ children }) {
   const [codeInput, setCodeInput] = useState("");
   const [codeError, setCodeError] = useState("");
   const [joining, setJoining] = useState(false);
+  const [unlinking, setUnlinking] = useState(false);
   const [copied, setCopied] = useState(false);
   const [flippedMyths, setFlippedMyths] = useState([]);
   const [toast, setToast] = useState(null);
@@ -95,12 +97,23 @@ export function FamilyProvider({ children }) {
 
   /* ================= Тооцоолсон утгууд ================= */
   const view = profile?.role ?? null; // "mother" | "daughter"
+  const guardianProfile = members.find((member) => member.role === "mother") ?? null;
+  const guardianName = guardianProfile?.display_name || null;
+  const childProfiles = members.filter((member) => member.role === "daughter");
+  useEffect(() => {
+    if (view !== "mother") {
+      setActiveChildId(null);
+      return;
+    }
+    setActiveChildId((current) => childProfiles.some((child) => child.id === current) ? current : (childProfiles[0]?.id ?? null));
+  }, [view, members]);
+  const activeChild = childProfiles.find((child) => child.id === activeChildId) ?? (view === "mother" ? childProfiles[0] ?? null : null);
   const daughterProfile =
-    view === "daughter" ? profile : (members.find((m) => m.role === "daughter" && m.id !== userId) ?? null);
+    view === "daughter" ? profile : activeChild;
   const linked =
     view === "daughter"
       ? members.some((member) => member.role === "mother" && member.id !== userId)
-      : Boolean(daughterProfile);
+      : childProfiles.length > 0;
   const daughterName = daughterProfile?.display_name || (view === "mother" ? "Охин тань" : "");
   const nameGen = daughterProfile?.display_name ? genitive(daughterProfile.display_name) : "Охины тань";
 
@@ -140,12 +153,19 @@ export function FamilyProvider({ children }) {
   const lowSupplyCount = Object.values(supplies).filter((s) => s.count / s.max <= 0.3).length;
 
   const inbox = notifications.map((n) => ({ ...n, time: formatTime(n.created_at) }));
-  const momInbox = view === "mother" ? inbox : [];
-  const teenInbox = view === "daughter" ? inbox : [];
+  const momInbox = view === "mother"
+    ? inbox.filter((message) => message.recipient_role === "mother" && (message.sender_id === activeChild?.id || !message.sender_id))
+    : [];
+  const teenInbox = view === "daughter"
+    ? inbox.filter((message) => message.recipient_role === "daughter" && (!message.recipient_id || message.recipient_id === userId))
+    : [];
   const momUnread = momInbox.filter((m) => !m.read).length;
   const latestTeenMsg = teenInbox.find((m) => !m.read);
 
-  const kitChecked = familyId ? kitRows.map((r) => r.item_id) : localKit;
+  const kitOwnerId = view === "mother" ? activeChild?.id : userId;
+  const kitChecked = familyId
+    ? kitRows.filter((row) => row.child_id === kitOwnerId).map((row) => row.item_id)
+    : localKit;
 
   const phaseTips = phase.tips;
   const insightTips = aiTips ?? [0, 1, 2].map((i) => phaseTips[i % phaseTips.length]);
@@ -156,7 +176,6 @@ export function FamilyProvider({ children }) {
   // Аль дэлгэцийг харуулах вэ
   const noPeriodYet = Boolean(daughterProfile?.no_period_yet) && !lastPeriodStart;
   const needsCycleSetup = view === "daughter" && !lastPeriodStart && !profile?.no_period_yet;
-  const needsMotherCode = view === "mother" && !linked;
   const showOnboarding = !session || !profile || !ready || needsCycleSetup;
 
   /* ================= Нэвтрэлтийг сонсох ================= */
@@ -250,7 +269,7 @@ export function FamilyProvider({ children }) {
   }, []);
 
   const loadKit = useCallback(async (fid) => {
-    const { data } = await supabase.from("kit_checks").select("item_id").eq("family_id", fid);
+    const { data } = await supabase.from("kit_checks").select("child_id, item_id").eq("family_id", fid);
     setKitRows(data ?? []);
   }, []);
 
@@ -277,8 +296,8 @@ export function FamilyProvider({ children }) {
       return;
     }
     let fid = p?.family_id ?? null;
-    // Охин өөрийн бүлгийг үүсгээд асран хамгаалагчдаа урилгын код өгнө.
-    if (p?.role === "daughter" && !fid) {
+    // Асран хамгаалагч өөрийн кодтой гэр бүлийг үүсгэнэ. Охид асран хамгаалагчийн кодоор нэгдэнэ.
+    if (p?.role === "mother" && !fid) {
       const { error } = await supabase.rpc("create_family");
       if (!error) fid = (await loadProfile())?.family_id ?? null;
     }
@@ -289,6 +308,10 @@ export function FamilyProvider({ children }) {
       loadNotifications(),
       loadMoods(),
     ]);
+    if (!fid) {
+      setSupplyRows([]);
+      setKitRows([]);
+    }
   };
 
   useEffect(() => {
@@ -329,7 +352,7 @@ export function FamilyProvider({ children }) {
         loadKit(familyId);
         pulseSync();
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "profiles", filter }, () => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => {
         loadFamily(familyId);
         loadProfile();
         loadMoods();
@@ -396,18 +419,19 @@ export function FamilyProvider({ children }) {
 
   /* ================= Мэдэгдэл ================= */
   const notify = useCallback(
-    async (recipientRole, text, kind = "info") => {
-      if (!familyId) return false;
+    async (recipientRole, text, kind = "info", recipientId = null) => {
+      if (!familyId || !recipientId) return false;
       const { error } = await supabase
         .from("notifications")
-        .insert({ family_id: familyId, sender_id: userId, recipient_role: recipientRole, kind, text });
+        .insert({ family_id: familyId, sender_id: userId, recipient_id: recipientId, recipient_role: recipientRole, kind, text });
       if (error) setToast("Илгээж чадсангүй. Интернэтээ шалгаарай.");
       return !error;
     },
     [familyId, userId],
   );
-  const sendToMom = (text, kind) => notify("mother", text, kind);
-  const sendToTeen = (text, kind = "care") => notify("daughter", text, kind);
+  const guardianId = view === "mother" ? userId : members.find((member) => member.role === "mother")?.id;
+  const sendToMom = (text, kind) => notify("mother", text, kind, guardianId);
+  const sendToTeen = (text, kind = "care") => notify("daughter", text, kind, view === "mother" ? activeChild?.id : null);
 
   const markRead = async (id) => {
     setNotifications((p) => p.map((n) => (n.id === id ? { ...n, read: true } : n)));
@@ -417,14 +441,14 @@ export function FamilyProvider({ children }) {
   // Ээж «Мэдэгдэл» табыг нээхэд уншсан гэж тэмдэглэнэ
   useEffect(() => {
     if (view !== "mother" || tab !== "messages" || momUnread === 0) return;
-    const ids = notifications.filter((n) => !n.read).map((n) => n.id);
-    setNotifications((p) => p.map((n) => ({ ...n, read: true })));
+    const ids = momInbox.filter((n) => !n.read).map((n) => n.id);
+    setNotifications((p) => p.map((n) => ids.includes(n.id) ? { ...n, read: true } : n));
     supabase
       .from("notifications")
       .update({ read: true })
       .in("id", ids)
       .then(() => {});
-  }, [view, tab, momUnread, notifications]);
+  }, [view, tab, momUnread, momInbox]);
 
   /* ================= Нэвтрэлтийн үйлдлүүд ================= */
   const signUp = async ({ role, name, birthDate, email, password }) => {
@@ -464,7 +488,7 @@ export function FamilyProvider({ children }) {
   };
 
   const shareCode = async () => {
-    const text = `Bloomy 🌸 Энэ урилгын кодыг оруулаад охинтойгоо холбоорой: ${family?.code}`;
+    const text = `Bloomy 🌸 Guardian Access Code-оор гэр бүлийн бүлэгт холбогдоорой: ${family?.code}`;
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
         await navigator.share({ title: "Bloomy", text, url: window.location.origin });
@@ -478,7 +502,7 @@ export function FamilyProvider({ children }) {
 
   const joinFamily = async () => {
     const digits = codeInput.replace(/\D/g, "");
-    if (digits.length !== 6 || joining) return;
+    if (view !== "daughter" || digits.length !== 6 || joining) return;
     setJoining(true);
     const { error } = await supabase.rpc("join_family", { p_code: `BLOOM-${digits}` });
     setJoining(false);
@@ -493,7 +517,24 @@ export function FamilyProvider({ children }) {
     setCodeError("");
     setCodeInput("");
     await loadAll();
-    setToast(view === "mother" ? "Охинтойгоо амжилттай холбогдлоо 💗" : "Ээжтэйгээ амжилттай холбогдлоо 💗");
+    setToast("Асран хамгаалагчтайгаа амжилттай холбогдлоо 💗");
+  };
+
+  const leaveFamily = async () => {
+    if (view !== "daughter" || !linked || unlinking) return false;
+    setUnlinking(true);
+    const { error } = await supabase.rpc("leave_family");
+    if (error) {
+      setUnlinking(false);
+      setCodeError("Холболтыг салгаж чадсангүй. Дахин оролдоно уу.");
+      return false;
+    }
+    setCodeError("");
+    setCodeInput("");
+    await loadAll();
+    setUnlinking(false);
+    setToast("Асран хамгаалагчтай холболтыг салгалаа.");
+    return true;
   };
 
   /* ================= Мөчлөг ================= */
@@ -648,11 +689,6 @@ export function FamilyProvider({ children }) {
     setNudgeLoading(false);
   }, [session, view, linked, phaseKey, daysUntil, sharedMood, daughterProfile?.display_name]);
 
-  useEffect(() => {
-    if (view === "mother" && linked) fetchNudge();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, linked, phaseKey, sharedMood]);
-
   const refreshNudge = () => !nudgeLoading && fetchNudge();
 
   const markNudgeDone = async () => {
@@ -733,7 +769,8 @@ export function FamilyProvider({ children }) {
       return true;
     }
 
-    const currentIds = kitRows.map((row) => row.item_id);
+    if (!kitOwnerId) return false;
+    const currentIds = kitRows.filter((row) => row.child_id === kitOwnerId).map((row) => row.item_id);
     const removeIds = currentIds.filter((id) => !nextIds.includes(id));
     const addIds = nextIds.filter((id) => !currentIds.includes(id));
 
@@ -742,6 +779,7 @@ export function FamilyProvider({ children }) {
         .from("kit_checks")
         .delete()
         .eq("family_id", familyId)
+        .eq("child_id", kitOwnerId)
         .in("item_id", removeIds);
       if (error) {
         setToast("Цүнхний жагсаалтыг хадгалж чадсангүй. Дахин оролдоно уу.");
@@ -752,7 +790,7 @@ export function FamilyProvider({ children }) {
     if (addIds.length) {
       const { error } = await supabase
         .from("kit_checks")
-        .insert(addIds.map((item_id) => ({ family_id: familyId, item_id })));
+        .insert(addIds.map((item_id) => ({ family_id: familyId, child_id: kitOwnerId, item_id })));
       if (error) {
         await loadKit(familyId);
         setToast("Цүнхний жагсаалтыг хадгалж чадсангүй. Дахин оролдоно уу.");
@@ -760,7 +798,10 @@ export function FamilyProvider({ children }) {
       }
     }
 
-    setKitRows(nextIds.map((item_id) => ({ item_id })));
+    setKitRows((rows) => [
+      ...rows.filter((row) => row.child_id !== kitOwnerId),
+      ...nextIds.map((item_id) => ({ child_id: kitOwnerId, item_id })),
+    ]);
     return true;
   };
 
@@ -831,19 +872,32 @@ export function FamilyProvider({ children }) {
     view,
     family,
     familyCode: family?.code ?? "",
+    guardianName,
+    children: childProfiles,
+    activeChild,
+    activeChildId: activeChild?.id ?? activeChildId,
+    setActiveChildId,
     linked,
     daughterName,
     nameGen,
     codeInput,
     setCodeInput,
+    guardianCode: codeInput,
+    setGuardianCode: setCodeInput,
     codeError,
     setCodeError,
     joining,
+    unlinking,
     joinFamily,
+    leaveFamily,
+    isLinked: linked,
+    linkStatus: linked ? "connected" : joining ? "connecting" : "unlinked",
+    linkError: codeError,
+    setLinkError: setCodeError,
+    connectToGuardian: joinFamily,
     copied,
     copyCode,
     shareCode,
-    needsMotherCode,
     needsCycleSetup,
     showOnboarding,
     // навигаци

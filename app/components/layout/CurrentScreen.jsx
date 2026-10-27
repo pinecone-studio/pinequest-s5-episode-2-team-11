@@ -27,7 +27,6 @@ export default function CurrentScreen({ family, pathname }) {
     profile,
     view,
     tab,
-    needsMotherCode,
     needsCycleSetup,
   } = family;
 
@@ -39,7 +38,7 @@ export default function CurrentScreen({ family, pathname }) {
   if (!profile || loadError === "no_profile") {
     return <LoadError kind={loadError ?? "no_profile"} onRetry={reload} onSignOut={signOut} />;
   }
-  if (needsMotherCode || tab === "me") return <ProfileScreen />;
+  if (tab === "me") return <ProfileScreen />;
   if (tab === "settings") return <SettingsScreen />;
   if (needsCycleSetup) return <CycleSetup />;
   if (tab === "learn") return <LearnHub />;
