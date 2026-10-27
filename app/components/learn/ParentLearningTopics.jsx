@@ -45,7 +45,7 @@ const topics = [
 ];
 
 export default function ParentLearningTopics() {
-  const [expanded, setExpanded] = useState({});
+  const [expanded, setExpanded] = useState(null);
   const { theme } = useTheme();
   const headingColor = theme === "dark" ? "#d9a8bd" : "#a15f7c";
   const bodyColor = theme === "dark" ? "#ded5e2" : "#526070";
@@ -60,12 +60,12 @@ export default function ParentLearningTopics() {
       />
       <div className="space-y-3">
         {topics.map(({ icon: Icon, title, text }) => {
-          const isOpen = Boolean(expanded[title]);
+          const isOpen = expanded === title;
           return (
             <section key={title} className={`parent-topic rounded-2xl bg-white p-4 ${isOpen ? "parent-topic-open" : ""}`}>
               <button
                 type="button"
-                onClick={() => setExpanded((current) => ({ ...current, [title]: !current[title] }))}
+                onClick={() => setExpanded((current) => (current === title ? null : title))}
                 aria-expanded={isOpen}
                 className="flex w-full items-center gap-3 text-left active:opacity-80"
               >
