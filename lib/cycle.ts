@@ -32,6 +32,14 @@ export type CycleInfo = {
 export type Season = "winter" | "spring" | "summer" | "autumn";
 export type LateStatus = "late" | "very_late" | "on_time" | null;
 
+export type CyclePatternInsight = {
+  enoughData: boolean;
+  completedCycles: number;
+  loggedDays: number;
+  moodByPhase: { key: string; label: string; average: number; count: number }[];
+  painByPeriodDay: { day: number; average: number; count: number }[];
+};
+
 export function localDateKey(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -193,6 +201,45 @@ export function getLateStatus(today: string, prediction: Prediction | null, peri
   if (differenceInDays(lastStart, today) > 90) return "very_late";
   if (today > prediction.rangeEnd) return "late";
   return "on_time";
+}
+
+/** Summarizes the daughter's own recent logs without AI or clinical claims. */
+export function getCyclePatternInsight(periods: PeriodLog[], dayLogs: { log_date: string; mood?: number | null; pain?: number | null }[], today = localDateKey(new Date())): CyclePatternInsight {
+  const starts = [...new Set(getConfirmedPeriods(periods, today).map((period) => periodStart(period)!))];
+  const completedStarts = starts.slice(-4);
+  const completedCycles = Math.max(0, completedStarts.length - 1);
+  const relevant = dayLogs.filter((row) => row.log_date >= (completedStarts[0] ?? today) && row.log_date < (completedStarts.at(-1) ?? today));
+  const moodRows = relevant.filter((row) => Number.isFinite(row.mood) && Number(row.mood) >= 1 && Number(row.mood) <= 5);
+  const phaseDefs = [
+    { key: "period", label: "Сарын тэмдгийн үе (1–5 дахь өдөр)", from: 1, to: 5 },
+    { key: "early", label: "Дараах үе (6–14 дэх өдөр)", from: 6, to: 14 },
+    { key: "later", label: "Мөчлөгийн сүүл хэсэг (15+ дахь өдөр)", from: 15, to: 60 },
+  ];
+  const moodByPhase = phaseDefs.map((phase) => {
+    const values = moodRows.filter((row) => {
+      const cycleStart = completedStarts.filter((start) => start <= row.log_date).at(-1);
+      if (!cycleStart) return false;
+      const cycleDay = differenceInDays(cycleStart, row.log_date) + 1;
+      return cycleDay >= phase.from && cycleDay <= phase.to;
+    });
+    return { key: phase.key, label: phase.label, average: values.length ? values.reduce((sum, row) => sum + Number(row.mood), 0) / values.length : 0, count: values.length };
+  }).filter((item) => item.count > 0);
+  const painRows = relevant.filter((row) => row.pain != null && Number.isFinite(row.pain) && Number(row.pain) >= 0 && Number(row.pain) <= 3);
+  const painByPeriodDay = Array.from({ length: 5 }, (_, index) => {
+    const day = index + 1;
+    const values = painRows.filter((row) => {
+      const start = completedStarts.filter((value) => value <= row.log_date).at(-1);
+      return start && differenceInDays(start, row.log_date) + 1 === day;
+    });
+    return { day, average: values.length ? values.reduce((sum, row) => sum + Number(row.pain), 0) / values.length : 0, count: values.length };
+  }).filter((item) => item.count > 0);
+  return {
+    enoughData: completedCycles >= 2 && moodRows.length >= 10,
+    completedCycles,
+    loggedDays: moodRows.length,
+    moodByPhase,
+    painByPeriodDay,
+  };
 }
 
 export function periodDayKeys(starts: string[] = [], periodLength = 5, today = localDateKey(new Date())): Set<string> {

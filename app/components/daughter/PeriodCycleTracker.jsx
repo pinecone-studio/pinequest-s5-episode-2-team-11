@@ -5,7 +5,7 @@ import { ArrowLeft, CalendarDays, ChevronLeft, ChevronRight, Clock3, LoaderCircl
 import { useFamily } from "../../../context/FamilyContext";
 import { askAi } from "../../../lib/ai-client";
 import { supabase } from "../../../lib/supabase";
-import { dateLabelMongolian, localDateKey, periodDayKeys, predictPeriodRange } from "../../../lib/cycle";
+import { dateLabelMongolian, getCyclePatternInsight, localDateKey, periodDayKeys, predictPeriodRange } from "../../../lib/cycle";
 import Card from "../ui/Card";
 import BottomSheet from "../ui/BottomSheet";
 import DayLogSheet from "./DayLogSheet";
@@ -52,7 +52,22 @@ export default function PeriodCycleTracker({ onBack, cycleLength: _cycleLength, 
   const [summary, setSummary] = useState(null);
   const [summaryError, setSummaryError] = useState("");
   const [summaryLoading, setSummaryLoading] = useState(false);
+  const [insightLogs, setInsightLogs] = useState([]);
+  const [previewSeed, setPreviewSeed] = useState(null);
   const touchStartX = useRef(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!supabase || !profile?.id) return () => { cancelled = true; };
+    const fromDate = new Date();
+    fromDate.setDate(fromDate.getDate() - 365);
+    supabase.rpc("get_my_day_logs", { p_from: localDateKey(fromDate), p_to: today }).then(({ data, error }) => {
+      if (cancelled) return;
+      if (error) console.warn("[cycle-pattern]", error.message);
+      setInsightLogs((data ?? []).map((row) => ({ log_date: row.log_date, mood: row.mood, pain: row.pain })));
+    });
+    return () => { cancelled = true; };
+  }, [profile?.id, today]);
 
   const monthOffset = (month.getDay() + 6) % 7;
   const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
@@ -64,6 +79,7 @@ export default function PeriodCycleTracker({ onBack, cycleLength: _cycleLength, 
   const usableStarts = noPeriodYet ? [] : visibleStarts;
   const prediction = predictPeriodRange({ starts: usableStarts, today, hasHadPeriod: usableStarts.length > 0 });
   const periodDays = periodDayKeys(usableStarts, periodLength, today);
+  const insight = useMemo(() => getCyclePatternInsight(previewSeed?.periods ?? periodStarts, previewSeed?.logs ?? insightLogs, today), [previewSeed, periodStarts, insightLogs, today]);
   const pendingPeriods = useMemo(() => Object.fromEntries((periodLogs ?? []).filter((row) => row.status === "pending").map((row) => [row.log_date, row])), [periodLogs]);
   const rangeDates = useMemo(() => {
     const keys = new Set();
@@ -153,6 +169,20 @@ export default function PeriodCycleTracker({ onBack, cycleLength: _cycleLength, 
   };
 
   const saveDailyLog = (row) => setLogs((current) => ({ ...current, [row.log_date]: row }));
+
+  const makePreviewSeed = () => {
+    const starts = [-112, -84, -56, -28].map((offset) => {
+      const date = new Date(); date.setDate(date.getDate() + offset); return localDateKey(date);
+    });
+    const rows = [];
+    starts.slice(0, -1).forEach((start, cycleIndex) => {
+      [2, 8, 16, 24].forEach((cycleDay) => {
+        const date = new Date(`${start}T00:00:00`); date.setDate(date.getDate() + cycleDay - 1);
+        rows.push({ log_date: localDateKey(date), mood: cycleDay === 24 ? 2 + (cycleIndex % 2) : cycleDay < 6 ? 3 : 4 + (cycleIndex % 2), pain: cycleDay <= 5 ? (cycleDay === 1 ? 2 : 1) : null });
+      });
+    });
+    setPreviewSeed({ periods: starts, logs: rows });
+  };
 
   const generateSummary = async () => {
     if (!supabase || !profile?.id) return;
@@ -276,6 +306,22 @@ export default function PeriodCycleTracker({ onBack, cycleLength: _cycleLength, 
               <button type="button" onClick={() => { setDraftStarts(periodStarts); setEditingStarts(true); }} className="flex items-center justify-center gap-1.5 rounded-2xl bg-slate-100 py-3 text-xs font-extrabold text-slate-600"><Pencil className="h-4 w-4" /> Өдрүүдийг засах</button>
             </div>
           )}
+        </Card>
+
+        <Card className="!p-3">
+          <div className="mb-2 flex items-start justify-between gap-2">
+            <div><h2 className="text-sm font-extrabold text-slate-700">Миний бүртгэлийн хэв маяг</h2><p className="mt-1 text-[10px] font-semibold text-slate-400">Өөрийн тэмдэглэлээс тооцсон · онош биш</p></div>
+            {process.env.NODE_ENV === "development" && <button type="button" onClick={() => previewSeed ? setPreviewSeed(null) : makePreviewSeed()} className="shrink-0 rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-500">{previewSeed ? "Жишээг хаах" : "Жишээ харах"}</button>}
+          </div>
+          {insight.enoughData ? <div className="space-y-3">
+            <p className="text-xs font-semibold text-slate-500">Сүүлийн {insight.completedCycles} дууссан мөчлөг · {insight.loggedDays} сэтгэл санааны тэмдэглэл</p>
+            <div className="space-y-2">{insight.moodByPhase.map((item) => <div key={item.key}>
+              <div className="mb-1 flex items-center justify-between gap-2 text-[11px] font-bold text-slate-600"><span>{item.label}</span><span>{item.average.toFixed(1)}/5 · {item.count} өдөр</span></div>
+              <div className="h-2 overflow-hidden rounded-full bg-slate-100" role="img" aria-label={`${item.label}: дундаж ${item.average.toFixed(1)} оноо`}><div className="h-full rounded-full bb-bg-B794F4" style={{ width: `${Math.max(4, item.average / 5 * 100)}%` }} /></div>
+            </div>)}</div>
+            {insight.painByPeriodDay.length > 0 && <p className="rounded-xl bb-bg-FDE7F1-50 px-3 py-2 text-[11px] font-semibold leading-5 text-slate-600">Өвдөлтийн тэмдэглэл: {insight.painByPeriodDay.map((item) => `${item.day}-р өдөр ${item.average.toFixed(1)}/3 (${item.count})`).join(" · ")}</p>}
+            <p className="text-[10px] font-semibold text-slate-400">Энэ нь зөвхөн бүртгэлийн дундаж бөгөөд ирээдүйн мэдрэмжийг хэлэхгүй.</p>
+          </div> : <p className="text-xs font-semibold leading-5 text-slate-500">Хэв маяг харуулахад дор хаяж 2 дууссан мөчлөг, 10 өдрийн сэтгэл санааны тэмдэглэл хэрэгтэй. Одоогоор {insight.completedCycles} мөчлөг, {insight.loggedDays} тэмдэглэл байна.</p>}
         </Card>
 
         <Card className="!p-3">
