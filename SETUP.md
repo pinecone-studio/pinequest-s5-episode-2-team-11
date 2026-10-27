@@ -52,9 +52,12 @@ Supabase → **SQL Editor** дээр байгаа төслийн үндсэн sc
 
 1. `supabase/daily-logs-migration.sql`
 2. `supabase/cycle-calendar-migration.sql`
-3. `supabase/private-note-lock-migration.sql`
+3. `supabase/period-start-edit-migration.sql`
+4. `supabase/private-note-lock-migration.sql`
 
 Өдрийн бүртгэлийн функц тэмдэглэлийн текстийг буцаахаа сүүлийн migration-оор больдог тул `private-note-lock-migration.sql`-ийг алгасаж болохгүй.
+
+Хэрэв календарийн болон нууц тэмдэглэлийн migration-ууд өмнө нь ажилласан бол хуанлийн өдөр хасалтыг синк хийхийн тулд зөвхөн `period-start-edit-migration.sql`-ийг дахин ажиллуулна.
 
 ## 4. Интернэтэд гаргах — Vercel (5 мин)
 
