@@ -47,14 +47,15 @@ function legacyValues(date) {
   };
 }
 
-export default function DayLogSheet({ date, initialMood = null, isPeriodDay = false, periodDayNumber = 1, onClose, onSaved }) {
-  const { profile, linked, guardianName, shareWithMom, setToast, refreshMoods } = useFamily();
+export default function DayLogSheet({ date, initialMood = null, isPeriodDay = false, periodDayNumber = 1, pendingPeriod = null, onClose, onSaved }) {
+  const { profile, linked, guardianName, shareWithMom, setToast, refreshMoods, respondPeriodEntry } = useFamily();
   const today = localDateKey(new Date());
   const future = date > today;
   const selectedDate = new Date(`${date}T00:00:00`);
   const title = date === today ? "Өнөөдөр ямар байна?" : dateLabelMongolian(selectedDate);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [responding, setResponding] = useState(false);
   const [error, setError] = useState("");
   const [mood, setMood] = useState(initialMood);
   const [pain, setPain] = useState(null);
@@ -94,6 +95,13 @@ export default function DayLogSheet({ date, initialMood = null, isPeriodDay = fa
   }, [date, initialMood, profile?.id]);
 
   const toggleSymptom = (key) => setSymptoms((current) => current.includes(key) ? current.filter((item) => item !== key) : [...current, key]);
+  const decidePeriod = async (approve) => {
+    if (!pendingPeriod || responding) return;
+    setResponding(true);
+    const ok = await respondPeriodEntry(pendingPeriod.id, approve);
+    setResponding(false);
+    if (ok) onClose();
+  };
   const save = async () => {
     if (future || saving || !profile?.id) return;
     setSaving(true);
@@ -134,6 +142,7 @@ export default function DayLogSheet({ date, initialMood = null, isPeriodDay = fa
         <p className="py-8 text-center text-sm font-bold text-slate-400">Бүртгэл ачаалж байна…</p>
       ) : (
         <div className="space-y-5 pb-2">
+          {pendingPeriod && <section className="rounded-2xl bb-bg-FDE7F1-50 p-3"><p className="text-sm font-bold leading-relaxed text-slate-600">Асран хамгаалагч энэ өдрийг сарын тэмдэг эхэлсэн гэж санал болгосон. Баталгаажуулах уу?</p><div className="mt-2 grid grid-cols-2 gap-2"><button type="button" disabled={responding} onClick={() => decidePeriod(false)} className="rounded-xl bg-white py-2.5 text-xs font-extrabold text-slate-500 disabled:opacity-60">Үгүй</button><button type="button" disabled={responding} onClick={() => decidePeriod(true)} className="rounded-xl bb-bg-E0679F py-2.5 text-xs font-extrabold text-white disabled:opacity-60">{responding ? "Хадгалж байна…" : "Баталгаажуулах"}</button></div></section>}
           {isPeriodDay && <p className="w-fit rounded-full bb-bg-FDE7F1 px-3 py-1.5 text-xs font-extrabold bb-text-B83B7E">Сарын тэмдгийн {periodDayNumber} дэх өдөр</p>}
           <section>
             <h3 className="mb-2 text-sm font-extrabold text-slate-700">Сэтгэл санаа</h3>
