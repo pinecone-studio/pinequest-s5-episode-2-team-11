@@ -72,7 +72,6 @@ create table if not exists public.kit_checks (
 
 alter table public.profiles add column if not exists no_period_yet boolean not null default false;
 alter table public.profiles add column if not exists birth_date date;
-alter table public.notifications add column if not exists recipient_id uuid references public.profiles (id) on delete set null;
 alter table public.notifications add column if not exists recipient_id uuid references auth.users (id) on delete set null;
 alter table public.kit_checks add column if not exists child_id uuid references public.profiles (id) on delete cascade;
 
@@ -164,7 +163,6 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
--- ---------- Асран хамгаалагч гэр бүлийн код үүсгэх ----------
 -- ---------- Асран хамгаалагч өөрийн access code-той гэр бүл үүсгэх ----------
 
 create or replace function public.create_family()
@@ -207,7 +205,6 @@ begin
 end;
 $$;
 
--- ---------- Урилгын кодоор гэр бүлд нэгдэх (охин) ----------
 -- ---------- Хүүхэд асран хамгаалагчийн кодоор гэр бүлд нэгдэх ----------
 
 create or replace function public.join_family(p_code text)
@@ -379,14 +376,6 @@ create policy "notif: read mine" on public.notifications
   using (
     family_id = public.my_family_id()
     and recipient_role = public.my_role()
-    and (
-      public.my_role() = 'mother'
-      or recipient_id = auth.uid()
-      or (
-        recipient_id is null
-        and (kind not like 'target:%' or split_part(kind, ':', 2) = auth.uid()::text)
-      )
-    )
     and (recipient_id = auth.uid() or (recipient_id is null and public.my_role() = 'mother'))
   );
 
@@ -396,17 +385,6 @@ create policy "notif: send to family" on public.notifications
   with check (
     family_id = public.my_family_id()
     and sender_id = auth.uid()
-    and (
-      recipient_id is null
-      or (
-        public.my_role() = 'mother'
-        and exists (
-        select 1 from public.profiles p
-        where p.id = recipient_id
-          and p.family_id = public.my_family_id()
-          and p.role = recipient_role
-        )
-      )
     and recipient_id is not null
     and exists (
       select 1 from public.profiles p
@@ -420,27 +398,11 @@ create policy "notif: mark read" on public.notifications
   using (
     family_id = public.my_family_id()
     and recipient_role = public.my_role()
-    and (
-      public.my_role() = 'mother'
-      or recipient_id = auth.uid()
-      or (
-        recipient_id is null
-        and (kind not like 'target:%' or split_part(kind, ':', 2) = auth.uid()::text)
-      )
-    )
     and (recipient_id = auth.uid() or (recipient_id is null and public.my_role() = 'mother'))
   )
   with check (
     family_id = public.my_family_id()
     and recipient_role = public.my_role()
-    and (
-      public.my_role() = 'mother'
-      or recipient_id = auth.uid()
-      or (
-        recipient_id is null
-        and (kind not like 'target:%' or split_part(kind, ':', 2) = auth.uid()::text)
-      )
-    )
     and (recipient_id = auth.uid() or (recipient_id is null and public.my_role() = 'mother'))
   );
 
