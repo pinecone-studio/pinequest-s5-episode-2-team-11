@@ -15,7 +15,8 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { DEFAULT_SUPPLIES, KIT_ITEMS, MOOD_FALLBACK, MOOD_OPTIONS, PHASES, SOS_STEPS, SOS_TOTAL } from "../lib/data";
 import { genitive, getMomNudges, getPhaseKey } from "../lib/helpers";
 import { cycleStatus, formatTime, toDateStr } from "../lib/dates";
-import { predictPeriodRange } from "../lib/cycle";
+import { periodsFromLogs, predictPeriodRange } from "../lib/cycle";
+import { persistPeriodDays } from "../lib/period-edit";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { askAi } from "../lib/ai-client";
 
@@ -59,7 +60,9 @@ export function FamilyProvider({ children }) {
   const [localKit, setLocalKit] = useState([]);
   const [periodStarts, setPeriodStarts] = useState([]);
   const [periodLogs, setPeriodLogs] = useState([]);
-  const syncedPeriodDatesRef = useRef("");
+  // userId whose period_logs have been read from the DB; after that the DB,
+  // not localStorage, is the source of truth for period dates.
+  const periodLogsLoadedForRef = useRef(null);
   const [noteUnlockToken, setNoteUnlockToken] = useState("");
   const noteUnlockAtRef = useRef(0);
 
@@ -131,6 +134,7 @@ export function FamilyProvider({ children }) {
   const familyId = family?.id ?? null;
 
   useEffect(() => {
+    if (userId && periodLogsLoadedForRef.current === userId) return;
     const key = `${LOCAL_PERIOD_STARTS_PREFIX}${userId ?? "local"}`;
     let saved = [];
     try {
@@ -249,8 +253,14 @@ export function FamilyProvider({ children }) {
 
   // Аль дэлгэцийг харуулах вэ
   const noPeriodYet = Boolean(daughterProfile?.no_period_yet) && !lastPeriodStart;
+  // Confirmed periods with their logged lengths; the Today ring and the calendar
+  // both predict from this list so they always agree.
+  const cyclePeriods = useMemo(() => {
+    const confirmed = view === "daughter" ? periodsFromLogs(periodLogs) : [];
+    return confirmed.length ? confirmed : periodStarts;
+  }, [view, periodLogs, periodStarts]);
   const periodPrediction = predictPeriodRange({
-    starts: periodStarts,
+    periods: cyclePeriods,
     today,
     hasHadPeriod: Boolean(lastPeriodStart) && !noPeriodYet,
   });
@@ -386,6 +396,16 @@ export function FamilyProvider({ children }) {
     setMoodRows([]);
   }, [userId, view, activeChildId, familyId]);
 
+  // DB rows replace (never merge with) the local copy, so removed days stay removed.
+  const applyPeriodLogRows = useCallback((rows) => {
+    setPeriodLogs(rows);
+    if (view !== "daughter") return;
+    const confirmed = [...new Set(rows.filter((row) => row.status === "confirmed").map((row) => row.log_date))].sort();
+    periodLogsLoadedForRef.current = userId;
+    setPeriodStarts(confirmed);
+    try { localStorage.setItem(`${LOCAL_PERIOD_STARTS_PREFIX}${userId}`, JSON.stringify(confirmed)); } catch { /* localStorage боломжгүй */ }
+  }, [view, userId]);
+
   const loadPeriodLogs = useCallback(async () => {
     if (!supabase || !userId) {
       setPeriodLogs([]);
@@ -404,38 +424,32 @@ export function FamilyProvider({ children }) {
     }
     const { data, error } = await request;
     if (error) {
-      console.warn("[period_logs]", error.message);
-      setPeriodLogs([]);
-      return;
+      console.error("[period_logs] load failed:", error);
+      if (view !== "daughter") setPeriodLogs([]);
+      return false;
     }
-    const rows = data ?? [];
-    setPeriodLogs(rows);
-    if (view === "daughter") {
-      const confirmed = rows.filter((row) => row.status === "confirmed").map((row) => row.log_date);
-      setPeriodStarts((current) => [...new Set([...current, ...confirmed])].sort());
+    // Read before applyPeriodLogRows overwrites the local copy.
+    let localStarts = [];
+    try { localStarts = JSON.parse(localStorage.getItem(`${LOCAL_PERIOD_STARTS_PREFIX}${userId}`) ?? "[]"); } catch { /* localStorage боломжгүй */ }
+    applyPeriodLogRows(data ?? []);
+    if (view === "daughter" && !(data ?? []).some((row) => row.status === "confirmed")) {
+      // One-time upload of dates that only ever lived in this browser's localStorage.
+      const legacy = (Array.isArray(localStarts) ? localStarts : []).filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date) && date <= toDateStr());
+      if (legacy.length) {
+        const { error: syncError } = await supabase.rpc("sync_my_period_starts", { p_dates: legacy, p_period_length: periodLength });
+        if (syncError) console.error("[period_logs] legacy local date upload failed:", syncError);
+        else {
+          const { data: synced } = await supabase.rpc("get_my_period_logs", { p_from: from, p_to: to });
+          if (synced) applyPeriodLogRows(synced);
+        }
+      }
     }
-  }, [userId, view, activeChildId]);
+    return true;
+  }, [userId, view, activeChildId, periodLength, applyPeriodLogRows]);
 
   useEffect(() => {
     loadPeriodLogs();
   }, [loadPeriodLogs]);
-
-  useEffect(() => {
-    if (!supabase || view !== "daughter" || !userId || !periodStarts.length) return;
-    const signature = `${userId}:${periodLength}:${periodStarts.join(",")}`;
-    if (syncedPeriodDatesRef.current === signature) return;
-    let cancelled = false;
-    supabase.rpc("sync_my_period_starts", { p_dates: periodStarts, p_period_length: periodLength }).then(({ error }) => {
-      if (cancelled) return;
-      if (error) {
-        console.warn("[period_logs] legacy date sync:", error.message);
-        return;
-      }
-      syncedPeriodDatesRef.current = signature;
-      loadPeriodLogs();
-    });
-    return () => { cancelled = true; };
-  }, [view, userId, periodStarts, periodLength, loadPeriodLogs]);
 
   const loadKit = useCallback(async (fid) => {
     const { data } = await supabase.from("kit_checks").select("child_id, item_id").eq("family_id", fid);
@@ -750,8 +764,36 @@ export function FamilyProvider({ children }) {
     const key = `${LOCAL_PERIOD_STARTS_PREFIX}${userId ?? "local"}`;
     try { localStorage.setItem(key, JSON.stringify(starts)); } catch { /* localStorage боломжгүй */ }
     setPeriodStarts(starts);
-    syncedPeriodDatesRef.current = `${userId}:${nextPeriodLength}:${starts.join(",")}`;
     await loadPeriodLogs();
+    return true;
+  };
+
+  // Saves the calendar's selected days (consecutive days = one period), then
+  // reloads profile + period_logs from the DB so every screen shows saved data.
+  const savePeriodDays = async (dates) => {
+    if (!supabase || view !== "daughter") return false;
+    const result = await persistPeriodDays(supabase, dates, {
+      today: toDateStr(),
+      periodLength: Math.min(7, Math.max(2, Number(periodLength) || 5)),
+    });
+    if (!result.ok) {
+      // Supabase/PostgREST errors often have non-enumerable fields, so logging
+      // the object directly produces `{}` in the Next.js overlay.
+      console.error("[period_logs] sync_my_period_days failed:", {
+        code: result.error?.code,
+        message: result.error?.message,
+        details: result.error?.details,
+        hint: result.error?.hint,
+      });
+      setToast(result.error?.code === "PGRST202"
+        ? "Календарийн SQL шинэчлэл хийгдээгүй байна. Supabase дээр manual-period-date-edit-migration.sql-ийг ажиллуулаад дахин оролдоно уу."
+        : "Хадгалж чадсангүй. Алдааны дэлгэрэнгүйг шалгаад дахин оролдоно уу.");
+      return false;
+    }
+    if (result.rows) applyPeriodLogRows(result.rows);
+    else console.error("[period_logs] reload after save failed:", result.reloadError);
+    await loadProfile();
+    pulseSync();
     return true;
   };
 
@@ -1213,8 +1255,10 @@ export function FamilyProvider({ children }) {
     lastPeriodStart,
     periodStarts,
     periodLogs,
+    cyclePeriods,
     periodPrediction,
     savePeriodStartDates,
+    savePeriodDays,
     day,
     daysLate,
     phaseKey,

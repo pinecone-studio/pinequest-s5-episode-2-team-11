@@ -35,6 +35,7 @@ export default function DaughterHome() {
     daysUntil,
     lastPeriodStart,
     periodStarts,
+    cyclePeriods,
     periodPrediction,
     startPeriod,
   } = useFamily();
@@ -60,7 +61,7 @@ export default function DaughterHome() {
       <FriendsQuickCard />
 
       <HoroscopeCard />
-      {hasCycle && <CyclePredictionCard daysUntil={daysUntil} cycleLength={cycleLength} lastPeriodStart={lastPeriodStart} />}
+      {hasCycle && <CyclePredictionCard />}
 
       {/* Мөчлөгийн тойрог */}
       {hasCycle || noPeriodYet ? (
@@ -79,7 +80,7 @@ export default function DaughterHome() {
               phaseKey={phaseKey}
               daysUntil={periodPrediction.late ? 0 : periodPrediction.rangeStart ? Math.max(0, Math.round((new Date(`${periodPrediction.rangeStart}T00:00:00`) - new Date(`${localDateKey(new Date())}T00:00:00`)) / 86400000)) : daysUntil}
               daysLate={periodPrediction.late ? Math.max(daysLate, 1) : 0}
-              periods={periodStarts}
+              periods={cyclePeriods}
               hasHadPeriod={hasCycle && !noPeriodYet}
             />
           </button>
