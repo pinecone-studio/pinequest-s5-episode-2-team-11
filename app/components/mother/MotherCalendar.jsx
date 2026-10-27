@@ -196,6 +196,20 @@ export default function MotherCalendar() {
                   <p key={t} className="text-sm font-semibold text-slate-600">💡 {t}</p>
                 ))}
               </div>
+              ) : (
+                <button
+                  onClick={askSummary}
+                  disabled={aiLoading}
+                  className="mt-4 w-full rounded-2xl bb-grad-sos text-white py-3 text-sm font-extrabold flex items-center justify-center gap-2 active:scale-95 transition disabled:opacity-60"
+                >
+                  {aiLoading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                  {aiLoading ? "Тойм гаргаж байна…" : "AI-аар 7 хоногийн тойм, зөвлөмж авах"}
+                </button>
+              )}
+              {aiError && <p className="mt-2 text-xs font-semibold bb-text-7C4DCC">{aiError}</p>}
+            </>
+          )}
+        </Card>
             ) : (
               <button
                 onClick={askSummary}
