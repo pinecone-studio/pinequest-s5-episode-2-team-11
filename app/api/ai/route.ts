@@ -79,7 +79,7 @@ async function generate(prompt: string, maxTokens: number): Promise<string> {
 const PHASE_MN: Record<string, string> = {
   period: "сарын тэмдгийн үе",
   follicular: "дааврын тэнцвэрт (фолликулын) үе",
-  ovulation: "овуляцийн үе",
+  ovulation: "мөчлөгийн дунд үе",
   luteal: "сарын тэмдгийн өмнөх (лютейн) үе",
 };
 const MOOD_MN: Record<string, string> = {
@@ -165,12 +165,10 @@ const SAFETY = `Чи "Bloomy" апп-ын зөөлөн, найрсаг тусл�
 function cleanDayLogs(raw: unknown, limit: number) {
   return (Array.isArray(raw) ? raw.slice(-limit) : []).flatMap((entry: any) => {
     if (!entry || typeof entry.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(entry.date)) return [];
-    const values: Record<string, string> = {};
-    Object.entries(CYCLE_LOG_VALUES).forEach(([category, allowed]) => {
-      const value = entry[category];
-      if (typeof value === "string" && allowed.includes(value)) values[category] = value;
-    });
-    return Object.keys(values).length ? [{ date: entry.date, ...values }] : [];
+    const mood = Number(entry.mood);
+    if (![1, 2, 3, 4, 5].includes(mood)) return [];
+    const moodLabel = ({ 1: "маш хэцүү", 2: "тавгүй", 3: "дундаж", 4: "сайхан", 5: "маш сайхан" } as Record<number, string>)[mood];
+    return [{ date: entry.date, mood: moodLabel }];
   });
 }
 
@@ -197,10 +195,10 @@ function buildWeeklySummaryPrompt(body: any) {
   const daysUntil = Number.isFinite(Number(body.daysUntil)) ? Number(body.daysUntil) : null;
   return {
     maxTokens: 500,
-    prompt: `Асран хамгаалагчид охин ${name}-ийн сүүлийн 7 хоногийн бүртгэлийн товч тойм бич. Охин одоо ${phase}-д байна.${
-      daysUntil != null && daysUntil >= 0 ? ` Дараагийн сарын тэмдэг ойролцоогоор ${daysUntil} хоногийн дараа.` : ""
+    prompt: `Асран хамгаалагчид охин ${name}-ийн сүүлийн 7 хоногт өөрөө хуваалцахыг зөвшөөрсөн зөвхөн сэтгэл санааны бүртгэлийн товч тойм бич. Охин одоо ${phase}-д байна.${
+      daysUntil != null && daysUntil >= 0 ? " Сарын тэмдгийн хугацаа зөвхөн таамаг гэдгийг сануул." : ""
     }
-Доорх ангилсан өгөгдлийг л ашигла (сэтгэл, шинж тэмдэг, урсгал, арьс, нойр). Бүртгэгдээгүй зүйлийг таамаглаж бүү нэм. Охины хувийн байдлыг хүндэтгэсэн, буруутгаагүй өнгөөр бич. Оношлохгүй. Хүчтэй өвдөлт олон өдөр давтагдсан бол эмчтэй зөвлөлдөхийг зөөлөн санал болго. Өгөгдөл цөөн бол тэгж хэл.
+Зөвхөн сэтгэл санааны оноог ашигла. Шинж тэмдэг, өвдөлт, урсгал, хувийн тэмдэглэл танд өгөгдөөгүй бөгөөд эдгээрийг таамаглаж бүү нэм. Охины хувийн байдлыг хүндэтгэсэн, буруутгаагүй өнгөөр бич. Оношлохгүй. Өгөгдөл цөөн бол тэгж хэл.
 Өгөгдөл: ${JSON.stringify(days)}
 ЗӨВХӨН JSON: {"summary":"2-3 өгүүлбэрийн тойм","tips":["асран хамгаалагчийн хийж болох 1 өгүүлбэрийн халамж","...","..."]}`,
   };

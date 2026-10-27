@@ -4,7 +4,7 @@
  * FamilyContext — апп-ын бүх өгөгдөл ба үйлдэл.
  *
  *  • Нэвтрэлт: Supabase Auth (имэйл + нууц үг)
- *  • Өгөгдөл:  Supabase (profiles, families, supplies, mood_logs, notifications, kit_checks)
+ *  • Өгөгдөл:  Supabase (profiles, families, supplies, day_logs, notifications, kit_checks)
  *  • Синк:     Supabase Realtime — ээж, охин хоёр өөр утаснаас шууд харна
  *  • AI:       /api/ai (сервер дээр) → алдаа гарвал lib/data.js-ийн бэлэн текст
  *
@@ -15,11 +15,15 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { DEFAULT_SUPPLIES, KIT_ITEMS, MOOD_FALLBACK, MOOD_OPTIONS, PHASES, SOS_STEPS, SOS_TOTAL } from "../lib/data";
 import { genitive, getMomNudges, getPhaseKey } from "../lib/helpers";
 import { cycleStatus, formatTime, toDateStr } from "../lib/dates";
+import { predictPeriodRange } from "../lib/cycle";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { askAi } from "../lib/ai-client";
 
 const FamilyContext = createContext(null);
 const LOCAL_KIT_KEY = "bloomy:kit-checks";
+const LOCAL_CUSTOM_SUPPLIES_KEY = "bloomy:custom-supplies";
+const LOCAL_PERIOD_STARTS_PREFIX = "bloom:period-starts:";
+const DAILY_MOOD_EMOJI = { 1: "😣", 2: "😟", 3: "😐", 4: "🙂", 5: "😄" };
 
 const AUTH_ERRORS = {
   "Invalid login credentials": "Имэйл эсвэл нууц үг буруу байна.",
@@ -46,15 +50,26 @@ export function FamilyProvider({ children }) {
   /* ================= Гэр бүлийн өгөгдөл ================= */
   const [supplyRows, setSupplyRows] = useState([]);
   const [localSupplies, setLocalSupplies] = useState(DEFAULT_SUPPLIES); // гэр бүлгүй үед
+  const [localCustomSupplies, setLocalCustomSupplies] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [moodRows, setMoodRows] = useState([]);
   const [kitRows, setKitRows] = useState([]);
   const [localKit, setLocalKit] = useState([]);
+  const [periodStarts, setPeriodStarts] = useState([]);
 
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(LOCAL_KIT_KEY) ?? "[]");
       if (Array.isArray(saved)) setLocalKit(saved.filter((id) => KIT_ITEMS.some((item) => item.id === id)));
+    } catch {
+      /* localStorage боломжгүй */
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(LOCAL_CUSTOM_SUPPLIES_KEY) ?? "[]");
+      if (Array.isArray(saved)) setLocalCustomSupplies(saved.filter((item) => item?.kind?.startsWith("custom_")));
     } catch {
       /* localStorage боломжгүй */
     }
@@ -94,6 +109,17 @@ export function FamilyProvider({ children }) {
 
   const userId = session?.user?.id ?? null;
   const familyId = family?.id ?? null;
+
+  useEffect(() => {
+    const key = `${LOCAL_PERIOD_STARTS_PREFIX}${userId ?? "local"}`;
+    let saved = [];
+    try {
+      const value = JSON.parse(localStorage.getItem(key) ?? "[]");
+      if (Array.isArray(value)) saved = value;
+    } catch { /* хуанлийн хадгалсан өдрүүдийг алгасна */ }
+    const merged = [...new Set([...saved, profile?.last_period_start].filter(Boolean))].sort();
+    setPeriodStarts(merged);
+  }, [userId, profile?.last_period_start]);
 
   /* ================= Тооцоолсон утгууд ================= */
   const view = profile?.role ?? null; // "mother" | "daughter"
@@ -142,14 +168,19 @@ export function FamilyProvider({ children }) {
   const sharedMood = view === "mother" ? mood : linked && shareWithMom ? mood : null;
 
   const supplies = useMemo(() => {
-    if (!familyId) return localSupplies;
+    if (!familyId) return { ...localSupplies, ...Object.fromEntries(localCustomSupplies.map((item) => [item.kind, item])) };
     const out = {};
     for (const [k, base] of Object.entries(DEFAULT_SUPPLIES)) {
       const row = supplyRows.find((r) => r.kind === k);
       out[k] = { ...base, count: row?.count ?? 0, max: row?.max ?? base.max };
     }
+    for (const row of supplyRows) {
+      if (!Object.hasOwn(DEFAULT_SUPPLIES, row.kind)) {
+        out[row.kind] = { label: row.label || "Өөр хэрэглэл", emoji: row.emoji || "📦", count: row.count ?? 0, max: row.max ?? 10 };
+      }
+    }
     return out;
-  }, [familyId, supplyRows, localSupplies]);
+  }, [familyId, supplyRows, localSupplies, localCustomSupplies]);
   const lowSupplyCount = Object.values(supplies).filter((s) => s.count / s.max <= 0.3).length;
 
   const inbox = notifications.map((n) => ({ ...n, time: formatTime(n.created_at) }));
@@ -175,6 +206,11 @@ export function FamilyProvider({ children }) {
 
   // Аль дэлгэцийг харуулах вэ
   const noPeriodYet = Boolean(daughterProfile?.no_period_yet) && !lastPeriodStart;
+  const periodPrediction = predictPeriodRange({
+    starts: periodStarts,
+    today,
+    hasHadPeriod: Boolean(lastPeriodStart) && !noPeriodYet,
+  });
   const needsCycleSetup = view === "daughter" && !lastPeriodStart && !profile?.no_period_yet;
   const showOnboarding = !session || !profile || !ready || needsCycleSetup;
 
@@ -264,9 +300,21 @@ export function FamilyProvider({ children }) {
   }, []);
 
   const loadMoods = useCallback(async () => {
-    const { data } = await supabase.from("mood_logs").select("*").gte("log_date", toDateStr()).limit(20);
-    setMoodRows(data ?? []);
-  }, []);
+    if (!supabase || !userId) return setMoodRows([]);
+    const from = toDateStr(new Date(Date.now() - 30 * 86400000));
+    if (view === "mother") {
+      if (!activeChildId) return setMoodRows([]);
+      const { data } = await supabase.rpc("get_shared_daily_moods", { p_child_id: activeChildId, p_from: from, p_to: toDateStr() });
+      setMoodRows((data ?? []).map((row) => ({ ...row, user_id: activeChildId, family_id: familyId, mood: DAILY_MOOD_EMOJI[row.mood] ?? null })));
+      return;
+    }
+    if (view === "daughter") {
+      const { data } = await supabase.rpc("get_my_day_logs", { p_from: from, p_to: toDateStr() });
+      setMoodRows((data ?? []).map((row) => ({ ...row, user_id: userId, family_id: familyId, mood: DAILY_MOOD_EMOJI[row.mood] ?? null })));
+      return;
+    }
+    setMoodRows([]);
+  }, [userId, view, activeChildId, familyId]);
 
   const loadKit = useCallback(async (fid) => {
     const { data } = await supabase.from("kit_checks").select("child_id, item_id").eq("family_id", fid);
@@ -344,10 +392,6 @@ export function FamilyProvider({ children }) {
         loadNotifications();
         pulseSync();
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "mood_logs", filter }, () => {
-        loadMoods();
-        pulseSync();
-      })
       .on("postgres_changes", { event: "*", schema: "public", table: "kit_checks" }, () => {
         loadKit(familyId);
         pulseSync();
@@ -363,6 +407,16 @@ export function FamilyProvider({ children }) {
       supabase.removeChannel(channel);
     };
   }, [familyId, loadSupplies, loadNotifications, loadMoods, loadKit, loadFamily, loadProfile, pulseSync]);
+
+  useEffect(() => {
+    if ((view === "mother" && activeChildId) || view === "daughter") loadMoods();
+  }, [view, activeChildId, loadMoods]);
+
+  useEffect(() => {
+    if (view !== "mother" || !activeChildId) return;
+    const refreshId = window.setInterval(loadMoods, 60000);
+    return () => window.clearInterval(refreshId);
+  }, [view, activeChildId, loadMoods]);
 
   // Апп-руу буцаж ороход (утсыг түгжээд нээх) шинэчилнэ
   useEffect(() => {
@@ -547,9 +601,28 @@ export function FamilyProvider({ children }) {
     return !error;
   };
 
+  const savePeriodStartDates = async (dates, nextPeriodLength = periodLength) => {
+    const starts = [...new Set(dates.filter((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date) && date <= today))].sort();
+    if (!starts.length) {
+      setToast("Ядаж нэг сарын тэмдэг эхэлсэн өдрийг үлдээнэ үү.");
+      return false;
+    }
+    const lengths = starts.slice(1).map((date, index) => Math.round((new Date(`${date}T00:00:00`) - new Date(`${starts[index]}T00:00:00`)) / 86400000)).filter((days) => days >= 15 && days <= 60).slice(-6).map((days) => Math.min(45, Math.max(21, days)));
+    const nextCycleLength = lengths.length ? Math.round(lengths.reduce((sum, length) => sum + length, 0) / lengths.length) : 28;
+    const ok = await saveCycle({ lastPeriodStart: starts.at(-1), cycleLength: nextCycleLength, periodLength: nextPeriodLength });
+    if (!ok) return false;
+    const key = `${LOCAL_PERIOD_STARTS_PREFIX}${userId ?? "local"}`;
+    try { localStorage.setItem(key, JSON.stringify(starts)); } catch { /* localStorage боломжгүй */ }
+    setPeriodStarts(starts);
+    return true;
+  };
+
   const startPeriod = async () => {
     const ok = await saveCycle({ lastPeriodStart: today, cycleLength, periodLength });
     if (!ok) return;
+    const starts = [...new Set([...periodStarts, today])].sort();
+    try { localStorage.setItem(`${LOCAL_PERIOD_STARTS_PREFIX}${userId ?? "local"}`, JSON.stringify(starts)); } catch { /* localStorage боломжгүй */ }
+    setPeriodStarts(starts);
     if (linked) {
       await sendToMom(`${nameGen} сарын тэмдэг өнөөдөр ирлээ. Бага зэрэг илүү халамж хэрэгтэй 💗`, "period");
       setToast("Тэмдэглэлээ! Ээжид зөөлөн мэдэгдэл очлоо 🌸");
@@ -588,15 +661,18 @@ export function FamilyProvider({ children }) {
   };
 
   const pickMood = async (value) => {
-    const row = { user_id: userId, family_id: familyId, log_date: today, mood: value };
+    const scoreById = { sad: 1, angry: 2, tired: 3, craving: 3 };
+    const scoreByEmoji = { "😣": 1, "😟": 2, "😐": 3, "🙂": 4, "😄": 5 };
+    const score = scoreById[value] ?? scoreByEmoji[value] ?? null;
+    if (!score) return;
+    const emoji = DAILY_MOOD_EMOJI[score];
+    const row = { user_id: userId, family_id: familyId, log_date: today, mood: emoji };
     setMoodRows((p) => [...p.filter((r) => !(r.user_id === userId && r.log_date === today)), row]);
     setMoodTimer(120);
     setMoodTimerRunning(false);
-    supabase
-      .from("mood_logs")
-      .upsert(row, { onConflict: "user_id,log_date" })
-      .then(({ error }) => error && setToast("Хадгалж чадсангүй."));
-    await loadMoodCard(value);
+    const { error } = await supabase.rpc("set_my_day_mood", { p_log_date: today, p_mood: score });
+    if (error) setToast("Хадгалж чадсангүй.");
+    await loadMoodCard(emoji);
   };
 
   const clearMood = async () => {
@@ -608,7 +684,7 @@ export function FamilyProvider({ children }) {
     } catch {
       /* localStorage боломжгүй */
     }
-    await supabase.from("mood_logs").delete().eq("user_id", userId).eq("log_date", today);
+    await supabase.rpc("clear_my_day_mood", { p_log_date: today });
   };
 
   // Апп дахин ачаалагдахад өнөөдрийн мэдрэмжийн картыг сэргээнэ
@@ -701,10 +777,16 @@ export function FamilyProvider({ children }) {
   /* ================= Хэрэгсэл ================= */
   const updateSupply = async (key, delta) => {
     if (!familyId) {
-      setLocalSupplies((p) => ({
-        ...p,
-        [key]: { ...p[key], count: Math.min(p[key].max, Math.max(0, p[key].count + delta)) },
-      }));
+      const current = supplies[key];
+      if (!current) return;
+      const updated = { ...current, count: Math.min(current.max, Math.max(0, current.count + delta)) };
+      if (key.startsWith("custom_")) {
+        setLocalCustomSupplies((prev) => {
+          const next = prev.map((item) => item.kind === key ? { ...item, count: updated.count } : item);
+          try { localStorage.setItem(LOCAL_CUSTOM_SUPPLIES_KEY, JSON.stringify(next)); } catch { /* localStorage боломжгүй */ }
+          return next;
+        });
+      } else setLocalSupplies((p) => ({ ...p, [key]: updated }));
       return;
     }
     const cur = supplies[key];
@@ -715,6 +797,52 @@ export function FamilyProvider({ children }) {
       .update({ count, updated_at: new Date().toISOString() })
       .eq("family_id", familyId)
       .eq("kind", key);
+  };
+
+  const addSupply = async (label, emoji = "📦") => {
+    const cleanLabel = label.trim();
+    if (!cleanLabel) return false;
+    if (Object.values(supplies).some((item) => item.label.toLocaleLowerCase() === cleanLabel.toLocaleLowerCase())) {
+      setToast("Ийм нэртэй хэрэглэл аль хэдийн байна.");
+      return false;
+    }
+    const item = { kind: `custom_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, label: cleanLabel, emoji, count: 0, max: 10 };
+    if (!familyId) {
+      setLocalCustomSupplies((prev) => {
+        const next = [...prev, item];
+        try { localStorage.setItem(LOCAL_CUSTOM_SUPPLIES_KEY, JSON.stringify(next)); } catch { /* localStorage боломжгүй */ }
+        return next;
+      });
+      return true;
+    }
+    setSupplyRows((prev) => [...prev, { ...item, family_id: familyId }]);
+    const { error } = await supabase.from("supplies").insert({ ...item, family_id: familyId });
+    if (error) {
+      setSupplyRows((prev) => prev.filter((row) => row.kind !== item.kind));
+      setToast("Хэрэглэл нэмэхэд алдаа гарлаа. Supabase-ийн custom-supplies тохиргоог ажиллуулна уу.");
+      return false;
+    }
+    setToast(`${cleanLabel} нэмэгдлээ ✓`);
+    return true;
+  };
+
+  const removeSupply = async (key) => {
+    if (!key.startsWith("custom_")) return;
+    if (!familyId) {
+      setLocalCustomSupplies((prev) => {
+        const next = prev.filter((item) => item.kind !== key);
+        try { localStorage.setItem(LOCAL_CUSTOM_SUPPLIES_KEY, JSON.stringify(next)); } catch { /* localStorage боломжгүй */ }
+        return next;
+      });
+      return;
+    }
+    const previous = supplyRows;
+    setSupplyRows((rows) => rows.filter((row) => row.kind !== key));
+    const { error } = await supabase.from("supplies").delete().eq("family_id", familyId).eq("kind", key);
+    if (error) {
+      setSupplyRows(previous);
+      setToast("Хэрэглэл устгахад алдаа гарлаа.");
+    }
   };
 
   const restock = async (key) => {
@@ -910,6 +1038,9 @@ export function FamilyProvider({ children }) {
     cycleLength,
     periodLength,
     lastPeriodStart,
+    periodStarts,
+    periodPrediction,
+    savePeriodStartDates,
     day,
     daysLate,
     phaseKey,
@@ -918,6 +1049,7 @@ export function FamilyProvider({ children }) {
     daysUntil,
     saveCycle,
     startPeriod,
+    markChildPeriod,
     noPeriodYet,
     markNoPeriodYet,
     // сэтгэл санаа
@@ -925,6 +1057,7 @@ export function FamilyProvider({ children }) {
     selectedMood,
     shareWithMom,
     setShareWithMom,
+    refreshMoods: loadMoods,
     pickMood,
     clearMood,
     moodLoading,
@@ -946,6 +1079,8 @@ export function FamilyProvider({ children }) {
     supplies,
     lowSupplyCount,
     updateSupply,
+    addSupply,
+    removeSupply,
     restock,
     requestSupplies,
     // мэдэгдэл
