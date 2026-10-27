@@ -122,6 +122,12 @@ body {
 .theme-dark .bg-white {
   background-color: #302638;
 }
+.settings-choice-active { border: 1px solid transparent; }
+.theme-dark .settings-choice-active {
+  background-color: #58364c;
+  border-color: #8e5475;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 4%);
+}
 .theme-dark .theme-switch-thumb { background-color: #fff; }
 .theme-dark .bg-white\/95 { background-color: rgb(48 38 56 / 95%); }
 .theme-dark .bg-white\/80 { background-color: rgb(48 38 56 / 80%); }

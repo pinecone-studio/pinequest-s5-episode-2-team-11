@@ -37,7 +37,7 @@ export default function SettingsScreen() {
               type="button"
               onClick={() => selectLanguage(option.id)}
               aria-pressed={language === option.id}
-              className={`rounded-lg px-3 py-2 text-sm font-extrabold transition ${language === option.id ? "bg-white bb-text-B83B7E shadow-sm" : "text-slate-500"}`}
+              className={`rounded-lg px-3 py-2 text-sm font-extrabold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-400 ${language === option.id ? "bg-white bb-text-B83B7E shadow-sm settings-choice-active" : "text-slate-500"}`}
             >
               {option.label}
             </button>
@@ -54,7 +54,7 @@ export default function SettingsScreen() {
               type="button"
               onClick={() => setTheme(id)}
               aria-pressed={theme === id}
-              className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-extrabold transition ${theme === id ? "bg-white bb-text-B83B7E shadow-sm" : "text-slate-500"}`}
+              className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-extrabold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-400 ${theme === id ? "bg-white bb-text-B83B7E shadow-sm settings-choice-active" : "text-slate-500"}`}
             >
               <Icon className="h-4 w-4" /> {label}
             </button>
