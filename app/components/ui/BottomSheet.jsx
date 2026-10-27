@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { X } from "lucide-react";
+import { t } from "../../../lib/i18n";
 
 const EXPAND_PX = 40;
 const CLOSE_PX = 90;
@@ -61,7 +62,7 @@ export default function BottomSheet({ title, onClose, children, className = "", 
           className={`-mx-4 px-4 pb-1 pt-1 ${draggable ? "cursor-grab touch-none" : ""}`}
         >
           {draggable ? (
-            <button type="button" aria-label={expanded ? "Багасгах" : "Томруулах"} onClick={() => setExpanded((value) => !value)} className="mx-auto mb-2 block h-1.5 w-10 rounded-full bg-slate-200" />
+            <button type="button" aria-label={expanded ? t("Багасгах", "Collapse") : t("Томруулах", "Expand")} onClick={() => setExpanded((value) => !value)} className="mx-auto mb-2 block h-1.5 w-10 rounded-full bg-slate-200" />
           ) : (
             <span className="mx-auto mb-3 block h-1.5 w-10 rounded-full bg-slate-200" />
           )}
@@ -69,7 +70,7 @@ export default function BottomSheet({ title, onClose, children, className = "", 
             <h2 className="min-w-0 truncate text-lg font-black text-slate-800">{title}</h2>
             <div className="flex shrink-0 items-center gap-2">
               {aside}
-              <button type="button" onClick={onClose} aria-label="Хаах" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-slate-100 bg-white text-slate-500">
+              <button type="button" onClick={onClose} aria-label={t("Хаах", "Close")} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-slate-100 bg-white text-slate-500">
                 <X className="h-4 w-4" />
               </button>
             </div>
