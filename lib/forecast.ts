@@ -13,7 +13,7 @@ import {
 export const SYMPTOMS = ["cramps", "tired", "acne", "bloating", "breast_tenderness", "headache"] as const;
 export type Symptom = (typeof SYMPTOMS)[number];
 
-export type ForecastDayLog = { log_date: string; mood?: number | null; pain?: number | null; symptoms?: string[] | null };
+export type ForecastDayLog = { log_date: string; mood?: number | null; pain?: number | null; symptoms?: string[] | null; sleepHours?: number | null };
 export type ForecastPeriod = { startDate: string; duration?: number | null };
 
 export type ForecastStats = {
@@ -24,6 +24,7 @@ export type ForecastStats = {
   avgPain: number | null;
   avgMood: number | null;
   lowMood: boolean;
+  avgSleep: number | null; // hours, from sleep entries
   cyclesUsed: number;
 };
 
@@ -35,12 +36,12 @@ const DEFAULT_PERIOD_LENGTH = 5;
 const round1 = (value: number) => Math.round(value * 10) / 10;
 const mean = (values: number[]) => (values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null);
 const hasSignal = (log: ForecastDayLog) =>
-  Boolean(log && ((log.mood != null && log.mood >= 1) || log.pain != null || (log.symptoms?.length ?? 0) > 0));
+  Boolean(log && ((log.mood != null && log.mood >= 1) || log.pain != null || (log.symptoms?.length ?? 0) > 0 || log.sleepHours != null));
 
 /** Item must show up in ≥ 2 cycles, or ≥ 50 % when only 2 cycles have data. */
 export const minCycles = (cyclesUsed: number) => (cyclesUsed === 2 ? 1 : 2);
 
-type Aggregate = Pick<ForecastStats, "top" | "avgPain" | "avgMood" | "lowMood" | "cyclesUsed">;
+type Aggregate = Pick<ForecastStats, "top" | "avgPain" | "avgMood" | "lowMood" | "avgSleep" | "cyclesUsed">;
 
 /**
  * Aggregates the same window across past cycles (most recent first, up to 3
@@ -55,6 +56,7 @@ function aggregate(cycles: PastCycle[], logsByDate: Map<string, ForecastDayLog>,
   const symptomCycles = new Map<Symptom, number>();
   const painByCycle: number[] = [];
   const moodByCycle: number[] = [];
+  const sleepByCycle: number[] = [];
   let lowMoodCycles = 0;
   for (const logs of perCycle) {
     const seen = new Set<Symptom>();
@@ -68,6 +70,8 @@ function aggregate(cycles: PastCycle[], logsByDate: Map<string, ForecastDayLog>,
     const mood = mean(moods);
     if (mood != null) moodByCycle.push(mood);
     if (moods.some((value) => value <= 2)) lowMoodCycles += 1;
+    const sleep = mean(logs.map((log) => log.sleepHours).filter((value): value is number => value != null && value >= 4 && value <= 12));
+    if (sleep != null) sleepByCycle.push(sleep);
   }
 
   const threshold = minCycles(perCycle.length);
@@ -78,11 +82,13 @@ function aggregate(cycles: PastCycle[], logsByDate: Map<string, ForecastDayLog>,
     .slice(0, 3);
   const avgPain = mean(painByCycle);
   const avgMood = mean(moodByCycle);
+  const avgSleep = mean(sleepByCycle);
   return {
     top,
     avgPain: avgPain == null ? null : round1(avgPain),
     avgMood: avgMood == null ? null : round1(avgMood),
     lowMood: perCycle.length > 0 && lowMoodCycles >= threshold,
+    avgSleep: avgSleep == null ? null : round1(avgSleep),
     cyclesUsed: perCycle.length,
   };
 }
@@ -143,9 +149,13 @@ export function statsForPosition(position: CyclePosition, periods: ForecastPerio
   return level2.cyclesUsed >= 2 ? { season: position.season, level: 2, dayLabel, ...level2 } : null;
 }
 
-/** High mood, no repeated symptoms, no low mood, little pain. */
+/** Less than this many hours on average counts as short sleep. */
+export const SHORT_SLEEP_HOURS = 8;
+const shortSleep = (stats: ForecastStats) => stats.avgSleep != null && stats.avgSleep < SHORT_SLEEP_HOURS;
+
+/** High mood, no repeated symptoms, no low mood, little pain, enough sleep. */
 export const isGoodPattern = (stats: ForecastStats) =>
-  stats.top.length === 0 && !stats.lowMood && stats.avgMood != null && stats.avgMood >= 4 && (stats.avgPain ?? 0) < 1;
+  stats.top.length === 0 && !stats.lowMood && !shortSleep(stats) && stats.avgMood != null && stats.avgMood >= 4 && (stats.avgPain ?? 0) < 1;
 
 /* ================= Titles and local (level 3 / before-first) text ================= */
 
@@ -238,13 +248,14 @@ export const ALL_TIPS = [...new Set([...Object.values(TIPS), ...POSITIVE_TIPS].f
 export function allowedTips(stats: ForecastStats): string[] {
   const tips = stats.top.map((symptom) => TIPS[symptom]);
   if (stats.lowMood) tips.push(TIPS.low_mood);
+  if (shortSleep(stats)) tips.push(TIPS.tired);
   if (isGoodPattern(stats)) tips.push(...POSITIVE_TIPS);
   if (stats.season === "winter" || stats.season === "autumn") tips.push(TIPS.pad);
   if (!tips.some(Boolean)) tips.push(...POSITIVE_TIPS);
   return [...new Set(tips.filter((tip): tip is string => Boolean(tip)))];
 }
 
-type Feeling = Symptom | "low_mood" | "good" | "okay";
+type Feeling = Symptom | "low_mood" | "short_sleep" | "good" | "okay";
 /** [level 1 "back then", level 2 "usually"] */
 const FEELING: Record<Feeling, [string, string]> = {
   tired: ["чи ядарч байсан", "чи ихэвчлэн ядардаг"],
@@ -254,6 +265,7 @@ const FEELING: Record<Feeling, [string, string]> = {
   breast_tenderness: ["хөх чинь эмзэглэж байсан", "хөх чинь ихэвчлэн эмзэглэдэг"],
   headache: ["толгой чинь өвдөж байсан", "толгой чинь ихэвчлэн өвддөг"],
   low_mood: ["сэтгэл чинь жаахан унаж байсан", "сэтгэл чинь ихэвчлэн жаахан унадаг"],
+  short_sleep: ["чи бага унтсан байсан", "чи ихэвчлэн бага унтдаг"],
   good: ["чи сэтгэл сайхан, эрч хүчтэй байсан", "чи ихэвчлэн сэтгэл сайхан, эрч хүчтэй байдаг"],
   okay: ["чи гайгүй байсан", "чи ихэвчлэн гайгүй байдаг"],
 };
@@ -270,6 +282,7 @@ function whenPhrase(stats: ForecastStats): string {
 export function templateForecast(stats: ForecastStats): { text: string; tip: string } {
   const signals: Feeling[] = [...stats.top];
   if (stats.lowMood) signals.push("low_mood");
+  if (shortSleep(stats)) signals.push("short_sleep");
   if (!signals.length) signals.push(isGoodPattern(stats) ? "good" : "okay");
   const form = stats.level === 1 ? 0 : 1;
   const first = `${whenPhrase(stats)} ${signals.slice(0, 2).map((signal) => FEELING[signal][form]).join(", бас ")}.`;
@@ -321,6 +334,7 @@ export function sanitizeStats(value: unknown): ForecastStats | null {
     avgPain: num(raw.avgPain, 0, 3),
     avgMood: num(raw.avgMood, 1, 5),
     lowMood: raw.lowMood === true,
+    avgSleep: num(raw.avgSleep, 4, 12),
     cyclesUsed,
   };
 }
@@ -341,7 +355,7 @@ export const FORECAST_SYSTEM_PROMPT = `Чи "Bloomy" апп-д 9–12 наста
 
 /** User prompt: only the stats. */
 export function forecastUserPrompt(stats: ForecastStats): string {
-  return `Өгөгдөл (season: winter = сарын тэмдгийн үе, spring = хавар, summer = зун, autumn = сарын тэмдгийн өмнөх үе; level 1 = яг энэ өдөр, 2 = энэ улиралд; dayLabel: day_8 = мөчлөгийн 8 дахь өдөр, before_2 = сарын тэмдэг ирэхээс 2 хоногийн өмнө; avgPain 0–3; avgMood 1–5; top = давтагдсан шинж; cyclesUsed = харьцуулсан мөчлөгийн тоо):
+  return `Өгөгдөл (season: winter = сарын тэмдгийн үе, spring = хавар, summer = зун, autumn = сарын тэмдгийн өмнөх үе; level 1 = яг энэ өдөр, 2 = энэ улиралд; dayLabel: day_8 = мөчлөгийн 8 дахь өдөр, before_2 = сарын тэмдэг ирэхээс 2 хоногийн өмнө; avgPain 0–3; avgMood 1–5; avgSleep = дундаж унтсан цаг (8-аас бага бол бага унтсан); top = давтагдсан шинж; cyclesUsed = харьцуулсан мөчлөгийн тоо):
 ${JSON.stringify(stats)}
 Зөвшөөрөгдсөн зөвлөгөө: ${JSON.stringify(allowedTips(stats))}`;
 }
