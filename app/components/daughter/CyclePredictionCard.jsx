@@ -5,12 +5,13 @@ import { LoaderCircle } from "lucide-react";
 import { askAi } from "../../../lib/ai-client";
 import { addDaysToLocalDateKey, getCyclePosition, localDateKey } from "../../../lib/cycle";
 import {
-  LOG_MORE_HINT, SEASON_TEXT, forecastTitle, prepTipFor, safetyLines, statsForPosition, templateForecast, validateForecast,
+  LOG_MORE_HINT, SEASON_TEXT, tipLabel, forecastTitle, prepTipFor, safetyLines, statsForPosition, templateForecast, validateForecast,
 } from "../../../lib/forecast";
 import { LOG_ENTRIES_CHANGED, dayLogsFromEntries, fetchEntries } from "../../../lib/log-entries";
 import { supabase } from "../../../lib/supabase";
 import { useFamily } from "../../../context/FamilyContext";
 import { t } from "../../../lib/i18n";
+import { useLang } from "../../../context/LanguageContext";
 
 const AI_TIMEOUT_MS = 5000; // server gives the AI 3 s; this covers the round trip
 const TRANSIENT_ERRORS = new Set(["timeout", "network_error"]);
@@ -59,15 +60,21 @@ export default function CyclePredictionCard() {
   // Same numbers → same object, so a refetch after today's logging never restarts the request.
   const statsJson = rawStats ? JSON.stringify(rawStats) : "";
   const stats = useMemo(() => (statsJson ? JSON.parse(statsJson) : null), [statsJson]);
-  const safety = useMemo(() => (inCycle && logs ? safetyLines(periods, logs, position.cycleStart) : []), [inCycle, logs, periods, position]);
+  const { lang } = useLang();
+  const safety = useMemo(() => (inCycle && logs ? safetyLines(periods, logs, position.cycleStart) : []), [inCycle, logs, periods, position, lang]);
 
   useEffect(() => {
     if (!stats || !inCycle || !profile?.id) return;
     const cycleStart = position.cycleStart;
     // One text per cycle day: new logs during the day never regenerate it.
-    const key = `${cycleStart}:${stats.dayLabel}`;
+    const key = `${cycleStart}:${stats.dayLabel}:${lang}`;
     if (requestedRef.current === key) return;
     requestedRef.current = key;
+    // AI болон кэш зөвхөн монгол текст гаргадаг — англи хэлэнд орчуулсан загвар текстийг шууд харуулна
+    if (lang === "en") {
+      setForecast(templateForecast(stats));
+      return () => { requestedRef.current = ""; };
+    }
     setForecast(null);
     let cancelled = false;
 
@@ -107,7 +114,7 @@ export default function CyclePredictionCard() {
       cancelled = true;
       requestedRef.current = "";
     };
-  }, [stats, inCycle, position, profile?.id, session]);
+  }, [stats, inCycle, position, profile?.id, session, lang]);
 
   if (view !== "daughter") return null;
 
@@ -125,12 +132,12 @@ export default function CyclePredictionCard() {
           {local ? (
             <>
               <p className="text-sm font-bold leading-relaxed text-slate-700">{local}</p>
-              {inCycle && <p className="text-xs font-semibold text-slate-400">{LOG_MORE_HINT}</p>}
+              {inCycle && <p className="text-xs font-semibold text-slate-400">{t(LOG_MORE_HINT, "🌱 The more you log, the better your tips will fit you")}</p>}
             </>
           ) : (
             <>
               <p className="text-sm font-bold leading-relaxed text-slate-700">{forecast.text}</p>
-              <span className="inline-block rounded-full bb-bg-FDE7F1 px-3 py-1 text-xs font-extrabold bb-text-B83B7E">{forecast.tip}</span>
+              <span className="inline-block rounded-full bb-bg-FDE7F1 px-3 py-1 text-xs font-extrabold bb-text-B83B7E">{tipLabel(forecast.tip)}</span>
             </>
           )}
           {safety.map((line) => <p key={line} className="rounded-2xl bb-bg-FDE7F1-50 p-3 text-sm font-bold leading-relaxed bb-text-B83B7E">{line}</p>)}
