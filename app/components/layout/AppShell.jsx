@@ -7,6 +7,7 @@ import { useFriends } from "../../../context/FriendsContext";
 import AppHeader from "./AppHeader";
 import BottomNavigation from "./BottomNavigation";
 import CurrentScreen from "./CurrentScreen";
+import SosModal from "../sos/SosModal";
 import ChildSwitcher from "../mother/ChildSwitcher";
 import { useTheme } from "../../../context/ThemeContext";
 
