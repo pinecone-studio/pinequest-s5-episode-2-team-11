@@ -138,7 +138,7 @@ begin
   if auth.uid() is null or not exists (select 1 from public.profiles where id = auth.uid() and role = 'daughter') then raise exception 'daughter_only'; end if;
   if coalesce(cardinality(p_dates), 0) = 0 then raise exception 'period_start_required'; end if;
   if p_period_length not between 2 and 7 then raise exception 'invalid_period_length'; end if;
-  if exists (select 1 from unnest(coalesce(p_dates, '{}'::date[])) d where d > public.bloomy_today()) then raise exception 'invalid_log_date'; end if;
+  if exists (select 1 from unnest(coalesce(p_dates, '{}'::date[])) d where d > current_date) then raise exception 'invalid_log_date'; end if;
   -- Treat this RPC as the daughter's complete confirmed-date selection so
   -- calendar edits can remove old dates. Guardian pending entries stay pending.
   update public.period_logs set status = 'removed', confirmed_at = null
