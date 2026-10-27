@@ -217,6 +217,21 @@ function Closet({ av }) {
         </div>
       </div>
 
+      <div>
+        <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2">Нүдний өнгө</p>
+        <div className="flex flex-wrap gap-3">
+          {ITEMS.filter((i) => i.slot === "eyes").map((item) => (
+            <button
+              key={item.id}
+              onClick={() => av.equip(item.id)}
+              aria-label={`${item.name} нүд`}
+              className={`w-10 h-10 rounded-full border-4 transition ${av.look.eyes === item.id ? "bb-border-F48FB1" : "border-white"}`}
+              style={{ background: item.color }}
+            />
+          ))}
+        </div>
+      </div>
+
       <div className="flex gap-2 overflow-x-auto pb-1">
         {SLOTS.map((s) => (
           <button key={s.id} onClick={() => setSlot(s.id)} className={chip(slot === s.id)}>
