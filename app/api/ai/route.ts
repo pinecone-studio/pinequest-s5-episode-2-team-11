@@ -1,7 +1,7 @@
 /**
- * POST /api/ai — Bloomy-ийн AI (Gemini эсвэл Claude API).
+ * POST /api/ai — Bloomy-ийн AI (Claude API, эсвэл OpenAI / Gemini).
  *
- * • API түлхүүр зөвхөн сервер дээр (.env.local → ``GEMINI_API_KEY`` эсвэл ANTHROPIC_API_KEY). Утсанд хэзээ ч очихгүй.
+ * • API түлхүүр зөвхөн сервер дээр (.env.local → ANTHROPIC_API_KEY). Утсанд хэзээ ч очихгүй.
  * • Зөвхөн нэвтэрсэн хэрэглэгч ашиглана (Supabase access token шалгана).
  * • Хариу JSON. Алдаа гарвал апп бэлэн текст рүү шилжинэ.
  */
@@ -10,11 +10,50 @@ import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
 
-const MODEL = process.env.ANTHROPIC_MODEL || "claude-haiku-4-5-20251001";
+const MODEL = process.env.ANTHROPIC_MODEL || "claude-opus-5-5";
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite";
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
-// GEMINI_API_KEY байвал Gemini, үгүй бол Claude ашиглана
+// Дараалал: ANTHROPIC_API_KEY (Claude) → OPENAI_API_KEY (ChatGPT) → GEMINI_API_KEY
 async function generate(prompt: string, maxTokens: number): Promise<string> {
+  if (process.env.ANTHROPIC_API_KEY) {
+    const anthropic = new Anthropic({ timeout: 25000, maxRetries: 1 });
+    const response = await anthropic.beta.messages.create({
+      model: MODEL,
+      // Claude-ийн бодох (thinking) токен ч энэ хязгаарт орно
+      max_tokens: maxTokens * 4,
+      output_config: { effort: "low" },
+      betas: ["server-side-fallback-2026-07-01"],
+      fallbacks: "default",
+      system: SAFETY,
+      messages: [{ role: "user", content: prompt }],
+    });
+    if (response.stop_reason === "refusal") throw new Error(`Anthropic refusal: ${response.stop_details?.category}`);
+    return response.content
+      .filter((block): block is Anthropic.Beta.BetaTextBlock => block.type === "text")
+      .map((block) => block.text)
+      .join("");
+  }
+  const openaiKey = process.env.OPENAI_API_KEY;
+  if (openaiKey) {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
+      body: JSON.stringify({
+        model: OPENAI_MODEL,
+        max_completion_tokens: maxTokens * 2,
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: SAFETY },
+          { role: "user", content: prompt },
+        ],
+      }),
+      signal: AbortSignal.timeout(25000),
+    });
+    if (!res.ok) throw new Error(`OpenAI ${res.status}: ${await res.text()}`);
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content ?? "";
+  }
   const geminiKey = process.env.GEMINI_API_KEY;
   if (geminiKey) {
     const res = await fetch(
@@ -34,23 +73,13 @@ async function generate(prompt: string, maxTokens: number): Promise<string> {
     const data = await res.json();
     return (data.candidates?.[0]?.content?.parts ?? []).filter((p: any) => !p.thought).map((p: any) => p.text ?? "").join("");
   }
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  const res = await client.messages.create({
-    model: MODEL,
-    max_tokens: maxTokens,
-    system: SAFETY,
-    messages: [{ role: "user", content: prompt }],
-  });
-  return res.content
-    .filter((b: any) => b.type === "text")
-    .map((b: any) => b.text)
-    .join("");
+  throw new Error("AI түлхүүр тохируулаагүй");
 }
 
 const PHASE_MN: Record<string, string> = {
   period: "сарын тэмдгийн үе",
   follicular: "дааврын тэнцвэрт (фолликулын) үе",
-  ovulation: "овуляцийн үе",
+  ovulation: "мөчлөгийн дунд үе",
   luteal: "сарын тэмдгийн өмнөх (лютейн) үе",
 };
 const MOOD_MN: Record<string, string> = {
@@ -132,7 +161,52 @@ const SAFETY = `Чи "Bloomy" апп-ын зөөлөн, найрсаг тусл�
 - Бие махбодийг ичгүүртэй зүйл гэж бүү хандаарай; ичгүүргүй, эерэг байлга.
 - Хариугаа ЗӨВХӨН JSON хэлбэрээр, өөр текстгүй буцаа.`;
 
+// day_logs-ийн мөрүүдээс зөвхөн зөвшөөрөгдсөн ангиллын утгуудыг үлдээнэ
+function cleanDayLogs(raw: unknown, limit: number) {
+  return (Array.isArray(raw) ? raw.slice(-limit) : []).flatMap((entry: any) => {
+    if (!entry || typeof entry.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(entry.date)) return [];
+    const mood = Number(entry.mood);
+    if (![1, 2, 3, 4, 5].includes(mood)) return [];
+    const moodLabel = ({ 1: "маш хэцүү", 2: "тавгүй", 3: "дундаж", 4: "сайхан", 5: "маш сайхан" } as Record<number, string>)[mood];
+    return [{ date: entry.date, mood: moodLabel }];
+  });
+}
+
+// Асран хамгаалагчид: охины сүүлийн 30 хоногийн бүртгэлээс халамжийн зөвлөгөө (хувийн тэмдэглэл ОРОХГҮЙ)
+function buildMonthlyCarePrompt(body: any) {
+  const days = cleanDayLogs(body.days, 31);
+  const name = String(body.daughterName || "Охин").slice(0, 40);
+  const phase = PHASE_MN[body.phase] ?? "тодорхойгүй үе";
+  return {
+    maxTokens: 400,
+    prompt: `Асран хамгаалагчид охин ${name}-ийн сүүлийн 1 сарын бүртгэлд дүн шинжилгээ хийж, түүнийг хэрхэн халамжлах талаар зөвлө. Охин одоо ${phase}-д байна.
+Доорх ангилсан өгөгдлийг л ашигла (сэтгэл, шинж тэмдэг, урсгал, арьс, нойр). Давтагдсан хэв маяг, мөчлөгийн аль үед юу өөрчлөгддөгийг болгоомжтой дурд; бүртгэгдээгүй зүйлийг бүү нэм, оношлохгүй. Охины хувийн орон зайг хүндэтгэсэн, буруутгаагүй өнгөөр бич. Зөвлөгөө нь Монгол гэр бүлд хэрэгжүүлж болох, тодорхой байг. Хүчтэй өвдөлт олон өдөр давтагдсан, нойр байнга муу бол эмчтэй зөвлөлдөхийг зөөлөн санал болго. Өгөгдөл цөөн бол тэгж хэл.
+МАШ ТОВЧ бич: summary нь 1 богино өгүүлбэр (хамгийн чухал хэв маяг), tips яг 3 ширхэг тус бүр 10 үгээс ихгүй, talk 12 үгээс ихгүй.
+Өгөгдөл: ${JSON.stringify(days)}
+ЗӨВХӨН JSON: {"summary":"...","tips":["...","...","..."],"talk":"охинтойгоо яриа эхлүүлэх зөөлөн асуулт"}`,
+  };
+}
+
+// Асран хамгаалагчид: охины сүүлийн 7 хоногийн ангилсан бүртгэлийн тойм (хувийн тэмдэглэл ОРОХГҮЙ)
+function buildWeeklySummaryPrompt(body: any) {
+  const days = cleanDayLogs(body.days, 7);
+  const name = String(body.daughterName || "Охин").slice(0, 40);
+  const phase = PHASE_MN[body.phase] ?? "тодорхойгүй үе";
+  const daysUntil = Number.isFinite(Number(body.daysUntil)) ? Number(body.daysUntil) : null;
+  return {
+    maxTokens: 500,
+    prompt: `Асран хамгаалагчид охин ${name}-ийн сүүлийн 7 хоногт өөрөө хуваалцахыг зөвшөөрсөн зөвхөн сэтгэл санааны бүртгэлийн товч тойм бич. Охин одоо ${phase}-д байна.${
+      daysUntil != null && daysUntil >= 0 ? " Сарын тэмдгийн хугацаа зөвхөн таамаг гэдгийг сануул." : ""
+    }
+Зөвхөн сэтгэл санааны оноог ашигла. Шинж тэмдэг, өвдөлт, урсгал, хувийн тэмдэглэл танд өгөгдөөгүй бөгөөд эдгээрийг таамаглаж бүү нэм. Охины хувийн байдлыг хүндэтгэсэн, буруутгаагүй өнгөөр бич. Оношлохгүй. Өгөгдөл цөөн бол тэгж хэл.
+Өгөгдөл: ${JSON.stringify(days)}
+ЗӨВХӨН JSON: {"summary":"2-3 өгүүлбэрийн тойм","tips":["асран хамгаалагчийн хийж болох 1 өгүүлбэрийн халамж","...","..."]}`,
+  };
+}
+
 function buildPrompt(body: any): { prompt: string; maxTokens: number } | null {
+  if (body.type === "weekly_summary") return buildWeeklySummaryPrompt(body);
+  if (body.type === "monthly_care") return buildMonthlyCarePrompt(body);
   if (body.type === "cycle_summary") return buildCycleSummaryPrompt(body);
   if (body.type === "cycle_prediction") return buildCyclePredictionPrompt(body);
   const phase = PHASE_MN[body.phase] ?? "тодорхойгүй үе";
@@ -248,7 +322,7 @@ function extractJson(text: string) {
 }
 
 export async function POST(req: Request) {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!apiKey || !url || !anon) return Response.json({ error: "ai_not_configured" }, { status: 503 });
@@ -270,7 +344,7 @@ export async function POST(req: Request) {
   const built = buildPrompt(body);
   if (!built) return Response.json({ error: "bad_type" }, { status: 400 });
 
-  // 3) AI (Gemini эсвэл Claude)
+  // 3) AI (Claude)
   try {
     const text = await generate(built.prompt, built.maxTokens);
     const json = extractJson(text);
@@ -286,6 +360,19 @@ export async function POST(req: Request) {
       return Response.json({
         reply: typeof json.reply === "string" ? json.reply.slice(0, 1200) : "",
         chips: Array.isArray(json.chips) ? json.chips.filter((chip: unknown) => typeof chip === "string").slice(0, 2).map((chip: string) => chip.slice(0, 60)) : [],
+      });
+    }
+    if (body.type === "monthly_care") {
+      return Response.json({
+        summary: typeof json.summary === "string" ? json.summary.slice(0, 300) : "",
+        tips: Array.isArray(json.tips) ? json.tips.filter((tip: unknown) => typeof tip === "string").slice(0, 3).map((tip: string) => tip.slice(0, 120)) : [],
+        talk: typeof json.talk === "string" ? json.talk.slice(0, 160) : "",
+      });
+    }
+    if (body.type === "weekly_summary") {
+      return Response.json({
+        summary: typeof json.summary === "string" ? json.summary.slice(0, 700) : "",
+        tips: Array.isArray(json.tips) ? json.tips.filter((tip: unknown) => typeof tip === "string").slice(0, 3).map((tip: string) => tip.slice(0, 240)) : [],
       });
     }
     if (body.type === "cycle_prediction") {

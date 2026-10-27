@@ -1,21 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import {
-  Users,
-  Copy,
-  Check,
-  Share2,
-  AlertCircle,
-  Loader2,
-  Pencil,
-} from "lucide-react";
+import { Pencil, LogOut } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import Card from "../ui/Card";
 import SectionTitle from "../ui/SectionTitle";
 import PageHeader from "../ui/PageHeader";
 import MyFriendCode from "../friends/MyFriendCode";
 import Avatar from "../avatar/Avatar";
+import FamilyLinkingSection from "./FamilyLinkingSection";
 
 export default function ProfileScreen() {
   const {
@@ -40,6 +33,7 @@ export default function ProfileScreen() {
     updateName,
     updateEmail,
     setToast,
+    signOut,
   } = useFamily();
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState(profile?.display_name ?? "");
@@ -287,6 +281,15 @@ export default function ProfileScreen() {
         )}
       </Card>
 
+      <MyFriendCode />
+      <FamilyLinkingSection />
+      <button
+        type="button"
+        onClick={signOut}
+        className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-slate-100 bg-white py-3 font-extrabold bb-text-7C4DCC transition active:scale-95"
+      >
+        <LogOut className="h-4 w-4" /> Гарах
+      </button>
     </div>
   );
 }

@@ -1,36 +1,34 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Phone } from "lucide-react";
 import { useFriends } from "../../../context/FriendsContext";
-import SosCallButton from "./SosCallButton";
+import { useFamily } from "../../../context/FamilyContext";
 
 /** «Өнөөдөр» дэлгэцэн дээрх «Хэрэглэл дууссан уу?» товч карт */
-export default function FriendsQuickCard({ onOpen }) {
-  const { active, sosStage, outgoing, replyText } = useFriends();
+export default function FriendsQuickCard() {
+  const { active } = useFriends();
+  const { linked, requestSupplies } = useFamily();
   if (!active) return null;
-  const first = outgoing?.responses?.[0];
 
   return (
-    <div className="relative overflow-hidden flex items-center gap-4 rounded-3xl p-4 bb-grad-sos-soft border bb-border-F8D3E6 shadow-sm bloom-fade">
-      <span className="absolute -right-7 -top-10 w-28 h-28 rounded-full bg-white/40 pointer-events-none" />
-      <SosCallButton size={68} stage={sosStage} onClick={onOpen} />
-      <button onClick={onOpen} className="relative flex-1 min-w-0 text-left flex items-center gap-2">
-        <div className="flex-1 min-w-0">
-          <p className="font-black text-slate-700">
-            {sosStage === "ringing"
-              ? "Дохио илгээж байна…"
-              : sosStage === "sent"
-                ? "Найзуудад дохио очлоо 📣"
-                : "Хэрэглэл дууссан уу?"}
-          </p>
-          <p className="text-xs font-semibold text-slate-500 leading-snug mt-0.5">
-            {first
-              ? `${first.responder_name}: ${replyText(first.reply)}`
-              : "Найзаа сонгоод дохио илгээгээрэй"}
-          </p>
-        </div>
-        <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
-      </button>
-    </div>
+    <button
+      type="button"
+      onClick={requestSupplies}
+      disabled={!linked}
+      aria-label="Хэрэглэлийн хүсэлтийг асран хамгаалагчид илгээх"
+      className="daughter-supply-request-card w-full rounded-3xl p-5 text-left text-white shadow-xl bb-shadow-F48FB1-30 active:scale-95 transition flex items-center gap-4 relative overflow-hidden bloom-fade disabled:cursor-not-allowed disabled:opacity-80"
+    >
+      <span className="relative w-14 h-14 shrink-0 rounded-2xl bg-white/15 flex items-center justify-center">
+        <span className="absolute inset-0 rounded-2xl bg-white/10 animate-ping" />
+        <Phone className="relative w-7 h-7 text-white" />
+      </span>
+      <span className="flex-1 relative">
+        <span className="block text-xl font-black text-white">Хэрэглэл дууссан уу?</span>
+        <span className="block text-sm font-bold text-white/85">
+          {linked ? "Асран хамгаалагчдаа хүсэлт илгээгээрэй" : "Асран хамгаалагчтайгаа кодоор холбогдоорой"}
+        </span>
+      </span>
+      <ChevronRight className="w-6 h-6 relative text-white" />
+    </button>
   );
 }

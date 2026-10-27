@@ -42,7 +42,9 @@ function readPreviousPrePeriodEntries(lastPeriodStart, cycleLength, today) {
 }
 
 const configMessages = {
-  ai_not_configured: "AI тохиргоо дутуу байна. Серверт ANTHROPIC_API_KEY нэмэх шаардлагатай.",
+  ai_not_configured: "AI тохиргоо дутуу байна. Серверт GEMINI_API_KEY нэмэх шаардлагатай.",
+  ai_invalid_key: "Gemini API түлхүүр хүчингүй байна. Google AI Studio-оос түлхүүрээ шалгана уу.",
+  ai_quota_exceeded: "Gemini API-н хэрэглээний хязгаарт хүрсэн байна. Google AI Studio дээр quota тохиргоог шалгана уу.",
   unauthorized: "Нэвтрэлтийн хугацаа дууссан байна. Дахин нэвтэрч оролдоорой.",
   ai_failed: "AI үйлчилгээ хүсэлтэд хариу өгсөнгүй. Серверийн API түлхүүр, model тохиргоог шалгана уу.",
   timeout: "AI хариу удааширлаа. Дахин оролдоорой.",
@@ -100,7 +102,7 @@ export default function CyclePredictionCard({ daysUntil, cycleLength, lastPeriod
         <span className="flex h-10 w-10 items-center justify-center rounded-2xl bb-bg-FDE7F1 bb-text-B83B7E"><Sparkles className="h-5 w-5" /></span>
         <div className="min-w-0 flex-1">
           <h2 className="font-black text-slate-700">Мөчлөгийн өмнөх хувийн таамаг</h2>
-          <p className="text-xs font-bold bb-text-B83B7E">Сарын тэмдэг ойролцоогоор {daysUntil} хоногийн дараа</p>
+          <p className="text-xs font-bold bb-text-B83B7E">Сарын тэмдэг ойртож байна</p>
         </div>
       </div>
 

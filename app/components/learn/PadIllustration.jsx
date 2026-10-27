@@ -62,6 +62,35 @@ const Tick = ({ cx, cy }) => (
 );
 
 const PARTS = {
+  choose: (
+    <>
+      <Pad x={76} y={20} w={48} h={96} />
+      <circle cx={56} cy={42} r={4} fill={PINK} />
+      <circle cx={146} cy={91} r={4} fill={LAV} />
+    </>
+  ),
+  dayPad: (
+    <>
+      <Pad x={60} y={24} w={48} h={96} />
+      <line x1={118} y1={24} x2={118} y2={120} stroke="#B83B7E" strokeWidth={2} strokeLinecap="round" />
+      <line x1={114} y1={24} x2={122} y2={24} stroke="#B83B7E" strokeWidth={2} strokeLinecap="round" />
+      <line x1={114} y1={120} x2={122} y2={120} stroke="#B83B7E" strokeWidth={2} strokeLinecap="round" />
+      <text x={134} y={72} textAnchor="middle" fontSize={10} fontWeight={800} fill="#B83B7E" fontFamily="Nunito, sans-serif" transform="rotate(-90 134 72)">
+        20–25 см
+      </text>
+    </>
+  ),
+  nightPad: (
+    <>
+      <Pad x={54} y={18} w={60} h={108} />
+      <line x1={124} y1={18} x2={124} y2={126} stroke="#705ACB" strokeWidth={2} strokeLinecap="round" />
+      <line x1={120} y1={18} x2={128} y2={18} stroke="#705ACB" strokeWidth={2} strokeLinecap="round" />
+      <line x1={120} y1={126} x2={128} y2={126} stroke="#705ACB" strokeWidth={2} strokeLinecap="round" />
+      <text x={140} y={72} textAnchor="middle" fontSize={10} fontWeight={800} fill="#705ACB" fontFamily="Nunito, sans-serif" transform="rotate(-90 140 72)">
+        25–30 см
+      </text>
+    </>
+  ),
   wash: (
     <>
       <path
@@ -88,18 +117,11 @@ const PARTS = {
       ))}
     </>
   ),
-  choose: (
+  alert: (
     <>
-      <Pad x={42} y={34} w={40} h={76} />
-      <Pad x={118} y={20} w={42} h={104} />
-      <circle cx={62} cy={20} r={9} fill="#FFD66B" />
-      <path d="M146 8 A9 9 0 1 0 152 22 A7 7 0 1 1 146 8 Z" fill={LAV} />
-      <Label x={62} y={132}>
-        Өдөр
-      </Label>
-      <Label x={139} y={138}>
-        Шөнө
-      </Label>
+      <path d="M100 18 L170 124 H30 Z" fill="#FFF0D5" stroke="#E9B45A" strokeWidth={4} strokeLinejoin="round" />
+      <path d="M100 52 V84" stroke="#A86113" strokeWidth={8} strokeLinecap="round" />
+      <circle cx={100} cy={103} r={4.5} fill="#A86113" />
     </>
   ),
   open: (
@@ -218,6 +240,10 @@ const PARTS = {
 };
 
 export default function PadIllustration({ k }) {
+  if (k === "wrapped") {
+    return <div className="wrapped-pad-art"><img src="/assets/pad-wrapped.svg" alt="Задлаагүй хэрэглэл" /></div>;
+  }
+
   return (
     <svg viewBox="0 0 200 140" className="w-full h-full" role="img" aria-hidden="true">
       <circle cx={100} cy={72} r={66} fill={BLUSH} opacity={0.7} />

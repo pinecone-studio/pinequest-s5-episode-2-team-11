@@ -7,7 +7,6 @@ import {
   ChevronRight,
   Droplets,
   Heart,
-  Info,
   Leaf,
   Sparkles,
   X,
@@ -15,8 +14,35 @@ import {
 import PadGuide, { usePadGuideFinished } from "./PadGuide";
 import ParentAiAssistant from "./ParentAiAssistant";
 import ParentLearningTopics from "./ParentLearningTopics";
+import LearningLibrary from "./LearningLibrary";
 
 export default function LearnHub() {
+  const { learnTab, setLearnTab, view } = useFamily();
+  const isLegacy = view === "daughter"
+    ? ["pad", "food"].includes(learnTab)
+    : learnTab === "legacy";
+
+  if (!isLegacy) {
+    return <LearningLibrary onMoreMaterials={() => setLearnTab(view === "daughter" ? "pad" : "legacy")} />;
+  }
+
+  return (
+    <div className={view === "daughter" && learnTab === "pad" ? "flex h-full min-h-0 flex-col overflow-hidden" : "space-y-4"}>
+      <button
+        type="button"
+        onClick={() => setLearnTab("topics")}
+        className="min-h-11 rounded-xl bg-white px-3 text-sm font-extrabold bb-text-B83B7E shadow-sm"
+      >
+        ← Сэдвүүд рүү буцах
+      </button>
+      <div className={view === "daughter" && learnTab === "pad" ? "min-h-0 flex-1" : ""}>
+        <LegacyLearnHub />
+      </div>
+    </div>
+  );
+}
+
+function LegacyLearnHub() {
   const [selectedFoodTip, setSelectedFoodTip] = useState(null);
   const { learnTab, setLearnTab, view, setTab } =
     useFamily();
@@ -38,6 +64,7 @@ export default function LearnHub() {
     ...(isDaughter ? [["pad", padDone ? "Хэрэглэл ✓" : "Хэрэглэл 🌸"]] : []),
     ...(isDaughter ? [["food", "Хооллолт"]] : []),
   ];
+  const compactLesson = isDaughter && learnTab === "pad";
   const foodTips = [
     {
       icon: Leaf,
@@ -86,9 +113,9 @@ export default function LearnHub() {
   ];
 
   return (
-    <div className="space-y-4 bloom-fade">
+    <div className={compactLesson ? "flex h-full min-h-0 flex-col overflow-hidden" : "space-y-4 bloom-fade"}>
       {isDaughter && (
-        <div className="grid grid-cols-2 gap-1 bb-bg-FDE7F1 rounded-2xl p-1">
+        <div className={`grid grid-cols-2 gap-1 rounded-2xl bb-bg-FDE7F1 p-1 ${compactLesson ? "mb-2 flex-none" : ""}`}>
           {tabs.map(([id, label]) => (
             <button
               key={id}
@@ -103,7 +130,9 @@ export default function LearnHub() {
         </div>
       )}
 
-      {isDaughter && learnTab === "pad" && <PadGuide role={view} onAskFriends={() => setTab("friends")} />}
+      {isDaughter && learnTab === "pad" && (
+        <PadGuide role={view} onAskFriends={() => setTab("friends")} />
+      )}
       {!isDaughter && (
         <>
           <ParentAiAssistant />
@@ -200,15 +229,6 @@ export default function LearnHub() {
               </p>
             </div>
           </section>
-        </div>
-      )}
-      {isDaughter && (
-        <div className="flex items-start gap-3 rounded-2xl bb-bg-E9DDFC-30 p-4">
-          <Info className="w-5 h-5 bb-text-7C4DCC shrink-0 mt-0.5" />
-          <p className="text-xs font-semibold text-slate-600 leading-relaxed">
-            Энэ аппын мэдээлэл эмчийн зөвлөгөөг орлохгүй. Их өвдөх, цус их гарах зэрэг санаа зовоосон зүйл
-            байвал ээждээ болон итгэдэг том хүндээ хандаарай. Шаардлагатай бол эмчид хандаарай.
-          </p>
         </div>
       )}
     </div>
