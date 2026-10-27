@@ -8,6 +8,7 @@ import AppHeader from "./AppHeader";
 import BottomNavigation from "./BottomNavigation";
 import CurrentScreen from "./CurrentScreen";
 import SosModal from "../sos/SosModal";
+import ChildSwitcher from "../mother/ChildSwitcher";
 import { useTheme } from "../../../context/ThemeContext";
 
 // Хаяг → таб
@@ -27,6 +28,9 @@ const TAB_BY_PATH = {
   "/profile": "me",
 };
 
+// Асран хамгаалагчийн эдгээр таб сонгосон охиных нь мэдээллийг харуулна
+const CHILD_TABS = ["home", "calendar", "supplies", "messages"];
+
 export default function AppShell() {
   const router = useRouter();
   const pathname = usePathname();
@@ -44,9 +48,7 @@ export default function AppShell() {
     sosOpen,
     toast,
     lowSupplyCount,
-    momUnread,
     showOnboarding,
-    needsMotherCode,
   } = family;
   // Охины хонхны тоо: асран хамгаалагчийн уншаагүй үг + хариулаагүй найзын SOS
   const teenUnread = (family.teenInbox ?? []).filter((n) => !n.read).length + (unansweredIncoming ?? 0);
@@ -59,13 +61,11 @@ export default function AppShell() {
     if (authLoading) return;
     if (!session && pathname !== "/") {
       router.replace("/");
-    } else if (session && ready && needsMotherCode && pathname !== "/profile") {
-      router.replace("/profile");
     } else if (session && ready && view && pathname === "/") {
       // Нэвтэрсэн бол нүүр хуудас руу шууд оруулна
       router.replace(view === "mother" ? "/mother" : "/daughter");
     }
-  }, [authLoading, session, ready, needsMotherCode, view, pathname, router]);
+  }, [authLoading, session, ready, view, pathname, router]);
 
   const navigateToTab = (nextTab) => {
     setTab(nextTab);
@@ -106,6 +106,7 @@ export default function AppShell() {
           }}
         />
         <main className={isCompactLesson ? "learn-viewport-main" : `px-4 pt-4 ${showNav ? "pb-28" : "pb-10"}`}>
+          {showNav && view === "mother" && CHILD_TABS.includes(tab) && <ChildSwitcher />}
           <CurrentScreen family={family} pathname={pathname} />
         </main>
         {showNav && (

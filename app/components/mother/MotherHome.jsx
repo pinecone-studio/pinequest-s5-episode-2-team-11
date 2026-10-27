@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useFamily } from "../../../context/FamilyContext";
-import { Copy, Share2, Users, Sparkles, Check, Lock, RefreshCw, HeartHandshake, Send } from "lucide-react";
+import { Copy, Share2, Users, Check, Lock, HeartHandshake, Send } from "lucide-react";
 import { MOM_QUICK_NOTES } from "../../../lib/data";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
-import ThinkingDots from "../ui/ThinkingDots";
+import ChildrenOverview from "./ChildrenOverview";
+import MonthlyCareCarousel from "./MonthlyCareCarousel";
 
 export default function MotherHome() {
   const [customMessage, setCustomMessage] = useState("");
@@ -17,8 +18,6 @@ export default function MotherHome() {
     copied,
     day,
     shareWithMom,
-    nudgeLoading,
-    nudgesDone,
     phase,
     isPeriod,
     hasCycle,
@@ -26,11 +25,8 @@ export default function MotherHome() {
     profile,
     daysUntil,
     selectedMood,
-    currentNudge,
     copyCode,
     shareCode,
-    refreshNudge,
-    markNudgeDone,
     careMessage,
     sendToTeen,
     sendToMom,
@@ -56,6 +52,8 @@ export default function MotherHome() {
         </div>
       </div>
 
+      <ChildrenOverview />
+
       {!linked && (
         <Card className="bb-grad-5">
           <SectionTitle icon={Users} title="Охиноо урих" />
@@ -79,8 +77,8 @@ export default function MotherHome() {
             </button>
           </div>
           <p className="mt-3 text-xs font-semibold text-slate-500">
-            Охин тань Bloomy-д охины бүртгэлээр бүртгүүлээд энэ кодыг оруулна. Холбогдмогц энд шууд
-            харагдана.
+            Охинтойгоо холбогдох кодоо охиндоо илгээгээрэй. Охин тань Profile хэсэгт энэ кодыг
+            оруулснаар тантай холбогдоно.
           </p>
         </Card>
       )}
@@ -146,50 +144,8 @@ export default function MotherHome() {
         )}
       </div>
 
-      {/* AI халамжийн сануулга */}
-      <Card className="bb-grad-7">
-        <SectionTitle
-          icon={Sparkles}
-          title="AI халамжийн сануулга"
-          tone="peach"
-          right={
-            <button
-              onClick={refreshNudge}
-              className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center active:scale-90"
-              aria-label="Өөр санаа"
-            >
-              <RefreshCw className={`w-4 h-4 bb-text-7C4DCC ${nudgeLoading ? "animate-spin" : ""}`} />
-            </button>
-          }
-        />
-        {nudgeLoading ? (
-          <ThinkingDots label="Танд тохирох санаа бэлдэж байна…" />
-        ) : (
-          <div key={currentNudge} className="bloom-pop">
-            <p className="text-lg font-extrabold text-slate-700 leading-snug">{currentNudge}</p>
-            <div className="mt-4 flex gap-2">
-              <button
-                onClick={markNudgeDone}
-                disabled={!linked}
-                className="flex-1 rounded-2xl bb-bg-E0679F disabled:bg-slate-200 text-white font-extrabold py-3 text-sm active:scale-95 transition flex items-center justify-center gap-2"
-              >
-                <Check className="w-4 h-4" /> Хийлээ
-              </button>
-              <button
-                onClick={refreshNudge}
-                className="px-4 rounded-2xl bg-white border-2 border-slate-100 text-slate-600 font-extrabold text-sm active:scale-95"
-              >
-                Өөр санаа
-              </button>
-            </div>
-          </div>
-        )}
-        {nudgesDone.length > 0 && (
-          <p className="mt-3 text-xs font-bold bb-text-B83B7E">
-            ✓ Өнөөдөр {nudgesDone.length} халамж үзүүлсэн байна
-          </p>
-        )}
-      </Card>
+      {/* AI сарын халамжийн зөвлөгөө (охин бүрээр шудрана) */}
+      {linked && <MonthlyCareCarousel />}
 
       {linked && (
         <Card>
