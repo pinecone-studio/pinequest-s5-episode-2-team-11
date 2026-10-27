@@ -57,7 +57,16 @@ export default function AuthScreen() {
     if (!canSubmit || busy) return;
     setBusy(true);
     setMessage("");
-    const err = isSignup ? await signUp({ role, name, birthDate: isDaughter ? birthDate : null, email, password }) : await signIn({ email, password });
+    let err;
+    if (isSignup) {
+      err = await signUp({ role, name, birthDate: isDaughter ? birthDate : null, email, password });
+      if (err === "existing_user") {
+        setStage("login");
+        err = await signIn({ email, password });
+      }
+    } else {
+      err = await signIn({ email, password });
+    }
     setBusy(false);
     if (err) setMessage(err);
   };
