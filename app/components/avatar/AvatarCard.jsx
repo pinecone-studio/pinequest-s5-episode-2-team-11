@@ -12,6 +12,8 @@ import Card from "../ui/Card";
 import Avatar from "./Avatar";
 import AvatarStudio from "./AvatarStudio";
 import { useAvatar } from "./useAvatar";
+import { useTodayMood } from "./useTodayMood";
+import { MOODS } from "../../../lib/log-entries";
 import { PetalIcon, Sparkle, XpIcon } from "./icons";
 import { AVATAR_BACKGROUNDS, DAILY_GIFT, XP_PER_LEVEL } from "../../../lib/wardrobe";
 
@@ -24,6 +26,8 @@ const ACTIONS = [
 export default function AvatarCard() {
   const { profile, setToast } = useFamily();
   const av = useAvatar(profile?.id, setToast);
+  const mood = useTodayMood(profile?.id);
+  const moodInfo = MOODS.find((m) => m.value === mood);
   const [studioTab, setStudioTab] = useState(null);
   const close = useCallback(() => setStudioTab(null), []);
   const pct = ((av.xp % XP_PER_LEVEL) / XP_PER_LEVEL) * 100;
@@ -57,7 +61,15 @@ export default function AvatarCard() {
             className="absolute left-1/2 -translate-x-1/2 rounded-full"
             style={{ bottom: 12, width: 110, height: 14, background: "rgba(150,45,102,0.12)" }}
           />
-          <Avatar look={av.look} skin={av.skin} idle size={112} className="relative" />
+          <Avatar look={av.look} skin={av.skin} mood={mood} idle size={112} className="relative" />
+          {moodInfo && (
+            <span
+              className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-extrabold shadow-sm"
+              style={{ background: "rgba(255,255,255,0.88)", color: "#554454" }}
+            >
+              {moodInfo.emoji} {moodInfo.label}
+            </span>
+          )}
         </button>
 
         {/* ---------- XP ---------- */}

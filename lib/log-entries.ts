@@ -161,7 +161,17 @@ export async function saveEntry(client: Client, { id, userId, date, category, va
     ? client.from("log_entries").update({ value }).eq("id", id).select(COLUMNS).single()
     : client.from("log_entries").insert({ user_id: userId, log_date: date, category, value, logged_at: loggedAtFor(date, today) }).select(COLUMNS).single();
   const { data, error } = await request;
-  if (!error) announce(date);
+  if (!error) {
+    announce(date);
+    // Өнөөдрийн сэтгэл санааг дүрийн царай болгож найзуудад харуулна
+    if (category === "mood" && date === today) {
+      client
+        .from("profiles")
+        .update({ avatar_mood: (value as { mood: number }).mood, avatar_mood_date: date })
+        .eq("id", userId)
+        .then(({ error: moodError }: { error: any }) => moodError && console.error("[profiles] avatar_mood:", moodError));
+    }
+  }
   return { data: data as LogEntry | null, error };
 }
 

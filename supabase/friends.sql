@@ -6,8 +6,9 @@
 --
 --  Нууцлал:
 --   • Зөвхөн охид (daughter) ашиглана. Ээж нар найзуудын SOS-ийг харахгүй.
---   • Найзууд өөрийн хувцас, дэвсгэр, арьсны өнгийг л хуваалцана.
---   • Мөчлөг, сэтгэл санаа болон XP/дэлбээ зэрэг тоглоомын оноог хуваалцахгүй.
+--   • Найзууд өөрийн хувцас, дэвсгэр, арьсны өнгө, өнөөдрийн сэтгэл санааны
+--     царайг (😄…😣) л хуваалцана.
+--   • Мөчлөг, тэмдэглэл болон XP/дэлбээ зэрэг тоглоомын оноог хуваалцахгүй.
 --   • Чат байхгүй: хариулт нь тогтсон 4 сонголтоос (дээрэлхэлтээс сэргийлнэ).
 -- =====================================================================
 
@@ -20,6 +21,21 @@ alter table public.profiles
     check (avatar_skin between 0 and 3),
   add column if not exists avatar_background text not null default 'pink'
     check (avatar_background in ('pink', 'lilac', 'mint', 'blue', 'peach', 'yellow'));
+
+-- Апп 6 арьсны өнгө, "room" дэвсгэртэй болсон тул хуучин шалгалтыг шинэчилнэ
+-- (эс тэгвээс дүр хадгалагдахгүй, найзууд үндсэн дүрийг л харна)
+alter table public.profiles drop constraint if exists profiles_avatar_skin_check;
+alter table public.profiles add constraint profiles_avatar_skin_check check (avatar_skin between 0 and 5);
+alter table public.profiles drop constraint if exists profiles_avatar_background_check;
+alter table public.profiles add constraint profiles_avatar_background_check
+  check (avatar_background in ('pink', 'lilac', 'mint', 'blue', 'peach', 'yellow', 'room'));
+alter table public.profiles alter column avatar_background set default 'room';
+
+-- Өнөөдрийн сэтгэл санаа (1–5) → найзууд дүрийн царайны илэрхийллийг харна.
+-- Огноотой хадгалдаг тул өчигдрийнх нь өнөөдөр харагдахгүй (апп огноог шалгана).
+alter table public.profiles
+  add column if not exists avatar_mood smallint check (avatar_mood between 1 and 5),
+  add column if not exists avatar_mood_date date;
 
 -- ---------- Найзын код (жишээ: K7M2QX) ----------
 
@@ -190,10 +206,12 @@ returns table (
   display_name text,
   avatar_look jsonb,
   avatar_skin smallint,
-  avatar_background text
+  avatar_background text,
+  avatar_mood smallint,
+  avatar_mood_date date
 )
 language sql stable security definer set search_path = public as $$
-  select p.id, p.display_name, p.avatar_look, p.avatar_skin, p.avatar_background
+  select p.id, p.display_name, p.avatar_look, p.avatar_skin, p.avatar_background, p.avatar_mood, p.avatar_mood_date
   from public.friendships f
   join public.profiles p on p.id = f.friend_id
   where f.user_id = auth.uid()
