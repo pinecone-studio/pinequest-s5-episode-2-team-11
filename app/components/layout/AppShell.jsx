@@ -29,7 +29,7 @@ const TAB_BY_PATH = {
 };
 
 // Асран хамгаалагчийн эдгээр таб сонгосон охиных нь мэдээллийг харуулна
-const CHILD_TABS = ["home", "calendar", "supplies", "messages"];
+const CHILD_TABS = ["home", "calendar", "supplies", "messages", "learn"];
 
 export default function AppShell() {
   const router = useRouter();
@@ -52,7 +52,6 @@ export default function AppShell() {
     momUnread,
     toast,
     lowSupplyCount,
-    showOnboarding,
     sosOpen,
   } = family;
   // Охины хонхны тоо: асран хамгаалагчийн уншаагүй үг + хариулаагүй найзын SOS
@@ -88,8 +87,8 @@ export default function AppShell() {
     router.push(routes[nextTab] ?? "/");
   };
 
-  const showNav = family.supabaseConfigured && session && family.profile && ready && !showOnboarding;
-  const isCompactLesson = pathname === "/learn" && view === "daughter" && family.learnTab === "pad" && showNav;
+  const showNav = family.supabaseConfigured && session && family.profile && ready;
+  const isCompactLesson = pathname === "/learn" && view === "daughter" && ["pad", "pad-howto"].includes(family.learnTab) && showNav;
 
 
   return (

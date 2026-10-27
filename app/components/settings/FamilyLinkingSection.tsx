@@ -10,6 +10,8 @@ export default function FamilyLinkingSection() {
   const {
     view,
     children,
+    activeChildId,
+    setActiveChildId,
     familyCode,
     guardianName,
     isLinked,
@@ -43,8 +45,8 @@ export default function FamilyLinkingSection() {
         <div>
           <p className="text-sm font-semibold text-slate-500">
             {children.length
-              ? `${children.length} хүүхэд Guardian Access Code-оор холбогдсон.`
-              : "Guardian Access Code-оо охинтойгоо хуваалцаарай."}
+              ? `${children.length} хүүхэд гэр бүлийн урилгын кодоор холбогдсон.`
+              : "Гэр бүлийн урилгын кодоо охинтойгоо хуваалцаарай."}
           </p>
           <div className="mt-3 flex items-center gap-2">
             <span className="flex-1 rounded-2xl bb-bg-FFF7FB py-3 text-center text-lg font-black tracking-wider text-slate-700">
@@ -54,7 +56,7 @@ export default function FamilyLinkingSection() {
               type="button"
               onClick={copyCode}
               disabled={!familyCode}
-              aria-label="Guardian код хуулах"
+              aria-label="Гэр бүлийн урилгын код хуулах"
               className="flex h-12 w-12 items-center justify-center rounded-2xl bb-bg-FDE7F1 bb-text-B83B7E disabled:opacity-50"
             >
               {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
@@ -63,7 +65,7 @@ export default function FamilyLinkingSection() {
               type="button"
               onClick={shareCode}
               disabled={!familyCode}
-              aria-label="Guardian код хуваалцах"
+              aria-label="Гэр бүлийн урилгын код хуваалцах"
               className="flex h-12 w-12 items-center justify-center rounded-2xl border-2 border-slate-100 bg-white bb-text-B83B7E disabled:opacity-50"
             >
               <Share2 className="h-5 w-5" />
@@ -71,11 +73,22 @@ export default function FamilyLinkingSection() {
           </div>
           {children.length > 0 && (
             <ul className="mt-3 space-y-2" aria-label="Холбогдсон хүүхдүүд">
-              {children.map((child) => (
-                <li key={child.id} className="rounded-xl bb-bg-FFF7FB px-3 py-2 text-sm font-bold text-slate-600">
-                  {child.display_name || "Охин"}
-                </li>
-              ))}
+              {children.map((child) => {
+                const selected = child.id === activeChildId;
+                return (
+                  <li key={child.id}>
+                    <button
+                      type="button"
+                      onClick={() => setActiveChildId(child.id)}
+                      aria-pressed={selected}
+                      className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-sm font-bold transition ${selected ? "bb-border-F48FB1 bb-bg-FDE7F1 text-slate-700" : "border-transparent bb-bg-FFF7FB text-slate-600"}`}
+                    >
+                      <span>{child.display_name || "Охин"}</span>
+                      {selected && <span className="text-xs font-extrabold bb-text-B83B7E">Сонгосон</span>}
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
@@ -109,7 +122,7 @@ export default function FamilyLinkingSection() {
             Guardian-тайгаа холбогдох нь сонголттой. Кодоо хүссэн үедээ оруулж болно.
           </p>
           <label htmlFor="guardian-access-code" className="mt-4 block text-xs font-extrabold uppercase tracking-wider text-slate-400">
-            Guardian Access Code
+            Асран хамгаалагчийн урилгын код
           </label>
           <div className="mt-2 flex items-center overflow-hidden rounded-2xl border-2 border-slate-100 bg-white bb-focus-within-border-F48FB1">
             <span className="pl-4 font-black bb-text-F48FB1">BLOOM-</span>

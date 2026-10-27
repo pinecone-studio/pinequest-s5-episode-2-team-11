@@ -1,11 +1,11 @@
 "use client";
 
 /**
- * Туслах — «Блүми эгч» AI чат болон «Миний хэрэгсэл»-ийг нэг хуудсанд.
- * Дээд талын шилжүүлэгчээр хооронд нь сольно.
- *   /daughter/insights → Блүми эгч
- *   /daughter/supplies → Хэрэгсэл
- */
+* Туслах — «Блүми эгч» AI чат болон «Миний хэрэгсэл»-ийг нэг хуудсанд.
+* Дээд талын шилжүүлэгчээр хооронд нь сольно.
+*   /daughter/insights → Блүми эгч
+*   /daughter/supplies → Хэрэгсэл
+*/
 
 import { useState } from "react";
 import { ChevronRight, MessageCircleHeart, Package, Wind } from "lucide-react";
