@@ -29,12 +29,13 @@ Next.js 16 · React 19 · Tailwind CSS 4 · Supabase (Auth, Postgres, Realtime) 
 
 ## Эхлэх
 
-1. Supabase-ийн SQL Editor дээр `supabase/schema.sql`, дараа нь `supabase/friends.sql`-ийг ажиллуулна.
+1. Supabase-ийн SQL Editor дээр `supabase/schema.sql`, `supabase/friends.sql`, өдрийн бүртгэлийн өмнөх миграцууд, `supabase/cycle-calendar-migration.sql`, дараа нь `supabase/private-note-lock-migration.sql`-ийг ажиллуулна. Одоо байгаа төслийн миграцын дарааллыг `SETUP.md`-ээс харна уу.
 2. Төслийн үндсэн фолдерт `.env.local` үүсгэнэ:
 
    ```
    NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...
+   SUPABASE_SERVICE_ROLE_KEY=зөвхөн-серверийн-service-role-key
    GEMINI_API_KEY=таны-gemini-api-key
    # GEMINI_MODEL=gemini-3.8-flash   # заавал биш
    ```
@@ -48,6 +49,7 @@ Next.js 16 · React 19 · Tailwind CSS 4 · Supabase (Auth, Postgres, Realtime) 
    ```
 
 > AI key байхгүй ч апп ажиллана — AI-ийн оронд бэлэн зөвлөмжүүд харагдана.
+> `SUPABASE_SERVICE_ROLE_KEY` нь нууц түлхүүр тул `NEXT_PUBLIC_` угтвар бүү нэм, GitHub-д бүү оруул.
 
 ## Скриптүүд
 

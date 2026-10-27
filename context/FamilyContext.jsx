@@ -58,6 +58,22 @@ export function FamilyProvider({ children }) {
   const [periodStarts, setPeriodStarts] = useState([]);
   const [periodLogs, setPeriodLogs] = useState([]);
   const syncedPeriodDatesRef = useRef("");
+  const [noteUnlockToken, setNoteUnlockToken] = useState("");
+  const noteUnlockAtRef = useRef(0);
+
+  const unlockPrivateNotes = useCallback((token) => {
+    setNoteUnlockToken(token);
+    noteUnlockAtRef.current = Date.now();
+  }, []);
+
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") noteUnlockAtRef.current = Date.now();
+      else if (noteUnlockAtRef.current && Date.now() - noteUnlockAtRef.current > 60_000) setNoteUnlockToken("");
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
 
   useEffect(() => {
     try {
@@ -1072,6 +1088,8 @@ export function FamilyProvider({ children }) {
     // тохиргоо, нэвтрэлт
     supabaseConfigured,
     session,
+    noteUnlockToken,
+    unlockPrivateNotes,
     authLoading,
     dataLoading,
     ready,

@@ -37,18 +37,17 @@ function legacyValues(date) {
   } catch { /* хуучин тэмдэглэлийг алгасна */ }
   let checkin = null;
   try { checkin = JSON.parse(localStorage.getItem(`bloom:checkin:${date}`) ?? "null"); } catch { /* хуучин тэмдэглэлийг алгасна */ }
-  const oldNote = localStorage.getItem(`bloom:private-note:${date}`) ?? "";
   return {
     mood: LEGACY_MOOD[log.emotion] ?? checkin?.mood ?? null,
     symptoms: log.symptoms && LEGACY_SYMPTOM[log.symptoms] ? [LEGACY_SYMPTOM[log.symptoms]] : checkin?.pain > 1 ? ["cramps"] : [],
     flow: LEGACY_FLOW[log.period] ?? null,
-    note: oldNote.slice(0, 500),
+    note: "",
     share_mood: false,
   };
 }
 
 export default function DayLogSheet({ date, initialMood = null, isPeriodDay = false, periodDayNumber = 1, pendingPeriod = null, onClose, onSaved }) {
-  const { profile, linked, guardianName, shareWithMom, setToast, refreshMoods, respondPeriodEntry } = useFamily();
+  const { profile, session, noteUnlockToken, unlockPrivateNotes, linked, guardianName, shareWithMom, setToast, refreshMoods, respondPeriodEntry } = useFamily();
   const today = localDateKey(new Date());
   const future = date > today;
   const selectedDate = new Date(`${date}T00:00:00`);
@@ -63,6 +62,10 @@ export default function DayLogSheet({ date, initialMood = null, isPeriodDay = fa
   const [flow, setFlow] = useState(null);
   const [note, setNote] = useState("");
   const [noteOpen, setNoteOpen] = useState(false);
+  const [pinEnabled, setPinEnabled] = useState(false);
+  const [pinRequired, setPinRequired] = useState(false);
+  const [notePin, setNotePin] = useState("");
+  const [pinBusy, setPinBusy] = useState(false);
   const [shareMood, setShareMood] = useState(false);
 
   useEffect(() => {
@@ -85,14 +88,44 @@ export default function DayLogSheet({ date, initialMood = null, isPeriodDay = fa
         setPain(row?.pain ?? (row?.symptoms?.includes("cramps") ? 2 : legacy.symptoms.includes("cramps") ? 2 : null));
         setSymptoms(row?.symptoms ?? legacy.symptoms);
         setFlow(row?.flow ?? legacy.flow);
-        setNote(row?.note ?? legacy.note);
+        setNote("");
         setShareMood(Boolean(row?.share_mood));
+        const status = await fetch("/api/private-notes", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token ?? ""}` }, body: JSON.stringify({ action: "status", date }), cache: "no-store" });
+        const lock = status.ok ? await status.json() : { enabled: false, hasNote: false };
+        if (cancelled) return;
+        setPinEnabled(Boolean(lock.enabled));
+        const needsPin = Boolean(lock.enabled && lock.hasNote && !noteUnlockToken);
+        setPinRequired(needsPin);
+        if (!needsPin && lock.hasNote) await fetchNote(noteUnlockToken);
       }
       setLoading(false);
     };
     load();
     return () => { cancelled = true; };
-  }, [date, initialMood, profile?.id]);
+  }, [date, initialMood, profile?.id, session?.access_token, noteUnlockToken]);
+
+  const fetchNote = async (token) => {
+    const response = await fetch("/api/private-notes", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token ?? ""}`, ...(token ? { "x-note-unlock-token": token } : {}) }, body: JSON.stringify({ action: "note", date }), cache: "no-store" });
+    const result = await response.json();
+    if (response.ok) setNote(result.note ?? "");
+    else if (response.status === 423) { setPinRequired(true); setNote(""); }
+    else setError(result.error || "Тэмдэглэл ачаалж чадсангүй.");
+  };
+
+  const unlockNote = async (event) => {
+    event.preventDefault();
+    if (!/^\d{4,6}$/.test(notePin) || pinBusy) return;
+    setPinBusy(true); setError("");
+    try {
+      const response = await fetch("/api/private-notes", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token ?? ""}` }, body: JSON.stringify({ action: "verify", pin: notePin }), cache: "no-store" });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "PIN шалгаж чадсангүй.");
+      unlockPrivateNotes(result.token);
+      setPinRequired(false); setNotePin("");
+      await fetchNote(result.token);
+    } catch (e) { setError(e.message); }
+    finally { setPinBusy(false); }
+  };
 
   const toggleSymptom = (key) => setSymptoms((current) => current.includes(key) ? current.filter((item) => item !== key) : [...current, key]);
   const decidePeriod = async (approve) => {
@@ -126,8 +159,7 @@ export default function DayLogSheet({ date, initialMood = null, isPeriodDay = fa
       symptoms: symptoms.map((item) => LEGACY_SYMPTOM_BY_KEY[item]).find(Boolean),
       period: ({ light: "Light", medium: "Medium", heavy: "Heavy" })[isPeriodDay ? flow : ""] ?? undefined,
     }));
-    if (note.trim()) localStorage.setItem(`bloom:private-note:${date}`, note.trim());
-    else localStorage.removeItem(`bloom:private-note:${date}`);
+    localStorage.removeItem(`bloom:private-note:${date}`);
     await refreshMoods();
     setToast("Хадгаллаа");
     onSaved?.({ log_date: date, mood, pain, symptoms, flow: isPeriodDay ? flow : null, note: note.trim(), share_mood: shareMood && shareWithMom });
@@ -182,7 +214,7 @@ export default function DayLogSheet({ date, initialMood = null, isPeriodDay = fa
 
           <section>
             <button type="button" onClick={() => setNoteOpen((value) => !value)} aria-expanded={noteOpen} className="flex w-full items-center justify-between rounded-2xl bg-slate-50 px-3 py-3 text-left text-sm font-extrabold text-slate-700"><span className="flex items-center gap-2"><Lock className="h-4 w-4 bb-text-7C4DCC" /> 🔒 Нууц тэмдэглэл</span><span className="text-xs bb-text-B83B7E">{noteOpen ? "Хураах" : note ? "Нээх" : "Нэмэх"}</span></button>
-            {noteOpen && <><textarea id="private-day-note" value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} rows={3} placeholder="Өөр юу болсон бэ?" className="mt-2 w-full resize-none rounded-2xl border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-700 outline-none focus:border-pink-300" /><p className="mt-1 text-xs font-semibold text-slate-400">Зөвхөн чамд харагдана</p></>}
+            {noteOpen && (pinRequired ? <form onSubmit={unlockNote} className="mt-2 space-y-2"><p className="text-xs font-semibold text-slate-500">Хадгалсан тэмдэглэлээ үзэхийн тулд PIN-ээ оруулна уу.</p><div className="flex gap-2"><input aria-label="Нууц тэмдэглэлийн PIN" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={notePin} onChange={(event) => setNotePin(event.target.value.replace(/\D/g, ""))} className="min-w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm" placeholder="PIN" /><button type="submit" disabled={pinBusy} className="rounded-xl bb-bg-E0679F px-4 py-2 text-xs font-extrabold text-white disabled:opacity-50">{pinBusy ? "Шалгаж байна…" : "Нээх"}</button></div></form> : <><textarea id="private-day-note" value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} rows={3} placeholder="Өөр юу болсон бэ?" className="mt-2 w-full resize-none rounded-2xl border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-700 outline-none focus:border-pink-300" /><p className="mt-1 text-xs font-semibold text-slate-400">{pinEnabled ? "PIN-ээр хамгаалагдсан. Зөвхөн чамд харагдана." : "Зөвхөн чамд харагдана"}</p></>)}
           </section>
 
           <button type="button" role="switch" aria-checked={shareMood && shareWithMom} disabled={!linked || !shareWithMom} onClick={() => setShareMood((value) => !value)} className="flex w-full items-center justify-between gap-3 rounded-2xl bg-slate-50 px-3 py-3 text-left disabled:opacity-60">
