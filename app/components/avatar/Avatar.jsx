@@ -4,6 +4,7 @@
  * Avatar — Bloomy-ийн пиксел дүр (SVG, 4px-ийн торон дээр давхаргаар зурна).
  *   look    = { hair, top, bottom, shoes, acc }  (lib/wardrobe.js-ийн id-ууд)
  *   skin    = SKIN_TONES-ийн индекс
+ *   mood    = өнөөдрийн сэтгэл санаа (1–5) → царайны илэрхийлэл; null бол энгийн инээмсэглэл
  *   walking = true бол хөл, гар хөдөлж алхана
  *   idle    = true бол зөөлөн хөвж, нүдээ анивчина
  *   crop    = "x y w h" — зөвхөн тухайн хэсгийг харуулна (дэлгүүрийн жижиг зураг)
@@ -219,19 +220,39 @@ const eyeColors = (eye) => ({
 const BLUSH_MAP = ["..PPPP..", ".PWPPPP.", "..PPPP.."];
 const MOUTH_MAP = ["M..M", ".MM."];
 
-function Face({ skin, eye }) {
+// Сэтгэл санааны царай (lib/log-entries MOODS: 5 маш сайхан … 1 хэцүү).
+// eyes = нүдний зураг, brow = хөмсөг (заавал биш), mouth, blush = хацрын тод байдал
+const HAPPY_EYE = ["........", "........", "........", "..LLLL..", ".LL..LL.", ".L....L.", "........", "........", "........", "........"];
+const SQUEEZE_EYE = ["........", "........", ".LL.....", "...LL...", ".....LL.", "...LL...", ".LL.....", "........", "........", "........"];
+const MOOD_FACES = {
+  5: { eyes: HAPPY_EYE, mouth: ["MMMM", "MTTM", ".MM."], blush: 0.95 },
+  4: { eyes: EYE_MAP, mouth: MOUTH_MAP, blush: 0.75 },
+  3: { eyes: EYE_MAP, mouth: [".MM."], blush: 0.4 },
+  2: { eyes: EYE_MAP, brow: ["....LL", "LLLL.."], mouth: [".MM.", "M..M"], blush: 0.35 },
+  1: { eyes: SQUEEZE_EYE, brow: ["....LL", "LLLL.."], mouth: [".MM.", "M..M"], blush: 0.5, sweat: true },
+};
+
+function Face({ skin, eye, mood }) {
   const colors = eyeColors(eye);
+  const f = MOOD_FACES[mood] ?? MOOD_FACES[4];
   return (
     <g>
       {/* хацрын бүдэг сүүдэр */}
       <Px rows={[[20, 10, 19]]} fill={shade(skin, -0.06)} />
       <g className="av-eyes" style={{ transformOrigin: `60px ${(14 + OFF) * U}px` }}>
-        <Sprite map={EYE_MAP} x={15} y={24} colors={colors} />
-        <Sprite map={EYE_MAP} x={37} y={24} colors={colors} flip />
+        <Sprite map={f.eyes} x={15} y={24} colors={colors} />
+        <Sprite map={f.eyes} x={37} y={24} colors={colors} flip />
       </g>
-      <Sprite map={BLUSH_MAP} x={13} y={34} colors={{ P: "#F59DB2", W: "#FFFFFF" }} opacity={0.75} />
-      <Sprite map={BLUSH_MAP} x={39} y={34} colors={{ P: "#F59DB2", W: "#FFFFFF" }} opacity={0.75} flip />
-      <Sprite map={MOUTH_MAP} x={28} y={38} colors={{ M: "#C25A6A" }} />
+      {f.brow && (
+        <>
+          <Sprite map={f.brow} x={16} y={22} colors={{ L: "#2E2228" }} />
+          <Sprite map={f.brow} x={38} y={22} colors={{ L: "#2E2228" }} flip />
+        </>
+      )}
+      <Sprite map={BLUSH_MAP} x={13} y={34} colors={{ P: "#F59DB2", W: "#FFFFFF" }} opacity={f.blush} />
+      <Sprite map={BLUSH_MAP} x={39} y={34} colors={{ P: "#F59DB2", W: "#FFFFFF" }} opacity={f.blush} flip />
+      <Sprite map={f.mouth} x={28} y={38} colors={{ M: "#C25A6A", T: "#F48FB1" }} />
+      {f.sweat && <Sprite map={[".S.", "SSS", "SWS", ".S."]} x={44} y={28} colors={{ S: "#8EC9F5", W: "#FFFFFF" }} />}
     </g>
   );
 }
@@ -414,6 +435,7 @@ function Waist({ bottom }) {
 export default function Avatar({
   look = STARTER_LOOK,
   skin = 0,
+  mood = null,
   walking = false,
   idle = false,
   label = "Миний дүр",
@@ -457,7 +479,7 @@ export default function Avatar({
         <Px rows={FACE} fill={s} line={sl} />
         <Px rows={[[12, 8, 21]]} fill={shade(s, -0.08)} />
         <HairFront item={hair} />
-        <Face skin={s} eye={eyes.color} />
+        <Face skin={s} eye={eyes.color} mood={mood} />
         <Accessory item={acc} />
       </g>
     </svg>
