@@ -7,6 +7,7 @@ import { addDaysToLocalDateKey, getCyclePosition, localDateKey } from "../../../
 import {
   LOG_MORE_HINT, SEASON_TEXT, forecastTitle, prepTipFor, safetyLines, statsForPosition, templateForecast, validateForecast,
 } from "../../../lib/forecast";
+import { LOG_ENTRIES_CHANGED, dayLogsFromEntries, fetchEntries } from "../../../lib/log-entries";
 import { supabase } from "../../../lib/supabase";
 import { useFamily } from "../../../context/FamilyContext";
 
@@ -38,19 +39,25 @@ export default function CyclePredictionCard() {
     return oldest ? addDaysToLocalDateKey(oldest, -1) : today;
   }, [periods, today]);
 
+  // Reads log_entries (mood, symptoms/pain, skin → acne, sleep). Note text is never in there.
   useEffect(() => {
     if (view !== "daughter" || !inCycle || !supabase || !profile?.id) return;
     let cancelled = false;
-    supabase.rpc("get_my_day_logs", { p_from: from, p_to: today }).then(({ data, error }) => {
+    const load = () => fetchEntries(supabase, from, today).then(({ data, error }) => {
       if (cancelled) return;
-      if (error) console.warn("[forecast] day logs:", error.message);
-      // Only categorical fields are kept; note text never enters the forecast.
-      setLogs((data ?? []).map(({ log_date, mood, pain, symptoms }) => ({ log_date, mood, pain, symptoms })));
+      if (error) console.warn("[forecast] log entries:", error.message);
+      setLogs(dayLogsFromEntries(data).map(({ log_date, mood, pain, symptoms, sleepHours }) => ({ log_date, mood, pain, symptoms, sleepHours })));
     });
-    return () => { cancelled = true; };
+    load();
+    // Today's card is keyed by cycle day + cached, so new logs today never regenerate it.
+    window.addEventListener(LOG_ENTRIES_CHANGED, load);
+    return () => { cancelled = true; window.removeEventListener(LOG_ENTRIES_CHANGED, load); };
   }, [view, inCycle, profile?.id, from, today]);
 
-  const stats = useMemo(() => (inCycle && logs ? statsForPosition(position, periods, logs) : null), [inCycle, position, periods, logs]);
+  const rawStats = useMemo(() => (inCycle && logs ? statsForPosition(position, periods, logs) : null), [inCycle, position, periods, logs]);
+  // Same numbers → same object, so a refetch after today's logging never restarts the request.
+  const statsJson = rawStats ? JSON.stringify(rawStats) : "";
+  const stats = useMemo(() => (statsJson ? JSON.parse(statsJson) : null), [statsJson]);
   const safety = useMemo(() => (inCycle && logs ? safetyLines(periods, logs, position.cycleStart) : []), [inCycle, logs, periods, position]);
 
   useEffect(() => {
