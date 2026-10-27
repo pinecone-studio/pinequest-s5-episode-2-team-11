@@ -9,14 +9,14 @@ export default function BottomNavigation({ view, linked, lowSupplyCount, unanswe
           { id: "calendar", label: "Календарь", icon: CalendarDays },
           { id: "supplies", label: "Хэрэгсэл", icon: Package, badge: linked ? lowSupplyCount : 0 },
           { id: "home", label: "Халамж", icon: Home, center: true },
-          { id: "learn", label: "Зөвлөх", icon: BookOpen },
+          { id: "learn", label: "Суралцах", icon: BookOpen },
           { id: "me", label: "Профайл", icon: User },
         ]
       : [
           { id: "insights", label: "Туслах", icon: Sparkles, badge: lowSupplyCount, match: ["supplies"] },
           { id: "friends", label: "Найзууд", icon: Users, badge: unansweredIncoming },
           { id: "home", label: "Өнөөдөр", icon: Home, center: true },
-          { id: "learn", label: "Сурах", icon: BookOpen },
+          { id: "learn", label: "Суралцах", icon: BookOpen },
           { id: "me", label: "Профайл", icon: User },
         ];
 
