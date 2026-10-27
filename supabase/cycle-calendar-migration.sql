@@ -142,6 +142,14 @@ begin
   update public.profiles set
     last_period_start = (select max(d) from unnest(coalesce(p_dates, '{}'::date[])) d),
     period_length = p_period_length,
+    cycle_length = coalesce((
+      select greatest(21, least(45, round(avg(cycle_days))::int))
+      from (
+        select log_date - lag(log_date) over (order by log_date) as cycle_days
+        from unnest(coalesce(p_dates, '{}'::date[])) as dates(log_date)
+      ) lengths
+      where cycle_days between 15 and 60
+    ), 28),
     no_period_yet = false
   where id = auth.uid();
 end $$;

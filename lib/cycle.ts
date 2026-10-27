@@ -177,13 +177,12 @@ export function getBloomLevel(today: string, cycleInfo: CycleInfo): number {
     return actualLength <= 1 ? 1 : clamp(1 - (offset / (actualLength - 1)) * 0.9, 0.1, 1);
   }
 
-  if (prediction && today > prediction.rangeEnd) return 1;
-  const season = getSeason(today, { ...cycleInfo, periods: confirmed, prediction });
-  if (season === "autumn" && prediction) {
+  if (prediction) {
     const daysUntilStart = differenceInDays(today, prediction.rangeStart);
-    if (daysUntilStart >= 0) return 1;
-    return clamp(0.2 + ((7 + daysUntilStart) / 7) * 0.8, 0.2, 1);
+    if (daysUntilStart < 0 || today > prediction.rangeEnd) return 1;
+    if (daysUntilStart <= 7) return clamp(0.2 + ((7 - daysUntilStart) / 7) * 0.8, 0.2, 1);
   }
+  const season = getSeason(today, { ...cycleInfo, periods: confirmed, prediction });
   return season === "winter" ? 1 : season === "spring" || season === "summer" ? 0.15 : 0.1;
 }
 

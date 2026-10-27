@@ -56,6 +56,8 @@ export function FamilyProvider({ children }) {
   const [kitRows, setKitRows] = useState([]);
   const [localKit, setLocalKit] = useState([]);
   const [periodStarts, setPeriodStarts] = useState([]);
+  const [periodLogs, setPeriodLogs] = useState([]);
+  const syncedPeriodDatesRef = useRef("");
 
   useEffect(() => {
     try {
@@ -315,6 +317,57 @@ export function FamilyProvider({ children }) {
     }
     setMoodRows([]);
   }, [userId, view, activeChildId, familyId]);
+
+  const loadPeriodLogs = useCallback(async () => {
+    if (!supabase || !userId) {
+      setPeriodLogs([]);
+      return;
+    }
+    const from = `${new Date().getFullYear() - 20}-01-01`;
+    const to = `${new Date().getFullYear() + 1}-12-31`;
+    const request = view === "daughter"
+      ? supabase.rpc("get_my_period_logs", { p_from: from, p_to: to })
+      : view === "mother" && activeChildId
+        ? supabase.rpc("get_guardian_period_logs", { p_child_id: activeChildId, p_from: from, p_to: to })
+        : null;
+    if (!request) {
+      setPeriodLogs([]);
+      return;
+    }
+    const { data, error } = await request;
+    if (error) {
+      console.warn("[period_logs]", error.message);
+      setPeriodLogs([]);
+      return;
+    }
+    const rows = data ?? [];
+    setPeriodLogs(rows);
+    if (view === "daughter") {
+      const confirmed = rows.filter((row) => row.status === "confirmed").map((row) => row.log_date);
+      setPeriodStarts((current) => [...new Set([...current, ...confirmed])].sort());
+    }
+  }, [userId, view, activeChildId]);
+
+  useEffect(() => {
+    loadPeriodLogs();
+  }, [loadPeriodLogs]);
+
+  useEffect(() => {
+    if (!supabase || view !== "daughter" || !userId || !periodStarts.length) return;
+    const signature = `${userId}:${periodLength}:${periodStarts.join(",")}`;
+    if (syncedPeriodDatesRef.current === signature) return;
+    let cancelled = false;
+    supabase.rpc("sync_my_period_starts", { p_dates: periodStarts, p_period_length: periodLength }).then(({ error }) => {
+      if (cancelled) return;
+      if (error) {
+        console.warn("[period_logs] legacy date sync:", error.message);
+        return;
+      }
+      syncedPeriodDatesRef.current = signature;
+      loadPeriodLogs();
+    });
+    return () => { cancelled = true; };
+  }, [view, userId, periodStarts, periodLength, loadPeriodLogs]);
 
   const loadKit = useCallback(async (fid) => {
     const { data } = await supabase.from("kit_checks").select("child_id, item_id").eq("family_id", fid);
@@ -609,24 +662,59 @@ export function FamilyProvider({ children }) {
     }
     const lengths = starts.slice(1).map((date, index) => Math.round((new Date(`${date}T00:00:00`) - new Date(`${starts[index]}T00:00:00`)) / 86400000)).filter((days) => days >= 15 && days <= 60).slice(-6).map((days) => Math.min(45, Math.max(21, days)));
     const nextCycleLength = lengths.length ? Math.round(lengths.reduce((sum, length) => sum + length, 0) / lengths.length) : 28;
+    const { error: syncError } = await supabase.rpc("sync_my_period_starts", { p_dates: starts, p_period_length: nextPeriodLength });
+    if (syncError) {
+      setToast("Сарын тэмдгийн бүртгэл хадгалж чадсангүй. Supabase-ийн calendar migration-ийг шалгана уу.");
+      return false;
+    }
     const ok = await saveCycle({ lastPeriodStart: starts.at(-1), cycleLength: nextCycleLength, periodLength: nextPeriodLength });
     if (!ok) return false;
     const key = `${LOCAL_PERIOD_STARTS_PREFIX}${userId ?? "local"}`;
     try { localStorage.setItem(key, JSON.stringify(starts)); } catch { /* localStorage боломжгүй */ }
     setPeriodStarts(starts);
+    syncedPeriodDatesRef.current = `${userId}:${nextPeriodLength}:${starts.join(",")}`;
+    await loadPeriodLogs();
     return true;
   };
 
   const startPeriod = async () => {
-    const ok = await saveCycle({ lastPeriodStart: today, cycleLength, periodLength });
-    if (!ok) return;
     const starts = [...new Set([...periodStarts, today])].sort();
-    try { localStorage.setItem(`${LOCAL_PERIOD_STARTS_PREFIX}${userId ?? "local"}`, JSON.stringify(starts)); } catch { /* localStorage боломжгүй */ }
-    setPeriodStarts(starts);
+    const ok = await savePeriodStartDates(starts, periodLength);
+    if (!ok) return;
     if (linked) {
       await sendToMom(`${nameGen} сарын тэмдэг өнөөдөр ирлээ. Бага зэрэг илүү халамж хэрэгтэй 💗`, "period");
       setToast("Тэмдэглэлээ! Ээжид зөөлөн мэдэгдэл очлоо 🌸");
     } else setToast("Тэмдэглэлээ 🌸");
+  };
+
+  const proposePeriodStart = async (childId, date) => {
+    const { error } = await supabase.rpc("propose_period_start", { p_child_id: childId, p_log_date: date });
+    if (error) {
+      setToast(error.message?.includes("not_linked") ? "Охины бүртгэлийг олсонгүй." : "Санал илгээж чадсангүй. Supabase-ийн calendar migration-ийг шалгана уу.");
+      return false;
+    }
+    await loadPeriodLogs();
+    setToast("Охинд баталгаажуулах хүсэлт илгээлээ.");
+    return true;
+  };
+
+  const respondPeriodEntry = async (periodLogId, approve) => {
+    const { data, error } = await supabase.rpc("respond_period_entry", { p_period_log_id: periodLogId, p_approve: approve });
+    if (error) {
+      setToast("Хүсэлтийг шинэчилж чадсангүй. Дахин оролдоно уу.");
+      return false;
+    }
+    const changed = periodLogs.find((row) => row.id === periodLogId);
+    if (approve && changed?.log_date) {
+      const starts = [...new Set([...periodStarts, changed.log_date])].sort();
+      setPeriodStarts(starts);
+      try { localStorage.setItem(`${LOCAL_PERIOD_STARTS_PREFIX}${userId}`, JSON.stringify(starts)); } catch { /* localStorage боломжгүй */ }
+      const { data: latestProfile } = await supabase.from("profiles").select("last_period_start").eq("id", userId).maybeSingle();
+      if (latestProfile?.last_period_start) setProfile((current) => ({ ...current, ...latestProfile }));
+    }
+    await loadPeriodLogs();
+    setToast(data === "confirmed" ? "Өдрийг баталгаажууллаа 🌸" : "Санал хасагдлаа.");
+    return true;
   };
 
   const markNoPeriodYet = async () => {
@@ -1039,6 +1127,7 @@ export function FamilyProvider({ children }) {
     periodLength,
     lastPeriodStart,
     periodStarts,
+    periodLogs,
     periodPrediction,
     savePeriodStartDates,
     day,
@@ -1049,6 +1138,8 @@ export function FamilyProvider({ children }) {
     daysUntil,
     saveCycle,
     startPeriod,
+    proposePeriodStart,
+    respondPeriodEntry,
     noPeriodYet,
     markNoPeriodYet,
     // сэтгэл санаа
