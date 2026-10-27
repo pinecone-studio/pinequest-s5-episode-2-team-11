@@ -155,9 +155,12 @@ export function FriendsProvider({ children }) {
       .subscribe();
     const onVisible = () => document.visibilityState === "visible" && loadAll();
     document.addEventListener("visibilitychange", onVisible);
+    // Найзын дүр/сэтгэл санааны царай өөрчлөгдвөл харагдана (profiles-ийг RLS-ээс болж realtime-аар сонсож чадахгүй)
+    const poll = setInterval(() => document.visibilityState === "visible" && loadFriends(), 60_000);
     return () => {
       supabase.removeChannel(channel);
       document.removeEventListener("visibilitychange", onVisible);
+      clearInterval(poll);
     };
   }, [active, userId, loadIncoming, loadOutgoing, loadFriends, loadAll, setToast]);
 
