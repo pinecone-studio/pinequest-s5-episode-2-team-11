@@ -389,3 +389,16 @@ begin
     end if;
   end loop;
 end $$;
+
+-- Maintain safe profile-column access for fields added by this script.
+do $$
+declare safe_columns text;
+begin
+  select string_agg(format('%I', column_name), ', ' order by ordinal_position)
+  into safe_columns
+  from information_schema.columns
+  where table_schema = 'public'
+    and table_name = 'profiles'
+    and column_name <> 'guardian_gender';
+  execute format('grant select (%s) on public.profiles to authenticated', safe_columns);
+end $$;

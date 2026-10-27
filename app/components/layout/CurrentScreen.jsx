@@ -1,5 +1,4 @@
 import AuthScreen from "../onboarding/AuthScreen";
-import CycleSetup from "../onboarding/CycleSetup";
 import AvatarSetup from "../onboarding/AvatarSetup";
 import DaughterHome from "../daughter/DaughterHome";
 import DaughterHelper from "../daughter/DaughterHelper";
@@ -28,7 +27,6 @@ export default function CurrentScreen({ family, pathname }) {
     profile,
     view,
     tab,
-    needsCycleSetup,
     needsAvatarSetup,
   } = family;
 
@@ -43,7 +41,6 @@ export default function CurrentScreen({ family, pathname }) {
   if (tab === "me") return <ProfileScreen />;
   if (tab === "settings") return <SettingsScreen />;
   if (needsAvatarSetup) return <AvatarSetup />;
-  if (needsCycleSetup) return <CycleSetup />;
   if (tab === "learn") return <LearnHub />;
 
   if (view === "daughter") {
