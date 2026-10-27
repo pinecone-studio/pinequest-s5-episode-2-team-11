@@ -133,6 +133,10 @@ begin
   if coalesce(cardinality(p_dates), 0) = 0 then raise exception 'period_start_required'; end if;
   if p_period_length not between 2 and 7 then raise exception 'invalid_period_length'; end if;
   if exists (select 1 from unnest(coalesce(p_dates, '{}'::date[])) d where d > current_date) then raise exception 'invalid_log_date'; end if;
+  -- Treat this RPC as the daughter's complete confirmed-date selection so
+  -- calendar edits can remove old dates. Guardian pending entries stay pending.
+  update public.period_logs set status = 'removed', confirmed_at = null
+  where user_id = auth.uid() and status = 'confirmed' and not (log_date = any(p_dates));
   foreach start_date in array coalesce(p_dates, '{}'::date[]) loop
     insert into public.period_logs(user_id, log_date, status, entered_by, period_length, confirmed_at)
     values (auth.uid(), start_date, 'confirmed', auth.uid(), p_period_length, now())
