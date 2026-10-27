@@ -103,9 +103,9 @@ export default function FriendsScreen() {
       {/* ---------- Миний дүр · Алхалт · Дэлгүүр ---------- */}
       <AvatarCard />
 
-      {sheet === "sos" && (
+      {sheet === "supplies" && (
         <BottomSheet title="хэрэглэл хэрэгтэй юу?" onClose={() => setSheet(null)}>
-          <SosPanel />
+          <SupplyRequestPanel />
         </BottomSheet>
       )}
       {sheet === "friends" && (
