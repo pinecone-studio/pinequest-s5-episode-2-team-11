@@ -42,7 +42,7 @@ export function FamilyProvider({ children }) {
   const [profile, setProfile] = useState(null);
   const [family, setFamily] = useState(null); // { id, code }
   const [members, setMembers] = useState([]); // гэр бүлийн бүх профайл
-  const [activeChildId, setActiveChildId] = useState(null);
+  const [activeChildId, setActiveChildIdState] = useState(null);
   const [dataLoading, setDataLoading] = useState(false);
   const [ready, setReady] = useState(false); // эхний бүрэн ачаалалт дууссан эсэх
   const [loadError, setLoadError] = useState(null); // "no_profile" | "network"
@@ -146,11 +146,31 @@ export function FamilyProvider({ children }) {
   const childProfiles = members.filter((member) => member.role === "daughter");
   useEffect(() => {
     if (view !== "mother") {
-      setActiveChildId(null);
+      setActiveChildIdState(null);
       return;
     }
-    setActiveChildId((current) => childProfiles.some((child) => child.id === current) ? current : (childProfiles[0]?.id ?? null));
-  }, [view, members]);
+    let savedId = null;
+    if (familyId) {
+      try {
+        savedId = localStorage.getItem(`bloomy:selected-daughter:${familyId}`);
+      } catch { /* localStorage боломжгүй */ }
+    }
+    setActiveChildIdState((current) =>
+      childProfiles.some((child) => child.id === current)
+        ? current
+        : childProfiles.some((child) => child.id === savedId)
+          ? savedId
+          : (childProfiles[0]?.id ?? null),
+    );
+  }, [view, familyId, members]);
+  const setActiveChildId = useCallback((id) => {
+    setActiveChildIdState(id);
+    if (familyId && id) {
+      try {
+        localStorage.setItem(`bloomy:selected-daughter:${familyId}`, id);
+      } catch { /* localStorage боломжгүй */ }
+    }
+  }, [familyId]);
   const activeChild = childProfiles.find((child) => child.id === activeChildId) ?? (view === "mother" ? childProfiles[0] ?? null : null);
   const daughterProfile =
     view === "daughter" ? profile : activeChild;
@@ -595,6 +615,7 @@ export function FamilyProvider({ children }) {
       password,
       options: { data: { role, display_name: name.trim(), birth_date: birthDate || null } },
     });
+    if (error?.message === "User already registered") return "existing_user";
     if (error) return authMessage(error);
     if (!data.session) return "Бүртгэл үүслээ! Имэйлээ шалгаж баталгаажуулаад нэвтэрнэ үү.";
     return null;
@@ -626,7 +647,7 @@ export function FamilyProvider({ children }) {
   };
 
   const shareCode = async () => {
-    const text = `Bloomy 🌸 Guardian Access Code-оор гэр бүлийн бүлэгт холбогдоорой: ${family?.code}`;
+    const text = `Bloomy 🌸 Гэр бүлийн урилгын кодоор холбогдоорой: ${family?.code}`;
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
         await navigator.share({ title: "Bloomy", text, url: window.location.origin });
