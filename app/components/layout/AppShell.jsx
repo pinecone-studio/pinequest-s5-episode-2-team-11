@@ -127,7 +127,7 @@ export default function AppShell() {
         {toast && (
           <div
             className="fixed top-20 left-0 right-0 flex justify-center px-4 pointer-events-none"
-            style={{ zIndex: 60 }}
+            style={{ zIndex: 100 }}
           >
             <div className="bloom-pop bg-slate-700 text-white text-sm font-extrabold rounded-full px-5 py-3 shadow-xl text-center">
               {toast}
