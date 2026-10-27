@@ -29,7 +29,7 @@ Next.js 16 · React 19 · Tailwind CSS 4 · Supabase (Auth, Postgres, Realtime) 
 
 ## Эхлэх
 
-1. Supabase-ийн SQL Editor дээр `supabase/schema.sql`, `supabase/friends.sql`, өдрийн бүртгэлийн өмнөх миграцууд, `supabase/cycle-calendar-migration.sql`, `supabase/period-start-edit-migration.sql`, дараа нь `supabase/private-note-lock-migration.sql`-ийг ажиллуулна. Одоо байгаа төслийн миграцын дарааллыг `SETUP.md`-ээс харна уу.
+1. Supabase-ийн SQL Editor дээр `supabase/schema.sql`, хуучин төслийг олон охинтой холбох `supabase/multi-child-guardian.sql`, `supabase/friends.sql`, өдрийн бүртгэлийн өмнөх миграцууд, `supabase/cycle-calendar-migration.sql`, `supabase/period-start-edit-migration.sql`, дараа нь `supabase/private-note-lock-migration.sql`-ийг ажиллуулна. Одоо байгаа төслийн миграцын дарааллыг `SETUP.md`-ээс харна уу.
 2. Төслийн үндсэн фолдерт `.env.local` үүсгэнэ:
 
    ```
