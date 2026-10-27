@@ -49,6 +49,7 @@ export default function AppShell() {
     toast,
     lowSupplyCount,
     showOnboarding,
+    sosOpen,
   } = family;
   // Охины хонхны тоо: асран хамгаалагчийн уншаагүй үг + хариулаагүй найзын SOS
   const teenUnread = (family.teenInbox ?? []).filter((n) => !n.read).length + (unansweredIncoming ?? 0);
@@ -119,6 +120,7 @@ export default function AppShell() {
             onNavigate={navigateToTab}
           />
         )}
+        {sosOpen && <SosModal />}
         {toast && (
           <div
             className="fixed top-20 left-0 right-0 flex justify-center px-4 pointer-events-none"
