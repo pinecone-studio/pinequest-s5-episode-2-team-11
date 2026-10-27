@@ -1,5 +1,6 @@
 import AuthScreen from "../onboarding/AuthScreen";
 import CycleSetup from "../onboarding/CycleSetup";
+import AvatarSetup from "../onboarding/AvatarSetup";
 import DaughterHome from "../daughter/DaughterHome";
 import DaughterHelper from "../daughter/DaughterHelper";
 import DaughterMessages from "../daughter/DaughterMessages";
@@ -28,6 +29,7 @@ export default function CurrentScreen({ family, pathname }) {
     view,
     tab,
     needsCycleSetup,
+    needsAvatarSetup,
   } = family;
 
   if (!supabaseConfigured) return <NotConfigured />;
@@ -40,6 +42,7 @@ export default function CurrentScreen({ family, pathname }) {
   }
   if (tab === "me") return <ProfileScreen />;
   if (tab === "settings") return <SettingsScreen />;
+  if (needsAvatarSetup) return <AvatarSetup />;
   if (needsCycleSetup) return <CycleSetup />;
   if (tab === "learn") return <LearnHub />;
 
