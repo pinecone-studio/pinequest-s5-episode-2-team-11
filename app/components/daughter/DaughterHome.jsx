@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useFamily } from "../../../context/FamilyContext";
-import { Users, ChevronRight, AlertCircle, Droplets, BookOpen, CalendarDays } from "lucide-react";
+import { Users, Droplets, BookOpen, CalendarDays } from "lucide-react";
 import { localDateKey, periodDayKeys } from "../../../lib/cycle";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
@@ -124,24 +124,6 @@ export default function DaughterHome() {
       )}
 
       <TodayMoodCard periodDay={periodDay} periodDayNumber={periodDayNumber} />
-
-      {/* SOS */}
-      <button
-        onClick={openSos}
-        className="w-full rounded-3xl bg-gradient-to-r from-[#e0679f] to-[#b83b7e] p-5 text-left text-white shadow-xl bb-shadow-F48FB1-30 active:scale-95 transition flex items-center gap-4 relative overflow-hidden bloom-fade"
-      >
-        <span className="relative w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center">
-          <span className="absolute inset-0 rounded-2xl bg-white/10 animate-ping" />
-          <AlertCircle className="w-7 h-7 text-white" />
-        </span>
-        <span className="flex-1 relative">
-          <span className="block text-xl font-black text-white">SOS</span>
-          <span className="block text-sm font-bold text-white/85">
-            3 минутын амьсгал ба сунгалтын дасгал
-          </span>
-        </span>
-        <ChevronRight className="w-6 h-6 relative text-white" />
-      </button>
 
       {cycleModalOpen && (
         <PeriodCycleTracker onBack={() => setCycleModalOpen(false)} cycleLength={cycleLength} periodLength={periodLength} lastPeriodStart={lastPeriodStart} />
