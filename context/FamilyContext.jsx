@@ -19,6 +19,8 @@ import { predictPeriodRange } from "../lib/cycle";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { askAi } from "../lib/ai-client";
 
+const AVATAR_SETUP_KEY = "bloomy:avatar-setup";
+
 const FamilyContext = createContext(null);
 const LOCAL_KIT_KEY = "bloomy:kit-checks";
 const LOCAL_CUSTOM_SUPPLIES_KEY = "bloomy:custom-supplies";
@@ -253,7 +255,22 @@ export function FamilyProvider({ children }) {
     hasHadPeriod: Boolean(lastPeriodStart) && !noPeriodYet,
   });
   const needsCycleSetup = view === "daughter" && !lastPeriodStart && !profile?.no_period_yet;
-  const showOnboarding = !session || !profile || !ready || needsCycleSetup;
+
+  // Шинээр бүртгүүлсэн охин эхлээд өөрийн дүрийг бүтээнэ (энэ төхөөрөмж дээр тэмдэглэнэ)
+  const [avatarSetupPending, setAvatarSetupPending] = useState(false);
+  useEffect(() => {
+    try {
+      setAvatarSetupPending(window.localStorage.getItem(AVATAR_SETUP_KEY) === "1");
+    } catch {}
+  }, [session?.user?.id]);
+  const finishAvatarSetup = () => {
+    try {
+      window.localStorage.removeItem(AVATAR_SETUP_KEY);
+    } catch {}
+    setAvatarSetupPending(false);
+  };
+  const needsAvatarSetup = view === "daughter" && avatarSetupPending;
+  const showOnboarding = !session || !profile || !ready || needsAvatarSetup || needsCycleSetup;
 
   /* ================= Нэвтрэлтийг сонсох ================= */
   useEffect(() => {
@@ -610,13 +627,22 @@ export function FamilyProvider({ children }) {
 
   /* ================= Нэвтрэлтийн үйлдлүүд ================= */
   const signUp = async ({ role, name, birthDate, email, password }) => {
+    // Сесс үүсэхээс өмнө тэмдэглэнэ — тэгэхгүй бол дүр бүтээх алхам алгасагдана
+    try {
+      if (role === "daughter") window.localStorage.setItem(AVATAR_SETUP_KEY, "1");
+    } catch {}
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
       options: { data: { role, display_name: name.trim(), birth_date: birthDate || null } },
     });
-    if (error?.message === "User already registered") return "existing_user";
-    if (error) return authMessage(error);
+    if (error) {
+      try {
+        window.localStorage.removeItem(AVATAR_SETUP_KEY);
+      } catch {}
+      if (error.message === "User already registered") return "existing_user";
+      return authMessage(error);
+    }
     if (!data.session) return "Бүртгэл үүслээ! Имэйлээ шалгаж баталгаажуулаад нэвтэрнэ үү.";
     return null;
   };
@@ -1172,6 +1198,8 @@ export function FamilyProvider({ children }) {
     copyCode,
     shareCode,
     needsCycleSetup,
+    needsAvatarSetup,
+    finishAvatarSetup,
     showOnboarding,
     // навигаци
     tab,
