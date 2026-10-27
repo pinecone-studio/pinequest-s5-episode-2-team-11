@@ -239,6 +239,18 @@ export default function AiChat() {
         <p className="mt-2 flex items-center justify-center gap-1 text-[11px] font-semibold text-slate-400">
           <ShieldCheck className="w-3 h-3" /> Хувийн мэдээллээ бүү хуваалц
         </p>
+                <p className="mt-1 text-center text-[11px] font-semibold leading-relaxed text-slate-400">
+          Хариултыг AI бичдэг тул алдаа гарч болно. Эмчийн зөвлөгөөг орлохгүй.
+          Өвдөлт хүчтэй эсвэл санаа зовж байвал эмч, ээж эсвэл итгэдэг томдоо хэлээрэй.
+        </p>
+        <p className="mt-1 text-center text-[11px] font-semibold text-slate-400">
+          Дэлгэрэнгүй:{" "}
+          <a className="underline" href="https://www.unicef.org/parenting/health/talking-about-periods-at-home" target="_blank" rel="noreferrer">UNICEF</a>
+          {" · "}
+          <a className="underline" href="https://www.acog.org/womens-health/faqs/your-first-period" target="_blank" rel="noreferrer">ACOG</a>
+          {" · "}
+          <a className="underline" href="https://www.nhs.uk/conditions/periods/" target="_blank" rel="noreferrer">NHS</a>
+        </p>
       </form>
     </Card>
   );
