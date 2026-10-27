@@ -54,6 +54,7 @@ import { supabase } from "../../../lib/supabase";
 import { guardianMaleGuide } from "../../../src/content/guardian-male-guide";
 import GuardianMaleGuide from "./GuardianMaleGuide";
 import Card from "../ui/Card";
+import MangaShelf from "./MangaShelf";
 
 const TONES = {
   lilac: { background: "#E9DDFC", color: "#6A3BB8" },
@@ -636,6 +637,7 @@ export default function LearningLibrary({ onMoreMaterials }) {
         ))}
       </section>
 
+      {isGirl && <MangaShelf />}
     </div>
   );
 }
