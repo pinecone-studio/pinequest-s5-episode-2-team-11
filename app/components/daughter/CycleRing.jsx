@@ -101,24 +101,21 @@ export default function CycleRing({ day, cycleLength, periodLength, phaseKey, da
             <span className="text-5xl font-black text-slate-700 leading-none">{day}</span>
             <span className="text-sm font-bold text-slate-500">дэх өдөр</span>
           </>
-        ) : daysLate > 0 || daysUntil === 0 ? (
+        ) : daysLate > 0 ? (
           <>
-            <span className="text-xs font-bold text-slate-500 mt-1 leading-tight">Сарын тэмдэг</span>
-            <span className="text-3xl font-black text-slate-700 leading-tight">удахгүй</span>
-            <span className="text-xs font-bold text-slate-500">ирэх магадлалтай</span>
+            <span className="text-sm font-black text-slate-700 mt-1 leading-tight">Хоцорч байна</span>
+            <span className="text-[9px] font-bold text-slate-500 leading-tight">Эхний жилүүдэд ингэх нь хэвийн 💗</span>
           </>
         ) : daysUntil <= 7 ? (
           <>
-            <span className="text-xs font-bold text-slate-500 mt-1 leading-tight">Сарын тэмдэг ирэхэд</span>
-            <span className="text-5xl font-black text-slate-700 leading-none">{daysUntil}</span>
-            <span className="text-xs font-bold text-slate-500">хоног үлдлээ</span>
+            <span className="text-xs font-bold text-slate-500 mt-1 leading-tight">Сарын тэмдэг</span>
+            <span className="text-2xl font-black text-slate-700 leading-tight">ойртож байна</span>
+            <span className="text-[10px] font-bold text-slate-500">хугацаа өөр байж болно</span>
           </>
         ) : (
           <>
             <span className="text-5xl font-black text-slate-700 leading-none mt-1">{day}</span>
-            <span className="text-xs font-bold text-slate-500 leading-tight">
-              дэх өдөр · {daysUntil} хоногийн дараа
-            </span>
+            <span className="text-xs font-bold text-slate-500 leading-tight">дэх өдөр</span>
           </>
         )}
         <span
