@@ -8,6 +8,7 @@ import AppHeader from "./AppHeader";
 import BottomNavigation from "./BottomNavigation";
 import CurrentScreen from "./CurrentScreen";
 import SosModal from "../sos/SosModal";
+import ChildSwitcher from "../mother/ChildSwitcher";
 import { useTheme } from "../../../context/ThemeContext";
 
 // Хаяг → таб
@@ -27,6 +28,9 @@ const TAB_BY_PATH = {
   "/profile": "me",
 };
 
+// Асран хамгаалагчийн эдгээр таб сонгосон охиных нь мэдээллийг харуулна
+const CHILD_TABS = ["home", "calendar", "supplies", "messages"];
+
 export default function AppShell() {
   const router = useRouter();
   const pathname = usePathname();
@@ -45,12 +49,10 @@ export default function AppShell() {
     daughterName,
     tab,
     setTab,
-    sosOpen,
-    toast,
     momUnread,
+    toast,
     lowSupplyCount,
     showOnboarding,
-    needsMotherCode,
   } = family;
   // Охины хонхны тоо: асран хамгаалагчийн уншаагүй үг + хариулаагүй найзын SOS
   const teenUnread = (family.teenInbox ?? []).filter((n) => !n.read).length + (unansweredIncoming ?? 0);
@@ -63,13 +65,11 @@ export default function AppShell() {
     if (authLoading) return;
     if (!session && pathname !== "/") {
       router.replace("/");
-    } else if (session && ready && needsMotherCode && pathname !== "/profile") {
-      router.replace("/profile");
     } else if (session && ready && view && pathname === "/") {
       // Нэвтэрсэн бол нүүр хуудас руу шууд оруулна
       router.replace(view === "mother" ? "/mother" : "/daughter");
     }
-  }, [authLoading, session, ready, needsMotherCode, view, pathname, router]);
+  }, [authLoading, session, ready, view, pathname, router]);
 
   const navigateToTab = (nextTab) => {
     setTab(nextTab);
@@ -88,13 +88,15 @@ export default function AppShell() {
   };
 
   const showNav = family.supabaseConfigured && session && family.profile && ready && !showOnboarding;
+  const isCompactLesson = pathname === "/learn" && view === "daughter" && family.learnTab === "pad" && showNav;
+
 
   return (
     <div
-      className={`min-h-screen bb-grad-11 text-slate-700 ${theme === "dark" ? "theme-dark" : ""}`}
+      className={`${isCompactLesson ? "learn-viewport-shell" : "min-h-screen"} bb-grad-11 text-slate-700 ${theme === "dark" ? "theme-dark" : ""}`}
       style={{ fontFamily: "'Nunito', ui-rounded, 'SF Pro Rounded', system-ui, sans-serif" }}
     >
-      <div className="relative mx-auto max-w-md min-h-screen bb-bg-FFF7FB sm:shadow-2xl sm:shadow-slate-300/40">
+      <div className={`relative mx-auto max-w-md bb-bg-FFF7FB sm:shadow-2xl sm:shadow-slate-300/40 ${isCompactLesson ? "learn-viewport-app" : "min-h-screen"}`}>
         <AppHeader
           showNav={showNav}
           view={view}
@@ -131,6 +133,8 @@ export default function AppShell() {
           </div>
         )}
         <main className={`px-4 pt-4 ${showNav ? "pb-28" : "pb-10"}`}>
+        <main className={isCompactLesson ? "learn-viewport-main" : `px-4 pt-4 ${showNav ? "pb-28" : "pb-10"}`}>
+          {showNav && view === "mother" && CHILD_TABS.includes(tab) && <ChildSwitcher />}
           <CurrentScreen family={family} pathname={pathname} />
         </main>
         {showNav && (
@@ -153,7 +157,6 @@ export default function AppShell() {
             </div>
           </div>
         )}
-        {sosOpen && <SosModal />}
       </div>
     </div>
   );

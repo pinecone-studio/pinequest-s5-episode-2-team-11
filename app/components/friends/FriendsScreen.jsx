@@ -1,13 +1,12 @@
 "use client";
 
 /**
- * Найзууд · Хэрэглэлийн SOS — хэрэглэл дуусахад бүлгийн найзууддаа нэг товшилтоор дохио илгээнэ.
+ * Найзууд болон хэрэглэл хүсэх хэсэг.
  * Өгөгдөл: context/FriendsContext.jsx · Database: supabase/friends.sql
  */
 
 import { useState } from "react";
 import { Users, Plus, Lock, UserPlus, Loader2, ChevronRight, Phone, X } from "lucide-react";
-import { useFamily } from "../../../context/FamilyContext";
 import { useFriends } from "../../../context/FriendsContext";
 import { GROUP_EMOJIS, PLACE_MAX } from "../../../lib/friends";
 import { AVATAR_BACKGROUNDS } from "../../../lib/wardrobe";
@@ -18,6 +17,7 @@ import FriendReplies from "./FriendReplies";
 import IncomingSosCard from "./IncomingSosCard";
 import AvatarCard from "../avatar/AvatarCard";
 import Avatar from "../avatar/Avatar";
+import BottomSheet from "../ui/BottomSheet";
 
 const Label = ({ children }) => (
   <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2">{children}</p>
@@ -26,36 +26,11 @@ const Label = ({ children }) => (
 const chip = (on, onCls, offCls = "bg-white border-slate-100 text-slate-500") =>
   `px-3 py-1.5 rounded-full text-xs font-extrabold border-2 transition ${on ? onCls : offCls}`;
 
-/** Доороос гарч ирэх цонх */
-function Sheet({ title, onClose, children }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: "rgba(43,34,48,0.4)" }} onClick={onClose}>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        onClick={(e) => e.stopPropagation()}
-        className="bloom-pop w-full max-w-md max-h-[88vh] overflow-y-auto rounded-t-[28px] bb-bg-FFF7FB px-4 pt-2"
-        style={{ paddingBottom: "max(20px, env(safe-area-inset-bottom))" }}
-      >
-        <span className="mx-auto mb-3 block h-1.5 w-10 rounded-full bg-slate-200" />
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-black text-slate-800">{title}</h2>
-          <button onClick={onClose} aria-label="Хаах" className="w-9 h-9 rounded-full bg-white border-2 border-slate-100 flex items-center justify-center text-slate-500">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
-  );
-}
-
 export default function FriendsScreen() {
 
   const F = useFriends();
   const { friends, sosStage, outgoing, replyText } = F;
-  const [sheet, setSheet] = useState(null); // "sos" | "friends" | "groups"
+  const [sheet, setSheet] = useState(null); // "supplies" | "friends" | "groups"
   const nameOf = (id) => friends.find((f) => f.id === id)?.display_name ?? "…";
   const firstReply = outgoing?.responses?.[0];
 
@@ -74,9 +49,9 @@ export default function FriendsScreen() {
 
       <IncomingSosCard />
 
-      {/* ---------- SOS (нэг мөр) ---------- */}
+      {/* ---------- Хэрэглэл хүсэх ---------- */}
       <button
-        onClick={() => setSheet("sos")}
+        onClick={() => setSheet("supplies")}
         className="w-full flex items-center gap-3 rounded-3xl p-3 bb-grad-sos-soft border bb-border-F8D3E6 shadow-sm text-left active:scale-95 transition"
       >
         <span className="w-12 h-12 shrink-0 rounded-full bb-grad-sos text-white flex items-center justify-center shadow-md">
@@ -84,10 +59,10 @@ export default function FriendsScreen() {
         </span>
         <span className="flex-1 min-w-0">
           <span className="block font-black text-slate-800">
-            {sosStage === "sent" ? "Дохио очлоо 📣" : sosStage === "ringing" ? "Илгээж байна…" : "Пад хэрэгтэй юу?"}
+            {sosStage === "sent" ? "Дохио очлоо 📣" : sosStage === "ringing" ? "Илгээж байна…" : "хэрэглэл хэрэгтэй юу?"}
           </span>
           <span className="block text-xs font-semibold text-slate-500 bx-trunc">
-            {firstReply ? `${firstReply.responder_name}: ${replyText(firstReply.reply)}` : "Найзаа сонгоод дохио илгээ"}
+            {firstReply ? `${firstReply.responder_name}: ${replyText(firstReply.reply)}` : "Найзууддаа хэрэглэл хэрэгтэйгээ мэдэгд"}
           </span>
         </span>
         <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
@@ -128,28 +103,28 @@ export default function FriendsScreen() {
       {/* ---------- Миний дүр · Алхалт · Дэлгүүр ---------- */}
       <AvatarCard />
 
-      {sheet === "sos" && (
-        <Sheet title="Пад хэрэгтэй юу?" onClose={() => setSheet(null)}>
-          <SosPanel />
-        </Sheet>
+      {sheet === "supplies" && (
+        <BottomSheet title="хэрэглэл хэрэгтэй юу?" onClose={() => setSheet(null)}>
+          <SupplyRequestPanel />
+        </BottomSheet>
       )}
       {sheet === "friends" && (
-        <Sheet title="Найз нэмэх" onClose={() => setSheet(null)}>
+        <BottomSheet title="Найз нэмэх" onClose={() => setSheet(null)}>
           <MyFriends />
-        </Sheet>
+        </BottomSheet>
       )}
       {sheet === "groups" && (
-        <Sheet title="Бүлгүүд" onClose={() => setSheet(null)}>
+        <BottomSheet title="Бүлгүүд" onClose={() => setSheet(null)}>
           <MyGroups nameOf={nameOf} />
-        </Sheet>
+        </BottomSheet>
       )}
     </div>
   );
 }
 
-/* ================= SOS илгээх ================= */
+/* ================= Хэрэглэл хүсэлт илгээх ================= */
 
-function SosPanel() {
+function SupplyRequestPanel() {
   const F = useFriends();
   const { friends, groups, sosStage, placeInfo } = F;
   const [ids, setIds] = useState([]);
@@ -443,7 +418,7 @@ function MyGroups({ nameOf }) {
       </div>
 
       <p className="mt-3 flex items-center gap-1.5 text-xs font-bold text-slate-400">
-        <Lock className="w-3.5 h-3.5 shrink-0" /> Бүлэгт чат байхгүй — зөвхөн SOS дохио очно.
+        <Lock className="w-3.5 h-3.5 shrink-0" /> Бүлэгт чат байхгүй — зөвхөн хэрэглэл хүссэн мэдэгдэл очно.
       </p>
 
       {creating && (

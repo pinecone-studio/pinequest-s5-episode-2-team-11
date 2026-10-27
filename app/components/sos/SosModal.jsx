@@ -30,9 +30,9 @@ export default function SosModal() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-xs font-extrabold uppercase tracking-widest bb-text-7C4DCC">
-              SOS · Өвдөлт намдаах
+              Сарын тэмдгийн өвдөлтийн үед
             </p>
-            <h3 className="text-xl font-black text-slate-700">Хамтдаа тайвширъя 🤍</h3>
+            <h3 className="text-xl font-black text-slate-700">Өвдөлтөө зөөлрүүлж тайвширъя 🤍</h3>
           </div>
           <button
             onClick={() => setSosOpen(false)}

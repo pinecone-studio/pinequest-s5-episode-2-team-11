@@ -25,18 +25,19 @@ bun# Bloomy 🌿
 
 ## Технологи
 
-Next.js 16 · React 19 · Tailwind CSS 4 · Supabase (Auth, Postgres, Realtime) · Claude API
+Next.js 16 · React 19 · Tailwind CSS 4 · Supabase (Auth, Postgres, Realtime) · Gemini API
 
 ## Эхлэх
 
-1. Supabase-ийн SQL Editor дээр `supabase/schema.sql`, дараа нь `supabase/friends.sql`-ийг ажиллуулна.
+1. Supabase-ийн SQL Editor дээр `supabase/schema.sql`, `supabase/friends.sql`, өдрийн бүртгэлийн өмнөх миграцууд, `supabase/cycle-calendar-migration.sql`, дараа нь `supabase/private-note-lock-migration.sql`-ийг ажиллуулна. Одоо байгаа төслийн миграцын дарааллыг `SETUP.md`-ээс харна уу.
 2. Төслийн үндсэн фолдерт `.env.local` үүсгэнэ:
 
    ```
    NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...
-   ANTHROPIC_API_KEY=sk-ant-...
-   # ANTHROPIC_MODEL=claude-haiku-5-5   # заавал биш
+   SUPABASE_SERVICE_ROLE_KEY=зөвхөн-серверийн-service-role-key
+   GEMINI_API_KEY=таны-gemini-api-key
+   # GEMINI_MODEL=gemini-3.8-flash   # заавал биш
    ```
 
 3. Ажиллуулна:
@@ -48,6 +49,7 @@ Next.js 16 · React 19 · Tailwind CSS 4 · Supabase (Auth, Postgres, Realtime) 
    ```
 
 > AI key байхгүй ч апп ажиллана — AI-ийн оронд бэлэн зөвлөмжүүд харагдана.
+> `SUPABASE_SERVICE_ROLE_KEY` нь нууц түлхүүр тул `NEXT_PUBLIC_` угтвар бүү нэм, GitHub-д бүү оруул.
 
 ## Скриптүүд
 
@@ -62,7 +64,7 @@ Next.js 16 · React 19 · Tailwind CSS 4 · Supabase (Auth, Postgres, Realtime) 
 
 ```
 app/
-  api/ai/          Claude API-р AI зөвлөмж
+  api/ai/          Gemini API-р AI зөвлөмж
   api/horoscope/   Өнөөдрийн ордын зурхай (gogo.mn)
   components/      daughter · mother · friends · learn · sos · onboarding · settings · layout · ui
   daughter/ mother/ friends/ learn/ settings/   Хуудсууд

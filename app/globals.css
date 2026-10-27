@@ -7,6 +7,93 @@ body {
   background: #fff7fb;
 }
 
+.learn-viewport-shell {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+.learn-viewport-app {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  overflow: hidden;
+}
+.learn-viewport-app > header { flex: none; }
+.learn-viewport-main {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 8px 16px calc(108px + env(safe-area-inset-bottom));
+}
+.learn-viewport-main > * {
+  min-height: 0;
+  flex: 1;
+}
+.lesson-card { display: flex; flex-direction: column; overflow: hidden; }
+.lesson-category-heading {
+  border: 1px solid #eadcf3;
+  background: linear-gradient(110deg, #f4e8fb, #fff0f6);
+  color: #8052a6;
+}
+.lesson-category-option {
+  border: 1px solid #eee2f1;
+  background: #fff;
+  box-shadow: 0 3px 12px rgb(111 73 119 / 7%);
+}
+.lesson-category-option:hover { border-color: #d8bee7; background: #fffaff; }
+.lesson-category-option-active { border-color: #d8bee7; background: linear-gradient(110deg, #fff2f8, #f8f1ff); }
+.lesson-topic-details { border: 1px solid #f0e3f1; background: #fffafd; }
+.lesson-category-number { background: #f4e8fb; color: #8052a6; }
+.theme-dark .lesson-category-option { border-color: #55465a; background: #302638; box-shadow: 0 3px 12px rgb(0 0 0 / 15%); }
+.theme-dark .lesson-category-option:hover { border-color: #80648b; background: #382d3b; }
+.theme-dark .lesson-category-option-active { border-color: #80648b; background: linear-gradient(110deg, #49364f, #483540); }
+.theme-dark .lesson-topic-details { border-color: #55465a; background: #302638; }
+.theme-dark .lesson-category-number { background: #49364f; color: #e2b9ee; }
+.lesson-slide { background: linear-gradient(145deg, #fff8fc, #f7f1fc); }
+.lesson-info-card {
+  border: 1px solid #eee4f2;
+  background: #fff;
+  box-shadow: 0 3px 12px rgb(111 73 119 / 7%);
+}
+.theme-dark .lesson-category-heading { border-color: #55435c; background: linear-gradient(110deg, #49364f, #483540); color: #e2b9ee; }
+.theme-dark .lesson-slide { background: linear-gradient(145deg, #382d3b, #342d40); }
+.theme-dark .lesson-info-card { border-color: #55465a; background: #302638; box-shadow: 0 3px 12px rgb(0 0 0 / 15%); }
+.lesson-illustration { height: clamp(64px, 15vh, 118px); max-width: none; }
+.lesson-illustration-panel { display: flex; flex: none; aspect-ratio: 1.27; min-height: 0; height: auto; max-height: 34vh; max-width: none; align-items: center; justify-content: center; padding: 8px; border-radius: 1.5rem; background: #f8f4fc; }
+.wrapped-pad-art { position: relative; display: flex; width: 100%; height: 100%; align-items: center; justify-content: center; }
+.wrapped-pad-art::before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: auto;
+  height: 77%;
+  aspect-ratio: 1;
+  border-radius: 9999px;
+  background: #fde7f1;
+  content: "";
+  transform: translate(-50%, -50%);
+}
+.wrapped-pad-art > * { position: relative; z-index: 1; width: 100%; max-width: 200px; height: 90%; }
+.wrapped-pad-art img { width: auto; max-width: 100%; max-height: 100%; object-fit: contain; transform: rotate(-6deg); animation: pad-wrapper-float 3.8s ease-in-out infinite; }
+@keyframes pad-wrapper-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -2px; } }
+@media (prefers-reduced-motion: reduce) { .wrapped-pad-art img { animation: none; } }
+.lesson-slide-copy { font-size: clamp(13px, 1.9vh, 16px); line-height: 1.4; }
+.lesson-info-card-first { border-color: transparent; background: #fff5f9; box-shadow: none; }
+@media (max-height: 700px) {
+  .lesson-illustration { height: clamp(54px, 11vh, 78px); }
+  .lesson-illustration-panel { max-height: 30vh; }
+  .lesson-slide-copy { font-size: clamp(13px, 1.85vh, 14px); }
+  .lesson-card { border-radius: 1.25rem; }
+}
+@media (max-height: 600px) {
+  .learn-viewport-main { padding-top: 4px; }
+  .lesson-illustration { height: 48px; }
+  .lesson-illustration-panel { max-height: 27vh; }
+  .lesson-slide-copy { font-size: 13px; line-height: 1.32; }
+}
+
 /* Dark mode is scoped to the app shell so the selected theme covers every tab. */
 .theme-dark {
   color: #f1e8f4;
@@ -26,6 +113,26 @@ body {
 .theme-dark .bg-slate-50,
 .theme-dark .bg-slate-100 { background-color: #3a3242; }
 .theme-dark .bg-slate-200 { background-color: #51465a; }
+.daughter-supply-request-card {
+  background-image: linear-gradient(135deg, #e0679f, #b83b7e);
+  border-color: #e0679f;
+}
+.theme-dark .daughter-supply-request-card {
+  background-image: linear-gradient(135deg, #e0679f, #b83b7e);
+  border-color: #e0679f;
+}
+.daughter-supply-request-card p,
+.daughter-supply-request-card .text-slate-400,
+.daughter-supply-request-card > button { color: #fff; }
+.daughter-supply-request-card .bx-halo { background: rgb(255 255 255 / 16%); }
+.daughter-supply-request-card .bb-grad-sos {
+  background-image: linear-gradient(135deg, rgb(255 255 255 / 24%), rgb(255 255 255 / 12%));
+}
+.theme-dark .horoscope-card {
+  border-color: #594052;
+  --tw-ring-color: rgb(158 85 123 / 45%);
+  background-image: linear-gradient(135deg, #302638, #302638 60%, #342b3e);
+}
 .theme-dark .border-slate-100,
 .theme-dark .border-slate-200 { border-color: #403647; }
 .theme-dark .text-slate-800,
@@ -39,6 +146,11 @@ body {
 .theme-dark .cycle-ring-copy .text-slate-500 { color: #d7cadf; }
 .theme-dark .cycle-ring-copy .text-slate-400 { color: #c1b4c8; }
 .cycle-bloom-flower { transition: opacity 900ms ease, transform 900ms cubic-bezier(0.2, 0.8, 0.2, 1); transform-box: fill-box; }
+.cycle-ring-segment { transition: stroke-opacity 800ms ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .cycle-bloom-flower,
+  .cycle-ring-segment { transition: none !important; }
+}
 .theme-dark .bb-text-B83B7E { color: #f2a5c9; }
 .theme-dark .bb-text-7C4DCC,
 .theme-dark .bb-text-6A3BB8 { color: #c9adff; }
@@ -84,8 +196,8 @@ body {
   background-color: #302631;
 }
 .learn-food-tip-card {
-  border-color: #e3d6f0;
-  background-color: #f7f2fc;
+  border-color: #f1cbd9;
+  background-color: #fff0f5;
 }
 .theme-dark .learn-food-tip-card {
   border-color: #b66b96;
