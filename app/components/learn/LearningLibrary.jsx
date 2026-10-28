@@ -79,11 +79,11 @@ const TOPIC_TILE_STYLES = {
 };
 
 function RoleChip({ children, tone }) {
-  const TONES = useTones();
+  const currentTone = TONES[tone] || TONES.lilac;
   return (
     <span
       className="inline-flex rounded-full px-3 py-1 text-xs font-extrabold"
-      style={{ backgroundColor: TONES[tone].background, color: TONES[tone].color }}
+      style={{ backgroundColor: currentTone.background, color: currentTone.color }}
     >
       {children}
     </span>
@@ -91,11 +91,10 @@ function RoleChip({ children, tone }) {
 }
 
 function TopicCard({ category, index, onClick, tile = false }) {
-  const tone = TONES[category.tone];
+  const tone = TONES[category.tone] || TONES.lilac;
   if (tile) {
     const tileStyle = TOPIC_TILE_STYLES[category.id] ?? { background: "#B83B7E", Icon: Sun };
     const Icon = tileStyle.Icon;
-    const accent = tileStyle.background;
     return (
       <button
         type="button"
@@ -139,14 +138,17 @@ function TopicCard({ category, index, onClick, tile = false }) {
 }
 
 function TopicDetail({ category, index, total, counter, onBack, onNext, nextLabel }) {
-  const tone = TONES[category.tone];
+  const tileStyle = TOPIC_TILE_STYLES[category.id] ?? { background: "#B83B7E", Icon: Sun };
+  const accent = tileStyle.background;
+  const Icon = tileStyle.Icon;
+  const glass = { backgroundColor: "rgba(255, 255, 255, 0.2)", backdropFilter: "blur(8px)" };
+
   return (
     <div className="space-y-4 pb-4">
       <header
         className="relative overflow-hidden rounded-[2rem] p-4 pb-5 text-white shadow-lg"
         style={{ background: `linear-gradient(135deg, ${accent} 0%, ${accent}D9 100%)` }}
       >
-        {/* чимэглэлийн том дүрс */}
         <Icon className="pointer-events-none absolute -right-4 -bottom-6 h-32 w-32 opacity-15" aria-hidden="true" />
         <div className="relative flex items-center justify-between">
           <button
@@ -198,7 +200,6 @@ function TopicDetail({ category, index, total, counter, onBack, onNext, nextLabe
           </div>
         )}
         {category.points.map((point, pointIndex) => {
-          const PointIcon = icons[pointIndex] ?? Icon;
           return (
             <Card
               key={`${category.id}-${pointIndex}`}
@@ -208,7 +209,7 @@ function TopicDetail({ category, index, total, counter, onBack, onNext, nextLabe
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
                 style={{ backgroundColor: `${accent}26`, color: accent }}
               >
-                <PointIcon className="h-5 w-5" strokeWidth={2.2} aria-hidden="true" />
+                <Icon className="h-5 w-5" strokeWidth={2.2} aria-hidden="true" />
               </span>
               <p className="min-w-0 flex-1 pt-0.5 text-sm font-semibold leading-relaxed text-slate-700">{point}</p>
             </Card>
@@ -233,7 +234,6 @@ function TopicDetail({ category, index, total, counter, onBack, onNext, nextLabe
 
 export default function LearningLibrary({ onMoreMaterials }) {
   const { view, profile, session, guardianGender } = useFamily();
-  const tones = useTones();
   const isGirl = view === "daughter";
   const [selectedId, setSelectedId] = useState(null);
   const [guideCompletedIds, setGuideCompletedIds] = useState([]);
@@ -242,6 +242,9 @@ export default function LearningLibrary({ onMoreMaterials }) {
   const categories = isGirl ? girlCategories : guardianCategories;
   const selectedIndex = categories.findIndex((category) => category.id === selectedId);
   const selected = selectedIndex >= 0 ? categories[selectedIndex] : null;
+
+  // Placeholder read count tracking (can be connected to backend/localStorage state if needed)
+  const readCount = categories.length; 
 
   useEffect(() => {
     if (isGirl || guardianGender !== "male" || !profile?.id) {
@@ -377,7 +380,7 @@ export default function LearningLibrary({ onMoreMaterials }) {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-black text-slate-800">{t("Аавуудад ·", "For dads ·")} {guideCompletedIds.length}/{guardianMaleGuide.length}</p>
-                    <p className="mt-1 text-xs font-semibold text-slate-500">{t("Танилцуулгын картаа үргэлжлүүлээрэй", "Continue your intro cards")}</p>
+                    <p className="mt-1 text-xs font-semibold text-slate-500">{t("Танилцуулгын картаа үргэлжлүүлэн үзээрэй", "Continue your intro cards")}</p>
                   </div>
                   <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" aria-hidden="true" />
                 </div>
@@ -426,15 +429,11 @@ export default function LearningLibrary({ onMoreMaterials }) {
         {categories.map((category) => (
           <TopicCard
             key={category.id}
-            className={isGirl && visibleCategories.length % 2 === 1 && position === visibleCategories.length - 1 ? "col-span-2" : undefined}
-          >
-          <TopicCard
             category={category}
             index={categories.findIndex((item) => item.id === category.id)}
             tile
             onClick={() => setSelectedId(category.id)}
           />
-          </div>
         ))}
       </section>
 
