@@ -12,6 +12,7 @@ import { GROUP_EMOJIS, PLACE_MAX } from "../../../lib/friends";
 import { AVATAR_BACKGROUNDS } from "../../../lib/wardrobe";
 import Card from "../ui/Card";
 import SectionTitle from "../ui/SectionTitle";
+import MyFriendCode from "./MyFriendCode";
 import SosCallButton from "./SosCallButton";
 import FriendReplies from "./FriendReplies";
 import IncomingSosCard from "./IncomingSosCard";
