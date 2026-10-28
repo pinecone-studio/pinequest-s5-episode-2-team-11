@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, BookOpen, Check, X } from "lucide-react";
 import { guardianMaleGuide } from "../../../src/content/guardian-male-guide";
+import MicroFeedback from "../feedback/MicroFeedback";
 
 const BG = "#FFF7FB";
 const INK = "#3B1631";
@@ -163,6 +164,9 @@ export default function GuardianMaleGuide({
         </article>
 
         {error && <p role="alert" className="rounded-xl bg-rose-50 px-3 py-2 text-sm font-bold text-rose-800">{error}</p>}
+        {completedIds.length === guardianMaleGuide.length && (
+          <MicroFeedback targetType="lesson" targetId="guardian-male-guide" question="Ойлгомжтой байсан уу?" className="justify-center" />
+        )}
 
         <button
           type="button"
