@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronRight } from "lucide-react";
+import { t } from "../../../lib/i18n";
 
 /** Grouped list (iOS Settings style): muted small-caps header + rounded card of rows. */
 export function SettingsGroup({ id, title, children }) {
@@ -45,6 +46,6 @@ export function Toggle({ label, hint, checked, onChange, disabled = false }) {
   );
 }
 
-export function ComingSoon({ text = "Удахгүй нэмэгдэнэ 🌱" }) {
-  return <p className="rounded-2xl bb-bg-E9DDFC-50 p-4 text-center text-sm font-bold bb-text-7C4DCC">{text}</p>;
+export function ComingSoon({ text = null }) {
+  return <p className="rounded-2xl bb-bg-E9DDFC-50 p-4 text-center text-sm font-bold bb-text-7C4DCC">{text ?? t("Удахгүй нэмэгдэнэ 🌱", "Coming soon 🌱")}</p>;
 }

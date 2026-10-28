@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Pencil } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
+import { t } from "../../../lib/i18n";
 import Card from "../ui/Card";
 
 async function squarePhoto(file) {
@@ -52,9 +53,9 @@ export default function ProfileCard({ compact = false, subtitle = null }) {
       const next = await squarePhoto(file);
       localStorage.setItem(`bloomy:profile-photo:${profile.id}`, next);
       setPhoto(next);
-      setToast("Профайл зураг шинэчлэгдлээ 📷");
+      setToast(t("Профайл зураг шинэчлэгдлээ 📷", "Profile photo updated 📷"));
     } catch {
-      setToast("Зураг хадгалж чадсангүй. Өөр зураг сонгоод үзээрэй.");
+      setToast(t("Зураг хадгалж чадсангүй. Өөр зураг сонгоод үзээрэй.", "Could not save the photo. Try a different one."));
     }
     event.target.value = "";
   };
@@ -72,7 +73,7 @@ export default function ProfileCard({ compact = false, subtitle = null }) {
     const emailSaved = nameSaved && await updateEmail(emailInput);
     setSaving(false);
     if (emailSaved) {
-      if (emailInput.trim() === session?.user?.email) setToast("Профайлын мэдээлэл хадгалагдлаа ✓");
+      if (emailInput.trim() === session?.user?.email) setToast(t("Профайлын мэдээлэл хадгалагдлаа ✓", "Profile saved ✓"));
       setEditing(false);
     }
   };
@@ -81,13 +82,13 @@ export default function ProfileCard({ compact = false, subtitle = null }) {
   const avatar = (
     <span className={`relative shrink-0 ${compact ? "h-14 w-14" : "mb-3 h-24 w-24"}`}>
       <span className={`flex items-center justify-center overflow-hidden rounded-full bb-bg-FDE7F1 ${size}`}>
-        {photo ? <img src={photo} alt="Профайл зураг" className="h-full w-full object-cover" /> : fallback}
+        {photo ? <img src={photo} alt={t("Профайл зураг", "Profile photo")} className="h-full w-full object-cover" /> : fallback}
       </span>
-      <input ref={photoInput} type="file" accept="image/*" onChange={changePhoto} className="hidden" aria-label="Профайл зураг сонгох" />
+      <input ref={photoInput} type="file" accept="image/*" onChange={changePhoto} className="hidden" aria-label={t("Профайл зураг сонгох", "Choose profile photo")} />
       <button
         type="button"
         onClick={() => photoInput.current?.click()}
-        aria-label="Профайл зураг солих"
+        aria-label={t("Профайл зураг солих", "Change profile photo")}
         className={`absolute bottom-0 right-0 flex items-center justify-center rounded-full border-2 border-white bg-white text-slate-500 shadow-sm ${compact ? "h-6 w-6 -right-1" : "h-8 w-8"}`}
       >
         <Pencil className={compact ? "h-3 w-3" : "h-4 w-4"} />
@@ -97,20 +98,20 @@ export default function ProfileCard({ compact = false, subtitle = null }) {
 
   const form = (
     <form onSubmit={save} className="mt-3 w-full space-y-3 text-left">
-      <label className="block text-xs font-extrabold text-slate-500" htmlFor="profile-name">Хэрэглэгчийн нэр</label>
+      <label className="block text-xs font-extrabold text-slate-500" htmlFor="profile-name">{t("Хэрэглэгчийн нэр", "Display name")}</label>
       <input id="profile-name" value={name} onChange={(event) => setName(event.target.value)} maxLength={40} required className="w-full rounded-2xl border-2 border-slate-100 bb-focus-border-F48FB1 bg-white px-4 py-3 font-bold text-slate-700 outline-none" />
-      <label className="block text-xs font-extrabold text-slate-500" htmlFor="profile-email">Имэйл</label>
+      <label className="block text-xs font-extrabold text-slate-500" htmlFor="profile-email">{t("Имэйл", "Email")}</label>
       <input id="profile-email" type="email" value={emailInput} onChange={(event) => setEmailInput(event.target.value)} required className="w-full rounded-2xl border-2 border-slate-100 bb-focus-border-F48FB1 bg-white px-4 py-3 font-bold text-slate-700 outline-none" />
       <div className="flex gap-2 pt-1">
-        <button type="button" onClick={() => setEditing(false)} disabled={saving} className="flex-1 rounded-2xl bg-slate-100 py-3 font-extrabold text-slate-500">Болих</button>
-        <button type="submit" disabled={saving} className="flex-1 rounded-2xl bb-bg-E0679F py-3 font-extrabold text-white disabled:opacity-60">{saving ? "Хадгалж байна…" : "Хадгалах"}</button>
+        <button type="button" onClick={() => setEditing(false)} disabled={saving} className="flex-1 rounded-2xl bg-slate-100 py-3 font-extrabold text-slate-500">{t("Болих", "Cancel")}</button>
+        <button type="submit" disabled={saving} className="flex-1 rounded-2xl bb-bg-E0679F py-3 font-extrabold text-white disabled:opacity-60">{saving ? t("Хадгалж байна…", "Saving…") : t("Хадгалах", "Save")}</button>
       </div>
     </form>
   );
 
   const editButton = (
     <button type="button" onClick={startEdit} className="flex shrink-0 items-center gap-1.5 rounded-xl bb-bg-FDE7F1 px-3 py-2 text-sm font-extrabold bb-text-B83B7E">
-      <Pencil className="h-4 w-4" /> Засах
+      <Pencil className="h-4 w-4" /> {t("Засах", "Edit")}
     </button>
   );
 
