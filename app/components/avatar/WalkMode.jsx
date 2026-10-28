@@ -96,7 +96,7 @@ export default function WalkMode({ av }) {
           ))}
         </div>
         <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: 16 }}>
-          <Avatar look={av.look} skin={av.skin} walking={moving} size={118} />
+          <Avatar config={av.config} walking={moving} size={118} />
         </div>
         {moving && (
           <span className="absolute top-3 right-3 rounded-full bg-white/90 px-3 py-1 text-xs font-extrabold bb-text-B83B7E">

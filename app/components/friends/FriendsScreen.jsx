@@ -40,7 +40,7 @@ function FriendFace({ friend, size = 36, className = "" }) {
       className={`rounded-full overflow-hidden flex justify-center border-2 border-white shrink-0 ${className}`}
       style={{ width: size, height: size, background: sceneOf(friend.avatar_background).background }}
     >
-      <Avatar look={friend.avatar_look} skin={friend.avatar_skin} mood={friendMoodToday(friend)} label={`${friend.display_name}-ийн дүр`} size={size - 4} crop="10 12 100 100" />
+      <Avatar config={friend.avatar_config} look={friend.avatar_look} skin={friend.avatar_skin} mood={friendMoodToday(friend)} label={`${friend.display_name}-ийн дүр`} size={size - 4} headOnly />
     </span>
   );
 }
@@ -131,7 +131,7 @@ export default function FriendsScreen() {
                   className="relative rounded-2xl overflow-hidden flex justify-center items-end pt-3 border-2 border-white shadow-sm"
                   style={{ background: scene.background, height: 116 }}
                 >
-                  <Avatar look={friend.avatar_look} skin={friend.avatar_skin} mood={mood?.value} label={`${friend.display_name}-ийн дүр`} idle size={64} />
+                  <Avatar config={friend.avatar_config} look={friend.avatar_look} skin={friend.avatar_skin} mood={mood?.value} label={`${friend.display_name}-ийн дүр`} idle size={70} />
                   {mood && (
                     <span
                       title={mood.label}

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Pencil } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
+import Avatar from "../avatar/Avatar";
 import Card from "../ui/Card";
 
 async function squarePhoto(file) {
@@ -30,7 +31,7 @@ async function squarePhoto(file) {
  * Profile photo (this device only), name and email with the existing edit form.
  * `compact` is the daughter's header row; `subtitle` e.g. "Түв. 3 · 🌸 12".
  */
-export default function ProfileCard({ compact = false, subtitle = null }) {
+export default function ProfileCard({ compact = false, subtitle = null, avatarConfig = null }) {
   const { profile, session, view, updateName, updateEmail, setToast } = useFamily();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(profile?.display_name ?? "");
@@ -81,7 +82,11 @@ export default function ProfileCard({ compact = false, subtitle = null }) {
   const avatar = (
     <span className={`relative shrink-0 ${compact ? "h-14 w-14" : "mb-3 h-24 w-24"}`}>
       <span className={`flex items-center justify-center overflow-hidden rounded-full bb-bg-FDE7F1 ${size}`}>
-        {photo ? <img src={photo} alt="Профайл зураг" className="h-full w-full object-cover" /> : fallback}
+        {photo
+          ? <img src={photo} alt="Профайл зураг" className="h-full w-full object-cover" />
+          : avatarConfig
+            ? <Avatar config={avatarConfig} headOnly size={compact ? 56 : 96} label="Миний дүр" />
+            : fallback}
       </span>
       <input ref={photoInput} type="file" accept="image/*" onChange={changePhoto} className="hidden" aria-label="Профайл зураг сонгох" />
       <button
