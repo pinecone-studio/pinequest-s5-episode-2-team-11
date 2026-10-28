@@ -10,6 +10,7 @@ import { Stepper } from "../onboarding/CycleSetup";
 import BottomSheet from "../ui/BottomSheet";
 import { LANGUAGES, SegmentedChoice, THEMES, useLanguage } from "./AppSettingsSection";
 import GuardianConnectForm from "./GuardianConnectForm";
+import NotificationSettings from "./NotificationSettings";
 import PrivateNotePinSettings from "./PrivateNotePinSettings";
 import ProfileCard from "./ProfileCard";
 import { ComingSoon, SettingsGroup, SettingsRow, Toggle } from "./SettingsList";
@@ -158,7 +159,7 @@ export default function DaughterProfile() {
 
       <SettingsGroup title="Нууцлал">
         <SettingsRow emoji="🔒" label="Нууц тэмдэглэлийн түгжээ" onClick={() => setSheet("pin")} />
-        <SettingsRow emoji="🔔" label="Мэдэгдэл" value="Удахгүй" onClick={() => setSheet("notifications")} />
+        <SettingsRow emoji="🔔" label="Мэдэгдэл" onClick={() => setSheet("notifications")} />
       </SettingsGroup>
 
       <SettingsGroup id="app" title="Апп">
@@ -183,7 +184,7 @@ export default function DaughterProfile() {
       {sheet === "guardian" && <GuardianSheet onClose={close} />}
       {sheet === "connect" && <BottomSheet title="🔗 Асран хамгаалагчтай холбогдох" onClose={close}><div className="pb-2"><GuardianConnectForm /></div></BottomSheet>}
       {sheet === "pin" && <BottomSheet title="🔒 Нууц тэмдэглэлийн түгжээ" onClose={close}><div className="pb-2"><PrivateNotePinSettings /></div></BottomSheet>}
-      {sheet === "notifications" && <BottomSheet title="🔔 Мэдэгдэл" onClose={close}><div className="pb-2"><ComingSoon /></div></BottomSheet>}
+      {sheet === "notifications" && <BottomSheet title="🔔 Мэдэгдэл" onClose={close}><NotificationSettings /></BottomSheet>}
       {sheet === "language" && <BottomSheet title="🌐 Хэл" onClose={close}><div className="pb-2"><SegmentedChoice options={LANGUAGES} value={language} onChange={setLanguage} /></div></BottomSheet>}
       {sheet === "theme" && <BottomSheet title="🎨 Өнгө" onClose={close}><div className="pb-2"><SegmentedChoice options={THEMES} value={theme} onChange={setTheme} /></div></BottomSheet>}
       {sheet === "help" && <BottomSheet title="❓ Тусламж" onClose={close}><QaList items={FAQ} /></BottomSheet>}
