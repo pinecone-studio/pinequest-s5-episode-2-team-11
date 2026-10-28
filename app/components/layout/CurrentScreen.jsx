@@ -1,5 +1,5 @@
 import AuthScreen from "../onboarding/AuthScreen";
-import CycleSetup from "../onboarding/CycleSetup";
+import AvatarSetup from "../onboarding/AvatarSetup";
 import DaughterHome from "../daughter/DaughterHome";
 import DaughterHelper from "../daughter/DaughterHelper";
 import DaughterMessages from "../daughter/DaughterMessages";
@@ -8,12 +8,12 @@ import MotherMessages from "../mother/MotherMessages";
 import MotherSupplies from "../mother/MotherSupplies";
 import MotherCalendar from "../mother/MotherCalendar";
 import LearnHub from "../learn/LearnHub";
-import SettingsScreen from "../settings/SettingsScreen";
 import ProfileScreen from "../settings/ProfileScreen";
 import FriendsScreen from "../friends/FriendsScreen";
 import NotConfigured from "../system/NotConfigured";
 import Splash from "../system/Splash";
 import LoadError from "../system/LoadError";
+import SettingsScreen from "../settings/SettingsScreen";
 
 export default function CurrentScreen({ family, pathname }) {
   const {
@@ -27,7 +27,7 @@ export default function CurrentScreen({ family, pathname }) {
     profile,
     view,
     tab,
-    needsCycleSetup,
+    needsAvatarSetup,
   } = family;
 
   if (!supabaseConfigured) return <NotConfigured />;
@@ -38,9 +38,9 @@ export default function CurrentScreen({ family, pathname }) {
   if (!profile || loadError === "no_profile") {
     return <LoadError kind={loadError ?? "no_profile"} onRetry={reload} onSignOut={signOut} />;
   }
-  if (tab === "me") return <ProfileScreen />;
   if (tab === "settings") return <SettingsScreen />;
-  if (needsCycleSetup) return <CycleSetup />;
+  if (tab === "me") return <ProfileScreen />;
+  if (needsAvatarSetup) return <AvatarSetup />;
   if (tab === "learn") return <LearnHub />;
 
   if (view === "daughter") {

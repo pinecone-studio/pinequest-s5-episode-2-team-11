@@ -17,11 +17,12 @@ import {
   XP_PER_LEVEL,
   itemById,
 } from "../../../lib/wardrobe";
+import { t } from "../../../lib/i18n";
 
 const TABS = [
-  { id: "walk", label: "Алхах", Icon: Footprints },
-  { id: "shop", label: "Дэлгүүр", Icon: ShoppingBag },
-  { id: "closet", label: "Шүүгээ", Icon: Shirt },
+  { id: "walk", get label() { return t("Алхах", "Walk"); }, Icon: Footprints },
+  { id: "shop", get label() { return t("Дэлгүүр", "Shop"); }, Icon: ShoppingBag },
+  { id: "closet", get label() { return t("Шүүгээ", "Closet"); }, Icon: Shirt },
 ];
 
 const Price = ({ n }) => (
@@ -34,7 +35,7 @@ export function XpBar({ av }) {
   const pct = ((av.xp % XP_PER_LEVEL) / XP_PER_LEVEL) * 100;
   return (
     <div className="flex items-center gap-3">
-      <span className="shrink-0 rounded-xl bb-grad-sos text-white text-xs font-black px-2.5 py-1">Түв. {av.level}</span>
+      <span className="shrink-0 rounded-xl bb-grad-sos text-white text-xs font-black px-2.5 py-1">{t("Түв.", "Lv.")} {av.level}</span>
       <div className="flex-1 min-w-0">
         <div className="h-2.5 rounded-full bg-slate-100 overflow-hidden">
           <div className="h-full rounded-full bb-bg-B794F4 transition-all" style={{ width: `${pct}%` }} />
@@ -123,7 +124,7 @@ function Shop({ av }) {
               active={tryId === item.id}
               locked={locked && !owned}
               onClick={() => setTryId(item.id)}
-              badge={owned ? "Байгаа ✓" : locked ? `Түв. ${item.level}` : <Price n={item.price} />}
+              badge={owned ? t("Байгаа ✓", "Owned ✓") : locked ? t(`Түв. ${item.level}`, `Lv. ${item.level}`) : <Price n={item.price} />}
             />
           );
         })}
@@ -135,7 +136,7 @@ function Shop({ av }) {
             onClick={() => av.equip(tried.id)}
             className="w-full rounded-2xl py-3.5 font-extrabold bb-bg-E9DDFC bb-text-7C4DCC active:scale-95 transition"
           >
-            Өмсөх
+            {t("Өмсөх", "Wear")}
           </button>
         ) : (
           <button
@@ -144,12 +145,12 @@ function Shop({ av }) {
             className="w-full rounded-2xl py-3.5 font-extrabold bb-grad-sos text-white active:scale-95 transition disabled:opacity-50"
           >
             {av.level < tried.level
-              ? `${tried.level}-р түвшинд нээгдэнэ`
-              : `«${tried.name}» авах · ${tried.price} дэлбээ`}
+              ? t(`${tried.level}-р түвшинд нээгдэнэ`, `Unlocks at level ${tried.level}`)
+              : t(`«${tried.name}» авах · ${tried.price} дэлбээ`, `Buy "${tried.name}" · ${tried.price} petals`)}
           </button>
         ))}
       {!tried && (
-        <p className="text-xs font-semibold text-slate-400 text-center">Хувцас дээр дарж дүр дээрээ өмсөж үзээрэй</p>
+        <p className="text-xs font-semibold text-slate-400 text-center">{t("Хувцас дээр дарж дүр дээрээ өмсөж үзээрэй", "Tap an item to try it on your avatar")}</p>
       )}
     </div>
   );
@@ -169,13 +170,13 @@ function Closet({ av }) {
       </div>
 
       <div>
-        <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2">Дүрийн дэвсгэр</p>
+        <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2">{t("Дүрийн дэвсгэр", "Avatar background")}</p>
         <div className={`grid gap-2 ${AVATAR_BACKGROUNDS.length === 1 ? "grid-cols-1" : "grid-cols-3"}`}>
           {AVATAR_BACKGROUNDS.map((option) => (
             <button
               key={option.id}
               type="button"
-              aria-label={`${option.country ? `${option.country}, ` : ""}${option.label} дэвсгэр`}
+              aria-label={t(`${option.country ? `${option.country}, ` : ""}${option.label} дэвсгэр`, `${option.country ? `${option.country}, ` : ""}${option.label} background`)}
               aria-pressed={av.background === option.id}
               onClick={() => av.setBackground(option.id)}
               className={`relative overflow-hidden rounded-xl border-2 transition hover:scale-[1.02] ${
@@ -203,15 +204,30 @@ function Closet({ av }) {
       </div>
 
       <div>
-        <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2">Арьсны өнгө</p>
+        <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2">{t("Арьсны өнгө", "Skin tone")}</p>
         <div className="flex gap-3">
           {SKIN_TONES.map((c, i) => (
             <button
               key={c}
               onClick={() => av.setSkin(i)}
-              aria-label={`Арьсны өнгө ${i + 1}`}
+              aria-label={t(`Арьсны өнгө ${i + 1}`, `Skin tone ${i + 1}`)}
               className={`w-10 h-10 rounded-full border-4 transition ${av.skin === i ? "bb-border-F48FB1" : "border-white"}`}
               style={{ background: c }}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2">{t("Нүдний өнгө", "Eye color")}</p>
+        <div className="flex flex-wrap gap-3">
+          {ITEMS.filter((i) => i.slot === "eyes").map((item) => (
+            <button
+              key={item.id}
+              onClick={() => av.equip(item.id)}
+              aria-label={t(`${item.name} нүд`, `${item.name} eyes`)}
+              className={`w-10 h-10 rounded-full border-4 transition ${av.look.eyes === item.id ? "bb-border-F48FB1" : "border-white"}`}
+              style={{ background: item.color }}
             />
           ))}
         </div>
@@ -238,10 +254,10 @@ function Closet({ av }) {
               badge={
                 on ? (
                   <span className="inline-flex items-center gap-0.5 bb-text-B83B7E">
-                    <Check className="w-3 h-3" /> Өмссөн
+                    <Check className="w-3 h-3" /> {t("Өмссөн", "Wearing")}
                   </span>
                 ) : (
-                  "Өмсөх"
+                  t("Өмсөх", "Wear")
                 )
               }
             />
@@ -269,7 +285,7 @@ export default function AvatarStudio({ av, tab, setTab, onClose }) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Миний дүр"
+        aria-label={t("Миний дүр", "My avatar")}
         className="relative w-full max-w-md h-full overflow-y-auto bb-bg-FFF7FB bloom-fade"
       >
         <div
@@ -277,10 +293,10 @@ export default function AvatarStudio({ av, tab, setTab, onClose }) {
           style={{ paddingTop: "max(12px, env(safe-area-inset-top))" }}
         >
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-black text-slate-800">Миний дүр</h2>
+            <h2 className="text-lg font-black text-slate-800">{t("Миний дүр", "My avatar")}</h2>
             <button
               onClick={onClose}
-              aria-label="Хаах"
+              aria-label={t("Хаах", "Close")}
               className="w-9 h-9 rounded-full bg-white border-2 border-slate-100 flex items-center justify-center text-slate-500"
             >
               <X className="w-4 h-4" />

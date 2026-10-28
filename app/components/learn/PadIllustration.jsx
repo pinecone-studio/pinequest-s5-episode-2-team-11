@@ -1,3 +1,5 @@
+import { t } from "../../../lib/i18n";
+
 // «Хэрэглэлийн заавар»-ын алхам бүрийн энгийн SVG зураг. k = lib/padGuide.js доторх ill.
 
 const PINK = "#F48FB1";
@@ -61,7 +63,7 @@ const Tick = ({ cx, cy }) => (
   </>
 );
 
-const PARTS = {
+const PARTS = () => ({
   choose: (
     <>
       <Pad x={76} y={20} w={48} h={96} />
@@ -76,7 +78,7 @@ const PARTS = {
       <line x1={114} y1={24} x2={122} y2={24} stroke="#B83B7E" strokeWidth={2} strokeLinecap="round" />
       <line x1={114} y1={120} x2={122} y2={120} stroke="#B83B7E" strokeWidth={2} strokeLinecap="round" />
       <text x={134} y={72} textAnchor="middle" fontSize={10} fontWeight={800} fill="#B83B7E" fontFamily="Nunito, sans-serif" transform="rotate(-90 134 72)">
-        20–25 см
+        {t("20–25 см", "20–25 cm")}
       </text>
     </>
   ),
@@ -87,7 +89,7 @@ const PARTS = {
       <line x1={120} y1={18} x2={128} y2={18} stroke="#705ACB" strokeWidth={2} strokeLinecap="round" />
       <line x1={120} y1={126} x2={128} y2={126} stroke="#705ACB" strokeWidth={2} strokeLinecap="round" />
       <text x={140} y={72} textAnchor="middle" fontSize={10} fontWeight={800} fill="#705ACB" fontFamily="Nunito, sans-serif" transform="rotate(-90 140 72)">
-        25–30 см
+        {t("25–30 см", "25–30 cm")}
       </text>
     </>
   ),
@@ -175,7 +177,7 @@ const PARTS = {
         opacity={0.55}
       />
       <Label x={100} y={134}>
-        3–4 цаг
+        {t("3–4 цаг", "3–4 hours")}
       </Label>
     </>
   ),
@@ -237,17 +239,17 @@ const PARTS = {
       <path d="M100 100 C86 88 90 76 100 83 C110 76 114 88 100 100 Z" fill={PINK} />
     </>
   ),
-};
+});
 
 export default function PadIllustration({ k }) {
   if (k === "wrapped") {
-    return <div className="wrapped-pad-art"><img src="/assets/pad-wrapped.svg" alt="Задлаагүй хэрэглэл" /></div>;
+    return <div className="wrapped-pad-art"><img src="/assets/pad-wrapped.svg" alt={t("Задлаагүй хэрэглэл", "Unopened pad")} /></div>;
   }
 
   return (
     <svg viewBox="0 0 200 140" className="w-full h-full" role="img" aria-hidden="true">
       <circle cx={100} cy={72} r={66} fill={BLUSH} opacity={0.7} />
-      {PARTS[k]}
+      {PARTS()[k]}
     </svg>
   );
 }

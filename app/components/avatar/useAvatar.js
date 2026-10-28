@@ -21,6 +21,7 @@ import {
   itemById,
   levelOf,
 } from "../../../lib/wardrobe";
+import { t } from "../../../lib/i18n";
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -39,6 +40,7 @@ const normalizeBackground = (background) =>
 
 const fresh = () => ({
   xp: 0,
+  xpSpent: 0,
   petals: START_PETALS,
   skin: 0,
   owned: STARTER_OWNED,
@@ -56,6 +58,7 @@ const read = (key) => {
     return {
       ...fresh(),
       ...saved,
+      xpSpent: Number.isFinite(saved.xpSpent) ? Math.max(0, Math.floor(saved.xpSpent)) : 0,
       owned: Array.from(new Set([...STARTER_OWNED, ...(saved.owned ?? [])])),
       look: normalizeLook(saved.look),
       skin: normalizeSkin(saved.skin),
@@ -98,11 +101,11 @@ export function useAvatar(userId, onToast = () => {}) {
 
       if (cancelled) return;
       if (error) {
-        toastRef.current("Дүрийг серверээс ачаалж чадсангүй. Supabase-ийн тохиргоог шалгана уу.");
+        toastRef.current(t("Дүрийг серверээс ачаалж чадсангүй. Supabase-ийн тохиргоог шалгана уу.", "Couldn't load your avatar from the server. Check the Supabase setup."));
         return;
       }
       if (!data) {
-        toastRef.current("Профайл олдсонгүй. Дүр зөвхөн энэ төхөөрөмжид хадгалагдана.");
+        toastRef.current(t("Профайл олдсонгүй. Дүр зөвхөн энэ төхөөрөмжид хадгалагдана.", "Profile not found. Your avatar is only saved on this device."));
         return;
       }
 
@@ -155,7 +158,7 @@ export function useAvatar(userId, onToast = () => {}) {
         .eq("id", userId);
 
       if (error) {
-        toastRef.current("Дүрийг найзуудтай синк хийж чадсангүй. Интернэтээ шалгана уу.");
+        toastRef.current(t("Дүрийг найзуудтай синк хийж чадсангүй. Интернэтээ шалгана уу.", "Couldn't sync your avatar with friends. Check your internet."));
       }
     }, 250);
 
@@ -168,7 +171,7 @@ export function useAvatar(userId, onToast = () => {}) {
     const before = levelOf(s.xp);
     const next = { ...s, xp: s.xp + amount, petals: s.petals + amount };
     const after = levelOf(next.xp);
-    if (after > before) setTimeout(() => toastRef.current(`${after}-р түвшин! Шинэ хувцас нээгдлээ ✨`), 0);
+    if (after > before) setTimeout(() => toastRef.current(t(`${after}-р түвшин! Шинэ хувцас нээгдлээ ✨`, `Level ${after}! New outfits unlocked ✨`)), 0);
     return next;
   };
 
@@ -188,23 +191,31 @@ export function useAvatar(userId, onToast = () => {}) {
   const claimGift = () => {
     if (!giftReady) return;
     setState((s) => reward({ ...s, giftDate: today() }, DAILY_GIFT));
-    onToast(`Өдрийн бэлэг: +${DAILY_GIFT} XP, +${DAILY_GIFT} дэлбээ`);
+    onToast(t(`Өдрийн бэлэг: +${DAILY_GIFT} XP, +${DAILY_GIFT} дэлбээ`, `Daily gift: +${DAILY_GIFT} XP, +${DAILY_GIFT} petals`));
   };
 
   const level = levelOf(state.xp);
+  const availableXp = Math.max(0, state.xp - (state.xpSpent ?? 0));
+
+  const spendXp = (amount) => {
+    const cost = Math.max(0, Math.floor(Number(amount) || 0));
+    if (!cost || availableXp < cost) return false;
+    setState((current) => ({ ...current, xpSpent: (current.xpSpent ?? 0) + cost }));
+    return true;
+  };
 
   const buy = (id) => {
     const item = itemById(id);
     if (!item || state.owned.includes(id)) return false;
-    if (level < item.level) return onToast(`${item.level}-р түвшинд нээгдэнэ`), false;
-    if (state.petals < item.price) return onToast(`${item.price - state.petals} дэлбээ дутуу байна. Алхаад цуглуулаарай!`), false;
+    if (level < item.level) return onToast(t(`${item.level}-р түвшинд нээгдэнэ`, `Unlocks at level ${item.level}`)), false;
+    if (state.petals < item.price) return onToast(t(`${item.price - state.petals} дэлбээ дутуу байна. Алхаад цуглуулаарай!`, `You need ${item.price - state.petals} more petals. Go for a walk to collect them!`)), false;
     setState((s) => ({
       ...s,
       petals: s.petals - item.price,
       owned: [...s.owned, id],
       look: { ...s.look, [item.slot]: id },
     }));
-    onToast(`«${item.name}» авлаа ✨`);
+    onToast(t(`«${item.name}» авлаа ✨`, `Got "${item.name}" ✨`));
     return true;
   };
 
@@ -227,6 +238,8 @@ export function useAvatar(userId, onToast = () => {}) {
     ...state,
     loaded,
     level,
+    availableXp,
+    spendXp,
     walkToday,
     giftReady,
     addSteps,

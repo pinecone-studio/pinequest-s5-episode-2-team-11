@@ -15,27 +15,32 @@ import PadGuide, { usePadGuideFinished } from "./PadGuide";
 import ParentAiAssistant from "./ParentAiAssistant";
 import ParentLearningTopics from "./ParentLearningTopics";
 import LearningLibrary from "./LearningLibrary";
+import { t } from "../../../lib/i18n";
 
 export default function LearnHub() {
   const { learnTab, setLearnTab, view } = useFamily();
   const isLegacy = view === "daughter"
-    ? ["pad", "food"].includes(learnTab)
+    ? ["pad", "pad-howto", "food"].includes(learnTab)
     : learnTab === "legacy";
 
   if (!isLegacy) {
-    return <LearningLibrary onMoreMaterials={() => setLearnTab(view === "daughter" ? "pad" : "legacy")} />;
+    return (
+      <LearningLibrary
+        onMoreMaterials={() => setLearnTab(view === "daughter" ? "pad" : "legacy")}
+      />
+    );
   }
 
   return (
-    <div className={view === "daughter" && learnTab === "pad" ? "flex h-full min-h-0 flex-col overflow-hidden" : "space-y-4"}>
+    <div className={view === "daughter" && ["pad", "pad-howto"].includes(learnTab) ? "flex h-full min-h-0 flex-col gap-3 overflow-hidden" : "flex flex-col gap-5"}>
       <button
         type="button"
         onClick={() => setLearnTab("topics")}
-        className="min-h-11 rounded-xl bg-white px-3 text-sm font-extrabold bb-text-B83B7E shadow-sm"
+        className="min-h-9 self-start rounded-xl bg-white px-3 py-1.5 text-xs font-bold bb-text-B83B7E shadow-sm"
       >
-        ← Сэдвүүд рүү буцах
+        {t("← Сэдвүүд рүү буцах", "← Back to topics")}
       </button>
-      <div className={view === "daughter" && learnTab === "pad" ? "min-h-0 flex-1" : ""}>
+      <div className={view === "daughter" && ["pad", "pad-howto"].includes(learnTab) ? "min-h-0 flex-1" : ""}>
         <LegacyLearnHub />
       </div>
     </div>
@@ -48,6 +53,7 @@ function LegacyLearnHub() {
     useFamily();
   const padDone = usePadGuideFinished();
   const isDaughter = view === "daughter";
+  const standalonePadGuide = isDaughter && learnTab === "pad-howto";
   const SelectedFoodIcon = selectedFoodTip?.icon;
   useEffect(() => {
     if (isDaughter && learnTab === "kit") setLearnTab("pad");
@@ -61,17 +67,17 @@ function LegacyLearnHub() {
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [selectedFoodTip]);
   const tabs = [
-    ...(isDaughter ? [["pad", padDone ? "Хэрэглэл ✓" : "Хэрэглэл 🌸"]] : []),
-    ...(isDaughter ? [["food", "Хооллолт"]] : []),
+    ...(isDaughter ? [["pad", padDone ? t("Хэрэглэл ✓", "Supplies ✓") : t("Хэрэглэл 🌸", "Supplies 🌸")]] : []),
+    ...(isDaughter ? [["food", t("Хооллолт", "Nutrition")]] : []),
   ];
-  const compactLesson = isDaughter && learnTab === "pad";
+  const compactLesson = isDaughter && ["pad", "pad-howto"].includes(learnTab);
   const foodTips = [
     {
       icon: Leaf,
       number: "01",
-      title: "Тэжээлтэй хоол сонгоорой",
+      title: t("Тэжээлтэй хоол сонгоорой", "Choose nourishing food"),
       description:
-        "Овьёос, талх, будаа, тараг, өндөг, мах, жимс ногооноос өөрт тохирох тэжээллэг хоолоо сонгоорой. Заавал тусгай хоол идэх албагүй, өөрт таалагддаг зүйлээсээ сонгож болно 🌸",
+        t("Овьёос, талх, будаа, тараг, өндөг, мах, жимс ногооноос өөрт тохирох тэжээллэг хоолоо сонгоорой. Заавал тусгай хоол идэх албагүй, өөрт таалагддаг зүйлээсээ сонгож болно 🌸", "Choose nourishing food that suits you — oats, bread, rice, yogurt, eggs, meat, fruit and vegetables. You don't need special food; pick what you like 🌸"),
       color: "text-[#4F8B67]",
       iconBg: "bg-[#E6F4E9]",
       line: "bg-[#B8DFC2]",
@@ -80,9 +86,9 @@ function LegacyLearnHub() {
     {
       icon: Droplets,
       number: "02",
-      title: "Бүлээн ус уугаарай",
+      title: t("Бүлээн ус уугаарай", "Drink warm water"),
       description:
-        "Өдөртөө ус уухаа мартав аа. Бүлээн ус уухад таатай байвал ойр ойрхон бага багаар уугаарай. Заавал халуун байх шаардлагагүй шүү 💧",
+        t("Өдөртөө ус уухаа мартав аа. Бүлээн ус уухад таатай байвал ойр ойрхон бага багаар уугаарай. Заавал халуун байх шаардлагагүй шүү 💧", "Don't forget to drink water during the day. If warm water feels nice, sip a little often. It doesn't have to be hot 💧"),
       color: "text-[#8052C6]",
       iconBg: "bb-bg-E9DDFC-60",
       line: "bg-[#CDB7F5]",
@@ -91,9 +97,9 @@ function LegacyLearnHub() {
     {
       icon: Apple,
       number: "03",
-      title: "Амттан идмээр санагдвал",
+      title: t("Амттан идмээр санагдвал", "If you crave sweets"),
       description:
-        "Амттан идмээр байвал жимс, тарагтай овьёос эсвэл жаахан шоколад идэж болно. Амттанаа бүр мөсөн хорих хэрэггүй шүү 🍫",
+        t("Амттан идмээр байвал жимс, тарагтай овьёос эсвэл жаахан шоколад идэж болно. Амттанаа бүр мөсөн хорих хэрэггүй шүү 🍫", "If you want something sweet, try fruit, oats with yogurt or a little chocolate. You don't have to ban sweets completely 🍫"),
       color: "bb-text-B83B7E",
       iconBg: "bb-bg-FDE7F1",
       line: "bg-[#F3B6D1]",
@@ -102,9 +108,9 @@ function LegacyLearnHub() {
     {
       icon: Heart,
       number: "04",
-      title: "Зайлсхийх зүйлс",
+      title: t("Зайлсхийх зүйлс", "Things to avoid"),
       description:
-        "Зовиуртай үед эдгээрийг багасгаарай:\n\n• Кофе, өтгөн цай, энергийн ундаа — нойр муутгаж, базлалтыг нэмэгдүүлж магадгүй.\n• Давс ихтэй чипс, түргэн хоол — гэдэс дүүргэж магадгүй.\n• Их чихэр — сарын тэмдгийн өмнөх зовиурыг нэмэгдүүлж магадгүй.\n\nХүн бүрт нөлөө нь өөр 💗",
+        t("Зовиуртай үед эдгээрийг багасгаарай:\n\n• Кофе, өтгөн цай, энергийн ундаа — нойр муутгаж, базлалтыг нэмэгдүүлж магадгүй.\n• Давс ихтэй чипс, түргэн хоол — гэдэс дүүргэж магадгүй.\n• Их чихэр — сарын тэмдгийн өмнөх зовиурыг нэмэгдүүлж магадгүй.\n\nХүн бүрт нөлөө нь өөр 💗", "When you feel unwell, cut back on these:\n\n• Coffee, strong tea, energy drinks — may hurt sleep and make cramps worse.\n• Salty chips, fast food — may cause bloating.\n• Lots of sugar — may make PMS worse.\n\nThe effect is different for everyone 💗"),
       color: "learn-food-avoid-fg",
       iconBg: "learn-food-avoid-icon",
       line: "bg-[#E9B45A]",
@@ -114,7 +120,7 @@ function LegacyLearnHub() {
 
   return (
     <div className={compactLesson ? "flex h-full min-h-0 flex-col overflow-hidden" : "space-y-4 bloom-fade"}>
-      {isDaughter && (
+      {isDaughter && !standalonePadGuide && (
         <div className={`grid grid-cols-2 gap-1 rounded-2xl bb-bg-FDE7F1 p-1 ${compactLesson ? "mb-2 flex-none" : ""}`}>
           {tabs.map(([id, label]) => (
             <button
@@ -133,10 +139,13 @@ function LegacyLearnHub() {
       {isDaughter && learnTab === "pad" && (
         <PadGuide role={view} onAskFriends={() => setTab("friends")} />
       )}
+      {standalonePadGuide && (
+        <PadGuide role={view} onAskFriends={() => setTab("friends")} standalone />
+      )}
       {!isDaughter && (
         <>
-          <ParentAiAssistant />
           <ParentLearningTopics />
+          <ParentAiAssistant />
         </>
       )}
 
@@ -148,10 +157,10 @@ function LegacyLearnHub() {
             <div className="flex items-start justify-between gap-3">
               <div className="max-w-xl">
                 <span className="learn-food-hero-badge inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/70 px-2.5 py-1 text-[9px] font-black tracking-[0.12em] text-[#A74E80]">
-                  <Sparkles className="h-3 w-3" /> ӨӨРИЙГӨӨ ХАЛАМЖЛАХ НЬ
+                  <Sparkles className="h-3 w-3" /> {t("ӨӨРИЙГӨӨ ХАЛАМЖЛАХ НЬ", "TAKING CARE OF YOURSELF")}
                 </span>
                 <h2 className="mt-3 text-xl font-black leading-tight text-slate-800 sm:text-2xl">
-                  Сарын тэмдгийн үед юу идвэл дээр вэ?
+                  {t("Сарын тэмдгийн үед юу идвэл дээр вэ?", "What's good to eat during your period?")}
                 </h2>
               </div>
               <div className="learn-food-hero-icon hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/80 bg-white/80 shadow-sm sm:flex">
@@ -167,7 +176,7 @@ function LegacyLearnHub() {
                 type="button"
                 onClick={() => setSelectedFoodTip({ icon: Icon, number, title, description, color, iconBg, tone })}
                 aria-haspopup="dialog"
-                aria-label={`${title} — дэлгэрэнгүй унших`}
+                aria-label={t(`${title} — дэлгэрэнгүй унших`, `${title} — read more`)}
                 data-tone={tone}
                 className="learn-food-tip-card group relative w-full overflow-hidden rounded-[1.75rem] border border-slate-100 bg-white p-5 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300 sm:p-6"
               >
@@ -179,7 +188,7 @@ function LegacyLearnHub() {
                   <div className="min-w-0 flex-1">
                     <h3 className="text-base font-black leading-snug text-slate-800 sm:text-lg">{title}</h3>
                     <span className="mt-3 inline-flex items-center gap-1 text-xs font-extrabold text-[#A74E80]">
-                      Дэлгэрэнгүй <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                      {t("Дэлгэрэнгүй", "More")} <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                     </span>
                   </div>
                 </div>
@@ -193,7 +202,7 @@ function LegacyLearnHub() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto p-4">
           <button
             type="button"
-            aria-label="Попап хаах"
+            aria-label={t("Попап хаах", "Close popup")}
             onClick={() => setSelectedFoodTip(null)}
             className="absolute inset-0 cursor-default bg-slate-950/45 backdrop-blur-sm"
           />
@@ -210,7 +219,7 @@ function LegacyLearnHub() {
               type="button"
               autoFocus
               onClick={() => setSelectedFoodTip(null)}
-              aria-label="Хаах"
+              aria-label={t("Хаах", "Close")}
               className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-pink-100 hover:text-pink-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300"
             >
               <X className="h-5 w-5" />

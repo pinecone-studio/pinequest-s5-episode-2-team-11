@@ -15,34 +15,59 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { DEFAULT_SUPPLIES, KIT_ITEMS, MOOD_FALLBACK, MOOD_OPTIONS, PHASES, SOS_STEPS, SOS_TOTAL } from "../lib/data";
 import { genitive, getMomNudges, getPhaseKey } from "../lib/helpers";
 import { cycleStatus, formatTime, toDateStr } from "../lib/dates";
-import { predictPeriodRange } from "../lib/cycle";
+import { periodsFromLogs, predictPeriodRange } from "../lib/cycle";
+import { persistPeriodDays } from "../lib/period-edit";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { askAi } from "../lib/ai-client";
+import { t } from "../lib/i18n";
+import { useLang } from "./LanguageContext";
+import { sendNotification } from "../lib/push-client";
+
+const AVATAR_SETUP_KEY = "bloomy:avatar-setup";
 
 const FamilyContext = createContext(null);
 const LOCAL_KIT_KEY = "bloomy:kit-checks";
 const LOCAL_CUSTOM_SUPPLIES_KEY = "bloomy:custom-supplies";
 const LOCAL_PERIOD_STARTS_PREFIX = "bloom:period-starts:";
 const DAILY_MOOD_EMOJI = { 1: "😣", 2: "😟", 3: "😐", 4: "🙂", 5: "😄" };
+// Daughter → guardian message kinds → notification events (lib/notificationEvents.ts).
+const DAUGHTER_KIND_EVENT = { supply: "supply_request", sos: "guardian_signal", period: "first_period", care: "mood_shared" };
+const PROFILE_SAFE_COLUMNS = "id, role, display_name, family_id, cycle_length, period_length, last_period_start, share_mood, no_period_yet, birth_date, created_at";
+const PROFILE_CORE_COLUMNS = "id, role, display_name, family_id";
+
+const isProfileSchemaError = (error) =>
+  ["42703", "42P01", "42501", "PGRST204", "PGRST205"].includes(error?.code);
+
+const logSupabaseError = (label, error) => {
+  console.warn(label, {
+    code: error?.code ?? "unknown",
+    message: error?.message ?? String(error),
+    details: error?.details ?? "",
+    hint: error?.hint ?? "",
+  });
+};
 
 const AUTH_ERRORS = {
-  "Invalid login credentials": "Имэйл эсвэл нууц үг буруу байна.",
-  "User already registered": "Энэ имэйлээр аль хэдийн бүртгүүлсэн байна. «Нэвтрэх» дээр дарна уу.",
-  "Email not confirmed": "Имэйлээ баталгаажуулна уу (inbox-оо шалгаарай).",
+  get "Invalid login credentials"() { return t("Имэйл эсвэл нууц үг буруу байна.", "Wrong email or password."); },
+  get "User already registered"() { return t("Энэ имэйлээр аль хэдийн бүртгүүлсэн байна. «Нэвтрэх» дээр дарна уу.", "This email is already registered. Tap \"Sign in\"."); },
+  get "Email not confirmed"() { return t("Имэйлээ баталгаажуулна уу (inbox-оо шалгаарай).", "Please confirm your email (check your inbox)."); },
 };
 const authMessage = (e) =>
   AUTH_ERRORS[e?.message] ||
-  (e?.message?.includes("Password should be") ? "Нууц үг дор хаяж 6 тэмдэгттэй байх ёстой." : null) ||
-  "Алдаа гарлаа. Интернэтээ шалгаад дахин оролдоно уу.";
+  (e?.message?.includes("Password should be") ? t("Нууц үг дор хаяж 6 тэмдэгттэй байх ёстой.", "Password must be at least 6 characters.") : null) ||
+  t("Алдаа гарлаа. Интернэтээ шалгаад дахин оролдоно уу.", "Something went wrong. Check your internet and try again.");
 
 export function FamilyProvider({ children }) {
+  // Хэл солигдоход нэр, статус текст, хэрэгслийн нэр шинэчлэгдэнэ
+  const { lang } = useLang();
   /* ================= Нэвтрэлт ба профайл ================= */
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(supabaseConfigured);
   const [profile, setProfile] = useState(null);
+  const [guardianGender, setGuardianGender] = useState(null);
   const [family, setFamily] = useState(null); // { id, code }
   const [members, setMembers] = useState([]); // гэр бүлийн бүх профайл
-  const [activeChildId, setActiveChildId] = useState(null);
+  const [activeChildId, setActiveChildIdState] = useState(null);
   const [dataLoading, setDataLoading] = useState(false);
   const [ready, setReady] = useState(false); // эхний бүрэн ачаалалт дууссан эсэх
   const [loadError, setLoadError] = useState(null); // "no_profile" | "network"
@@ -57,7 +82,9 @@ export function FamilyProvider({ children }) {
   const [localKit, setLocalKit] = useState([]);
   const [periodStarts, setPeriodStarts] = useState([]);
   const [periodLogs, setPeriodLogs] = useState([]);
-  const syncedPeriodDatesRef = useRef("");
+  // userId whose period_logs have been read from the DB; after that the DB,
+  // not localStorage, is the source of truth for period dates.
+  const periodLogsLoadedForRef = useRef(null);
   const [noteUnlockToken, setNoteUnlockToken] = useState("");
   const noteUnlockAtRef = useRef(0);
 
@@ -95,8 +122,7 @@ export function FamilyProvider({ children }) {
 
   /* ================= Дэлгэцийн төлөв ================= */
   const [tab, setTab] = useState("home");
-  const [learnTab, setLearnTab] = useState("pad");
-  const [selectedDaughterId, setSelectedDaughterId] = useState(null);
+  const [learnTab, setLearnTab] = useState("topics");
   const [codeInput, setCodeInput] = useState("");
   const [codeError, setCodeError] = useState("");
   const [joining, setJoining] = useState(false);
@@ -130,6 +156,7 @@ export function FamilyProvider({ children }) {
   const familyId = family?.id ?? null;
 
   useEffect(() => {
+    if (userId && periodLogsLoadedForRef.current === userId) return;
     const key = `${LOCAL_PERIOD_STARTS_PREFIX}${userId ?? "local"}`;
     let saved = [];
     try {
@@ -142,40 +169,71 @@ export function FamilyProvider({ children }) {
 
   /* ================= Тооцоолсон утгууд ================= */
   const view = profile?.role ?? null; // "mother" | "daughter"
-  const daughters = view === "mother" ? members.filter((member) => member.role === "daughter" && member.id !== userId) : [];
   useEffect(() => {
-    if (view !== "mother") return;
-    const savedId = familyId ? localStorage.getItem(`bloomy:selected-daughter:${familyId}`) : null;
-    setSelectedDaughterId((currentId) => {
-      if (daughters.some((daughter) => daughter.id === currentId)) return currentId;
-      if (daughters.some((daughter) => daughter.id === savedId)) return savedId;
-      return daughters[0]?.id ?? null;
-    });
-  }, [view, familyId, members]);
-  const selectDaughter = (id) => {
-    setSelectedDaughterId(id);
-    setActiveChildId(id);
-    if (familyId) localStorage.setItem(`bloomy:selected-daughter:${familyId}`, id);
-  };
+    if (view !== "mother" || !userId) {
+      setGuardianGender(null);
+      return;
+    }
+    let cancelled = false;
+    supabase.rpc("get_my_guardian_gender")
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) {
+          setToast(t("Хүйсийн мэдээлэл ачаалж чадсангүй. Дахин оролдоно уу.", "Couldn't load gender info. Please try again."));
+          return;
+        }
+        setGuardianGender(data ?? "unspecified");
+      })
+      .catch(() => {
+        if (!cancelled) setToast(t("Хүйсийн мэдээлэл ачаалж чадсангүй. Дахин оролдоно уу.", "Couldn't load gender info. Please try again."));
+      });
+    return () => { cancelled = true; };
+  }, [userId, view]);
+
   const guardianProfile = members.find((member) => member.role === "mother") ?? null;
   const guardianName = guardianProfile?.display_name || null;
   const childProfiles = members.filter((member) => member.role === "daughter");
   useEffect(() => {
     if (view !== "mother") {
-      setActiveChildId(null);
+      setActiveChildIdState(null);
       return;
     }
-    setActiveChildId((current) => childProfiles.some((child) => child.id === current) ? current : (childProfiles[0]?.id ?? null));
-  }, [view, members]);
+    let savedId = null;
+    if (familyId) {
+      try {
+        savedId = localStorage.getItem(`bloomy:selected-daughter:${familyId}`);
+      } catch { /* localStorage боломжгүй */ }
+    }
+    setActiveChildIdState((current) =>
+      childProfiles.some((child) => child.id === current)
+        ? current
+        : childProfiles.some((child) => child.id === savedId)
+          ? savedId
+          : (childProfiles[0]?.id ?? null),
+    );
+  }, [view, familyId, members]);
+  const setActiveChildId = useCallback((id) => {
+    setActiveChildIdState(id);
+    if (familyId && id) {
+      try {
+        localStorage.setItem(`bloomy:selected-daughter:${familyId}`, id);
+      } catch { /* localStorage боломжгүй */ }
+    }
+  }, [familyId]);
   const activeChild = childProfiles.find((child) => child.id === activeChildId) ?? (view === "mother" ? childProfiles[0] ?? null : null);
   const daughterProfile =
     view === "daughter" ? profile : activeChild;
+  // Tsetse-ийн кодтой нийцүүлэх нэрс (нэг л хэрэгжүүлэлт: activeChild)
+  const daughters = view === "mother" ? childProfiles : [];
+  const selectDaughter = setActiveChildId;
   const linked =
     view === "daughter"
       ? members.some((member) => member.role === "mother" && member.id !== userId)
       : childProfiles.length > 0;
-  const daughterName = daughterProfile?.display_name || (view === "mother" ? "Охин тань" : "");
-  const nameGen = daughterProfile?.display_name ? genitive(daughterProfile.display_name) : "Охины тань";
+  const daughterName = daughterProfile?.display_name || (view === "mother" ? t("Охин тань", "Your daughter") : "");
+  const nameGen = daughterProfile?.display_name ? genitive(daughterProfile.display_name) : t("Охины тань", "Your daughter's");
+  // Англи өгүүлбэрт нэрийн илгэлийн оронд ашиглана («Сарааны» → «Saraa's»)
+  const nameEn = daughterProfile?.display_name ? `${daughterProfile.display_name}'s` : "Your daughter's";
 
   const cycleLength = daughterProfile?.cycle_length ?? 28;
   const periodLength = daughterProfile?.period_length ?? 5;
@@ -210,19 +268,14 @@ export function FamilyProvider({ children }) {
     }
     for (const row of supplyRows) {
       if (!Object.hasOwn(DEFAULT_SUPPLIES, row.kind)) {
-        out[row.kind] = { label: row.label || "Өөр хэрэглэл", emoji: row.emoji || "📦", count: row.count ?? 0, max: row.max ?? 10 };
+        out[row.kind] = { label: row.label || t("Өөр хэрэглэл", "Other supply"), emoji: row.emoji || "📦", count: row.count ?? 0, max: row.max ?? 10 };
       }
     }
     return out;
-  }, [familyId, supplyRows, localSupplies, localCustomSupplies]);
+  }, [familyId, supplyRows, localSupplies, localCustomSupplies, lang]);
   const lowSupplyCount = Object.values(supplies).filter((s) => s.count / s.max <= 0.3).length;
 
-  const inbox = notifications.map((n) => ({
-    ...n,
-    time: formatTime(n.created_at),
-    senderName: members.find((member) => member.id === n.sender_id)?.display_name ?? "",
-    recipientName: members.find((member) => member.id === n.recipient_id)?.display_name ?? "",
-  }));
+  const inbox = notifications.map((n) => ({ ...n, time: formatTime(n.created_at) }));
   const momInbox = view === "mother"
     ? inbox.filter((message) => message.recipient_role === "mother" && (message.sender_id === activeChild?.id || !message.sender_id))
     : [];
@@ -245,13 +298,34 @@ export function FamilyProvider({ children }) {
 
   // Аль дэлгэцийг харуулах вэ
   const noPeriodYet = Boolean(daughterProfile?.no_period_yet) && !lastPeriodStart;
+  // Confirmed periods with their logged lengths; the Today ring and the calendar
+  // both predict from this list so they always agree.
+  const cyclePeriods = useMemo(() => {
+    const confirmed = view === "daughter" ? periodsFromLogs(periodLogs) : [];
+    return confirmed.length ? confirmed : periodStarts;
+  }, [view, periodLogs, periodStarts]);
   const periodPrediction = predictPeriodRange({
-    starts: periodStarts,
+    periods: cyclePeriods,
     today,
     hasHadPeriod: Boolean(lastPeriodStart) && !noPeriodYet,
   });
   const needsCycleSetup = view === "daughter" && !lastPeriodStart && !profile?.no_period_yet;
-  const showOnboarding = !session || !profile || !ready || needsCycleSetup;
+
+  // Шинээр бүртгүүлсэн охин эхлээд өөрийн дүрийг бүтээнэ (энэ төхөөрөмж дээр тэмдэглэнэ)
+  const [avatarSetupPending, setAvatarSetupPending] = useState(false);
+  useEffect(() => {
+    try {
+      setAvatarSetupPending(window.localStorage.getItem(AVATAR_SETUP_KEY) === "1");
+    } catch {}
+  }, [session?.user?.id]);
+  const finishAvatarSetup = () => {
+    try {
+      window.localStorage.removeItem(AVATAR_SETUP_KEY);
+    } catch {}
+    setAvatarSetupPending(false);
+  };
+  const needsAvatarSetup = view === "daughter" && avatarSetupPending;
+  const showOnboarding = !session || !profile || !ready || needsAvatarSetup || needsCycleSetup;
 
   /* ================= Нэвтрэлтийг сонсох ================= */
   useEffect(() => {
@@ -283,7 +357,33 @@ export function FamilyProvider({ children }) {
     if (!userId) return null;
     // Trigger профайлыг үүсгэхэд хэдэн мс шаардагдаж магадгүй тул хэд дахин оролдоно
     for (let i = 0; i < 5; i++) {
-      const { data } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
+      let { data, error } = await supabase.from("profiles").select(PROFILE_SAFE_COLUMNS).eq("id", userId).maybeSingle();
+      if (error) {
+        logSupabaseError("Bloom profile read error:", error);
+        if (!["42703", "PGRST204"].includes(error.code)) {
+          setLoadError(isProfileSchemaError(error) ? "schema" : "network");
+          return null;
+        }
+
+        const coreResult = await supabase.from("profiles").select(PROFILE_CORE_COLUMNS).eq("id", userId).maybeSingle();
+        data = coreResult.data;
+        error = coreResult.error;
+        if (error) {
+          logSupabaseError("Bloom profile fallback read error:", error);
+          setLoadError(isProfileSchemaError(error) ? "schema" : "network");
+          return null;
+        }
+        data = {
+          ...data,
+          cycle_length: data?.cycle_length ?? 28,
+          period_length: data?.period_length ?? 5,
+          last_period_start: data?.last_period_start ?? null,
+          share_mood: data?.share_mood ?? true,
+          no_period_yet: data?.no_period_yet ?? false,
+          birth_date: data?.birth_date ?? null,
+          created_at: data?.created_at ?? null,
+        };
+      }
       if (data) {
         // Бүртгүүлэхдээ оруулсан төрсөн өдөр профайлд ороогүй бол нөхөж хадгална
         const metaBirth = metaRef.current.birth_date;
@@ -297,16 +397,22 @@ export function FamilyProvider({ children }) {
       // 2 удаа олдохгүй бол (schema-аас өмнө бүртгүүлсэн гэх мэт) өөрөө нөхөж үүсгэнэ
       if (i === 1) {
         const meta = metaRef.current;
-        await supabase.from("profiles").insert({
+        const { error: insertError } = await supabase.from("profiles").insert({
           id: userId,
           role: meta.role === "mother" ? "mother" : "daughter",
           display_name: meta.display_name ?? "",
           birth_date: meta.birth_date || null,
         });
+        if (insertError) {
+          logSupabaseError("Bloom profile recovery error:", insertError);
+          setLoadError(isProfileSchemaError(insertError) ? "schema" : "network");
+          return null;
+        }
         continue;
       }
       await new Promise((r) => setTimeout(r, 400));
     }
+    setLoadError("no_profile");
     return null;
   }, [userId]);
 
@@ -318,7 +424,7 @@ export function FamilyProvider({ children }) {
     }
     const [{ data: fam }, { data: mem }] = await Promise.all([
       supabase.from("families").select("id, code").eq("id", fid).maybeSingle(),
-      supabase.from("profiles").select("*").eq("family_id", fid).order("created_at"),
+      supabase.from("profiles").select(PROFILE_SAFE_COLUMNS).eq("family_id", fid).order("created_at"),
     ]);
     setFamily(fam ?? null);
     setMembers(mem ?? []);
@@ -367,6 +473,16 @@ export function FamilyProvider({ children }) {
     setMoodRows([]);
   }, [userId, view, activeChildId, familyId]);
 
+  // DB rows replace (never merge with) the local copy, so removed days stay removed.
+  const applyPeriodLogRows = useCallback((rows) => {
+    setPeriodLogs(rows);
+    if (view !== "daughter") return;
+    const confirmed = [...new Set(rows.filter((row) => row.status === "confirmed").map((row) => row.log_date))].sort();
+    periodLogsLoadedForRef.current = userId;
+    setPeriodStarts(confirmed);
+    try { localStorage.setItem(`${LOCAL_PERIOD_STARTS_PREFIX}${userId}`, JSON.stringify(confirmed)); } catch { /* localStorage боломжгүй */ }
+  }, [view, userId]);
+
   const loadPeriodLogs = useCallback(async () => {
     if (!supabase || !userId) {
       setPeriodLogs([]);
@@ -385,38 +501,32 @@ export function FamilyProvider({ children }) {
     }
     const { data, error } = await request;
     if (error) {
-      console.warn("[period_logs]", error.message);
-      setPeriodLogs([]);
-      return;
+      console.error("[period_logs] load failed:", error);
+      if (view !== "daughter") setPeriodLogs([]);
+      return false;
     }
-    const rows = data ?? [];
-    setPeriodLogs(rows);
-    if (view === "daughter") {
-      const confirmed = rows.filter((row) => row.status === "confirmed").map((row) => row.log_date);
-      setPeriodStarts((current) => [...new Set([...current, ...confirmed])].sort());
+    // Read before applyPeriodLogRows overwrites the local copy.
+    let localStarts = [];
+    try { localStarts = JSON.parse(localStorage.getItem(`${LOCAL_PERIOD_STARTS_PREFIX}${userId}`) ?? "[]"); } catch { /* localStorage боломжгүй */ }
+    applyPeriodLogRows(data ?? []);
+    if (view === "daughter" && !(data ?? []).some((row) => row.status === "confirmed")) {
+      // One-time upload of dates that only ever lived in this browser's localStorage.
+      const legacy = (Array.isArray(localStarts) ? localStarts : []).filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date) && date <= toDateStr());
+      if (legacy.length) {
+        const { error: syncError } = await supabase.rpc("sync_my_period_starts", { p_dates: legacy, p_period_length: periodLength });
+        if (syncError) console.error("[period_logs] legacy local date upload failed:", syncError);
+        else {
+          const { data: synced } = await supabase.rpc("get_my_period_logs", { p_from: from, p_to: to });
+          if (synced) applyPeriodLogRows(synced);
+        }
+      }
     }
-  }, [userId, view, activeChildId]);
+    return true;
+  }, [userId, view, activeChildId, periodLength, applyPeriodLogRows]);
 
   useEffect(() => {
     loadPeriodLogs();
   }, [loadPeriodLogs]);
-
-  useEffect(() => {
-    if (!supabase || view !== "daughter" || !userId || !periodStarts.length) return;
-    const signature = `${userId}:${periodLength}:${periodStarts.join(",")}`;
-    if (syncedPeriodDatesRef.current === signature) return;
-    let cancelled = false;
-    supabase.rpc("sync_my_period_starts", { p_dates: periodStarts, p_period_length: periodLength }).then(({ error }) => {
-      if (cancelled) return;
-      if (error) {
-        console.warn("[period_logs] legacy date sync:", error.message);
-        return;
-      }
-      syncedPeriodDatesRef.current = signature;
-      loadPeriodLogs();
-    });
-    return () => { cancelled = true; };
-  }, [view, userId, periodStarts, periodLength, loadPeriodLogs]);
 
   const loadKit = useCallback(async (fid) => {
     const { data } = await supabase.from("kit_checks").select("child_id, item_id").eq("family_id", fid);
@@ -441,12 +551,8 @@ export function FamilyProvider({ children }) {
 
   const loadAllInner = async () => {
     const p = await loadProfile();
-    if (!p) {
-      setLoadError("no_profile");
-      return;
-    }
+    if (!p) return;
     let fid = p?.family_id ?? null;
-    // Асран хамгаалагч гэр бүлийн код үүсгээд охидоо урина.
     // Асран хамгаалагч өөрийн кодтой гэр бүлийг үүсгэнэ. Охид асран хамгаалагчийн кодоор нэгдэнэ.
     if (p?.role === "mother" && !fid) {
       const { error } = await supabase.rpc("create_family");
@@ -575,26 +681,23 @@ export function FamilyProvider({ children }) {
   }, [tab, view]);
 
   /* ================= Мэдэгдэл ================= */
+  // All family messages go through /api/notify → lib/notify.ts (inbox row + push by the timing rules).
+  // `text` is the in-app detail; the lock screen only shows the event's neutral line.
   const notify = useCallback(
     async (recipientRole, text, kind = "info", recipientId = null) => {
-      if (!familyId) return false;
-      const payload = { family_id: familyId, sender_id: userId, recipient_role: recipientRole, kind, text };
-      let { error } = recipientId
-        ? await supabase.from("notifications").insert({ ...payload, recipient_id: recipientId })
-        : await supabase.from("notifications").insert(payload);
-      if (recipientId && (error?.code === "PGRST204" || error?.code === "42703" || error?.message?.includes("recipient_id"))) {
-        ({ error } = await supabase
-          .from("notifications")
-          .insert({ ...payload, kind: `target:${recipientId}:${kind}` }));
-      }
-      if (error) {
-        setToast("Сануулагч илгээж чадсангүй. Дахин оролдоорой.");
-      } else {
-        await loadNotifications();
-      }
-      return !error;
+      if (!familyId || !recipientId) return false;
+      const event = recipientRole === "daughter"
+        ? "guardian_message"
+        : view === "mother"
+          ? "sent_copy"
+          : DAUGHTER_KIND_EVENT[kind] ?? "guardian_signal";
+      const { ok, limited } = await sendNotification(session, event, [recipientId], text);
+      if (limited) setToast(t("Саяхан илгээсэн байна. Түр хүлээгээд дахин оролдоорой.", "You just sent one. Please wait a moment and try again."));
+      else if (!ok) setToast(t("Илгээж чадсангүй. Интернэтээ шалгаарай.", "Couldn't send. Check your internet."));
+      if (ok) loadNotifications();
+      return ok;
     },
-    [familyId, userId, loadNotifications],
+    [familyId, view, session, loadNotifications],
   );
   const guardianId = view === "mother" ? userId : members.find((member) => member.role === "mother")?.id;
   const sendToMom = (text, kind) => notify("mother", text, kind, guardianId);
@@ -618,20 +721,39 @@ export function FamilyProvider({ children }) {
   }, [view, tab, momUnread, momInbox]);
 
   /* ================= Нэвтрэлтийн үйлдлүүд ================= */
-  const signUp = async ({ role, name, birthDate, email, password }) => {
+  const signUp = async ({ role, guardianGender: selectedGuardianGender, name, birthDate, email, password }) => {
+    // Сесс үүсэхээс өмнө тэмдэглэнэ — тэгэхгүй бол дүр бүтээх алхам алгасагдана
+    try {
+      if (role === "daughter") window.localStorage.setItem(AVATAR_SETUP_KEY, "1");
+    } catch {}
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      options: { data: { role, display_name: name.trim(), birth_date: birthDate || null } },
+      options: {
+        data: {
+          role,
+          guardian_gender: role === "mother" ? selectedGuardianGender ?? "unspecified" : "unspecified",
+          display_name: name.trim(),
+          birth_date: birthDate || null,
+        },
+      },
     });
-    if (error) return authMessage(error);
-    if (!data.session) return "Бүртгэл үүслээ! Имэйлээ шалгаж баталгаажуулаад нэвтэрнэ үү.";
+    if (error) {
+      try {
+        window.localStorage.removeItem(AVATAR_SETUP_KEY);
+      } catch {}
+      if (error.message === "User already registered") return "existing_user";
+      return authMessage(error);
+    }
+    if (!data.session) return t("Бүртгэл үүслээ! Имэйлээ шалгаж баталгаажуулаад нэвтэрнэ үү.", "Account created! Check your email to confirm, then sign in.");
     return null;
   };
 
   const signIn = async ({ email, password }) => {
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-    return error ? authMessage(error) : null;
+    if (error) return authMessage(error);
+    setTab("home");
+    return null;
   };
 
   const signOut = async () => {
@@ -646,16 +768,16 @@ export function FamilyProvider({ children }) {
   const copyCode = async () => {
     try {
       await navigator.clipboard.writeText(family?.code ?? "");
-      setToast("Гэр бүлийн код хуулагдлаа 📋");
+      setToast(t("Гэр бүлийн код хуулагдлаа 📋", "Family code copied 📋"));
     } catch {
-      setToast(`Код: ${family?.code}`);
+      setToast(t(`Код: ${family?.code}`, `Code: ${family?.code}`));
     }
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
   };
 
   const shareCode = async () => {
-    const text = `Bloomy 🌸 Guardian Access Code-оор гэр бүлийн бүлэгт холбогдоорой: ${family?.code}`;
+    const text = t(`Bloomy 🌸 Гэр бүлийн урилгын кодоор холбогдоорой: ${family?.code}`, `Bloomy 🌸 Connect with our family invite code: ${family?.code}`);
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
         await navigator.share({ title: "Bloomy", text, url: window.location.origin });
@@ -676,16 +798,15 @@ export function FamilyProvider({ children }) {
     if (error) {
       setCodeError(
         error.message?.includes("invalid_code")
-          ? "Ийм код олдсонгүй. Кодоо дахин шалгаарай."
-          : "Холбогдож чадсангүй. Интернэтээ шалгаад дахин оролдоно уу.",
+          ? t("Ийм код олдсонгүй. Кодоо дахин шалгаарай.", "Code not found. Please check it again.")
+          : t("Холбогдож чадсангүй. Интернэтээ шалгаад дахин оролдоно уу.", "Couldn't connect. Check your internet and try again."),
       );
       return;
     }
     setCodeError("");
     setCodeInput("");
     await loadAll();
-    setToast(view === "mother" ? "Охин тань гэр бүлд холбогдлоо 💗" : "Асран хамгаалагчтайгаа гэр бүлд холбогдлоо 💗");
-    setToast("Асран хамгаалагчтайгаа амжилттай холбогдлоо 💗");
+    setToast(t("Асран хамгаалагчтайгаа амжилттай холбогдлоо 💗", "Connected with your guardian 💗"));
   };
 
   const leaveFamily = async () => {
@@ -694,14 +815,14 @@ export function FamilyProvider({ children }) {
     const { error } = await supabase.rpc("leave_family");
     if (error) {
       setUnlinking(false);
-      setCodeError("Холболтыг салгаж чадсангүй. Дахин оролдоно уу.");
+      setCodeError(t("Холболтыг салгаж чадсангүй. Дахин оролдоно уу.", "Couldn't disconnect. Please try again."));
       return false;
     }
     setCodeError("");
     setCodeInput("");
     await loadAll();
     setUnlinking(false);
-    setToast("Асран хамгаалагчтай холболтыг салгалаа.");
+    setToast(t("Асран хамгаалагчтай холболтыг салгалаа.", "Disconnected from your guardian."));
     return true;
   };
 
@@ -710,7 +831,7 @@ export function FamilyProvider({ children }) {
     const patch = { last_period_start: start, cycle_length: cl, period_length: pl, no_period_yet: false };
     setProfile((p) => ({ ...p, ...patch }));
     const { error } = await supabase.from("profiles").update(patch).eq("id", userId);
-    if (error) setToast("Хадгалж чадсангүй. Дахин оролдоно уу.");
+    if (error) setToast(t("Хадгалж чадсангүй. Дахин оролдоно уу.", "Couldn't save. Please try again."));
     else pulseSync();
     return !error;
   };
@@ -718,14 +839,14 @@ export function FamilyProvider({ children }) {
   const savePeriodStartDates = async (dates, nextPeriodLength = periodLength) => {
     const starts = [...new Set(dates.filter((date) => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date) && date <= today))].sort();
     if (!starts.length) {
-      setToast("Ядаж нэг сарын тэмдэг эхэлсэн өдрийг үлдээнэ үү.");
+      setToast(t("Ядаж нэг сарын тэмдэг эхэлсэн өдрийг үлдээнэ үү.", "Keep at least one period start date."));
       return false;
     }
     const lengths = starts.slice(1).map((date, index) => Math.round((new Date(`${date}T00:00:00`) - new Date(`${starts[index]}T00:00:00`)) / 86400000)).filter((days) => days >= 15 && days <= 60).slice(-6).map((days) => Math.min(45, Math.max(21, days)));
     const nextCycleLength = lengths.length ? Math.round(lengths.reduce((sum, length) => sum + length, 0) / lengths.length) : 28;
     const { error: syncError } = await supabase.rpc("sync_my_period_starts", { p_dates: starts, p_period_length: nextPeriodLength });
     if (syncError) {
-      setToast("Сарын тэмдгийн бүртгэл хадгалж чадсангүй. Supabase-ийн calendar migration-ийг шалгана уу.");
+      setToast(t("Сарын тэмдгийн бүртгэл хадгалж чадсангүй. Supabase-ийн calendar migration-ийг шалгана уу.", "Couldn't save the period log. Check the Supabase calendar migration."));
       return false;
     }
     const ok = await saveCycle({ lastPeriodStart: starts.at(-1), cycleLength: nextCycleLength, periodLength: nextPeriodLength });
@@ -733,8 +854,36 @@ export function FamilyProvider({ children }) {
     const key = `${LOCAL_PERIOD_STARTS_PREFIX}${userId ?? "local"}`;
     try { localStorage.setItem(key, JSON.stringify(starts)); } catch { /* localStorage боломжгүй */ }
     setPeriodStarts(starts);
-    syncedPeriodDatesRef.current = `${userId}:${nextPeriodLength}:${starts.join(",")}`;
     await loadPeriodLogs();
+    return true;
+  };
+
+  // Saves the calendar's selected days (consecutive days = one period), then
+  // reloads profile + period_logs from the DB so every screen shows saved data.
+  const savePeriodDays = async (dates) => {
+    if (!supabase || view !== "daughter") return false;
+    const result = await persistPeriodDays(supabase, dates, {
+      today: toDateStr(),
+      periodLength: Math.min(7, Math.max(2, Number(periodLength) || 5)),
+    });
+    if (!result.ok) {
+      // Supabase/PostgREST errors often have non-enumerable fields, so logging
+      // the object directly produces `{}` in the Next.js overlay.
+      console.error("[period_logs] sync_my_period_days failed:", {
+        code: result.error?.code,
+        message: result.error?.message,
+        details: result.error?.details,
+        hint: result.error?.hint,
+      });
+      setToast(result.error?.code === "PGRST202"
+        ? t("Календарийн SQL шинэчлэл хийгдээгүй байна. Supabase дээр manual-period-date-edit-migration.sql-ийг ажиллуулаад дахин оролдоно уу.", "The calendar SQL update hasn't been applied. Run manual-period-date-edit-migration.sql on Supabase and try again.")
+        : t("Хадгалж чадсангүй. Алдааны дэлгэрэнгүйг шалгаад дахин оролдоно уу.", "Couldn't save. Check the error details and try again."));
+      return false;
+    }
+    if (result.rows) applyPeriodLogRows(result.rows);
+    else console.error("[period_logs] reload after save failed:", result.reloadError);
+    await loadProfile();
+    pulseSync();
     return true;
   };
 
@@ -743,26 +892,26 @@ export function FamilyProvider({ children }) {
     const ok = await savePeriodStartDates(starts, periodLength);
     if (!ok) return;
     if (linked) {
-      await sendToMom(`${nameGen} сарын тэмдэг өнөөдөр ирлээ. Бага зэрэг илүү халамж хэрэгтэй 💗`, "period");
-      setToast("Тэмдэглэлээ! Ээжид зөөлөн мэдэгдэл очлоо 🌸");
-    } else setToast("Тэмдэглэлээ 🌸");
+      await sendToMom(t(`${nameGen} сарын тэмдэг өнөөдөр ирлээ. Бага зэрэг илүү халамж хэрэгтэй 💗`, `${nameEn} period started today. A little extra care would help 💗`), "period");
+      setToast(t("Тэмдэглэлээ! Ээжид зөөлөн мэдэгдэл очлоо 🌸", "Logged! A gentle notice went to your guardian 🌸"));
+    } else setToast(t("Тэмдэглэлээ 🌸", "Logged 🌸"));
   };
 
   const proposePeriodStart = async (childId, date) => {
     const { error } = await supabase.rpc("propose_period_start", { p_child_id: childId, p_log_date: date });
     if (error) {
-      setToast(error.message?.includes("not_linked") ? "Охины бүртгэлийг олсонгүй." : "Санал илгээж чадсангүй. Supabase-ийн calendar migration-ийг шалгана уу.");
+      setToast(error.message?.includes("not_linked") ? t("Охины бүртгэлийг олсонгүй.", "Daughter's account not found.") : t("Санал илгээж чадсангүй. Supabase-ийн calendar migration-ийг шалгана уу.", "Couldn't send the suggestion. Check the Supabase calendar migration."));
       return false;
     }
     await loadPeriodLogs();
-    setToast("Охинд баталгаажуулах хүсэлт илгээлээ.");
+    setToast(t("Охинд баталгаажуулах хүсэлт илгээлээ.", "Sent a confirmation request to your daughter."));
     return true;
   };
 
   const respondPeriodEntry = async (periodLogId, approve) => {
     const { data, error } = await supabase.rpc("respond_period_entry", { p_period_log_id: periodLogId, p_approve: approve });
     if (error) {
-      setToast("Хүсэлтийг шинэчилж чадсангүй. Дахин оролдоно уу.");
+      setToast(t("Хүсэлтийг шинэчилж чадсангүй. Дахин оролдоно уу.", "Couldn't update the request. Please try again."));
       return false;
     }
     const changed = periodLogs.find((row) => row.id === periodLogId);
@@ -774,7 +923,7 @@ export function FamilyProvider({ children }) {
       if (latestProfile?.last_period_start) setProfile((current) => ({ ...current, ...latestProfile }));
     }
     await loadPeriodLogs();
-    setToast(data === "confirmed" ? "Өдрийг баталгаажууллаа 🌸" : "Санал хасагдлаа.");
+    setToast(data === "confirmed" ? t("Өдрийг баталгаажууллаа 🌸", "Day confirmed 🌸") : t("Санал хасагдлаа.", "Suggestion removed."));
     return true;
   };
 
@@ -820,7 +969,7 @@ export function FamilyProvider({ children }) {
     setMoodTimer(120);
     setMoodTimerRunning(false);
     const { error } = await supabase.rpc("set_my_day_mood", { p_log_date: today, p_mood: score });
-    if (error) setToast("Хадгалж чадсангүй.");
+    if (error) setToast(t("Хадгалж чадсангүй.", "Couldn't save."));
     await loadMoodCard(emoji);
   };
 
@@ -914,17 +1063,12 @@ export function FamilyProvider({ children }) {
     setNudgeLoading(false);
   }, [session, view, linked, phaseKey, daysUntil, sharedMood, daughterProfile?.display_name]);
 
-  useEffect(() => {
-    if (view === "mother" && linked) fetchNudge();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, linked, phaseKey, `${sharedMood ?? ""}:${daughterProfile?.id ?? ""}`]);
-
   const refreshNudge = () => !nudgeLoading && fetchNudge();
 
   const markNudgeDone = async () => {
     setNudgesDone((p) => [...p, currentNudge]);
-    await sendToTeen("Ээж чамд зориулж жаахан халамж бэлдлээ 💗", "care");
-    setToast(`${daughterName}-д мэдэгдэл очлоо 🌸`);
+    await sendToTeen(t("Ээж чамд зориулж жаахан халамж бэлдлээ 💗", "Your guardian prepared a little care for you 💗"), "care");
+    setToast(t(`${daughterName}-д мэдэгдэл очлоо 🌸`, `Notice sent to ${daughterName} 🌸`));
     setTimeout(fetchNudge, 500);
   };
 
@@ -957,7 +1101,7 @@ export function FamilyProvider({ children }) {
     const cleanLabel = label.trim();
     if (!cleanLabel) return false;
     if (Object.values(supplies).some((item) => item.label.toLocaleLowerCase() === cleanLabel.toLocaleLowerCase())) {
-      setToast("Ийм нэртэй хэрэглэл аль хэдийн байна.");
+      setToast(t("Ийм нэртэй хэрэглэл аль хэдийн байна.", "A supply with this name already exists."));
       return false;
     }
     const item = { kind: `custom_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, label: cleanLabel, emoji, count: 0, max: 10 };
@@ -973,10 +1117,10 @@ export function FamilyProvider({ children }) {
     const { error } = await supabase.from("supplies").insert({ ...item, family_id: familyId });
     if (error) {
       setSupplyRows((prev) => prev.filter((row) => row.kind !== item.kind));
-      setToast("Хэрэглэл нэмэхэд алдаа гарлаа. Supabase-ийн custom-supplies тохиргоог ажиллуулна уу.");
+      setToast(t("Хэрэглэл нэмэхэд алдаа гарлаа. Supabase-ийн custom-supplies тохиргоог ажиллуулна уу.", "Couldn't add the supply. Run the Supabase custom-supplies setup."));
       return false;
     }
-    setToast(`${cleanLabel} нэмэгдлээ ✓`);
+    setToast(t(`${cleanLabel} нэмэгдлээ ✓`, `${cleanLabel} added ✓`));
     return true;
   };
 
@@ -995,7 +1139,7 @@ export function FamilyProvider({ children }) {
     const { error } = await supabase.from("supplies").delete().eq("family_id", familyId).eq("kind", key);
     if (error) {
       setSupplyRows(previous);
-      setToast("Хэрэглэл устгахад алдаа гарлаа.");
+      setToast(t("Хэрэглэл устгахад алдаа гарлаа.", "Couldn't delete the supply."));
     }
   };
 
@@ -1007,8 +1151,8 @@ export function FamilyProvider({ children }) {
       .update({ count: s.max, updated_at: new Date().toISOString() })
       .eq("family_id", familyId)
       .eq("kind", key);
-    await sendToTeen(`Ээж чиний ${s.label.toLowerCase()}-ийг нөхөн дүүргэлээ ${s.emoji}`, "supply");
-    setToast(`${s.label} нөхөн дүүргэгдлээ ✓`);
+    await sendToTeen(t(`Ээж чиний ${s.label.toLowerCase()}-ийг нөхөн дүүргэлээ ${s.emoji}`, `Your guardian restocked your ${s.label.toLowerCase()} ${s.emoji}`), "supply");
+    setToast(t(`${s.label} нөхөн дүүргэгдлээ ✓`, `${s.label} restocked ✓`));
   };
 
   const requestSupplies = async () => {
@@ -1016,10 +1160,10 @@ export function FamilyProvider({ children }) {
       .filter((s) => s.count / s.max <= 0.3)
       .map((s) => s.label.toLowerCase());
     const ok = await sendToMom(
-      `${profile?.display_name || "Охин тань"}: ${low.length ? low.join(", ") : "ариун цэврийн хэрэгсэл"} дуусах дөхөж байна. Авч өгөх үү? 🛍️`,
+      t(`${profile?.display_name || "Охин тань"}: ${low.length ? low.join(", ") : "ариун цэврийн хэрэгсэл"} дуусах дөхөж байна. Авч өгөх үү? 🛍️`, `${profile?.display_name || "Охин тань"}: running low on ${low.length ? low.join(", ") : "ариун цэврийн хэрэгсэл"}. Could you get more? 🛍️`),
       "supply",
     );
-    if (ok) setToast("Ээжид хүсэлт илгээлээ 💌");
+    if (ok) setToast(t("Ээжид хүсэлт илгээлээ 💌", "Request sent to your guardian 💌"));
   };
 
   /* ================= SOS ================= */
@@ -1032,7 +1176,7 @@ export function FamilyProvider({ children }) {
 
   const sosNotifyMom = async () => {
     const ok = await sendToMom(
-      `${profile?.display_name || "Охин тань"} яг одоо хэвлийгээр хүчтэй өвдөж байна. Халуун жин, дулаан тэврэлт тусална 🤍`,
+      t(`${profile?.display_name || "Охин тань"} яг одоо хэвлийгээр хүчтэй өвдөж байна. Халуун жин, дулаан тэврэлт тусална 🤍`, `${profile?.display_name || "Охин тань"} has strong cramps right now. A warm compress and a warm hug will help 🤍`),
       "sos",
     );
     if (ok) setSosSent(true);
@@ -1064,7 +1208,7 @@ export function FamilyProvider({ children }) {
         .eq("child_id", kitOwnerId)
         .in("item_id", removeIds);
       if (error) {
-        setToast("Цүнхний жагсаалтыг хадгалж чадсангүй. Дахин оролдоно уу.");
+        setToast(t("Цүнхний жагсаалтыг хадгалж чадсангүй. Дахин оролдоно уу.", "Couldn't save the bag list. Try again."));
         return false;
       }
     }
@@ -1075,7 +1219,7 @@ export function FamilyProvider({ children }) {
         .insert(addIds.map((item_id) => ({ family_id: familyId, child_id: kitOwnerId, item_id })));
       if (error) {
         await loadKit(familyId);
-        setToast("Цүнхний жагсаалтыг хадгалж чадсангүй. Дахин оролдоно уу.");
+        setToast(t("Цүнхний жагсаалтыг хадгалж чадсангүй. Дахин оролдоно уу.", "Couldn't save the bag list. Try again."));
         return false;
       }
     }
@@ -1097,12 +1241,29 @@ export function FamilyProvider({ children }) {
     if (!display_name) return false;
     const { error } = await supabase.from("profiles").update({ display_name }).eq("id", userId);
     if (error) {
-      setToast("Нэр хадгалж чадсангүй. Дахин оролдоно уу.");
+      setToast(t("Нэр хадгалж чадсангүй. Дахин оролдоно уу.", "Couldn't save the name. Please try again."));
       return false;
     }
     setProfile((p) => ({ ...p, display_name }));
-    setToast("Нэр хадгалагдлаа ✓");
+    setToast(t("Нэр хадгалагдлаа ✓", "Name saved ✓"));
     return true;
+  };
+
+  const updateGuardianGender = async (gender) => {
+    if (view !== "mother" || !["female", "male", "unspecified"].includes(gender)) return false;
+    try {
+      const { data, error } = await supabase.rpc("set_my_guardian_gender", { p_gender: gender });
+      if (error) {
+        setToast(t("Хүйсийн мэдээлэл хадгалж чадсангүй. Дахин оролдоно уу.", "Couldn't save gender info. Please try again."));
+        return false;
+      }
+      setGuardianGender(data);
+      setToast(t("Хүйсийн мэдээлэл шинэчлэгдлээ.", "Gender info updated."));
+      return true;
+    } catch {
+      setToast(t("Хүйсийн мэдээлэл хадгалж чадсангүй. Дахин оролдоно уу.", "Couldn't save gender info. Please try again."));
+      return false;
+    }
   };
 
   const updateEmail = async (email) => {
@@ -1110,28 +1271,28 @@ export function FamilyProvider({ children }) {
     if (!nextEmail || nextEmail === session?.user?.email) return true;
     const { error } = await supabase.auth.updateUser({ email: nextEmail });
     if (error) {
-      setToast("Имэйл солиж чадсангүй. Хаягаа шалгаад дахин оролдоно уу.");
+      setToast(t("Имэйл солиж чадсангүй. Хаягаа шалгаад дахин оролдоно уу.", "Couldn't change the email. Check the address and try again."));
       return false;
     }
-    setToast("Шинэ имэйл хаяг руу баталгаажуулах холбоос илгээлээ.");
+    setToast(t("Шинэ имэйл хаяг руу баталгаажуулах холбоос илгээлээ.", "We sent a confirmation link to the new email."));
     return true;
   };
 
   /* ================= Ээжийн статус текст ================= */
   const careMessage = (() => {
-    if (!linked) return "Охин тань таны кодоор холбогдсоны дараа халамжийн статус энд харагдана.";
+    if (!linked) return t("Охин тань таны кодоор холбогдсоны дараа халамжийн статус энд харагдана.", "The care status shows here once your daughter connects with your code.");
     if (noPeriodYet)
-      return `${nameGen} анхны сарын тэмдэг хараахан ирээгүй. «Сурах» хэсгийг хамтдаа үзэж, цүнхэнд нь бэлтгэл хийгээрэй 🌱`;
-    if (!hasCycle) return `${daughterName} мөчлөгийнхөө мэдээллийг хараахан оруулаагүй байна.`;
+      return t(`${nameGen} анхны сарын тэмдэг хараахан ирээгүй. «Сурах» хэсгийг хамтдаа үзэж, цүнхэнд нь бэлтгэл хийгээрэй 🌱`, `${nameEn} first period hasn't come yet. Look through the Learn section together and pack her bag ahead of time 🌱`);
+    if (!hasCycle) return t(`${daughterName} мөчлөгийнхөө мэдээллийг хараахан оруулаагүй байна.`, `${daughterName} hasn't entered her cycle info yet.`);
     if (isPeriod)
-      return `${nameGen} сарын тэмдгийн ${day} дэх өдөр. Өнөөдөр илүү амралт, дулаан халамж хэрэгтэй.`;
+      return t(`${nameGen} сарын тэмдгийн ${day} дэх өдөр. Өнөөдөр илүү амралт, дулаан халамж хэрэгтэй.`, `Day ${day} of ${nameEn} period. Extra rest and warm care help today.`);
     if (daysLate > 0)
-      return `${nameGen} сарын тэмдэг удахгүй ирэх магадлалтай. Өсвөр насанд хэдэн хоног хоцрох нь хэвийн.`;
+      return t(`${nameGen} сарын тэмдэг удахгүй ирэх магадлалтай. Өсвөр насанд хэдэн хоног хоцрох нь хэвийн.`, `${nameEn} period will probably come soon. Being a few days late is normal for teens.`);
     if (daysUntil <= 3)
-      return `${nameGen} сарын тэмдэг ${daysUntil} хоногийн дараа ирэх магадлалтай. Бэлтгэл хангахад туслаарай.`;
+      return t(`${nameGen} сарын тэмдэг ${daysUntil} хоногийн дараа ирэх магадлалтай. Бэлтгэл хангахад туслаарай.`, `${nameEn} period may come in ${daysUntil} days. Help her get ready.`);
     if (daysUntil <= 7)
-      return `${nameGen} сарын тэмдэг 1 долоо хоногийн дотор ирэх магадлалтай. Хэрэгслээ шалгах сайхан үе.`;
-    return `${daughterName} одоо «${phase.name}»-д байна. Онцгой бэлтгэл хэрэггүй — зүгээр л дэргэд нь байгаарай 🌸`;
+      return t(`${nameGen} сарын тэмдэг 1 долоо хоногийн дотор ирэх магадлалтай. Хэрэгслээ шалгах сайхан үе.`, `${nameEn} period may come within a week. A good time to check supplies.`);
+    return t(`${daughterName} одоо «${phase.name}»-д байна. Онцгой бэлтгэл хэрэггүй — зүгээр л дэргэд нь байгаарай 🌸`, `${daughterName} is now in "${phase.name}". No special prep needed — just be there for her 🌸`);
   })();
 
   const value = {
@@ -1146,10 +1307,12 @@ export function FamilyProvider({ children }) {
     loadError,
     reload: () => loadAll(),
     profile,
+    guardianGender: view === "mother" ? guardianGender : null,
     signUp,
     signIn,
     signOut,
     updateName,
+    updateGuardianGender,
     updateEmail,
     birthDate,
     // гэр бүл
@@ -1186,6 +1349,8 @@ export function FamilyProvider({ children }) {
     copyCode,
     shareCode,
     needsCycleSetup,
+    needsAvatarSetup,
+    finishAvatarSetup,
     showOnboarding,
     // навигаци
     tab,
@@ -1199,8 +1364,10 @@ export function FamilyProvider({ children }) {
     lastPeriodStart,
     periodStarts,
     periodLogs,
+    cyclePeriods,
     periodPrediction,
     savePeriodStartDates,
+    savePeriodDays,
     day,
     daysLate,
     phaseKey,

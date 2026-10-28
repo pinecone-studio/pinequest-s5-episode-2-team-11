@@ -37,6 +37,8 @@ export interface FamilyLinkingState {
 export interface FamilyLinkingContext {
   view: FamilyRole | null;
   children: ChildProfile[];
+  activeChildId: string | null;
+  setActiveChildId: (id: string) => void;
   familyCode: string;
   guardianName: string | null;
   isLinked: boolean;

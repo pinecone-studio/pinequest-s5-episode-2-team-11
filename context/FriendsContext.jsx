@@ -9,14 +9,18 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { sendNotification } from "../lib/push-client";
 import { useFamily } from "./FamilyContext";
 import { SOS_REPLIES, SOS_WINDOW_HOURS, friendError, placeOf } from "../lib/friends";
+import { t } from "../lib/i18n";
+import { useLang } from "./LanguageContext";
 
 const FriendsContext = createContext(null);
 
 const sinceIso = () => new Date(Date.now() - SOS_WINDOW_HOURS * 3600 * 1000).toISOString();
 
 export function FriendsProvider({ children }) {
+  const { lang } = useLang();
   const { session, profile, view, ready, setToast } = useFamily();
   const userId = session?.user?.id ?? null;
   const active = Boolean(supabase && userId && ready && view === "daughter");
@@ -41,19 +45,24 @@ export function FriendsProvider({ children }) {
   }, [setToast]);
 
   const loadGroups = useCallback(async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("friend_groups")
-      .select("id, name, emoji, created_at, friend_group_members(member_id)")
+      .select("id, owner_id, name, emoji, created_at, friend_group_members(member_id)")
       .order("created_at");
+    if (error) {
+      setToast(friendError(error));
+      return;
+    }
     const list = (data ?? []).map((g) => ({
       id: g.id,
+      ownerId: g.owner_id,
       name: g.name,
       emoji: g.emoji,
       members: (g.friend_group_members ?? []).map((m) => m.member_id),
     }));
     setGroups(list);
     setActiveGroupId((cur) => (list.some((g) => g.id === cur) ? cur : (list[0]?.id ?? null)));
-  }, []);
+  }, [setToast]);
 
   const loadOutgoing = useCallback(async () => {
     const { data } = await supabase
@@ -78,7 +87,7 @@ export function FriendsProvider({ children }) {
   const loadIncoming = useCallback(async () => {
     const { data } = await supabase
       .from("pad_requests")
-      .select("id, sender_name, place, created_at, resolved, pad_responses(reply, responder_id)")
+      .select("id, sender_id, sender_name, place, created_at, resolved, pad_responses(reply, responder_id)")
       .neq("sender_id", userId)
       .eq("resolved", false)
       .gte("created_at", sinceIso())
@@ -134,7 +143,7 @@ export function FriendsProvider({ children }) {
         },
         async () => {
           await loadIncoming();
-          setToast("🆘 Найз чинь хэрэглэл хэрэгтэй байна!");
+          setToast(t("🆘 Найз чинь хэрэглэл хэрэгтэй байна!", "🆘 Your friend needs supplies!"));
           try {
             navigator.vibrate?.([200, 100, 200]);
           } catch {
@@ -152,21 +161,26 @@ export function FriendsProvider({ children }) {
         { event: "*", schema: "public", table: "friendships", filter: `user_id=eq.${userId}` },
         () => loadFriends(),
       )
+      .on("postgres_changes", { event: "*", schema: "public", table: "friend_group_members" }, () => loadGroups())
       .subscribe();
     const onVisible = () => document.visibilityState === "visible" && loadAll();
     document.addEventListener("visibilitychange", onVisible);
+    // Найзын дүр/сэтгэл санааны царай өөрчлөгдвөл харагдана (profiles-ийг RLS-ээс болж realtime-аар сонсож чадахгүй)
+    const poll = setInterval(() => document.visibilityState === "visible" && loadFriends(), 60_000);
     return () => {
       supabase.removeChannel(channel);
       document.removeEventListener("visibilitychange", onVisible);
+      clearInterval(poll);
     };
-  }, [active, userId, loadIncoming, loadOutgoing, loadFriends, loadAll, setToast]);
+  }, [active, userId, loadIncoming, loadOutgoing, loadFriends, loadGroups, loadAll, setToast]);
 
   /* ---------- Найз ---------- */
   const addFriend = async (code) => {
     const { data, error } = await supabase.rpc("add_friend", { p_code: code.trim() });
     if (error) return friendError(error);
     await loadFriends();
-    setToast(`${data?.display_name || "Найз"} найзаар нэмэгдлээ 💗`);
+    if (data?.id) sendNotification(session, "friend_added", [data.id]);
+    setToast(t(`${data?.display_name || "Найз"} найзаар нэмэгдлээ 💗`, `${data?.display_name || "Найз"} added as a friend 💗`));
     return null;
   };
 
@@ -174,7 +188,7 @@ export function FriendsProvider({ children }) {
     const { error } = await supabase.rpc("remove_friend", { p_friend: friend.id });
     if (error) return setToast(friendError(error));
     await Promise.all([loadFriends(), loadGroups()]);
-    setToast(`${friend.display_name} найзуудаас хасагдлаа`);
+    setToast(t(`${friend.display_name} найзуудаас хасагдлаа`, `${friend.display_name} removed from friends`));
   };
 
   /* ---------- Бүлэг ---------- */
@@ -186,13 +200,18 @@ export function FriendsProvider({ children }) {
       .single();
     if (error) return (setToast(friendError(error)), false);
     if (memberIds.length) {
-      await supabase
+      const { error: memberError } = await supabase
         .from("friend_group_members")
         .insert(memberIds.map((member_id) => ({ group_id: data.id, member_id })));
+      if (memberError) {
+        await supabase.from("friend_groups").delete().eq("id", data.id);
+        setToast(friendError(memberError));
+        return false;
+      }
     }
     await loadGroups();
     setActiveGroupId(data.id);
-    setToast("Шинэ бүлэг үүслээ 💗");
+    setToast(t("Шинэ бүлэг үүслээ 💗", "New group created 💗"));
     return true;
   };
 
@@ -217,13 +236,13 @@ export function FriendsProvider({ children }) {
       setToast(friendError(error));
       return loadGroups();
     }
-    setToast(has ? `${friend.display_name} бүлгээс хасагдлаа` : `${friend.display_name} бүлэгт нэмэгдлээ 💗`);
+    setToast(has ? t(`${friend.display_name} бүлгээс хасагдлаа`, `${friend.display_name} removed from the group`) : t(`${friend.display_name} бүлэгт нэмэгдлээ 💗`, `${friend.display_name} added to the group 💗`));
   };
 
   const deleteGroup = async (group) => {
     await supabase.from("friend_groups").delete().eq("id", group.id);
     await loadGroups();
-    setToast(`«${group.name}» бүлэг устлаа`);
+    setToast(t(`«${group.name}» бүлэг устлаа`, `Group "${group.name}" deleted`));
   };
 
   /* ---------- SOS ---------- */
@@ -232,7 +251,7 @@ export function FriendsProvider({ children }) {
   const sendSos = async (recipientIds) => {
     if (sending) return;
     const selectedFriends = friends.filter((friend) => recipientIds.includes(friend.id));
-    if (!selectedFriends.length) return setToast("Мэдэгдэл илгээх найзаа сонгоно уу.");
+    if (!selectedFriends.length) return setToast(t("Мэдэгдэл илгээх найзаа сонгоно уу.", "Choose friends to notify."));
     setSending(true);
     const started = Date.now();
     const { error } = await supabase.rpc("send_pad_request_to_friends", {
@@ -243,8 +262,10 @@ export function FriendsProvider({ children }) {
     await new Promise((r) => setTimeout(r, Math.max(0, 1200 - (Date.now() - started))));
     setSending(false);
     if (error) return setToast(friendError(error));
+    // Urgent push to every chosen friend (lock screen shows only "{name} чамаас тусламж хүсч байна").
+    sendNotification(session, "friend_sos", selectedFriends.map((friend) => friend.id), place.trim().slice(0, 40) || null);
     await loadOutgoing();
-    setToast(`${selectedFriends.length} найзад дохио очлоо 📣`);
+    setToast(t(`${selectedFriends.length} найзад дохио очлоо 📣`, `Alert sent to ${selectedFriends.length} friend(s) 📣`));
   };
 
   const resolveSos = async () => {
@@ -260,7 +281,8 @@ export function FriendsProvider({ children }) {
       setToast(friendError(error));
       return loadIncoming();
     }
-    setToast(reply === "no" ? "Хариу илгээлээ" : `${request.sender_name}-д хариу очлоо 💗`);
+    if (reply === "coming" && request.sender_id) sendNotification(session, "friend_coming", [request.sender_id]);
+    setToast(reply === "no" ? t("Хариу илгээлээ", "Reply sent") : t(`${request.sender_name}-д хариу очлоо 💗`, `Reply sent to ${request.sender_name} 💗`));
   };
 
   const sosStage = sending ? "ringing" : outgoing ? "sent" : "idle";
@@ -293,6 +315,7 @@ export function FriendsProvider({ children }) {
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
+      lang,
       active,
       friendCode,
       friends,

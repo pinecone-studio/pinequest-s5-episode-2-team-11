@@ -7,11 +7,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { BookOpen, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
-import { PAD_GUIDE } from "../../../lib/padGuide";
+import { PAD_GUIDE, PAD_USAGE_DISPOSAL_GUIDE } from "../../../lib/padGuide";
 import PadIllustration from "./PadIllustration";
 import Card from "../ui/Card";
+import { t } from "../../../lib/i18n";
 
 const STORAGE_KEY = "bloomy:padGuide";
+const USAGE_DISPOSAL_STORAGE_KEY = "bloomy:padUsageDisposalGuide";
 const INITIAL = { version: 4, part: 0, step: 0, page: 0, finished: false };
 
 const MAX_PAGE_CHARS = 110;
@@ -55,15 +57,15 @@ function getTextPages(text) {
   return pages.length ? pages : [""];
 }
 
-function loadProgress() {
+function loadProgress(guide = PAD_GUIDE, storageKey = STORAGE_KEY) {
   try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+    const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
     if (saved && saved.version !== 4) {
-      const canKeepPart = [2, 3].includes(saved.version) && Number.isInteger(saved.part) && PAD_GUIDE[saved.part];
-      const part = saved.finished ? PAD_GUIDE.length - 1 : canKeepPart ? saved.part : 2;
+      const canKeepPart = [2, 3].includes(saved.version) && Number.isInteger(saved.part) && guide[saved.part];
+      const part = saved.finished ? guide.length - 1 : canKeepPart ? saved.part : Math.min(2, guide.length - 1);
       const step = saved.finished
-        ? PAD_GUIDE[part].steps.length - 1
-        : Math.min(Number.isInteger(saved.step) ? saved.step : 0, PAD_GUIDE[part].steps.length - 1);
+        ? guide[part].steps.length - 1
+        : Math.min(Number.isInteger(saved.step) ? saved.step : 0, guide[part].steps.length - 1);
       const migrated = {
         ...INITIAL,
         ...saved,
@@ -72,11 +74,11 @@ function loadProgress() {
         step,
         page: 0,
       };
-      if (PAD_GUIDE[migrated.part]?.steps[migrated.step]) return migrated;
+      if (guide[migrated.part]?.steps[migrated.step]) return migrated;
     }
-    if (saved && PAD_GUIDE[saved.part]?.steps[saved.step]) {
+    if (saved && guide[saved.part]?.steps[saved.step]) {
       const migrated = { ...INITIAL, ...saved };
-      const pageCount = getTextPages(PAD_GUIDE[migrated.part].steps[migrated.step].d).length;
+      const pageCount = getTextPages(guide[migrated.part].steps[migrated.step].d).length;
       migrated.page = Math.min(Number.isInteger(saved.page) ? saved.page : 0, pageCount - 1);
       return migrated;
     }
@@ -98,26 +100,28 @@ export function usePadGuideFinished() {
   return finished;
 }
 
-export default function PadGuide({ role, onAskFriends }) {
+export default function PadGuide({ role, onAskFriends, standalone = false }) {
+  const guide = standalone ? PAD_USAGE_DISPOSAL_GUIDE : PAD_GUIDE;
+  const storageKey = standalone ? USAGE_DISPOSAL_STORAGE_KEY : STORAGE_KEY;
   const [T, setT] = useState(INITIAL);
   const [expandedPart, setExpandedPart] = useState(0);
   const touchX = useRef(null);
 
   useEffect(() => {
-    const progress = loadProgress();
+    const progress = loadProgress(guide, storageKey);
     setT(progress);
     setExpandedPart(progress.part);
-  }, []);
+  }, [guide, storageKey]);
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(T));
+      localStorage.setItem(storageKey, JSON.stringify(T));
       window.dispatchEvent(new Event("bloomy:padGuide"));
     } catch {
       /* ignore */
     }
-  }, [T]);
+  }, [T, storageKey]);
 
-  const part = PAD_GUIDE[T.part] ?? PAD_GUIDE[0];
+  const part = guide[T.part] ?? guide[0];
   const step = part.steps[T.step] ?? part.steps[0];
   const pages = getTextPages(step.d);
   const pageIndex = Math.min(T.page ?? 0, pages.length - 1);
@@ -143,23 +147,23 @@ export default function PadGuide({ role, onAskFriends }) {
   };
 
   const nextLabel = pageIndex < pages.length - 1 || T.step < total - 1
-    ? "Дараах"
-    : "Дуусгах ✓";
+    ? t("Дараах", "Next")
+    : t("Дуусгах ✓", "Finish ✓");
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2 overflow-hidden">
       <div className="flex flex-none items-center justify-between gap-2 px-1">
         <h1 className="flex min-w-0 flex-1 items-center gap-2 text-base font-black text-slate-700">
           <BookOpen className="h-5 w-5 shrink-0 bb-text-B83B7E" />
-          <span className="truncate">Ариун цэврийн хэрэглэл</span>
+          <span className="truncate">{standalone ? t("Хэрэглэл хэрэглэх, хаях заавар", "How to use and dispose of supplies") : t("Ариун цэврийн хэрэглэл", "Hygiene supplies")}</span>
         </h1>
       </div>
 
       <Card className="lesson-card min-h-0 flex-1 !p-3 sm:!p-4">
         <div className="h-full min-h-0 overflow-y-auto overscroll-contain pr-1">
-          <p className="mb-2 px-1 text-xs font-bold text-slate-500">Үзэх сэдвээ сонгоорой</p>
-          <nav aria-label="Хэрэглэлийн сэдвүүд" className="flex flex-col gap-2">
-            {PAD_GUIDE.map((p, i) => {
+          <p className="mb-2 px-1 text-xs font-bold text-slate-500">{t("Үзэх сэдвээ сонгоорой", "Pick a topic")}</p>
+          <nav aria-label={t("Хэрэглэлийн сэдвүүд", "Supply topics")} className="flex flex-col gap-2">
+            {guide.map((p, i) => {
               const isExpanded = expandedPart === i;
               const topicSteps = p.steps;
               const topicIsCurrent = T.part === i;
@@ -207,19 +211,19 @@ export default function PadGuide({ role, onAskFriends }) {
                         <div className="lesson-info-card lesson-info-card-first w-full max-w-full rounded-2xl px-3 py-2">
                           <p className={`lesson-slide-copy font-semibold text-slate-600 ${topicStep.d.includes("\n") ? "whitespace-pre-line text-left" : "text-center"}`}>{topicPages[topicPageIndex]}</p>
                         </div>
-                        <div className="mt-2 flex items-center justify-center gap-1.5" aria-label={`${topicTotal} мэдээлэл`}>
+                        <div className="mt-2 flex items-center justify-center gap-1.5" aria-label={t(`${topicTotal} мэдээлэл`, `${topicTotal} facts`)}>
                           {topicSteps.map((_, index) => <span key={index} className={`h-1.5 rounded-full transition-all ${index === T.step ? "w-4 bb-grad-guide" : "w-1.5 bg-violet-200"}`} />)}
                         </div>
                       </div>
-                      {i === 2 && T.step === topicTotal - 1 && topicPageIndex === topicPages.length - 1 && role !== "mother" && onAskFriends && (
-                        <button onClick={onAskFriends} className="mt-2 min-h-9 w-full rounded-xl border-2 bb-border-F8D3E6 bb-bg-FDE7F1 px-2 text-[11px] font-extrabold bb-text-B83B7E">Хэрэглэл дууссан уу? Найзаасаа асуух →</button>
+                      {((standalone && i === 0) || (!standalone && i === 2)) && T.step === topicTotal - 1 && topicPageIndex === topicPages.length - 1 && role !== "mother" && onAskFriends && (
+                        <button onClick={onAskFriends} className="mt-2 min-h-9 w-full rounded-xl border-2 bb-border-F8D3E6 bb-bg-FDE7F1 px-2 text-[11px] font-extrabold bb-text-B83B7E">{t("Хэрэглэл дууссан уу? Найзаасаа асуух →", "Out of supplies? Ask a friend →")}</button>
                       )}
                       <div className="mt-2 flex gap-2">
-                        <button onClick={topicPrev} disabled={topicFirst} aria-label="Өмнөх" className={`flex min-h-11 flex-1 items-center justify-center gap-1 rounded-xl text-sm font-extrabold ${topicFirst ? "bg-slate-100 text-slate-300" : "bg-slate-100 text-slate-600 active:scale-95"}`}>
-                          <ChevronLeft className="h-4 w-4" /> Өмнөх
+                        <button onClick={topicPrev} disabled={topicFirst} aria-label={t("Өмнөх", "Previous")} className={`flex min-h-11 flex-1 items-center justify-center gap-1 rounded-xl text-sm font-extrabold ${topicFirst ? "bg-slate-100 text-slate-300" : "bg-slate-100 text-slate-600 active:scale-95"}`}>
+                          <ChevronLeft className="h-4 w-4" /> {t("Өмнөх", "Previous")}
                         </button>
                         <button onClick={topicNext} className="flex min-h-11 flex-1 items-center justify-center gap-1 rounded-xl text-sm font-extrabold text-white bb-grad-guide shadow-md active:scale-95">
-                          {topicIsCurrent ? nextLabel : "Дэлгэрэнгүй"} <ChevronRight className="h-4 w-4" />
+                          {topicIsCurrent ? nextLabel : t("Дэлгэрэнгүй", "More")} <ChevronRight className="h-4 w-4" />
                         </button>
                       </div>
                     </div>
