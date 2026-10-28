@@ -9,6 +9,7 @@ import DaughterSupplies from "../daughter/DaughterSupplies";
 import { Stepper } from "../onboarding/CycleSetup";
 import BottomSheet from "../ui/BottomSheet";
 import { LANGUAGES, SegmentedChoice, THEMES, useLanguage } from "./AppSettingsSection";
+import FeedbackSurvey from "../feedback/FeedbackSurvey";
 import GuardianConnectForm from "./GuardianConnectForm";
 import NotificationSettings from "./NotificationSettings";
 import PrivateNotePinSettings from "./PrivateNotePinSettings";
@@ -132,7 +133,7 @@ function QaList({ items }) {
 
 /** Daughter's Profile tab as a grouped settings list (Settings page merged in as «Апп»). */
 export default function DaughterProfile() {
-  const { profile, setToast, linked, guardianName, cycleLength, signOut } = useFamily();
+  const { profile, setToast, linked, guardianName, cycleLength, signOut, noPeriodYet } = useFamily();
   const { theme, setTheme } = useTheme();
   const [language, setLanguage] = useLanguage();
   const avatar = useAvatar(profile?.id, setToast);
@@ -168,6 +169,7 @@ export default function DaughterProfile() {
       </SettingsGroup>
 
       <SettingsGroup title="Тусламж">
+        <SettingsRow emoji="💌" label="Санал хүсэлт" onClick={() => setSheet("feedback")} />
         <SettingsRow emoji="❓" label="Тусламж" onClick={() => setSheet("help")} />
         <SettingsRow emoji="📄" label="Нууцлалын бодлого" onClick={() => setSheet("policy")} />
       </SettingsGroup>
@@ -202,6 +204,7 @@ export default function DaughterProfile() {
         </div>
       </BottomSheet>}
       {sheet === "delete" && <DeleteAccountSheet onClose={close} />}
+      {sheet === "feedback" && <FeedbackSurvey role="daughter" noPeriodYet={noPeriodYet} onClose={close} />}
     </div>
   );
 }
