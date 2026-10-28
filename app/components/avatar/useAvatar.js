@@ -193,6 +193,9 @@ export function useAvatar(userId, onToast = () => {}) {
     onToast(`Өдрийн бэлэг: +${DAILY_GIFT} XP, +${DAILY_GIFT} дэлбээ`);
   };
 
+  /** Small thank-you reward (e.g. after a feedback survey): same XP + 🌸 logic as the daily gift. */
+  const bonus = (amount) => setState((s) => reward(s, amount));
+
   const level = levelOf(state.xp);
   const availableXp = Math.max(0, state.xp - (state.xpSpent ?? 0));
 
@@ -243,6 +246,7 @@ export function useAvatar(userId, onToast = () => {}) {
     giftReady,
     addSteps,
     claimGift,
+    bonus,
     buy,
     equip,
     setSkin,

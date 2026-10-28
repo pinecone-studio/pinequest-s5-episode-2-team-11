@@ -9,6 +9,7 @@ import AppSettingsSection from "./AppSettingsSection";
 import DaughterProfile from "./DaughterProfile";
 import FamilyLinkingSection from "./FamilyLinkingSection";
 import NotificationSettings from "./NotificationSettings";
+import FeedbackSurvey from "../feedback/FeedbackSurvey";
 import { SettingsGroup, SettingsRow } from "./SettingsList";
 import ProfileCard from "./ProfileCard";
 import { APP_SETTINGS_FOCUS_EVENT, takeAppSettingsFocus } from "./appSettingsFocus";
@@ -18,6 +19,7 @@ export default function ProfileScreen() {
   const [savingGender, setSavingGender] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const isMother = view === "mother";
 
   // Header gear → scroll to the «Апп» section.
@@ -78,7 +80,9 @@ export default function ProfileScreen() {
           <FamilyLinkingSection />
           <SettingsGroup>
             <SettingsRow emoji="🔔" label="Мэдэгдэл" onClick={() => setNotificationsOpen(true)} />
+            <SettingsRow emoji="💌" label="Санал хүсэлт" onClick={() => setFeedbackOpen(true)} />
           </SettingsGroup>
+          {feedbackOpen && <FeedbackSurvey role="guardian" onClose={() => setFeedbackOpen(false)} />}
           {notificationsOpen && <BottomSheet title="🔔 Мэдэгдэл" onClose={() => setNotificationsOpen(false)}><NotificationSettings /></BottomSheet>}
           <AppSettingsSection />
           <button
