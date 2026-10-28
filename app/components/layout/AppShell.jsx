@@ -10,6 +10,7 @@ import CurrentScreen from "./CurrentScreen";
 import SosModal from "../sos/SosModal";
 import ChildSwitcher from "../mother/ChildSwitcher";
 import { useTheme } from "../../../context/ThemeContext";
+import { requestAppSettingsFocus } from "../settings/appSettingsFocus";
 
 // Хаяг → таб
 const TAB_BY_PATH = {
@@ -24,7 +25,7 @@ const TAB_BY_PATH = {
   "/daughter/messages": "messages",
   "/friends": "friends",
   "/learn": "learn",
-  "/settings": "settings",
+  "/settings": "me", // хуучин тохиргооны хуудас → Профайлын «Апп» хэсэг
   "/profile": "me",
 };
 
@@ -59,7 +60,11 @@ export default function AppShell() {
 
   useEffect(() => {
     setTab(TAB_BY_PATH[pathname] ?? "home");
-  }, [pathname, setTab]);
+    if (pathname === "/settings") {
+      requestAppSettingsFocus();
+      router.replace("/profile");
+    }
+  }, [pathname, setTab, router]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -82,7 +87,6 @@ export default function AppShell() {
       learn: "/learn",
       messages: view === "mother" ? "/mother/messages" : "/daughter/messages",
       me: "/profile",
-      settings: "/settings",
     };
     router.push(routes[nextTab] ?? "/");
   };
@@ -102,7 +106,10 @@ export default function AppShell() {
           view={view}
           tab={tab}
           momUnread={view === "mother" ? momUnread : teenUnread}
-          onOpenSettings={() => navigateToTab("settings")}
+          onOpenSettings={() => {
+            requestAppSettingsFocus();
+            navigateToTab("me");
+          }}
           onOpenNotifications={() => navigateToTab("messages")}
           onLogoClick={() => {
             if (session) navigateToTab("home");
