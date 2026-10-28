@@ -8,6 +8,8 @@ import Card from "../ui/Card";
 import AppSettingsSection from "./AppSettingsSection";
 import DaughterProfile from "./DaughterProfile";
 import FamilyLinkingSection from "./FamilyLinkingSection";
+import NotificationSettings from "./NotificationSettings";
+import { SettingsGroup, SettingsRow } from "./SettingsList";
 import ProfileCard from "./ProfileCard";
 import { APP_SETTINGS_FOCUS_EVENT, takeAppSettingsFocus } from "./appSettingsFocus";
 
@@ -15,6 +17,7 @@ export default function ProfileScreen() {
   const { view, guardianGender, updateGuardianGender, signOut } = useFamily();
   const [savingGender, setSavingGender] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const isMother = view === "mother";
 
   // Header gear → scroll to the «Апп» section.
@@ -73,6 +76,10 @@ export default function ProfileScreen() {
             {savingGender && <p role="status" className="mt-2 text-xs font-semibold text-slate-500">Хадгалж байна…</p>}
           </Card>
           <FamilyLinkingSection />
+          <SettingsGroup>
+            <SettingsRow emoji="🔔" label="Мэдэгдэл" onClick={() => setNotificationsOpen(true)} />
+          </SettingsGroup>
+          {notificationsOpen && <BottomSheet title="🔔 Мэдэгдэл" onClose={() => setNotificationsOpen(false)}><NotificationSettings /></BottomSheet>}
           <AppSettingsSection />
           <button
             type="button"
