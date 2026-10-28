@@ -10,6 +10,7 @@ import ChildrenOverview from "./ChildrenOverview";
 import MonthlyCareCarousel from "./MonthlyCareCarousel";
 import FeedbackPromptCard from "../feedback/FeedbackPromptCard";
 import StoryRecorderSheet from "../connection/StoryRecorderSheet";
+import SharedSignals from "../connection/SharedSignals";
 
 export default function MotherHome() {
   const [customMessage, setCustomMessage] = useState("");
@@ -57,6 +58,8 @@ export default function MotherHome() {
       </div>
 
       <ChildrenOverview />
+
+      {linked && <SharedSignals />}
 
       {!linked && (
         <Card className="bb-grad-5">
