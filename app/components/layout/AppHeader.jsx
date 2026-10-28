@@ -1,4 +1,5 @@
 import { Bell, Settings } from "lucide-react";
+import { t } from "../../../lib/i18n";
 import BloomyLogo from "../ui/BloomyLogo";
 
 export default function AppHeader({ showNav, view, tab, momUnread = 0, onOpenSettings, onOpenNotifications, onLogoClick }) {
@@ -8,7 +9,7 @@ export default function AppHeader({ showNav, view, tab, momUnread = 0, onOpenSet
       style={{ paddingTop: "max(12px, env(safe-area-inset-top))" }}
     >
       <div className="flex items-center justify-between gap-2">
-        <button type="button" onClick={onLogoClick} aria-label="Bloomy руу буцах" className="flex items-center gap-1.5 rounded-xl text-left active:scale-95 transition">
+        <button type="button" onClick={onLogoClick} aria-label={t("Bloomy руу буцах", "Back to Bloomy")} className="flex items-center gap-1.5 rounded-xl text-left active:scale-95 transition">
           <BloomyLogo className="w-8 h-8 shrink-0" />
           <span className="font-black text-slate-700">Bloomy</span>
         </button>
@@ -17,8 +18,8 @@ export default function AppHeader({ showNav, view, tab, momUnread = 0, onOpenSet
             <button
               type="button"
               onClick={onOpenSettings}
-              aria-label="Тохиргоо"
-              title="Тохиргоо"
+              aria-label={t("Тохиргоо", "Settings")}
+              title={t("Тохиргоо", "Settings")}
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-100 bg-white text-slate-500 active:scale-95"
             >
               <Settings className="h-4 w-4" />
@@ -28,7 +29,7 @@ export default function AppHeader({ showNav, view, tab, momUnread = 0, onOpenSet
             <button
               type="button"
               onClick={onOpenNotifications}
-              aria-label="Мэдэгдэл"
+              aria-label={t("Мэдэгдэл", "Notifications")}
               className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-100 bg-white text-slate-500 active:scale-95"
             >
               <Bell className={`h-4 w-4 ${momUnread ? "bloom-wiggle" : ""}`} />

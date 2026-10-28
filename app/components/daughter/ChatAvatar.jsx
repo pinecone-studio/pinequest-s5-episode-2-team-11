@@ -1,8 +1,8 @@
 "use client";
 
 /**
- * "Блүми эгч" аватар. Нүд нь байнга анивчина; talking үед ам нь хөдөлж, толгой нь бага зэрэг хөдөлнө.
- */
+* "Блүми эгч" аватар. Нүд нь байнга анивчина; talking үед ам нь хөдөлж, толгой нь бага зэрэг хөдөлнө.
+*/
 export default function ChatAvatar({ talking = false, size = 72 }) {
   return (
     <div className={talking ? "bloom-bob" : "bloom-avatar-float"} style={{ width: size, height: size }}>

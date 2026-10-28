@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Plus, Share2 } from "lucide-react";
+import { t } from "../../../lib/i18n";
 
 export default function InstallAppButton() {
   const [installPrompt, setInstallPrompt] = useState(null);
@@ -55,19 +56,19 @@ export default function InstallAppButton() {
         aria-expanded={showInstructions}
         className="inline-flex items-center gap-2 rounded-full border-2 bb-border-FDE7F1 bg-white px-5 py-3 font-extrabold bb-text-B83B7E shadow-sm active:scale-95 transition"
       >
-        <Plus className="w-5 h-5" /> Нүүр дэлгэцэд нэмэх
+        <Plus className="w-5 h-5" /> {t("Нүүр дэлгэцэд нэмэх", "Add to Home Screen")}
       </button>
 
       {showInstructions && (
         <p className="mt-3 max-w-xs rounded-2xl bb-bg-FDE7F1-70 px-4 py-3 text-center text-xs font-semibold text-slate-600">
           {isIos ? (
             <>
-              Safari-ийн <Share2 className="inline w-3.5 h-3.5 align-[-2px]" /> Хуваалцах товчийг дараад{" "}
-              <b>Нүүр дэлгэцэд нэмэх</b>-ийг сонгоно уу.
+              {t("Safari-ийн", "In Safari, tap")} <Share2 className="inline w-3.5 h-3.5 align-[-2px]" /> {t("Хуваалцах товчийг дараад", "Share, then choose")} {" "}
+              <b>{t("Нүүр дэлгэцэд нэмэх", "Add to Home Screen")}</b>{t("-ийг сонгоно уу.", ".")}
             </>
           ) : (
             <>
-              Chrome-ийн <b>⋮</b> цэсийг нээгээд <b>Апп суулгах</b> эсвэл <b>Нүүр дэлгэцэд нэмэх</b>-ийг сонгоно уу.
+              {t("Chrome-ийн", "In Chrome, open the")} <b>⋮</b> {t("цэсийг нээгээд", "menu and choose")} <b>{t("Апп суулгах", "Install app")}</b> {t("эсвэл", "or")} <b>{t("Нүүр дэлгэцэд нэмэх", "Add to Home Screen")}</b>{t("-ийг сонгоно уу.", ".")}
             </>
           )}
         </p>

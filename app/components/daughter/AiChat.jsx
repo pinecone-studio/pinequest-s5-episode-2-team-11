@@ -9,16 +9,17 @@ import { supabase } from "../../../lib/supabase";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
 import ChatAvatar from "./ChatAvatar";
+import { t } from "../../../lib/i18n";
 
-const STARTERS = [
-  "Сарын тэмдэг гэж юу вэ? 🌸",
-  "Найзтайгаа муудалцчихлаа 😔",
-  "Хичээлдээ яаж төвлөрөх вэ? 📚",
-  "Өөртөө итгэлтэй болохыг хүсч байна ✨",
-];
+const STARTERS = () => ([
+  t("Сарын тэмдэг гэж юу вэ? 🌸", "What is a period? 🌸"),
+  t("Найзтайгаа муудалцчихлаа 😔", "I fought with my friend 😔"),
+  t("Хичээлдээ яаж төвлөрөх вэ? 📚", "How can I focus on school? 📚"),
+  t("Өөртөө итгэлтэй болохыг хүсч байна ✨", "I want to feel more confident ✨"),
+]);
 
 const GREETING =
-  "Сайн уу! Би Блүми эгч байна 🌷 Бие махбод, сэтгэл санаа, найз нөхөд, сургууль — юу ч хамаагүй асуугаарай. Ичих зүйл огт байхгүй 💗";
+  () => (t("Сайн уу! Би Блүми эгч байна 🌷 Бие махбод, сэтгэл санаа, найз нөхөд, сургууль — юу ч хамаагүй асуугаарай. Ичих зүйл огт байхгүй 💗", "Hi! I'm Big Sis Bloomy 🌷 Body, feelings, friends, school — ask me anything. There's nothing to be shy about 💗"));
 
 export default function AiChat() {
   const { session } = useFamily();
@@ -114,7 +115,7 @@ export default function AiChat() {
       }
     }
     setThinking(false);
-    setMessages([...next, { role: "assistant", content: reply }]);
+    setMessages([...next, { role: "assistant", content: reply, source: reply === fallback.reply ? "auto" : "ai" }]);
     setChips(nextChips);
     setTyping({ index: next.length, shown: 0 });
     saveToDb([
@@ -147,14 +148,14 @@ export default function AiChat() {
     <Card>
       <SectionTitle
         icon={MessageCircleHeart}
-        title="Блүми эгчээс асуу"
+        title={t("Блүми эгчээс асуу", "Ask Big Sis Bloomy")}
         right={
           <div className="flex items-center gap-2">
             {messages.length > 0 && (
               <button
                 onClick={clear}
                 className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center active:scale-90"
-                aria-label="Яриаг устгах"
+                aria-label={t("Яриаг устгах", "Clear chat")}
               >
                 <Trash2 className="w-4 h-4 text-slate-400" />
               </button>
@@ -167,20 +168,22 @@ export default function AiChat() {
       <div className="flex items-center gap-3 rounded-3xl bb-grad-4 p-3">
         <ChatAvatar talking={Boolean(typing)} />
         <div className="flex-1">
-          <p className="font-black text-slate-700">Блүми эгч</p>
+          <p className="font-black text-slate-700">{t("Блүми эгч", "Big Sis Bloomy")}</p>
           <p className="text-xs font-semibold text-slate-500">
-            {thinking ? "Бодож байна…" : typing ? "Ярьж байна…" : "Чиний итгэлт найз 🌷"}
+            {thinking ? t("Бодож байна…", "Thinking…") : typing ? t("Ярьж байна…", "Speaking…") : t("Чиний итгэлт найз 🌷", "Your trusted friend 🌷")}
           </p>
         </div>
       </div>
 
       {/* Мессежүүд */}
       <div ref={listRef} className="mt-3 max-h-96 overflow-y-auto space-y-3 pr-1">
-        <Bubble role="assistant">{GREETING}</Bubble>
+        <Bubble role="assistant">{GREETING()}</Bubble>
         {messages.map((m, i) => (
-          <Bubble key={i} role={m.role}>
-            {typing?.index === i ? m.content.slice(0, typing.shown) : m.content}
-          </Bubble>
+          <div key={i}>
+            <Bubble role={m.role}>
+              {typing?.index === i ? m.content.slice(0, typing.shown) : m.content}
+            </Bubble>
+          </div>
         ))}
         {thinking && (
           <div className="flex justify-start">
@@ -197,7 +200,7 @@ export default function AiChat() {
         )}
         {!busy && (messages.length === 0 || chips.length > 0) && (
           <div className="flex flex-wrap gap-2">
-            {(messages.length === 0 ? STARTERS : chips).map((s) => (
+            {(messages.length === 0 ? STARTERS() : chips).map((s) => (
               <button
                 key={s}
                 onClick={() => send(s)}
@@ -223,33 +226,21 @@ export default function AiChat() {
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             maxLength={600}
-            placeholder="Асуух зүйлээ бичээрэй…"
-            aria-label="Мессеж"
+            placeholder={t("Асуух зүйлээ бичээрэй…", "Type your question…")}
+            aria-label={t("Мессеж", "Message")}
             className="flex-1 min-w-0 rounded-2xl bb-bg-FFF7FB border-2 bb-border-E9DDFC px-4 py-3 text-sm font-semibold outline-none bb-focus-border-F48FB1"
           />
           <button
             type="submit"
             disabled={!draft.trim() || busy}
             className="w-12 rounded-2xl bb-bg-E0679F text-white flex items-center justify-center active:scale-95 transition disabled:opacity-40"
-            aria-label="Илгээх"
+            aria-label={t("Илгээх", "Send")}
           >
             <Send className="w-5 h-5" />
           </button>
         </div>
         <p className="mt-2 flex items-center justify-center gap-1 text-[11px] font-semibold text-slate-400">
-          <ShieldCheck className="w-3 h-3" /> Хувийн мэдээллээ бүү хуваалц
-        </p>
-                <p className="mt-1 text-center text-[11px] font-semibold leading-relaxed text-slate-400">
-          Хариултыг AI бичдэг тул алдаа гарч болно. Эмчийн зөвлөгөөг орлохгүй.
-          Өвдөлт хүчтэй эсвэл санаа зовж байвал эмч, ээж эсвэл итгэдэг томдоо хэлээрэй.
-        </p>
-        <p className="mt-1 text-center text-[11px] font-semibold text-slate-400">
-          Дэлгэрэнгүй:{" "}
-          <a className="underline" href="https://www.unicef.org/parenting/health/talking-about-periods-at-home" target="_blank" rel="noreferrer">UNICEF</a>
-          {" · "}
-          <a className="underline" href="https://www.acog.org/womens-health/faqs/your-first-period" target="_blank" rel="noreferrer">ACOG</a>
-          {" · "}
-          <a className="underline" href="https://www.nhs.uk/conditions/periods/" target="_blank" rel="noreferrer">NHS</a>
+          <ShieldCheck className="w-3 h-3" /> {t("Хувийн мэдээллээ бүү хуваалц", "Don't share personal info")}
         </p>
       </form>
     </Card>
@@ -272,3 +263,5 @@ function Bubble({ role, children }) {
     </div>
   );
 }
+
+ 

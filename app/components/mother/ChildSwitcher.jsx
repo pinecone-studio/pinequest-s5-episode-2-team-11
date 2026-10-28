@@ -1,6 +1,7 @@
 "use client";
 
 import { useFamily } from "../../../context/FamilyContext";
+import { t } from "../../../lib/i18n";
 
 /** 2+ охинтой асран хамгаалагч аль охиныхоо мэдээллийг харахаа сонгоно (бүх таб дээр). */
 export default function ChildSwitcher() {
@@ -8,8 +9,8 @@ export default function ChildSwitcher() {
   if (children.length < 2) return null;
 
   return (
-    <div aria-label="Охиноо сонгох" className="mb-4 rounded-2xl bg-white p-2 shadow-sm border border-slate-100">
-      <p className="px-2 pb-2 text-xs font-extrabold uppercase tracking-wider text-slate-400">Хүүхэд сонгох</p>
+    <div aria-label={t("Охиноо сонгох", "Choose your daughter")} className="mb-4 rounded-2xl bg-white p-2 shadow-sm border border-slate-100">
+      <p className="px-2 pb-2 text-xs font-extrabold uppercase tracking-wider text-slate-400">{t("Хүүхэд сонгох", "Choose child")}</p>
       <div className="flex gap-2 overflow-x-auto">
         {children.map((child) => (
           <button
@@ -19,7 +20,7 @@ export default function ChildSwitcher() {
             aria-pressed={activeChildId === child.id}
             className={`shrink-0 rounded-full px-4 py-2 text-sm font-extrabold transition ${activeChildId === child.id ? "bb-bg-E0679F text-white" : "bb-bg-FFF7FB text-slate-600"}`}
           >
-            {child.display_name || "Охин"}
+            {child.display_name || t("Охин", "Daughter")}
           </button>
         ))}
       </div>

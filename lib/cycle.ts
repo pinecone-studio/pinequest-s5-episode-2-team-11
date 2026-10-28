@@ -1,3 +1,5 @@
+import { monthDay, t } from "./i18n";
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export type PeriodLog = string | {
@@ -197,11 +199,40 @@ export function getSeason(date: string | Date, cycleInfo: CycleInfo): Season {
   const dayIndex = differenceInDays(lastStart, key);
   if (dayIndex < 0) return "spring";
   const autumnFromDay = Math.max(Math.ceil(length * 0.7), (cycleInfo.prediction ? differenceInDays(lastStart, cycleInfo.prediction.rangeStart) - 7 : length - 7));
+  return seasonForCycleDay(dayIndex, length, duration, autumnFromDay);
+}
+
+/** Season of a 0-based day inside a cycle of `cycleLength` days; also used to split past cycles into seasons. */
+export function seasonForCycleDay(dayIndex: number, cycleLength: number, periodLength: number, autumnFromDay = Math.max(Math.ceil(cycleLength * 0.7), cycleLength - 7)): Season {
   if (dayIndex >= autumnFromDay) return "autumn";
-  if (dayIndex < duration) return "winter";
-  if (dayIndex < length * 0.45) return "spring";
-  if (dayIndex < length * 0.7) return "summer";
+  if (dayIndex < periodLength) return "winter";
+  if (dayIndex < cycleLength * 0.45) return "spring";
+  if (dayIndex < cycleLength * 0.7) return "summer";
   return "autumn";
+}
+
+export type CyclePosition =
+  | { phase: "before_first" }
+  | { phase: "cycle"; season: Season; cycleDay: number; daysUntilNext: number | null; cycleStart: string; late: boolean };
+
+/**
+ * Where today sits in the cycle. Uses the same inputs as CycleRing
+ * (context cycleLength, predicted period length) so both show the same season.
+ */
+export function getCyclePosition(today: string, periods: PeriodLog[] = [], { cycleLength, periodLength }: { cycleLength?: number; periodLength?: number } = {}): CyclePosition {
+  const confirmed = getConfirmedPeriods(periods, today);
+  if (!confirmed.length) return { phase: "before_first" };
+  const prediction = getPrediction(confirmed, today);
+  const cycleStart = periodStart(confirmed.at(-1)!)!;
+  const season = getSeason(today, { periods: confirmed, cycleLength: cycleLength ?? prediction?.cycleLength, periodLength: prediction?.periodLength ?? periodLength, prediction });
+  return {
+    phase: "cycle",
+    season,
+    cycleDay: differenceInDays(cycleStart, today) + 1,
+    daysUntilNext: prediction ? differenceInDays(today, prediction.rangeStart) : null,
+    cycleStart,
+    late: Boolean(prediction?.late),
+  };
 }
 
 export function getBloomLevel(today: string, cycleInfo: CycleInfo): number {
@@ -245,9 +276,9 @@ export function getCyclePatternInsight(periods: PeriodLog[], dayLogs: { log_date
   const relevant = dayLogs.filter((row) => row.log_date >= (completedStarts[0] ?? today) && row.log_date < (completedStarts.at(-1) ?? today));
   const moodRows = relevant.filter((row) => Number.isFinite(row.mood) && Number(row.mood) >= 1 && Number(row.mood) <= 5);
   const phaseDefs = [
-    { key: "period", label: "Сарын тэмдгийн үе (1–5 дахь өдөр)", from: 1, to: 5 },
-    { key: "early", label: "Дараах үе (6–14 дэх өдөр)", from: 6, to: 14 },
-    { key: "later", label: "Мөчлөгийн сүүл хэсэг (15+ дахь өдөр)", from: 15, to: 60 },
+    { key: "period", label: t("Сарын тэмдгийн үе (1–5 дахь өдөр)", "Period (days 1–5)"), from: 1, to: 5 },
+    { key: "early", label: t("Дараах үе (6–14 дэх өдөр)", "After the period (days 6–14)"), from: 6, to: 14 },
+    { key: "later", label: t("Мөчлөгийн сүүл хэсэг (15+ дахь өдөр)", "Late cycle (day 15+)"), from: 15, to: 60 },
   ];
   const moodByPhase = phaseDefs.map((phase) => {
     const values = moodRows.filter((row) => {
@@ -288,5 +319,5 @@ export function periodDayKeys(starts: string[] = [], periodLength = 5, today = l
 export function dateLabelMongolian(date: Date, { includeYear = false }: { includeYear?: boolean } = {}): string {
   const month = date.getMonth() + 1;
   const day = date.getDate();
-  return includeYear ? `${date.getFullYear()} оны ${month} сарын ${day}` : `${month} сарын ${day}`;
+  return monthDay(month, day, includeYear ? date.getFullYear() : undefined);
 }

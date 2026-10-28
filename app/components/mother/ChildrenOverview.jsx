@@ -7,20 +7,21 @@ import { getPhaseKey } from "../../../lib/helpers";
 import { cycleStatus } from "../../../lib/dates";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
+import { t } from "../../../lib/i18n";
 
 function childSummary(child) {
   const cycleLength = child.cycle_length ?? 28;
   const cycle = cycleStatus(child.last_period_start, cycleLength);
   if (!cycle) {
-    return { color: "#CBD5E1", text: child.no_period_yet ? "Сарын тэмдэг хараахан ирээгүй" : "Мөчлөгөө оруулаагүй" };
+    return { color: "#CBD5E1", text: child.no_period_yet ? t("Сарын тэмдэг хараахан ирээгүй", "No period yet") : t("Мөчлөгөө оруулаагүй", "Cycle not entered") };
   }
   const phaseKey = getPhaseKey(cycle.day, cycleLength, child.period_length ?? 5);
   const isPeriod = phaseKey === "period";
   const detail = cycle.daysLate > 0
-    ? `${cycle.daysLate} хоног хоцорсон`
+    ? t(`${cycle.daysLate} хоног хоцорсон`, `${cycle.daysLate} days late`)
     : isPeriod
-      ? `${cycle.displayDay} дэх өдөр`
-      : `${cycle.daysUntil} хоногийн дараа`;
+      ? t(`${cycle.displayDay} дэх өдөр`, `Day ${cycle.displayDay}`)
+      : t(`${cycle.daysUntil} хоногийн дараа`, `In ${cycle.daysUntil} days`);
   return { color: PHASE_COLORS[phaseKey], text: `${PHASES[phaseKey].short} · ${detail}` };
 }
 
@@ -31,7 +32,7 @@ export default function ChildrenOverview() {
 
   return (
     <Card>
-      <SectionTitle icon={Users} title="Охидын тойм" />
+      <SectionTitle icon={Users} title={t("Охидын тойм", "Daughters overview")} />
       <div className="space-y-2">
         {children.map((child) => {
           const { color, text } = childSummary(child);
@@ -46,7 +47,7 @@ export default function ChildrenOverview() {
             >
               <span className="w-3 h-3 shrink-0 rounded-full" style={{ backgroundColor: color }} />
               <div className="flex-1 min-w-0">
-                <p className="font-black text-slate-700 truncate">{child.display_name || "Охин"}</p>
+                <p className="font-black text-slate-700 truncate">{child.display_name || t("Охин", "Daughter")}</p>
                 <p className="text-xs font-semibold text-slate-500">{text}</p>
               </div>
               <ChevronRight className="w-4 h-4 text-slate-300" />
