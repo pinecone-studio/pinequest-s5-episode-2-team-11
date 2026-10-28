@@ -5,7 +5,7 @@ import { CalendarHeart, Minus, Plus, Loader2 } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import { toDateStr, addDays } from "../../../lib/dates";
 
-function Stepper({ id, label, hint, value, setValue, min, max }) {
+export function Stepper({ id, label, hint, value, setValue, min, max }) {
   return (
     <div>
       <label
