@@ -264,6 +264,17 @@ const heartRows = (a, y = 12) => [
 ];
 const star = (x, y) => [[y - 1, x, x], [y, x - 1, x + 1], [y + 1, x, x]];
 
+// Үсний хавчаар (2 нэгжийн пиксел): L хүрээ, C өнгө, "." нүх — үс харагдана
+const CLIP_MAP = ["LLLLLLLL..", "LCCCCCCCL.", "LC.....CCL", "LCCCCCCCCL", ".LLLLLLLL."];
+// Хавчаарын зүүн үзүүрт суух дүрс: L хүрээ, K нүд, W үр, P хамар, G/M accent
+const CLIP_MOTIFS = {
+  heart: [".LL.LL.", "LCCLCCL", "LCCCCCL", ".LCCCL.", "..LCL..", "...L..."],
+  star: ["...L...", "..LCL..", "LLLCLLL", "LCCCCCL", ".LCCCL.", "LCLLLCL", "LL...LL"],
+  strawberry: ["..GG..", ".LGGL.", "LCCCCL", "LCWCWL", "LCCCCL", ".LCWL.", "..LL.."],
+  cat: ["L.....L", "LL...LL", "LCLLLCL", "LCCCCCL", "LCKCKCL", "LCCPCCL", ".LCCCL.", "..LLL.."],
+  bear: ["LL...LL", "LCLLLCL", "LCCCCCL", "LCKCKCL", "LCCMCCL", ".LCCCL.", "..LLL.."],
+};
+
 function Accessory({ item }) {
   const c = item.color;
   const a = item.accent ?? shade(c, -0.2);
@@ -310,6 +321,25 @@ function Accessory({ item }) {
           <Px rows={[[2, 9, 11]]} fill={shade(c, 0.3)} />
         </g>
       );
+    case "clip": {
+      const motif = CLIP_MOTIFS[item.motif];
+      const bar = motif ? shade(c, 0.55) : c;
+      return (
+        <g>
+          <Sprite map={CLIP_MAP} x={38} y={12} colors={{ L: line, C: bar }} />
+          {motif ? (
+            <Sprite
+              map={motif}
+              x={33}
+              y={9}
+              colors={{ L: line, C: c, G: a, M: a, K: "#2E2228", W: "#FFF4D6", P: "#F48FB1" }}
+            />
+          ) : (
+            <Sprite map={CLIP_MAP} x={39} y={17} colors={{ L: shade(a, -0.4), C: a }} />
+          )}
+        </g>
+      );
+    }
     case "sprout":
       return (
         <g>
@@ -323,49 +353,102 @@ function Accessory({ item }) {
 }
 
 /* ---------------- Хөл (өмд, гутал хамт хөдөлнө) ---------------- */
-const COVER = { pants: 41, joggers: 41, shorts: 35 };
+const COVER = { pants: 41, joggers: 41, shorts: 35, ripped: 41, cargo: 41, overalls: 41 };
+
+function Shoe({ x, shoes, skin, skinLine }) {
+  const { color: c, accent: a } = shoes;
+  const line = shade(c, -0.3);
+  const sole = [[43, x - 1, x + 2]];
+  const foot = [[42, x - 1, x + 2], ...sole];
+  switch (shoes.kind) {
+    case "boot":
+      return (
+        <g>
+          <Px rows={[...block(38, 41, x, x + 1), ...foot]} fill={c} line={shade(c, -0.35)} />
+          <Px rows={sole} fill={a} />
+        </g>
+      );
+    case "hightop":
+      return (
+        <g>
+          <Px rows={[...block(39, 41, x, x + 1), ...foot]} fill={c} line={shade(c, -0.35)} />
+          <Px rows={[...sole, [40, x, x + 1]]} fill={a} />
+          <Px rows={[[42, x - 1, x - 1]]} fill={a} />
+        </g>
+      );
+    case "chunky":
+      return (
+        <g>
+          <Px rows={[[41, x - 1, x + 2], ...foot]} fill={c} line={line} />
+          <Px rows={sole} fill={a} />
+          <Px rows={[[41, x, x]]} fill="#FFFFFF" />
+        </g>
+      );
+    case "slipper": {
+      const ears = [[39, x - 1, x - 1], [40, x - 1, x - 1], [39, x + 2, x + 2], [40, x + 2, x + 2]];
+      return (
+        <g>
+          <Px rows={[...ears, [41, x - 1, x + 2], ...foot]} fill={c} line={shade(c, -0.25)} />
+          <Px rows={[[40, x - 1, x - 1], [40, x + 2, x + 2]]} fill={a} />
+          <Sprite map={["K..K", ".PP."]} x={x * 2} y={83} colors={{ K: "#2E2228", P: a }} />
+        </g>
+      );
+    }
+    case "sandal":
+      return (
+        <g>
+          <Px rows={foot} fill={skin} line={skinLine} />
+          <Px rows={sole} fill={c} />
+          <Px rows={[[40, x, x + 1], [42, x, x]]} fill={c} />
+          <Px rows={[[43, x - 1, x + 2]]} fill={a} opacity={0.5} />
+        </g>
+      );
+    default:
+      return (
+        <g>
+          <Px rows={foot} fill={c} line={line} />
+          {shoes.kind === "mary" ? <Px rows={[[42, x, x]]} fill={shade(c, 0.35)} /> : <Px rows={sole} fill={a} />}
+        </g>
+      );
+  }
+}
 
 function Leg({ x, skin, skinLine, bottom, shoes, className, origin }) {
   const cover = COVER[bottom.kind];
-  const sole = [[43, x - 1, x + 2]];
-  const foot = [[42, x - 1, x + 2], ...sole];
   return (
     <g className={className} style={{ transformOrigin: origin }}>
       <Px rows={block(33, 41, x, x + 1)} fill={skin} line={skinLine} />
       {cover && <Px rows={block(33, cover, x, x + 1)} fill={bottom.color} line={shade(bottom.color, -0.3)} />}
       {bottom.kind === "joggers" && <Px rows={[[41, x, x + 1]]} fill={bottom.accent} />}
-      {shoes.kind === "mary" && <Px rows={block(37, 41, x, x + 1)} fill={shoes.accent} line={shade(shoes.accent, -0.25)} />}
-      {shoes.kind === "boot" ? (
+      {bottom.kind === "ripped" && (
         <g>
-          <Px rows={[...block(38, 41, x, x + 1), ...foot]} fill={shoes.color} line={shade(shoes.color, -0.35)} />
-          <Px rows={sole} fill={shoes.accent} />
-        </g>
-      ) : (
-        <g>
-          <Px rows={foot} fill={shoes.color} line={shade(shoes.color, -0.3)} />
-          {shoes.kind === "mary" ? (
-            <Px rows={[[42, x, x]]} fill={shade(shoes.color, 0.35)} />
-          ) : (
-            <Px rows={sole} fill={shoes.accent} />
-          )}
+          <Px rows={[[37, x, x + 1]]} fill={skin} />
+          <Px rows={[[36, x, x + 1], [38, x + 1, x + 1]]} fill={shade(bottom.color, 0.45)} />
         </g>
       )}
+      {bottom.kind === "cargo" && <Px rows={[[36, x, x + 1], [37, x, x + 1], [41, x, x + 1]]} fill={bottom.accent} />}
+      {shoes.kind === "mary" && <Px rows={block(37, 41, x, x + 1)} fill={shoes.accent} line={shade(shoes.accent, -0.25)} />}
+      <Shoe x={x} shoes={shoes} skin={skin} skinLine={skinLine} />
     </g>
   );
 }
 
 /* ---------------- Гар (ханцуй хамт) ---------------- */
-const SHORT_SLEEVE = ["tee", "heart"];
+const SHORT_SLEEVE = ["tee", "heart", "pinafore"];
+const TIEDYE = ["#F48FB1", "#8FB8F0", "#7CC46A", "#B794F4"];
 
 function Arm({ x, skin, skinLine, top, className, origin }) {
   const end = SHORT_SLEEVE.includes(top.kind) ? 26 : 30;
-  const sleeve = top.kind === "collar" ? top.accent : top.color;
+  const sleeve = top.kind === "collar" || top.kind === "pinafore" ? top.accent : top.color;
   return (
     <g className={className} style={{ transformOrigin: origin }}>
       <Px rows={block(24, 32, x, x + 1)} fill={skin} line={skinLine} />
       <Px rows={block(24, end, x, x + 1)} fill={sleeve} line={shade(sleeve, -0.3)} />
       {top.kind === "stripe" && <Px rows={[[25, x, x + 1], [27, x, x + 1], [29, x, x + 1]]} fill={top.accent} />}
       {(top.kind === "long" || top.kind === "hoodie") && <Px rows={[[30, x, x + 1]]} fill={top.accent} />}
+      {top.kind === "sweat" && <Px rows={[[30, x, x + 1]]} fill={shade(top.color, -0.12)} />}
+      {top.kind === "plaid" && <Px rows={[[26, x, x + 1], [29, x, x + 1]]} fill={top.accent} />}
+      {top.kind === "tiedye" && [25, 27, 29].map((y, i) => <Px key={y} rows={[[y, x, x + 1]]} fill={TIEDYE[i]} />)}
       {/* ханцуйн хүрээ гарыг дарсан тул гарыг дахин зурна */}
       <Px rows={block(end + 2, 32, x, x + 1)} fill={skin} />
     </g>
@@ -375,8 +458,50 @@ function Arm({ x, skin, skinLine, top, className, origin }) {
 /* ---------------- Бие ---------------- */
 const TORSO = [[23, 12, 17], ...block(24, 31, 11, 18)];
 
+// Цээжний зураг (2 нэгжийн пиксел): A/P accent, K бараан, Y шар, H зүрх, R/G/W гүзээлзгэнэ
+const TOP_MOTIFS = {
+  butterfly: ["AA....AA", "AAA..AAA", "AAAKKAAA", ".AAKKAA.", "AAAKKAAA", "AA.KK.AA"],
+  flower: [".PP.PP.", "PPPPPPP", ".PPYPP.", "PPPPPPP", ".PP.PP."],
+  smile: [".YYYY.", "YKYYKY", "YYYYYY", "YKYYKY", "YYKKYY", ".YYYY."],
+  heart: [".HH.HH.", "HHHHHHH", "HHHHHHH", ".HHHHH.", "..HHH..", "...H..."],
+  strawberry: ["..GG..", ".RRRR.", "RRWRRR", "RRRRWR", ".RRRR.", "..RR.."],
+};
+
+function TopMotif({ name, accent }) {
+  const map = TOP_MOTIFS[name];
+  if (!map) return null;
+  const colors = {
+    A: accent,
+    P: accent,
+    K: name === "smile" ? "#2E2228" : shade(accent, -0.45),
+    Y: name === "smile" ? accent : "#FFD45C",
+    H: "#F06292",
+    R: "#E5484D",
+    G: "#7CC46A",
+    W: "#FFF4D6",
+  };
+  // их биеийн төв (x=30), 25-р мөрөөс эхэлнэ
+  return <Sprite map={map} x={30 - Math.floor(map[0].length / 2)} y={50} colors={colors} />;
+}
+
+// Цагаан футболк дээр өмссөн даамтай сарафан — юбка нь бэлхүүсийг дарна
+function Pinafore({ top, skin }) {
+  const { color: c, accent: a } = top;
+  const check = shade(c, 0.3);
+  return (
+    <g>
+      <Px rows={TORSO} fill={a} line={shade(a, -0.3)} />
+      <Px rows={[...block(26, 31, 11, 18), [32, 10, 19], [33, 10, 19], [34, 9, 20]]} fill={c} line={shade(c, -0.35)} />
+      <Px rows={[[24, 12, 13], [24, 16, 17], [25, 12, 17]]} fill={c} />
+      <Px rows={[...block(26, 34, 13, 13), ...block(26, 34, 16, 16), [28, 11, 18], [31, 11, 18], [33, 10, 19]]} fill={check} />
+      <Px rows={[[23, 14, 15]]} fill={skin} />
+    </g>
+  );
+}
+
 function Torso({ top, skin }) {
   const { color: c, accent: a } = top;
+  if (top.kind === "pinafore") return <Pinafore top={top} skin={skin} />;
   return (
     <g>
       {top.kind === "hoodie" && <Px rows={[[22, 11, 18], [23, 10, 19]]} fill={a} line={shade(a, -0.3)} />}
@@ -391,8 +516,23 @@ function Torso({ top, skin }) {
       {top.kind === "long" && <Px rows={[[31, 11, 18]]} fill={a} />}
       {top.kind === "hoodie" && (
         <g>
-          <Px rows={[...block(24, 26, 13, 13), ...block(24, 26, 16, 16)]} fill="#FFFFFF" />
+          {!top.motif && <Px rows={[...block(24, 26, 13, 13), ...block(24, 26, 16, 16)]} fill="#FFFFFF" />}
           <Px rows={block(28, 30, 12, 17)} fill={a} />
+        </g>
+      )}
+      {top.kind === "sweat" && <Px rows={[[31, 11, 18]]} fill={shade(c, -0.12)} />}
+      {top.kind === "plaid" && (
+        <g>
+          <Px rows={[...block(24, 31, 13, 13), ...block(24, 31, 16, 16), [26, 11, 18], [29, 11, 18]]} fill={a} />
+          <Px rows={[[26, 13, 13], [26, 16, 16], [29, 13, 13], [29, 16, 16]]} fill={shade(c, -0.45)} />
+        </g>
+      )}
+      {top.kind === "tiedye" && (
+        <g>
+          <Px rows={[[24, 11, 13], [25, 11, 12], [26, 11, 11], [29, 18, 18], [30, 17, 18], [31, 16, 18]]} fill={TIEDYE[0]} />
+          <Px rows={[[24, 16, 18], [25, 17, 18], [26, 18, 18], [29, 11, 11], [30, 11, 12], [31, 11, 13]]} fill={TIEDYE[1]} />
+          <Px rows={[[26, 14, 15], [27, 13, 16], [28, 13, 16], [29, 14, 15]]} fill={TIEDYE[2]} />
+          <Px rows={[[27, 14, 15], [28, 14, 15]]} fill={TIEDYE[3]} />
         </g>
       )}
       {top.kind === "cardigan" && (
@@ -407,6 +547,7 @@ function Torso({ top, skin }) {
           <Px rows={[[25, 14, 15]]} fill={shade(c, -0.4)} />
         </g>
       )}
+      {top.motif && <TopMotif name={top.motif} accent={top.kind === "hoodie" || top.kind === "cardigan" ? c : a} />}
       {/* хүзүүний зүсэлт */}
       <Px rows={[[23, 14, 15]]} fill={skin} />
     </g>
@@ -422,6 +563,7 @@ function Waist({ bottom }) {
         <Px rows={[...block(34, 36, 12, 12), ...block(34, 36, 17, 17)]} fill={a} />
         <Px rows={[[32, 11, 13], [34, 10, 11]]} fill={shade(c, 0.35)} />
         <Px rows={[[36, 13, 16]]} fill={shade(c, -0.08)} />
+        {bottom.pattern === "plaid" && <Px rows={[...block(32, 36, 14, 15), [34, 10, 19]]} fill={a} opacity={0.75} />}
       </g>
     );
   return (
@@ -429,6 +571,20 @@ function Waist({ bottom }) {
       <Px rows={block(32, 33, 11, 18)} fill={c} line={shade(c, -0.3)} />
       {/* хүрээ хөлийн дээд хэсгийг дарсныг нөхнө */}
       <Px rows={[[34, 11, 12], [34, 17, 18]]} fill={c} />
+    </g>
+  );
+}
+
+// Комбинезоны цээжний хэсэг ба мөрний оосор — цамцны дээр зурна
+function Bib({ bottom }) {
+  if (bottom.kind !== "overalls") return null;
+  const c = bottom.color;
+  return (
+    <g>
+      <Px rows={block(27, 31, 12, 17)} fill={c} line={shade(c, -0.3)} />
+      <Px rows={[...block(23, 26, 12, 12), ...block(23, 26, 17, 17)]} fill={c} />
+      <Px rows={[[27, 12, 12], [27, 17, 17]]} fill={bottom.accent} />
+      <Px rows={[[29, 14, 15]]} fill={shade(c, -0.15)} />
     </g>
   );
 }
@@ -477,6 +633,7 @@ export default function Avatar({
         <Arm x={8} skin={s} skinLine={sl} top={top} className="av-arm-l" origin={SHOULDER_L} />
         <Arm x={20} skin={s} skinLine={sl} top={top} className="av-arm-r" origin={SHOULDER_R} />
         <Torso top={top} skin={s} />
+        <Bib bottom={bottom} />
         <Px rows={FACE} fill={s} line={sl} />
         <Px rows={[[12, 8, 21]]} fill={shade(s, -0.08)} />
         <HairFront item={hair} />
