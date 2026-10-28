@@ -15,6 +15,7 @@ import CyclePredictionCard from "./CyclePredictionCard";
 import TodayMoodCard from "./TodayMoodCard";
 import CycleLegend from "./CycleLegend";
 import CouponRewards from "../avatar/CouponRewards";
+import FeedbackPromptCard from "../feedback/FeedbackPromptCard";
 
 export default function DaughterHome() {
   const [cycleModalOpen, setCycleModalOpen] = useState(false);
@@ -125,6 +126,9 @@ export default function DaughterHome() {
       <TodayMoodCard />
 
       <CouponRewards featured />
+
+      {/* Санал хүсэлт: хүнд өдөр харагдахгүй; найзын SOS-ийн дараах асуулт энд */}
+      <FeedbackPromptCard role="daughter" />
 
       {cycleModalOpen && (
         <PeriodCycleTracker onBack={() => setCycleModalOpen(false)} cycleLength={cycleLength} periodLength={periodLength} lastPeriodStart={lastPeriodStart} />

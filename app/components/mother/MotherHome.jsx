@@ -8,6 +8,7 @@ import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
 import ChildrenOverview from "./ChildrenOverview";
 import MonthlyCareCarousel from "./MonthlyCareCarousel";
+import FeedbackPromptCard from "../feedback/FeedbackPromptCard";
 
 export default function MotherHome() {
   const [customMessage, setCustomMessage] = useState("");
@@ -187,6 +188,8 @@ export default function MotherHome() {
           </form>
         </Card>
       )}
+
+      <FeedbackPromptCard role="guardian" />
     </div>
   );
 }
