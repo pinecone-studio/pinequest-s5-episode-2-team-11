@@ -142,7 +142,7 @@ export default function DaughterProfile() {
 
   return (
     <div className="space-y-5">
-      <ProfileCard compact subtitle={subtitle} />
+      <ProfileCard compact subtitle={subtitle} avatarConfig={avatar.loaded ? avatar.config : null} />
 
       <SettingsGroup title="Миний зүйлс">
         <SettingsRow emoji="🎒" label="Миний цүнх" onClick={() => setSheet("bag")} />
