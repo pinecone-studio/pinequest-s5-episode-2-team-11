@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, Check, Copy, Loader2, LogOut, Pencil, Share2, Users } from "lucide-react";
+import { Lock, LogOut, Pencil, Unlock, Users } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import Card from "../ui/Card";
 import SectionTitle from "../ui/SectionTitle";
-import PageHeader from "../ui/PageHeader";
-import MyFriendCode from "../friends/MyFriendCode";
 import FamilyLinkingSection from "./FamilyLinkingSection";
+import AppSettingsSection from "./AppSettingsSection";
+import GuardianConnectForm from "./GuardianConnectForm";
+import PrivateNotePinSettings from "./PrivateNotePinSettings";
+import { APP_SETTINGS_FOCUS_EVENT, takeAppSettingsFocus } from "./appSettingsFocus";
 
 export default function ProfileScreen() {
   const {
@@ -20,6 +22,10 @@ export default function ProfileScreen() {
     updateEmail,
     setToast,
     signOut,
+    linked,
+    guardianName,
+    shareWithMom,
+    setShareWithMom,
   } = useFamily();
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState(profile?.display_name ?? "");
@@ -29,6 +35,17 @@ export default function ProfileScreen() {
   const [profilePhoto, setProfilePhoto] = useState("");
   const photoInput = useRef(null);
   const isMother = view === "mother";
+
+  // Header gear → scroll to the «Апп» section.
+  useEffect(() => {
+    const focusApp = () => {
+      if (!takeAppSettingsFocus()) return;
+      requestAnimationFrame(() => document.getElementById("app")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    };
+    focusApp();
+    window.addEventListener(APP_SETTINGS_FOCUS_EVENT, focusApp);
+    return () => window.removeEventListener(APP_SETTINGS_FOCUS_EVENT, focusApp);
+  }, []);
 
   useEffect(() => {
     if (!profile?.id) {
@@ -82,9 +99,7 @@ export default function ProfileScreen() {
   };
   return (
     <div className="space-y-4">
-      <PageHeader sub={isMother ? "Асран хамгаалагчийн бүртгэл" : "Миний бүртгэл"} title="Профайл" />
-
-      <p className="text-sm font-bold text-slate-400">Профайл</p>
+      <h2 className="text-2xl font-black leading-tight text-slate-700 bloom-fade">Профайл</h2>
 
       <Card className="p-5">
         <div className="flex flex-col items-center text-center">
@@ -186,8 +201,34 @@ export default function ProfileScreen() {
         </Card>
       )}
 
-      <MyFriendCode />
-      <FamilyLinkingSection />
+      {isMother ? <FamilyLinkingSection /> : (
+        <Card>
+          <SectionTitle icon={Users} title="Гэр бүл" />
+          {linked ? (
+            <p className="rounded-2xl bb-bg-FFF7FB px-3 py-3 text-sm font-extrabold text-slate-700">💗 Асран хамгаалагч · {guardianName || "Холбогдсон"}</p>
+          ) : <GuardianConnectForm />}
+        </Card>
+      )}
+
+      {!isMother && (
+        <Card className="p-3">
+          <div className="mb-2 flex items-center gap-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bb-bg-FDE7F1">
+              {shareWithMom ? <Unlock className="h-3.5 w-3.5 bb-text-B83B7E" /> : <Lock className="h-3.5 w-3.5 bb-text-B83B7E" />}
+            </span>
+            <h3 className="text-sm font-extrabold text-slate-700">Нууцлал</h3>
+          </div>
+          <button type="button" onClick={() => setShareWithMom((current) => !current)} className="flex w-full items-center justify-between gap-3 text-left" role="switch" aria-checked={shareWithMom}>
+            <span className="text-xs font-extrabold leading-4 text-slate-700">Сэтгэл санаагаа асран хамгаалагчтай хуваалцах</span>
+            <span className={`h-7 w-12 shrink-0 rounded-full p-1 transition-colors ${shareWithMom ? "bb-bg-E0679F" : "bg-slate-200"}`}>
+              <span className={`block h-5 w-5 rounded-full bg-white shadow transition-transform ${shareWithMom ? "translate-x-5" : ""}`} />
+            </span>
+          </button>
+        </Card>
+      )}
+      {!isMother && <PrivateNotePinSettings />}
+
+      <AppSettingsSection />
       <button
         type="button"
         onClick={signOut}
