@@ -1,7 +1,7 @@
 "use client";
 
 import { useFamily } from "../../../context/FamilyContext";
-import { Package, Send, Trash2 } from "lucide-react";
+import { Minus, Package, Plus, Send, Trash2 } from "lucide-react";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
 import PageHeader from "../ui/PageHeader";
@@ -38,13 +38,22 @@ export default function DaughterSupplies({ embedded = false }) {
                     }}
                   />
                 </div>
-                <span className="text-xs font-extrabold text-slate-500 w-6 text-right">{s.count}</span>
+                <span className="text-xs font-extrabold text-slate-500 w-12 text-right">{s.count}/{s.max}</span>
                 <button
                   onClick={() => updateSupply(key, -1)}
-                  className="text-xs font-extrabold text-slate-400 bb-hover-text-7C4DCC px-1"
-                  title={t("Нэгийг хэрэглэсэн", "Used one")}
+                  disabled={s.count <= 0}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-slate-500 shadow-sm active:scale-90 disabled:opacity-40"
+                  aria-label={t("Хасах", "Decrease")}
                 >
-                  −1
+                  <Minus className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => updateSupply(key, 1)}
+                  disabled={s.count >= s.max}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-slate-500 shadow-sm active:scale-90 disabled:opacity-40"
+                  aria-label={t("Нэмэх", "Add")}
+                >
+                  <Plus className="h-4 w-4" />
                 </button>
                 {key.startsWith("custom_") && <button onClick={() => removeSupply(key)} className="p-1 text-slate-300 hover:text-rose-500" aria-label={t(`${s.label} устгах`, `Delete ${s.label}`)}><Trash2 className="h-4 w-4" /></button>}
               </div>
