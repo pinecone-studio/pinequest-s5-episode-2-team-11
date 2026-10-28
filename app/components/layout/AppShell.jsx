@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useFamily } from "../../../context/FamilyContext";
 import { useFriends } from "../../../context/FriendsContext";
@@ -11,6 +11,9 @@ import SosModal from "../sos/SosModal";
 import ChildSwitcher from "../mother/ChildSwitcher";
 import { useTheme } from "../../../context/ThemeContext";
 import { requestAppSettingsFocus } from "../settings/appSettingsFocus";
+import NotificationInbox from "../notifications/NotificationInbox";
+import { useInbox } from "../notifications/useInbox";
+import { syncPushSubscription } from "../../../lib/push-client";
 
 // Хаяг → таб
 const TAB_BY_PATH = {
@@ -50,13 +53,18 @@ export default function AppShell() {
     daughterName,
     tab,
     setTab,
-    momUnread,
     toast,
     lowSupplyCount,
     sosOpen,
   } = family;
-  // Охины хонхны тоо: асран хамгаалагчийн уншаагүй үг + хариулаагүй найзын SOS
-  const teenUnread = (family.teenInbox ?? []).filter((n) => !n.read).length + (unansweredIncoming ?? 0);
+  // Хонх: notify()-оор ирсэн бүх мэдэгдэл (найзын SOS ч мөн адил inbox-д бичигддэг)
+  const inbox = useInbox(session && ready ? family.profile?.id : null);
+  const [inboxOpen, setInboxOpen] = useState(false);
+
+  // Энэ төхөөрөмж өмнө нь мэдэгдэл зөвшөөрсөн бол бүртгэлийг нэвтэрсэн хэрэглэгчид шилжүүлнэ
+  useEffect(() => {
+    if (session && ready) syncPushSubscription(session);
+  }, [session, ready]);
 
   useEffect(() => {
     setTab(TAB_BY_PATH[pathname] ?? "home");
@@ -105,12 +113,12 @@ export default function AppShell() {
           showNav={showNav}
           view={view}
           tab={tab}
-          momUnread={view === "mother" ? momUnread : teenUnread}
+          momUnread={inbox.unread}
           onOpenSettings={() => {
             requestAppSettingsFocus();
             navigateToTab("me");
           }}
-          onOpenNotifications={() => navigateToTab("messages")}
+          onOpenNotifications={() => setInboxOpen(true)}
           onLogoClick={() => {
             if (session) navigateToTab("home");
             else window.dispatchEvent(new Event("bloomy-auth-back"));
@@ -131,6 +139,16 @@ export default function AppShell() {
           />
         )}
         {sosOpen && <SosModal />}
+        {inboxOpen && (
+          <NotificationInbox
+            inbox={inbox}
+            onClose={() => setInboxOpen(false)}
+            onOpen={(url) => {
+              setInboxOpen(false);
+              if (url) router.push(url);
+            }}
+          />
+        )}
         {toast && (
           <div
             className="fixed top-20 left-0 right-0 flex justify-center px-4 pointer-events-none"
