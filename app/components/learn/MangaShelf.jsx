@@ -20,15 +20,17 @@ const CHAPTERS = [
     get title() { return t("Цонхны хажууд байгаа хүү", "The Boy by the Window"); },
     release: null,
     pages: [
-      page(1, 1, 909, 1215),
-      page(1, 2, 1020, 1215),
-      page(1, 3, 1080, 1163),
-      page(1, 4, 915, 1383),
-      page(1, 5, 1071, 1383),
-      page(1, 6, 942, 1383),
-      page(1, 7, 915, 1059),
+      page(1, 1, 309, 423),
+      page(1, 2, 363, 423),
+      page(1, 3, 341, 423),
+      page(1, 4, 320, 475),
+      page(1, 5, 330, 471),
+      page(1, 6, 332, 474),
+      page(1, 7, 320, 597),
+      page(1, 8, 330, 603),
+      page(1, 9, 332, 603),
     ],
-    bonus: { src: "/manga/ch1-bonus.webp", w: 960, h: 1113, get title() { return t("Мира ба Bloomy", "Mira and Bloomy"); } },
+    bonus: { src: "/manga/ch1-bonus.webp", w: 960, h: 1113, get title() { return t("Марал ба Блүүми", "Maral and Bloomy"); } },
   },
   {
     id: 2,
@@ -267,7 +269,7 @@ function MangaReader({ chapter, next, today, onEnd, onNext, onClose }) {
               draggable={false}
               decoding="async"
               style={{ maxHeight: `calc(100dvh - ${slide.isBonus ? 150 : 124}px - env(safe-area-inset-bottom))` }}
-              className="bloom-fade block h-auto w-auto max-w-full rounded-lg object-contain"
+              className="bloom-fade block h-auto w-full rounded-lg object-contain"
             />
             {index === 0 && (
               <span className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-between px-4 text-[11px] font-extrabold text-white/80">
