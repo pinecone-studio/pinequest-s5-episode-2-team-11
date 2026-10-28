@@ -164,7 +164,7 @@ export default function DaughterProfile({ mode = "profile" }) {
           ? <SettingsRow emoji="💗" label={`${t("Асран хамгаалагч", "Guardian")} · ${guardianName || t("Холбогдсон", "Connected")}`} onClick={() => setSheet("guardian")} />
           : <SettingsRow emoji="🔗" label={t("Асран хамгаалагчтай холбогдох", "Connect to a guardian")} onClick={() => setSheet("connect")} />}
         {/* TODO: «➕ Асран хамгаалагч нэмэх» — a family has one guardian (families.created_by) today. */}
-      </SettingsGroup>
+      </SettingsGroup>}
 
       {showSettings && <SettingsGroup title={t("Нууцлал", "Privacy")}>
         <SettingsRow emoji="🔒" label={t("Нууц тэмдэглэлийн түгжээ", "Private note lock")} onClick={() => setSheet("pin")} />
