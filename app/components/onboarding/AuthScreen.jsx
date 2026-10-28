@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertCircle, ChevronLeft, Eye, EyeOff, Loader2, Heart } from "lucide-react";
+import { AlertCircle, Check, ChevronLeft, Eye, EyeOff, Loader2, Heart, X } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import RoleSelect from "./RoleSelect";
 import BloomyLogo from "../ui/BloomyLogo";
@@ -10,6 +10,8 @@ import GuardianMaleGuide from "../learn/GuardianMaleGuide";
 import { t } from "../../../lib/i18n";
 
 const PENDING_GUIDE_PREFIX = "bloom:pending-guardian-guide:";
+// Шинэ бүртгэлийн нууц үгийн доод урт (хуучин 6 тэмдэгттэй бүртгэлүүд нэвтэрсээр байна)
+const MIN_SIGNUP_PASSWORD = 8;
 
 /** Нэвтрэх / бүртгүүлэх. stage: "role" → "signup" | "login" */
 export default function AuthScreen() {
@@ -69,9 +71,10 @@ export default function AuthScreen() {
 
   const isSignup = stage === "signup";
   const isDaughter = role === "daughter";
+  const passwordLongEnough = password.length >= (isSignup ? MIN_SIGNUP_PASSWORD : 6);
   const canSubmit =
     email.includes("@") &&
-    password.length >= 6 &&
+    passwordLongEnough &&
     (!isSignup || (name.trim().length > 0 && (!isDaughter || birthDate)));
 
   const submit = async (e) => {
@@ -205,6 +208,8 @@ export default function AuthScreen() {
               onChange={(e) => setPassword(e.target.value)}
               className={`${inputCls} pr-12`}
               autoComplete={isSignup ? "new-password" : "current-password"}
+              minLength={isSignup ? MIN_SIGNUP_PASSWORD : undefined}
+              aria-describedby={isSignup ? "password-rule" : undefined}
             />
             <button
               type="button"
@@ -215,6 +220,19 @@ export default function AuthScreen() {
               {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
           </div>
+          {isSignup && (
+            <p
+              id="password-rule"
+              aria-live="polite"
+              className={`mt-2 flex items-center gap-1.5 text-xs font-bold ${
+                passwordLongEnough ? "text-emerald-600" : password ? "text-rose-500" : "text-slate-400"
+              }`}
+            >
+              {passwordLongEnough ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : password ? <X className="h-3.5 w-3.5" strokeWidth={3} /> : <span className="h-1.5 w-1.5 rounded-full bg-current" />}
+              {t(`Дор хаяж ${MIN_SIGNUP_PASSWORD} тэмдэгт`, `At least ${MIN_SIGNUP_PASSWORD} characters`)}
+              {password && !passwordLongEnough && ` · ${t(`${MIN_SIGNUP_PASSWORD - password.length} дутуу`, `${MIN_SIGNUP_PASSWORD - password.length} more`)}`}
+            </p>
+          )}
         </div>
       </div>
 
