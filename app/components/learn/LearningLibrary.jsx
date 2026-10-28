@@ -9,6 +9,7 @@ import {
   BookOpen,
   HeartHandshake,
   HeartPulse,
+  Check,
   ChevronRight,
   CircleCheck,
   CircleHelp,
@@ -58,24 +59,24 @@ const TONES = {
 const PENDING_GUIDE_PREFIX = "bloom:pending-guardian-guide:";
 
 const TOPIC_TILE_STYLES = {
-  what: { background: "#FADAD9", Icon: Droplets },
-  when: { background: "#F3C3C5", Icon: Venus },
-  cycle: { background: "#E9ABAE", Icon: Moon },
-  products: { background: "#E0959C", Icon: LockKeyhole },
-  kit: { background: "#D78289", Icon: BookOpen },
-  hygiene: { background: "#CE6F79", Icon: Sparkles },
-  body: { background: "#C65C69", Icon: ShieldCheck },
-  doctor: { background: "#F3C3C5", Icon: TriangleAlert },
-  myths: { background: "#E9ABAE", Icon: CircleHelp },
-  "guardian-talk-early": { background: "#FADAD9", Icon: MessageCircleHeart },
-  "guardian-calm-response": { background: "#F3C3C5", Icon: HeartHandshake },
-  "guardian-growth": { background: "#E9ABAE", Icon: Eye },
-  "guardian-teach": { background: "#E0959C", Icon: BookOpen },
-  "guardian-supplies": { background: "#D78289", Icon: Package },
-  "guardian-pain-mood": { background: "#CE6F79", Icon: HeartPulse },
-  "guardian-privacy": { background: "#C65C69", Icon: LockKeyhole },
-  "guardian-family": { background: "#F3C3C5", Icon: UsersRound },
-  "guardian-doctor": { background: "#E9ABAE", Icon: Stethoscope },
+  what: { background: "#DC3F6B", Icon: Droplets },
+  when: { background: "#A64FAD", Icon: Venus },
+  cycle: { background: "#5B68D8", Icon: Moon },
+  products: { background: "#575BC8", Icon: LockKeyhole },
+  kit: { background: "#B8740C", Icon: BookOpen },
+  hygiene: { background: "#1F7FB0", Icon: Sparkles },
+  body: { background: "#218863", Icon: ShieldCheck },
+  doctor: { background: "#D63D4D", Icon: TriangleAlert },
+  myths: { background: "#D9604F", Icon: CircleHelp },
+  "guardian-talk-early": { background: "#DC3F6B", Icon: MessageCircleHeart },
+  "guardian-calm-response": { background: "#A64FAD", Icon: HeartHandshake },
+  "guardian-growth": { background: "#5B68D8", Icon: Eye },
+  "guardian-teach": { background: "#B8740C", Icon: BookOpen },
+  "guardian-supplies": { background: "#1F7FB0", Icon: Package },
+  "guardian-pain-mood": { background: "#D63D4D", Icon: HeartPulse },
+  "guardian-privacy": { background: "#575BC8", Icon: LockKeyhole },
+  "guardian-family": { background: "#218863", Icon: UsersRound },
+  "guardian-doctor": { background: "#D9604F", Icon: Stethoscope },
 };
 
 function RoleChip({ children, tone }) {
@@ -90,26 +91,43 @@ function RoleChip({ children, tone }) {
   );
 }
 
-function TopicCard({ category, index, onClick, tile = false }) {
+function TopicCard({ category, index, onClick, tile = false, read = false }) {
   const tone = TONES[category.tone] || TONES.lilac;
   if (tile) {
     const tileStyle = TOPIC_TILE_STYLES[category.id] ?? { background: "#B83B7E", Icon: Sun };
     const Icon = tileStyle.Icon;
+    const accent = tileStyle.background;
     return (
       <button
         type="button"
         onClick={onClick}
-        aria-label={`${category.title}. ${category.subtitle}`}
-        className="relative flex aspect-[0.88] min-h-32 w-full flex-col items-center justify-end gap-2 overflow-hidden rounded-2xl p-2.5 text-center shadow-sm transition hover:brightness-105 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300 active:scale-[0.98]"
-        style={{ backgroundColor: tileStyle.background, color: "#501923" }}
+        aria-label={`${category.title}. ${category.subtitle}${read ? `. ${t("Уншсан", "Read")}` : ""}`}
+        className="group relative flex aspect-[0.86] w-full flex-col overflow-hidden rounded-[22px] p-2.5 text-left text-white transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300 active:scale-[0.97]"
+        style={{
+          background: `linear-gradient(155deg, ${accent} 0%, ${accent}E0 60%, ${accent}B8 100%)`,
+          boxShadow: `0 8px 18px -10px ${accent}`,
+        }}
       >
-        <span aria-hidden="true" className="absolute -right-4 -top-5 h-16 w-16 rounded-full bg-[#CE6F79]/10" />
-        <span aria-hidden="true" className="absolute -bottom-5 -left-4 h-14 w-14 rounded-full bg-[#CE6F79]/10" />
-        <span aria-hidden="true" className="absolute left-3 top-1/2 h-2 w-2 rounded-full bg-[#CE6F79]/25" />
-        <span className="absolute left-2.5 top-2.5 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/60 ring-1 ring-[#CE6F79]/25">
-          <Icon className="h-5 w-5" strokeWidth={2.2} aria-hidden="true" />
+        {/* чимэглэл: том бүдэг дүрс, гэрлийн толбо */}
+        <Icon className="pointer-events-none absolute -right-3 -bottom-3 h-16 w-16 opacity-20 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6" aria-hidden="true" />
+        <span aria-hidden="true" className="pointer-events-none absolute -left-5 -top-6 h-14 w-14 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.18)" }} />
+
+        <span className="relative flex w-full items-start justify-between">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ backgroundColor: "rgba(255,255,255,0.25)" }}>
+            <Icon className="h-[18px] w-[18px] text-white" strokeWidth={2.3} aria-hidden="true" />
+          </span>
+          {read ? (
+            <span className="flex h-5 w-5 items-center justify-center rounded-full" style={{ backgroundColor: "#FFFFFF", color: accent }} aria-hidden="true">
+              <Check className="h-3 w-3" strokeWidth={3.5} />
+            </span>
+          ) : (
+            <span className="rounded-full px-1.5 py-0.5 text-[10px] font-black text-white" style={{ backgroundColor: "rgba(255,255,255,0.25)" }} aria-hidden="true">
+              {String(index + 1).padStart(2, "0")}
+            </span>
+          )}
         </span>
-        <span className="relative z-10 line-clamp-3 w-full text-left text-xs font-black leading-tight">
+
+        <span className="relative mt-auto line-clamp-3 w-full text-[12.5px] font-black leading-tight">
           {category.title}
         </span>
       </button>
@@ -243,8 +261,30 @@ export default function LearningLibrary({ onMoreMaterials }) {
   const selectedIndex = categories.findIndex((category) => category.id === selectedId);
   const selected = selectedIndex >= 0 ? categories[selectedIndex] : null;
 
-  // Placeholder read count tracking (can be connected to backend/localStorage state if needed)
-  const readCount = categories.length; 
+  // Уншсан сэдвүүд (охинд, энэ төхөөрөмж дээр). Сэдвийг нээхэд уншсан гэж тооцно.
+  const readKey = `bloom:learn-progress:${profile?.id ?? session?.user?.id ?? "local"}`;
+  const [readIds, setReadIds] = useState([]);
+  useEffect(() => {
+    if (!isGirl) return;
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(readKey) ?? "[]");
+      setReadIds(Array.isArray(saved) ? saved.filter((id) => girlCategories.some((c) => c.id === id)) : []);
+    } catch {
+      setReadIds([]);
+    }
+  }, [isGirl, readKey]);
+  const openTopic = (id) => {
+    setSelectedId(id);
+    if (!isGirl || readIds.includes(id)) return;
+    const next = [...readIds, id];
+    setReadIds(next);
+    try {
+      window.localStorage.setItem(readKey, JSON.stringify(next));
+    } catch {
+      /* хадгалж чадахгүй ч дэлгэц дээр тэмдэглэгдэнэ */
+    }
+  };
+  const readCount = isGirl ? categories.filter((c) => readIds.includes(c.id)).length : 0;
 
   useEffect(() => {
     if (isGirl || guardianGender !== "male" || !profile?.id) {
@@ -316,7 +356,7 @@ export default function LearningLibrary({ onMoreMaterials }) {
   };
 
   const openNext = () => {
-    if (selectedIndex < categories.length - 1) setSelectedId(categories[selectedIndex + 1].id);
+    if (selectedIndex < categories.length - 1) openTopic(categories[selectedIndex + 1].id);
   };
 
   if (selected) {
@@ -432,7 +472,8 @@ export default function LearningLibrary({ onMoreMaterials }) {
             category={category}
             index={categories.findIndex((item) => item.id === category.id)}
             tile
-            onClick={() => setSelectedId(category.id)}
+            read={isGirl && readIds.includes(category.id)}
+            onClick={() => openTopic(category.id)}
           />
         ))}
       </section>
