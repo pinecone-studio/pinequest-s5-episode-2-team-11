@@ -11,7 +11,6 @@ import SosModal from "../sos/SosModal";
 import ChildSwitcher from "../mother/ChildSwitcher";
 import { useTheme } from "../../../context/ThemeContext";
 import { useT } from "../../../context/LanguageContext";
-import { requestAppSettingsFocus } from "../settings/appSettingsFocus";
 import NotificationInbox from "../notifications/NotificationInbox";
 import { useInbox } from "../notifications/useInbox";
 import { syncPushSubscription } from "../../../lib/push-client";
@@ -29,7 +28,7 @@ const TAB_BY_PATH = {
   "/daughter/messages": "messages",
   "/friends": "friends",
   "/learn": "learn",
-  "/settings": "me", // хуучин тохиргооны хуудас → Профайлын «Апп» хэсэг
+  "/settings": "settings",
   "/profile": "me",
 };
 
@@ -81,10 +80,6 @@ export default function AppShell() {
 
   useEffect(() => {
     setTab(TAB_BY_PATH[pathname] ?? "home");
-    if (pathname === "/settings") {
-      requestAppSettingsFocus();
-      router.replace("/profile");
-    }
   }, [pathname, setTab, router]);
 
   useEffect(() => {
@@ -108,6 +103,7 @@ export default function AppShell() {
       learn: "/learn",
       messages: view === "mother" ? "/mother/messages" : "/daughter/messages",
       me: "/profile",
+      settings: "/settings",
     };
     router.push(routes[nextTab] ?? "/");
   };
@@ -127,10 +123,7 @@ export default function AppShell() {
           view={view}
           tab={tab}
           momUnread={inbox.unread}
-          onOpenSettings={() => {
-            requestAppSettingsFocus();
-            navigateToTab("me");
-          }}
+          onOpenSettings={() => navigateToTab("settings")}
           onOpenNotifications={() => setInboxOpen(true)}
           onLogoClick={() => {
             if (session) navigateToTab("home");

@@ -13,6 +13,7 @@ import FriendsScreen from "../friends/FriendsScreen";
 import NotConfigured from "../system/NotConfigured";
 import Splash from "../system/Splash";
 import LoadError from "../system/LoadError";
+import SettingsScreen from "../settings/SettingsScreen";
 
 export default function CurrentScreen({ family, pathname }) {
   const {
@@ -37,6 +38,7 @@ export default function CurrentScreen({ family, pathname }) {
   if (!profile || loadError === "no_profile") {
     return <LoadError kind={loadError ?? "no_profile"} onRetry={reload} onSignOut={signOut} />;
   }
+  if (tab === "settings") return <SettingsScreen />;
   if (tab === "me") return <ProfileScreen />;
   if (needsAvatarSetup) return <AvatarSetup />;
   if (tab === "learn") return <LearnHub />;

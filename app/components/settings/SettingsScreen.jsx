@@ -15,6 +15,16 @@ export default function SettingsScreen() {
   const { view, shareWithMom, setShareWithMom } = useFamily();
   const { lang: language, setLang: selectLanguage } = useLang();
 
+  if (view === "daughter") {
+    return (
+      <div className="space-y-4">
+        <PageHeader sub={t("Аппын тохиргоо", "App settings")} title={t("Тохиргоо", "Settings")} />
+        <DaughterProfile mode="settings" />
+        <MyFriendCode />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <PageHeader sub={t("Аппын тохиргоо", "App settings")} title={t("Тохиргоо", "Settings")} />
