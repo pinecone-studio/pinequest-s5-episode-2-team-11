@@ -102,7 +102,7 @@ export default function CycleRing({ day = 1, cycleLength = 28, periodLength = 5,
       <div className="cycle-ring-copy absolute inset-0 flex flex-col items-center justify-center px-8 text-center">
         <span className="rounded-full px-2 py-0.5 text-[10px] font-extrabold text-slate-700" style={{ background: `${seasonUi.color}35` }}>{seasonUi.label}</span>
         {periodDay ? (
-          <span className="mt-2 text-sm font-black leading-tight text-slate-700">{t("Сарын тэмдгийн", "Period day")} {periodDay} {t("дэх өдөр", "")}</span>
+          <span className="mt-2 text-sm font-black leading-tight text-slate-700">{t(`Сарын тэмдгийн ${periodDay} дахь өдөр`, `Period day ${periodDay}`)}</span>
         ) : !hasHadPeriod ? (
           <span className="mt-2 text-lg font-black leading-tight text-slate-700">{t("Бэлтгэл үе 🌱", "Getting ready 🌱")}</span>
         ) : effectiveLate ? (
