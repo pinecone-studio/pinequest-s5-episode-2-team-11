@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertCircle, Eye, EyeOff, Loader2, Heart } from "lucide-react";
+import { AlertCircle, ChevronLeft, Eye, EyeOff, Loader2, Heart } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import RoleSelect from "./RoleSelect";
 import BloomyLogo from "../ui/BloomyLogo";
@@ -108,6 +108,17 @@ export default function AuthScreen() {
 
   return (
     <form onSubmit={submit} className="px-2 pt-4 pb-10 bloom-fade">
+      <button
+        type="button"
+        onClick={() => {
+          setStage("role");
+          setMessage("");
+        }}
+        className="mb-4 -ml-1 inline-flex items-center gap-1 rounded-full py-1.5 pl-1.5 pr-3 text-sm font-extrabold text-slate-500 transition hover:bg-pink-50 active:scale-95"
+        aria-label={t("Буцах", "Back")}
+      >
+        <ChevronLeft className="h-5 w-5" aria-hidden="true" /> {t("Буцах", "Back")}
+      </button>
       {!isSignup && (
         <div className="mb-3">
           <BloomyLogo className="w-16 h-16" />
