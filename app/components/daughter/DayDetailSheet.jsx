@@ -102,7 +102,7 @@ export default function DayDetailSheet({ date, pendingPeriod = null, onClose }) 
   };
 
   const aside = position.phase === "cycle" && position.cycleDay >= 1
-    ? <span className="text-[10px] font-black uppercase tracking-wide text-slate-400">{t("МӨЧЛӨГИЙН", "CYCLE DAY")} {position.cycleDay} {t("ДЭХ ӨДӨР", "")}</span>
+    ? <span className="text-[10px] font-black uppercase tracking-wide text-slate-400">{t(`Мөчлөгийн ${position.cycleDay} дэх өдөр`, `Cycle day ${position.cycleDay}`)}</span>
     : null;
 
   return (
