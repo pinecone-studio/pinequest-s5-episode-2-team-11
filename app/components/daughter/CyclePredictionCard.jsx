@@ -10,6 +10,7 @@ import {
 import { LOG_ENTRIES_CHANGED, dayLogsFromEntries, fetchEntries } from "../../../lib/log-entries";
 import { supabase } from "../../../lib/supabase";
 import { useFamily } from "../../../context/FamilyContext";
+import MicroFeedback from "../feedback/MicroFeedback";
 
 const AI_TIMEOUT_MS = 5000; // server gives the AI 3 s; this covers the round trip
 const TRANSIENT_ERRORS = new Set(["timeout", "network_error"]);
@@ -139,6 +140,14 @@ export default function CyclePredictionCard() {
       <p className="mt-3 border-t border-slate-100 pt-2 text-xs font-semibold text-slate-400">
         🔒 Зөвхөн чамд харагдана{stats ? ` · Өмнөх ${stats.cyclesUsed} мөчлөгөөс` : ""}
       </p>
+      {!loading && (
+        <MicroFeedback
+          targetType="forecast"
+          targetId={inCycle ? `${position.cycleStart}:${stats?.dayLabel ?? `local_${position.season}`}` : `prep:${today}`}
+          question="Энэ чамд таарсан уу?"
+          className="mt-2"
+        />
+      )}
     </section>
   );
 }

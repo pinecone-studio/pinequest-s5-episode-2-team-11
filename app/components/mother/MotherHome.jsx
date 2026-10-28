@@ -8,9 +8,14 @@ import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
 import ChildrenOverview from "./ChildrenOverview";
 import MonthlyCareCarousel from "./MonthlyCareCarousel";
+import FeedbackPromptCard from "../feedback/FeedbackPromptCard";
+import StoryRecorderSheet from "../connection/StoryRecorderSheet";
+import SharedSignals from "../connection/SharedSignals";
+import DailyTipCard from "../connection/DailyTipCard";
 
 export default function MotherHome() {
   const [customMessage, setCustomMessage] = useState("");
+  const [storyOpen, setStoryOpen] = useState(false);
   const {
     familyCode,
     linked,
@@ -54,6 +59,10 @@ export default function MotherHome() {
       </div>
 
       <ChildrenOverview />
+
+      {linked && <SharedSignals />}
+
+      {linked && <DailyTipCard />}
 
       {!linked && (
         <Card className="bb-grad-5">
@@ -141,6 +150,17 @@ export default function MotherHome() {
         )}
       </div>
 
+      {linked && (
+        <button type="button" onClick={() => setStoryOpen(true)} className="flex w-full items-center gap-3 rounded-3xl border-2 border-slate-100 bg-white p-4 text-left active:scale-[0.99]">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bb-bg-FDE7F1 text-xl" aria-hidden="true">🎙️</span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-black text-slate-700">Миний түүх</span>
+            <span className="block text-xs font-semibold text-slate-500">Өөрийн анхны туршлагаа {daughterName}-д дуу эсвэл бичвэрээр үлдээх</span>
+          </span>
+        </button>
+      )}
+      {storyOpen && <StoryRecorderSheet onClose={() => setStoryOpen(false)} />}
+
       {/* AI сарын халамжийн зөвлөгөө (охин бүрээр шудрана) */}
       {linked && <MonthlyCareCarousel />}
 
@@ -187,6 +207,8 @@ export default function MotherHome() {
           </form>
         </Card>
       )}
+
+      <FeedbackPromptCard role="guardian" />
     </div>
   );
 }

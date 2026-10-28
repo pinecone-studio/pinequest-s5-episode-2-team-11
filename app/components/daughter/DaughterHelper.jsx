@@ -12,6 +12,7 @@ import { ChevronRight, MessageCircleHeart, Package, Wind } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import PageHeader from "../ui/PageHeader";
 import AiChat from "./AiChat";
+import TalkRequestSheet from "../connection/TalkRequestSheet";
 import DaughterSupplies from "./DaughterSupplies";
 
 const SECTIONS = [
@@ -22,6 +23,7 @@ const SECTIONS = [
 export default function DaughterHelper({ initial = "chat" }) {
   const { lowSupplyCount, openSos } = useFamily();
   const [section, setSection] = useState(initial);
+  const [talkOpen, setTalkOpen] = useState(false);
 
   return (
     <div className="space-y-4">
@@ -53,6 +55,18 @@ export default function DaughterHelper({ initial = "chat" }) {
       </div>
 
       {section === "chat" ? <AiChat /> : <DaughterSupplies embedded />}
+
+      {section === "chat" && (
+        <button type="button" onClick={() => setTalkOpen(true)} className="flex w-full items-center gap-3 rounded-3xl border-2 border-slate-100 bg-white p-4 text-left active:scale-95 transition">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bb-bg-FDE7F1 text-2xl" aria-hidden="true">💬</span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-black text-slate-700">Ярилцмаар байна</span>
+            <span className="block text-xs font-bold text-slate-500">Асран хамгаалагчдаа нэг товшилтоор хэлэх</span>
+          </span>
+          <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" />
+        </button>
+      )}
+      {talkOpen && <TalkRequestSheet onClose={() => setTalkOpen(false)} />}
 
       {section === "chat" && (
         <button
