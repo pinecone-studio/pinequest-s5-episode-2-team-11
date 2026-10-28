@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Check, ChevronRight, Copy, Tag, X } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import { useAvatar } from "./useAvatar";
+import { t } from "../../../lib/i18n";
 import Card from "../ui/Card";
 import StoreProductCatalog from "./StoreProductCatalog";
 
