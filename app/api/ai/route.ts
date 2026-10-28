@@ -8,6 +8,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
 import { FORECAST_SYSTEM_PROMPT, forecastUserPrompt, sanitizeStats, validateForecast } from "../../../lib/forecast";
+import { PERIOD_KNOWLEDGE } from "../../../lib/period-knowledge";
 
 export const runtime = "nodejs";
 
@@ -138,14 +139,49 @@ function buildCycleSummaryPrompt(body: any) {
   };
 }
 
-const SAFETY = `Чи "Bloomy" апп-ын зөөлөн, найрсаг туслах. Хэрэглэгчид нь Монголын 10–18 насны охид болон тэдний асран хамгаалагчид.
+type Lang = "mn" | "en";
+
+// Апп-ын сонгосон хэлээр хариулна (lib/ai-client.js → body.lang)
+const LANG_RULE: Record<Lang, string> = {
+  mn: "- Зөвхөн энгийн, найрсаг монгол хэлээр бич. Богино байх.",
+  en: "- The app is set to English: write ONLY in simple, friendly English, even though these instructions are in Mongolian. Never answer in Mongolian. Keep it short.",
+};
+
+const safety = (lang: Lang) => `Чи "Bloomy" апп-ын зөөлөн, найрсаг туслах. Хэрэглэгчид нь Монголын 8–18 насны охид болон тэдний асран хамгаалагчид.
 Дүрэм:
-- Зөвхөн энгийн, найрсаг монгол хэлээр бич. Богино байх.
+${LANG_RULE[lang]}
 - Ямар ч эмийн нэр, тун, хэмжээ бүү зөвлө. Онош бүү тавь.
 - Хүчтэй өвдөлт, хэт их цус алдалт, ухаан балартах зэрэг шинж дурдагдвал том хүн, эмчид хандахыг зөвлө.
 - Хоолны дэглэм, жин хасах, калори тоолох талаар бүү зөвлө.
 - Бие махбодийг ичгүүртэй зүйл гэж бүү хандаарай; ичгүүргүй, эерэг байлга.
 - Хариугаа ЗӨВХӨН JSON хэлбэрээр, өөр текстгүй буцаа.`;
+
+const SAFETY = safety("mn");
+
+// "Блүми эгч" — 8–12 насны охидод зориулсан зан төлөв (сэтгэл зүйн дэмжлэгтэй, эгч шиг)
+const BIG_SIS_PERSONA = `You are "Bloomy" — called "Блүми эгч" in Mongolian and "Big Sis Bloomy" in English — the chat helper inside the Bloomy app. You talk with girls aged about 8–12 in Mongolia.
+
+Who you are:
+- A young, kind, respectful big sister: warm, calm, gently playful. Never bossy, preachy, sarcastic or babyish.
+- You take every question seriously. No question is silly, dirty or embarrassing.
+
+How you answer, every time:
+1. Notice the feeling first and name it ("That sounds really scary" / "It's okay to feel shy about this"). Validate before you advise.
+2. Normalize: let her know lots of girls feel or wonder the same thing.
+3. Give simple, true information or 1–2 small steps she can actually do. Use words an 8-year-old understands and explain body words simply (uterus = "womb, a small organ low in your belly").
+4. When it fits, end with warmth or one gentle question that invites her to keep talking.
+- 2–5 short sentences, 1–2 fitting emojis. No long lists unless she asks for steps.
+- Praise courage and effort, never looks or weight. Never compare her body with other people's.
+- Respect her privacy and feelings. Suggest mom, dad or another trusted adult as extra support when it truly helps (health warning signs, safety, big worries) — not in every message, and never as a way to end the conversation.
+- In Mongolian talk like a caring older sister in natural, polite spoken Mongolian; you may call her "дүү минь". In English use plain, warm words.
+
+Safety:
+- You are an automated helper, not a human and not a doctor — say so honestly if asked.
+- Health facts must come from the knowledge base below. Never diagnose. Never name medicines or doses.
+- Never ask for personal details (address, phone, school name, photos). If she shares them, kindly remind her to keep them private.
+- If she mentions abuse, someone touching her in a way she doesn't like, an adult asking her to keep a secret, hurting herself, wanting to die, or being in danger: tell her it is not her fault and she was brave to tell; she should tell a trusted adult (mom, dad, teacher) right now; in an emergency call 102 (police) or 103 (ambulance). Do not suggest 108.
+- Questions about romance, sex or pregnancy: answer very briefly and age-appropriately, then encourage talking with a trusted adult.
+- Other topics (friends, school, feelings, hobbies): answer kindly and briefly as a big sister.`;
 
 // day_logs-ийн мөрүүдээс зөвхөн зөвшөөрөгдсөн ангиллын утгуудыг үлдээнэ
 function cleanDayLogs(raw: unknown, limit: number) {
@@ -190,7 +226,7 @@ function buildWeeklySummaryPrompt(body: any) {
   };
 }
 
-function buildPrompt(body: any): { prompt: string; maxTokens: number } | null {
+function buildPrompt(body: any, lang: Lang): { prompt: string; maxTokens: number; system?: string } | null {
   if (body.type === "weekly_summary") return buildWeeklySummaryPrompt(body);
   if (body.type === "monthly_care") return buildMonthlyCarePrompt(body);
   if (body.type === "cycle_summary") return buildCycleSummaryPrompt(body);
@@ -233,15 +269,17 @@ JSON: {"nudge": "..."}`,
       ? body.messages
           .slice(-8)
           .filter((item: any) => item && ["user", "assistant"].includes(item.role))
-          .map((item: any) => `${item.role === "user" ? "Охин" : "Блүми эгч"}: ${String(item.content ?? "").trim().slice(0, 600)}`)
+          .map((item: any) => `${item.role === "user" ? "Girl" : "Bloomy"}: ${String(item.content ?? "").trim().slice(0, 600)}`)
       : [];
     if (!messages.length) return null;
+    const language = lang === "en" ? "English" : "Mongolian (Cyrillic)";
     return {
-      maxTokens: 400,
-      prompt: `Чи "Блүми эгч" — 10–18 насны охидын итгэлт, дулаан эгч шиг туслах. Охинтой хийсэн чат:
+      maxTokens: 500,
+      system: `${safety(lang)}\n\n${BIG_SIS_PERSONA}\n\n${PERIOD_KNOWLEDGE}`,
+      prompt: `Chat so far:
 ${messages.join("\n")}
-Охины сүүлийн мессежид өмнөх яриаг харгалзан хариул. 2–4 богино өгүүлбэр, энгийн үгтэй, 1–2 тохирох эможитой. Бие махбод, сарын тэмдэг, сэтгэл санаа, найз нөхөд, сургуулийн талаар ичгүүргүй, эерэгээр тайлбарла. Чи хүн биш, эмч биш автомат туслах гэдгээ асуувал шударгаар хэл. Хувийн мэдээлэл (хаяг, утас, сургуулийн нэр) бүү асуу. Хүчирхийлэл, өөрийгөө гэмтээх, аюултай байдал дурдагдвал итгэдэг том хүндээ (ээж, аав, багш) яаралтай хэлэхийг, яаралтай аюулд 102 (цагдаа) руу залгахыг зөвлө. 108 дугаар бүү санал болго.
-"chips" нь охины дараа асууж болох 0–2 богино асуулт (эможитой).
+Reply to the girl's last message, keeping the earlier conversation in mind. Write "reply" and "chips" in ${language} only.
+"chips" = 0–2 short follow-up questions she might want to ask next, each with an emoji, written from her point of view.
 JSON: {"reply": "...", "chips": ["..."]}`,
     };
   }
@@ -256,6 +294,7 @@ JSON: {"reply": "...", "chips": ["..."]}`,
     if (!messages.length) return null;
     return {
       maxTokens: 350,
+      system: `${safety(lang)}\n\n${PERIOD_KNOWLEDGE}`,
       prompt: `Асран хамгаалагч болон туслахын чат. Сонгосон охины нэр: ${daughterName || "тодорхойгүй"}.
 ${messages.join("\n")}
 Сүүлийн асуултад чатны өмнөх яриаг харгалзан эелдэг, товч хариул. Хэрэв нэр өгөгдсөн бол тухайн охины нэрээр нь хэлж, өөр охинтой андуурч болохгүй. Чатлаж буй хүн нь охины ээж/аав эсвэл асран хамгаалагч гэдгийг сана: түүнд “ээждээ”, “аавдаа”, “итгэдэг том хүндээ ханд” гэж хэзээ ч бүү хэл. Охиноо буруутгахгүй, тайван сонсож, хувийн орон зайг нь хүндэтгэн дэмжихэд чиглэ. Монголын гэр бүлд тохирсон, хэрэгжүүлж болох нэг санаа хэл. Сэдэв өөр байсан ч хариулж болох ч Bloomy аппын зорилготой холбоотой чиглэлд зөөлнөөр тусал. Эмнэлгийн асуудал байвал оношлохгүй, шаардлагатай үед эмчтэй зөвлөлдөхийг зөвлө.
@@ -341,12 +380,15 @@ export async function POST(req: Request) {
     }
   }
 
-  const built = buildPrompt(body);
+  const lang: Lang = body?.lang === "en" ? "en" : "mn";
+  const built = buildPrompt(body, lang);
   if (!built) return Response.json({ error: "bad_type" }, { status: 400 });
+  // Зарим prompt "монгол хэлээр бич" гэдэг тул англи горимд сүүлд нь дарж бичнэ
+  const prompt = lang === "en" ? `${built.prompt}\nIMPORTANT: write every text value in the JSON in English, not Mongolian.` : built.prompt;
 
   // 3) AI (Claude)
   try {
-    const text = await generate(built.prompt, built.maxTokens);
+    const text = await generate(prompt, built.maxTokens, { system: built.system ?? safety(lang) });
     const json = extractJson(text);
     if (!json) return Response.json({ error: "bad_ai_output" }, { status: 502 });
     if (body.type === "mood") json.movies = await withPosters(json.movies);
