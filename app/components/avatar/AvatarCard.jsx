@@ -13,7 +13,6 @@ import Avatar from "./Avatar";
 import AvatarStudio from "./AvatarStudio";
 import { useAvatar } from "./useAvatar";
 import { useTodayMood } from "./useTodayMood";
-import { useSeasonalGift } from "./useSeasonalGift";
 import { MOODS } from "../../../lib/log-entries";
 import { PetalIcon, Sparkle, XpIcon } from "./icons";
 import { AVATAR_BACKGROUNDS, DAILY_GIFT, XP_PER_LEVEL } from "../../../lib/wardrobe";
@@ -29,7 +28,6 @@ export default function AvatarCard() {
   const av = useAvatar(profile?.id, setToast);
   const mood = useTodayMood(profile?.id);
   const moodInfo = MOODS.find((m) => m.value === mood);
-  const seasonal = useSeasonalGift(av);
   const [studioTab, setStudioTab] = useState(null);
   const close = useCallback(() => setStudioTab(null), []);
   const pct = ((av.xp % XP_PER_LEVEL) / XP_PER_LEVEL) * 100;
@@ -63,7 +61,7 @@ export default function AvatarCard() {
             className="absolute left-1/2 -translate-x-1/2 rounded-full"
             style={{ bottom: 12, width: 110, height: 14, background: "rgba(150,45,102,0.12)" }}
           />
-          <Avatar config={av.config} mood={mood} idle size={130} className="relative" />
+          <Avatar look={av.look} skin={av.skin} mood={mood} idle size={112} className="relative" />
           {moodInfo && (
             <span
               className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-extrabold shadow-sm"
@@ -73,12 +71,6 @@ export default function AvatarCard() {
             </span>
           )}
         </button>
-
-        {seasonal.tip && (
-          <p className="mt-2 rounded-2xl bb-bg-FDE7F1-50 px-3 py-2 text-center text-xs font-extrabold bb-text-B83B7E">
-            {seasonal.season === "winter" ? "Дулаацах цаг 🧣" : seasonal.tip}
-          </p>
-        )}
 
         {/* ---------- XP ---------- */}
         <div className="mt-3">

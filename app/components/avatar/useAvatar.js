@@ -21,7 +21,6 @@ import {
   itemById,
   levelOf,
 } from "../../../lib/wardrobe";
-import { DEFAULT_CONFIG, isOwned, keysOf, migrateLook, normalizeConfig, priceOf } from "../../../lib/avatar";
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -45,7 +44,6 @@ const fresh = () => ({
   skin: 0,
   owned: STARTER_OWNED,
   look: STARTER_LOOK,
-  config: DEFAULT_CONFIG, // layered avatar (lib/avatar.ts); `look`/`skin` are the old pixel avatar
   background: "room",
   walk: { date: today(), steps: 0, xp: 0 },
   giftDate: null,
@@ -56,15 +54,11 @@ const read = (key) => {
     const raw = window.localStorage.getItem(key);
     if (!raw) return fresh();
     const saved = JSON.parse(raw);
-    // Old saves have only the pixel `look` → map it to the closest new items once.
-    const config = saved.config ? normalizeConfig(saved.config) : migrateLook(saved.look, saved.skin);
     return {
       ...fresh(),
       ...saved,
-      config,
-      hasConfig: Boolean(saved.config),
       xpSpent: Number.isFinite(saved.xpSpent) ? Math.max(0, Math.floor(saved.xpSpent)) : 0,
-      owned: Array.from(new Set([...STARTER_OWNED, ...(saved.owned ?? []), ...keysOf(config)])),
+      owned: Array.from(new Set([...STARTER_OWNED, ...(saved.owned ?? [])])),
       look: normalizeLook(saved.look),
       skin: normalizeSkin(saved.skin),
       background: normalizeBackground(saved.background),
@@ -100,7 +94,7 @@ export function useAvatar(userId, onToast = () => {}) {
     const loadSharedAvatar = async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select("avatar_look, avatar_skin, avatar_background")
         .eq("id", userId)
         .maybeSingle();
 
@@ -127,18 +121,11 @@ export function useAvatar(userId, onToast = () => {}) {
         remoteBackground !== "room";
       const useLocalAvatar = localHasCustomAvatar && !remoteHasCustomAvatar;
 
-      const config = data.avatar_config
-        ? normalizeConfig(data.avatar_config)
-        : localState.hasConfig
-          ? localState.config
-          : migrateLook(useLocalAvatar ? localState.look : remoteLook, useLocalAvatar ? localState.skin : remoteSkin);
       setState((current) => ({
         ...current,
         look: useLocalAvatar ? localState.look : remoteLook,
         skin: useLocalAvatar ? localState.skin : remoteSkin,
         background: useLocalAvatar ? localState.background : remoteBackground,
-        config,
-        owned: Array.from(new Set([...current.owned, ...keysOf(config)])),
       }));
       setAvatarSyncReady(true);
     };
@@ -160,15 +147,14 @@ export function useAvatar(userId, onToast = () => {}) {
     if (!loaded || !avatarSyncReady || !supabase || !userId) return;
 
     const timeout = setTimeout(async () => {
-      // avatar_look / avatar_skin stay as they were (old index meaning) for the one-time migration.
-      let { error } = await supabase
+      const { error } = await supabase
         .from("profiles")
-        .update({ avatar_config: state.config, avatar_background: state.background })
+        .update({
+          avatar_look: state.look,
+          avatar_skin: state.skin,
+          avatar_background: state.background,
+        })
         .eq("id", userId);
-      if (error && /avatar_config/.test(error.message ?? "")) {
-        // supabase/avatar-config.sql not run yet: keep the background in sync at least.
-        ({ error } = await supabase.from("profiles").update({ avatar_background: state.background }).eq("id", userId));
-      }
 
       if (error) {
         toastRef.current("Дүрийг найзуудтай синк хийж чадсангүй. Интернэтээ шалгана уу.");
@@ -176,7 +162,7 @@ export function useAvatar(userId, onToast = () => {}) {
     }, 250);
 
     return () => clearTimeout(timeout);
-  }, [avatarSyncReady, loaded, state.config, state.background, userId]);
+  }, [avatarSyncReady, loaded, state.look, state.skin, state.background, userId]);
 
   // XP нэмэх бүрт түвшин ахисан эсэхийг шалгана
   const reward = (s, amount) => {
@@ -239,29 +225,6 @@ export function useAvatar(userId, onToast = () => {}) {
   };
 
   const setSkin = (skin) => setState((s) => ({ ...s, skin }));
-
-  /* ---------- Layered avatar ---------- */
-  const setConfig = (next) => setState((s) => ({ ...s, config: normalizeConfig(next), hasConfig: true }));
-  const owns = (key) => isOwned(state.owned, key);
-
-  /** Same rules as buy(): level gate, then 🌸 petals. `key` = "top:hoodie" / "haircolor:pink". */
-  const buyKey = (key) => {
-    const info = priceOf(key);
-    if (!info || owns(key)) return false;
-    if (info.seasonal) return onToast("Энэ бол улирлын бэлэг. Тохирох улиралд автоматаар нээгдэнэ 🌸"), false;
-    if (level < info.level) return onToast(`${info.level}-р түвшинд нээгдэнэ`), false;
-    if (state.petals < info.price) return onToast(`${info.price - state.petals} дэлбээ дутуу байна. Алхаад цуглуулаарай!`), false;
-    setState((s) => ({ ...s, petals: s.petals - info.price, owned: [...s.owned, key] }));
-    onToast(`«${info.name}» авлаа ✨`);
-    return true;
-  };
-
-  /** Free seasonal gift; kept forever. Returns true only the first time. */
-  const unlockSeasonal = (key) => {
-    if (!loaded || owns(key)) return false;
-    setState((s) => (s.owned.includes(key) ? s : { ...s, owned: [...s.owned, key] }));
-    return true;
-  };
   const setBackground = (background) => {
     if (AVATAR_BACKGROUNDS.some((option) => option.id === background)) {
       setState((s) => ({ ...s, background }));
@@ -283,10 +246,6 @@ export function useAvatar(userId, onToast = () => {}) {
     buy,
     equip,
     setSkin,
-    setConfig,
-    owns,
-    buyKey,
-    unlockSeasonal,
     setBackground,
     reset,
   };
