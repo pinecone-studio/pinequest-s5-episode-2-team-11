@@ -6,7 +6,7 @@ import { useFamily } from "../../../context/FamilyContext";
 import BottomSheet from "../ui/BottomSheet";
 import Card from "../ui/Card";
 import AppSettingsSection from "./AppSettingsSection";
-import DaughterProfile from "./DaughterProfile";
+import DaughterProfile, { DeleteAccountSheet } from "./DaughterProfile";
 import FamilyLinkingSection from "./FamilyLinkingSection";
 import MyFriendCode from "../friends/MyFriendCode";
 import NotificationSettings from "./NotificationSettings";
@@ -19,6 +19,7 @@ export default function ProfileScreen() {
   const { view, guardianGender, updateGuardianGender, signOut } = useFamily();
   const [savingGender, setSavingGender] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
+  const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const isMother = view === "mother";
 
@@ -41,6 +42,32 @@ export default function ProfileScreen() {
           <DaughterProfile />
           <MyFriendCode />
           <FamilyLinkingSection />
+          <button
+            type="button"
+            onClick={() => setDeleteAccountOpen(true)}
+            className="mx-auto block px-3 py-2 text-xs font-bold text-rose-500"
+          >
+            {t("Бүртгэл устгах", "Delete account")}
+          </button>
+          {deleteAccountOpen && <DeleteAccountSheet onClose={() => setDeleteAccountOpen(false)} />}
+          <button
+            type="button"
+            onClick={() => setConfirmLogout(true)}
+            className="w-full rounded-2xl border border-slate-100 bg-white py-3 text-center text-sm font-extrabold text-rose-600 transition active:scale-95"
+          >
+            {t("Гарах", "Sign out")}
+          </button>
+          {confirmLogout && (
+            <BottomSheet title={t("Гарах", "Sign out")} onClose={() => setConfirmLogout(false)}>
+              <div className="space-y-3 pb-2">
+                <p className="text-base font-black text-slate-700">{t("Гарахдаа итгэлтэй байна уу?", "Are you sure you want to sign out?")}</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button type="button" onClick={() => setConfirmLogout(false)} className="rounded-2xl bg-slate-100 py-3 text-sm font-extrabold text-slate-600">{t("Болих", "Cancel")}</button>
+                  <button type="button" onClick={() => { setConfirmLogout(false); signOut(); }} className="rounded-2xl bb-bg-E0679F py-3 text-sm font-extrabold text-white">{t("Гарах", "Sign out")}</button>
+                </div>
+              </div>
+            </BottomSheet>
+          )}
         </>
       ) : (
         <>
