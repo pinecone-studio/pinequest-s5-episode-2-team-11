@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 768" width="512" height="768">
+  <!-- Accessory: headphones over the hair. -->
+  <path d="M108 232 C96 6 416 6 404 232" fill="none" stroke="var(--c1)" stroke-width="24" stroke-linecap="round"/>
+  <rect x="84" y="196" width="50" height="88" rx="22" fill="var(--c1)"/>
+  <rect x="378" y="196" width="50" height="88" rx="22" fill="var(--c1)"/>
+  <rect x="94" y="210" width="30" height="60" rx="14" fill="var(--c2)"/>
+  <rect x="388" y="210" width="30" height="60" rx="14" fill="var(--c2)"/>
+</svg>

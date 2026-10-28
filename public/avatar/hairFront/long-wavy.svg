@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 768" width="512" height="768">
+  <!-- Hair front: side-swept bangs + face-framing strands. -->
+  <path d="M110 230 C104 120 180 70 256 70 C332 70 408 120 402 230 C380 170 340 150 300 158 C282 190 240 196 214 170 C180 160 140 178 110 230 Z" fill="var(--c1)"/>
+  <path d="M110 220 C96 300 100 380 128 430 C140 380 138 300 132 240 Z" fill="var(--c1)"/>
+  <path d="M402 220 C416 300 412 380 384 430 C372 380 374 300 380 240 Z" fill="var(--c1)"/>
+  <path d="M190 100 Q230 86 262 92" fill="none" stroke="var(--c2)" stroke-width="10" stroke-linecap="round"/>
+</svg>

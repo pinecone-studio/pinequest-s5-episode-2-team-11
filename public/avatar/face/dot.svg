@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 768" width="512" height="768">
+  <!-- Face: simple dot eyes (class av-eyes blinks) + cheeks. The mouth is drawn by the engine from mood. -->
+  <g class="av-eyes">
+    <ellipse cx="206" cy="248" rx="14" ry="19" fill="var(--c1)"/>
+    <ellipse cx="306" cy="248" rx="14" ry="19" fill="var(--c1)"/>
+  </g>
+  <ellipse cx="174" cy="292" rx="24" ry="13" fill="var(--blush)" opacity="0.55"/>
+  <ellipse cx="338" cy="292" rx="24" ry="13" fill="var(--blush)" opacity="0.55"/>
+</svg>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 768" width="512" height="768">
+  <!-- Top: T-shirt (c1 shirt, c2 collar). -->
+  <rect x="128" y="384" width="58" height="86" rx="26" fill="var(--c1)"/>
+  <rect x="326" y="384" width="58" height="86" rx="26" fill="var(--c1)"/>
+  <rect x="172" y="374" width="168" height="206" rx="50" fill="var(--c1)"/>
+  <path d="M226 380 Q256 410 286 380" fill="none" stroke="var(--c2)" stroke-width="10" stroke-linecap="round"/>
+</svg>
