@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useFamily } from "../../../context/FamilyContext";
 import { useFriends } from "../../../context/FriendsContext";
@@ -60,6 +60,16 @@ export default function AppShell() {
   // Хонх: notify()-оор ирсэн бүх мэдэгдэл (найзын SOS ч мөн адил inbox-д бичигддэг)
   const inbox = useInbox(session && ready ? family.profile?.id : null);
   const [inboxOpen, setInboxOpen] = useState(false);
+
+  // A guardian's answer to «Ярилцмаар байна» also shows as a toast the moment it arrives.
+  const seenInboxRef = useRef(null);
+  useEffect(() => {
+    const ids = new Set(inbox.rows.map((row) => row.id));
+    if (seenInboxRef.current) {
+      inbox.rows.filter((row) => row.event === "talk_reply" && !row.read && !seenInboxRef.current.has(row.id) && Date.now() - new Date(row.created_at).getTime() < 120_000).forEach((row) => family.setToast(row.body));
+    }
+    seenInboxRef.current = ids;
+  }, [inbox.rows, family.setToast]);
 
   // Энэ төхөөрөмж өмнө нь мэдэгдэл зөвшөөрсөн бол бүртгэлийг нэвтэрсэн хэрэглэгчид шилжүүлнэ
   useEffect(() => {

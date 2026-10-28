@@ -17,6 +17,7 @@ import CycleLegend from "./CycleLegend";
 import CouponRewards from "../avatar/CouponRewards";
 import FeedbackPromptCard from "../feedback/FeedbackPromptCard";
 import StoryCards from "../connection/StoryCards";
+import { sendTalkRequest } from "../connection/TalkRequestSheet";
 
 export default function DaughterHome() {
   const [cycleModalOpen, setCycleModalOpen] = useState(false);
@@ -39,6 +40,7 @@ export default function DaughterHome() {
     cyclePeriods,
     periodPrediction,
     startPeriod,
+    setToast,
   } = useFamily();
   return (
     <div className="space-y-4">
@@ -56,7 +58,7 @@ export default function DaughterHome() {
       </div>
 
       <IncomingSosCard />
-      <StoryCards />
+      <StoryCards onTalk={() => sendTalkRequest("body", setToast)} />
       <FriendsQuickCard />
 
       <HoroscopeCard />
