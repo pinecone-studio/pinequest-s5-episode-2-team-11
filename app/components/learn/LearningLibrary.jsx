@@ -14,6 +14,7 @@ import {
   CircleCheck,
   CircleHelp,
   Clock,
+  Crown,
   Droplet,
   Droplets,
   Eye,
@@ -44,7 +45,12 @@ import EmotionCoachingLesson from "./EmotionCoachingLesson";
 import GuardianMaleGuide from "./GuardianMaleGuide";
 import Card from "../ui/Card";
 import MangaShelf from "./MangaShelf";
+import BottomSheet from "../ui/BottomSheet";
+import { usePremium } from "../avatar/usePremium";
 import { t } from "../../../lib/i18n";
+
+// Охины 4–9-р сэдэв зөвхөн Bloomy Plus эрхтэй үед нээгдэнэ (эхний 3 нь үнэгүй)
+const FREE_TOPIC_COUNT = 3;
 
 const TONES = {
   lilac: { background: "#E9DDFC", color: "#6A3BB8" },
@@ -91,7 +97,7 @@ function RoleChip({ children, tone }) {
   );
 }
 
-function TopicCard({ category, index, onClick, tile = false, read = false }) {
+function TopicCard({ category, index, onClick, tile = false, read = false, locked = false }) {
   const tone = TONES[category.tone] || TONES.lilac;
   if (tile) {
     const tileStyle = TOPIC_TILE_STYLES[category.id] ?? { background: "#B83B7E", Icon: Sun };
@@ -101,7 +107,7 @@ function TopicCard({ category, index, onClick, tile = false, read = false }) {
       <button
         type="button"
         onClick={onClick}
-        aria-label={`${category.title}. ${category.subtitle}${read ? `. ${t("Уншсан", "Read")}` : ""}`}
+        aria-label={`${category.title}. ${category.subtitle}${locked ? ". Bloomy Plus" : read ? `. ${t("Уншсан", "Read")}` : ""}`}
         className="group relative flex aspect-[0.86] w-full flex-col overflow-hidden rounded-[22px] p-2.5 text-left text-white transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300 active:scale-[0.97]"
         style={{
           background: `linear-gradient(155deg, ${accent} 0%, ${accent}E0 60%, ${accent}B8 100%)`,
@@ -116,7 +122,11 @@ function TopicCard({ category, index, onClick, tile = false, read = false }) {
           <span className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ backgroundColor: "rgba(255,255,255,0.25)" }}>
             <Icon className="h-[18px] w-[18px] text-white" strokeWidth={2.3} aria-hidden="true" />
           </span>
-          {read ? (
+          {locked ? (
+            <span className="flex h-6 w-6 items-center justify-center rounded-full" style={{ backgroundColor: "#FFFFFF", color: accent }} aria-hidden="true">
+              <Crown className="h-3.5 w-3.5" strokeWidth={2.6} />
+            </span>
+          ) : read ? (
             <span className="flex h-5 w-5 items-center justify-center rounded-full" style={{ backgroundColor: "#FFFFFF", color: accent }} aria-hidden="true">
               <Check className="h-3 w-3" strokeWidth={3.5} />
             </span>
@@ -260,6 +270,10 @@ export default function LearningLibrary({ onMoreMaterials }) {
   const categories = isGirl ? girlCategories : guardianCategories;
   const selectedIndex = categories.findIndex((category) => category.id === selectedId);
   const selected = selectedIndex >= 0 ? categories[selectedIndex] : null;
+  const premium = usePremium(isGirl ? profile?.id ?? session?.user?.id : null);
+  const [plusPrompt, setPlusPrompt] = useState(false);
+  const isLocked = (id) =>
+    isGirl && !premium.active && categories.findIndex((category) => category.id === id) >= FREE_TOPIC_COUNT;
 
   // Уншсан сэдвүүд (охинд, энэ төхөөрөмж дээр). Сэдвийг нээхэд уншсан гэж тооцно.
   const readKey = `bloom:learn-progress:${profile?.id ?? session?.user?.id ?? "local"}`;
@@ -274,6 +288,11 @@ export default function LearningLibrary({ onMoreMaterials }) {
     }
   }, [isGirl, readKey]);
   const openTopic = (id) => {
+    if (isLocked(id)) {
+      setSelectedId(null);
+      setPlusPrompt(true);
+      return;
+    }
     setSelectedId(id);
     if (!isGirl || readIds.includes(id)) return;
     const next = [...readIds, id];
@@ -473,10 +492,39 @@ export default function LearningLibrary({ onMoreMaterials }) {
             index={categories.findIndex((item) => item.id === category.id)}
             tile
             read={isGirl && readIds.includes(category.id)}
+            locked={isLocked(category.id)}
             onClick={() => openTopic(category.id)}
           />
         ))}
       </section>
+
+      {plusPrompt && (
+        <BottomSheet title="Bloomy Plus" onClose={() => setPlusPrompt(false)}>
+          <div className="space-y-3 pb-2">
+            <div className="flex items-center gap-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bb-grad-sos text-white">
+                <Crown className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <p className="text-sm font-black text-slate-800">
+                {t(`${FREE_TOPIC_COUNT + 1}–${categories.length}-р сэдэв Bloomy Plus-д багтдаг`, `Topics ${FREE_TOPIC_COUNT + 1}–${categories.length} are part of Bloomy Plus`)}
+              </p>
+            </div>
+            <p className="text-sm font-semibold leading-relaxed text-slate-600">
+              {t(
+                "Асран хамгаалагч чинь Тохиргоо → Bloomy Plus хэсгээс асааж өгнө. Тэр хүртэл эхний сэдвүүдээ уншаад, асуух зүйлээ Блүми эгчээс асуугаарай 🌸",
+                "Your guardian can turn it on in Settings → Bloomy Plus. Until then, read the first topics and ask Big Sis Bloomy anything you want to know 🌸",
+              )}
+            </p>
+            <button
+              type="button"
+              onClick={() => setPlusPrompt(false)}
+              className="min-h-12 w-full rounded-2xl bb-grad-sos px-4 py-3 text-sm font-extrabold text-white active:scale-[0.99]"
+            >
+              {t("Ойлголоо", "Got it")}
+            </button>
+          </div>
+        </BottomSheet>
+      )}
 
       {isGirl && <MangaShelf />}
     </div>
