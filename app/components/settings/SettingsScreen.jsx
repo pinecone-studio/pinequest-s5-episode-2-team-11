@@ -8,12 +8,24 @@ import Card from "../ui/Card";
 import PageHeader from "../ui/PageHeader";
 import SectionTitle from "../ui/SectionTitle";
 import PrivateNotePinSettings from "./PrivateNotePinSettings";
+import DaughterProfile from "./DaughterProfile";
+import MyFriendCode from "../friends/MyFriendCode";
 import { t } from "../../../lib/i18n";
 
 export default function SettingsScreen() {
   const { theme, setTheme } = useTheme();
   const { view, shareWithMom, setShareWithMom } = useFamily();
   const { lang: language, setLang: selectLanguage } = useLang();
+
+  if (view === "daughter") {
+    return (
+      <div className="space-y-4">
+        <PageHeader sub={t("Аппын тохиргоо", "App settings")} title={t("Тохиргоо", "Settings")} />
+        <DaughterProfile mode="settings" />
+        <MyFriendCode />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

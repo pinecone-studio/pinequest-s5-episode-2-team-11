@@ -8,7 +8,6 @@ import Card from "../ui/Card";
 import AppSettingsSection from "./AppSettingsSection";
 import DaughterProfile, { DeleteAccountSheet } from "./DaughterProfile";
 import FamilyLinkingSection from "./FamilyLinkingSection";
-import MyFriendCode from "../friends/MyFriendCode";
 import NotificationSettings from "./NotificationSettings";
 import { SettingsGroup, SettingsRow } from "./SettingsList";
 import ProfileCard from "./ProfileCard";
@@ -39,9 +38,7 @@ export default function ProfileScreen() {
 
       {!isMother ? (
         <>
-          <DaughterProfile />
-          <MyFriendCode />
-          <FamilyLinkingSection />
+          <DaughterProfile mode="profile" />
           <button
             type="button"
             onClick={() => setDeleteAccountOpen(true)}

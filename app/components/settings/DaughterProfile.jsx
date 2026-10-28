@@ -132,60 +132,62 @@ function QaList({ items }) {
 }
 
 /** Daughter's Profile tab as a grouped settings list (Settings page merged in as «Апп»). */
-export default function DaughterProfile() {
+export default function DaughterProfile({ mode = "profile" }) {
   const { profile, setToast, linked, guardianName, cycleLength } = useFamily();
   const { theme, setTheme } = useTheme();
   const [language, setLanguage] = useLanguage();
   const avatar = useAvatar(profile?.id, setToast);
   const [sheet, setSheet] = useState(null);
+  const showProfile = mode === "profile";
+  const showSettings = mode === "settings";
   const close = () => setSheet(null);
   const subtitle = avatar.loaded ? `Түв. ${avatar.level} · 🌸 ${avatar.petals}` : null;
 
   return (
     <div className="space-y-5">
-      <ProfileCard compact subtitle={subtitle} />
+      {showProfile && <ProfileCard compact subtitle={subtitle} />}
 
-      <SettingsGroup title="Миний зүйлс">
+      {showProfile && <SettingsGroup title="Миний зүйлс" className="my-things-list">
         <SettingsRow emoji="🎒" label="Миний цүнх" onClick={() => setSheet("bag")} />
         <SettingsRow emoji="🎁" label="Миний хүслүүд" value="Удахгүй" onClick={() => setSheet("wishes")} />
         <SettingsRow emoji="📅" label="Миний мөчлөг" value={cycleLength ? `${cycleLength} хоног` : null} onClick={() => setSheet("cycle")} />
-      </SettingsGroup>
+      </SettingsGroup>}
 
-      <SettingsGroup title="Гэр бүл">
+      {showSettings && <SettingsGroup title="Гэр бүл">
         {linked
           ? <SettingsRow emoji="💗" label={`Асран хамгаалагч · ${guardianName || "Холбогдсон"}`} onClick={() => setSheet("guardian")} />
           : <SettingsRow emoji="🔗" label="Асран хамгаалагчтай холбогдох" onClick={() => setSheet("connect")} />}
         {/* TODO: «➕ Асран хамгаалагч нэмэх» — a family has one guardian (families.created_by) today. */}
-      </SettingsGroup>
+      </SettingsGroup>}
 
-      <SettingsGroup title="Нууцлал">
+      {showSettings && <SettingsGroup title="Нууцлал">
         <SettingsRow emoji="🔒" label="Нууц тэмдэглэлийн түгжээ" onClick={() => setSheet("pin")} />
         <SettingsRow emoji="🔔" label="Мэдэгдэл" onClick={() => setSheet("notifications")} />
-      </SettingsGroup>
+      </SettingsGroup>}
 
-      <SettingsGroup id="app" title="Апп">
+      {showSettings && <SettingsGroup id="app" title="Апп">
         <SettingsRow emoji="🌐" label="Хэл" value={LANGUAGES.find((item) => item.id === language)?.label} onClick={() => setSheet("language")} />
         <SettingsRow emoji="🎨" label="Өнгө" value={THEMES.find((item) => item.id === theme)?.label} onClick={() => setSheet("theme")} />
-      </SettingsGroup>
+      </SettingsGroup>}
 
-      <SettingsGroup title="Тусламж">
+      {showProfile && <SettingsGroup title="Тусламж">
         <SettingsRow emoji="💗" label="Итгэдэг том хүнтэй ярилцах" onClick={() => setSheet("safety")} />
         <SettingsRow emoji="❓" label="Тусламж" onClick={() => setSheet("help")} />
         <SettingsRow emoji="📄" label="Нууцлалын бодлого" onClick={() => setSheet("policy")} />
-      </SettingsGroup>
+      </SettingsGroup>}
 
-      {sheet === "bag" && <BottomSheet title="🎒 Миний цүнх" onClose={close}><div className="pb-2"><DaughterSupplies embedded /></div></BottomSheet>}
-      {sheet === "wishes" && <BottomSheet title="🎁 Миний хүслүүд" onClose={close}><div className="pb-2"><ComingSoon /></div></BottomSheet>}
-      {sheet === "cycle" && <MyCycleSheet onClose={close} />}
-      {sheet === "guardian" && <GuardianSheet onClose={close} />}
-      {sheet === "connect" && <BottomSheet title="🔗 Асран хамгаалагчтай холбогдох" onClose={close}><div className="pb-2"><GuardianConnectForm /></div></BottomSheet>}
-      {sheet === "pin" && <BottomSheet title="🔒 Нууц тэмдэглэлийн түгжээ" onClose={close}><div className="pb-2"><PrivateNotePinSettings /></div></BottomSheet>}
-      {sheet === "notifications" && <BottomSheet title="🔔 Мэдэгдэл" onClose={close}><NotificationSettings /></BottomSheet>}
-      {sheet === "language" && <BottomSheet title="🌐 Хэл" onClose={close}><div className="pb-2"><SegmentedChoice options={LANGUAGES} value={language} onChange={setLanguage} /></div></BottomSheet>}
-      {sheet === "theme" && <BottomSheet title="🎨 Өнгө" onClose={close}><div className="pb-2"><SegmentedChoice options={THEMES} value={theme} onChange={setTheme} /></div></BottomSheet>}
-      {sheet === "help" && <BottomSheet title="❓ Тусламж" onClose={close}><QaList items={FAQ} /></BottomSheet>}
-      {sheet === "safety" && <BottomSheet title="💗 Чи ганцаараа биш" onClose={close}><SafetyCard /></BottomSheet>}
-      {sheet === "policy" && <BottomSheet title="📄 Нууцлалын бодлого" onClose={close}>
+      {showProfile && sheet === "bag" && <BottomSheet title="🎒 Миний цүнх" onClose={close}><div className="pb-2"><DaughterSupplies embedded /></div></BottomSheet>}
+      {showProfile && sheet === "wishes" && <BottomSheet title="🎁 Миний хүслүүд" onClose={close}><div className="pb-2"><ComingSoon /></div></BottomSheet>}
+      {showProfile && sheet === "cycle" && <MyCycleSheet onClose={close} />}
+      {showSettings && sheet === "guardian" && <GuardianSheet onClose={close} />}
+      {showSettings && sheet === "connect" && <BottomSheet title="🔗 Асран хамгаалагчтай холбогдох" onClose={close}><div className="pb-2"><GuardianConnectForm /></div></BottomSheet>}
+      {showSettings && sheet === "pin" && <BottomSheet title="🔒 Нууц тэмдэглэлийн түгжээ" onClose={close}><div className="pb-2"><PrivateNotePinSettings /></div></BottomSheet>}
+      {showSettings && sheet === "notifications" && <BottomSheet title="🔔 Мэдэгдэл" onClose={close}><NotificationSettings /></BottomSheet>}
+      {showSettings && sheet === "language" && <BottomSheet title="🌐 Хэл" onClose={close}><div className="pb-2"><SegmentedChoice options={LANGUAGES} value={language} onChange={setLanguage} /></div></BottomSheet>}
+      {showSettings && sheet === "theme" && <BottomSheet title="🎨 Өнгө" onClose={close}><div className="pb-2"><SegmentedChoice options={THEMES} value={theme} onChange={setTheme} /></div></BottomSheet>}
+      {showProfile && sheet === "help" && <BottomSheet title="❓ Тусламж" onClose={close}><QaList items={FAQ} /></BottomSheet>}
+      {showProfile && sheet === "safety" && <BottomSheet title="💗 Чи ганцаараа биш" onClose={close}><SafetyCard /></BottomSheet>}
+      {showProfile && sheet === "policy" && <BottomSheet title="📄 Нууцлалын бодлого" onClose={close}>
         <p className="mb-3 w-fit rounded-full bg-amber-100 px-3 py-1 text-[11px] font-extrabold text-amber-700">📝 Ноорог · хянагдаж байна</p>
         <QaList items={POLICY} />
       </BottomSheet>}

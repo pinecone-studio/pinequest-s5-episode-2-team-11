@@ -3,9 +3,9 @@
 import { ChevronRight } from "lucide-react";
 
 /** Grouped list (iOS Settings style): muted small-caps header + rounded card of rows. */
-export function SettingsGroup({ id, title, children }) {
+export function SettingsGroup({ id, title, children, className = "" }) {
   return (
-    <section id={id} className="scroll-mt-20">
+    <section id={id} className={`scroll-mt-20 ${className}`}>
       {title && <h3 className="mb-1.5 px-3 text-[11px] font-black uppercase tracking-wider text-slate-400">{title}</h3>}
       <div className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-100 bg-white">{children}</div>
     </section>
