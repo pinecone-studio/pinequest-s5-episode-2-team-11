@@ -10,7 +10,6 @@ import { BookOpen, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { PAD_GUIDE, PAD_USAGE_DISPOSAL_GUIDE } from "../../../lib/padGuide";
 import PadIllustration from "./PadIllustration";
 import Card from "../ui/Card";
-import MicroFeedback from "../feedback/MicroFeedback";
 
 const STORAGE_KEY = "bloomy:padGuide";
 const USAGE_DISPOSAL_STORAGE_KEY = "bloomy:padUsageDisposalGuide";
@@ -232,9 +231,6 @@ export default function PadGuide({ role, onAskFriends, standalone = false }) {
               );
             })}
           </nav>
-          {T.finished && role !== "mother" && (
-            <MicroFeedback targetType="lesson" targetId={standalone ? "pad-usage-disposal" : "pad-guide"} question="Ойлгомжтой байсан уу?" className="mt-3 px-1" />
-          )}
         </div>
       </Card>
     </div>

@@ -55,7 +55,7 @@ export default function InstallAppButton() {
         aria-expanded={showInstructions}
         className="inline-flex items-center gap-2 rounded-full border-2 bb-border-FDE7F1 bg-white px-5 py-3 font-extrabold bb-text-B83B7E shadow-sm active:scale-95 transition"
       >
-        <Plus className="w-5 h-5" /> Апп татах
+        <Plus className="w-5 h-5" /> Нүүр дэлгэцэд нэмэх
       </button>
 
       {showInstructions && (
@@ -63,11 +63,11 @@ export default function InstallAppButton() {
           {isIos ? (
             <>
               Safari-ийн <Share2 className="inline w-3.5 h-3.5 align-[-2px]" /> Хуваалцах товчийг дараад{" "}
-              <b>Апп татах</b>-ийг сонгоно уу.
+              <b>Нүүр дэлгэцэд нэмэх</b>-ийг сонгоно уу.
             </>
           ) : (
             <>
-              Chrome-ийн <b>⋮</b> цэсийг нээгээд <b>Апп суулгах</b> эсвэл <b>Апп татах</b>-ийг сонгоно уу.
+              Chrome-ийн <b>⋮</b> цэсийг нээгээд <b>Апп суулгах</b> эсвэл <b>Нүүр дэлгэцэд нэмэх</b>-ийг сонгоно уу.
             </>
           )}
         </p>

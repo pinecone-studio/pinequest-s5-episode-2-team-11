@@ -19,7 +19,6 @@ import { periodsFromLogs, predictPeriodRange } from "../lib/cycle";
 import { persistPeriodDays } from "../lib/period-edit";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { askAi } from "../lib/ai-client";
-import { sendNotification } from "../lib/push-client";
 
 const AVATAR_SETUP_KEY = "bloomy:avatar-setup";
 
@@ -28,8 +27,6 @@ const LOCAL_KIT_KEY = "bloomy:kit-checks";
 const LOCAL_CUSTOM_SUPPLIES_KEY = "bloomy:custom-supplies";
 const LOCAL_PERIOD_STARTS_PREFIX = "bloom:period-starts:";
 const DAILY_MOOD_EMOJI = { 1: "😣", 2: "😟", 3: "😐", 4: "🙂", 5: "😄" };
-// Daughter → guardian message kinds → notification events (lib/notificationEvents.ts).
-const DAUGHTER_KIND_EVENT = { supply: "supply_request", sos: "guardian_signal", period: "first_period", care: "mood_shared" };
 const PROFILE_SAFE_COLUMNS = "id, role, display_name, family_id, cycle_length, period_length, last_period_start, share_mood, no_period_yet, birth_date, created_at";
 const PROFILE_CORE_COLUMNS = "id, role, display_name, family_id";
 
@@ -675,23 +672,16 @@ export function FamilyProvider({ children }) {
   }, [tab, view]);
 
   /* ================= Мэдэгдэл ================= */
-  // All family messages go through /api/notify → lib/notify.ts (inbox row + push by the timing rules).
-  // `text` is the in-app detail; the lock screen only shows the event's neutral line.
   const notify = useCallback(
     async (recipientRole, text, kind = "info", recipientId = null) => {
       if (!familyId || !recipientId) return false;
-      const event = recipientRole === "daughter"
-        ? "guardian_message"
-        : view === "mother"
-          ? "sent_copy" // guardian's own copy of what she sent
-          : DAUGHTER_KIND_EVENT[kind] ?? "guardian_signal";
-      const { ok, limited } = await sendNotification(session, event, [recipientId], text);
-      if (limited) setToast("Саяхан илгээсэн байна. Түр хүлээгээд дахин оролдоорой.");
-      else if (!ok) setToast("Илгээж чадсангүй. Интернэтээ шалгаарай.");
-      if (ok) loadNotifications();
-      return ok;
+      const { error } = await supabase
+        .from("notifications")
+        .insert({ family_id: familyId, sender_id: userId, recipient_id: recipientId, recipient_role: recipientRole, kind, text });
+      if (error) setToast("Илгээж чадсангүй. Интернэтээ шалгаарай.");
+      return !error;
     },
-    [familyId, view, session, loadNotifications],
+    [familyId, userId, loadNotifications],
   );
   const guardianId = view === "mother" ? userId : members.find((member) => member.role === "mother")?.id;
   const sendToMom = (text, kind) => notify("mother", text, kind, guardianId);

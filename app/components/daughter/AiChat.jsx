@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { feedbackRequest } from "../../../lib/feedback-client";
-import MicroFeedback from "../feedback/MicroFeedback";
 import { MessageCircleHeart, Send, Trash2, ShieldCheck } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import { autoReply } from "../../../lib/chat-replies";
@@ -107,8 +105,6 @@ export default function AiChat() {
     let reply = fallback.reply;
     let nextChips = fallback.chips;
     if (fallback.urgent) {
-      // Safety reply shown → no feedback survey today (nobody is notified).
-      feedbackRequest("hard_day");
       await new Promise((r) => setTimeout(r, 600));
     } else {
       const ai = await askAi(session, { type: "daughter_chat", messages: next.slice(-8) }, 30000);
@@ -118,7 +114,7 @@ export default function AiChat() {
       }
     }
     setThinking(false);
-    setMessages([...next, { role: "assistant", content: reply, source: reply === fallback.reply ? "auto" : "ai" }]);
+    setMessages([...next, { role: "assistant", content: reply }]);
     setChips(nextChips);
     setTyping({ index: next.length, shown: 0 });
     saveToDb([
@@ -182,14 +178,9 @@ export default function AiChat() {
       <div ref={listRef} className="mt-3 max-h-96 overflow-y-auto space-y-3 pr-1">
         <Bubble role="assistant">{GREETING}</Bubble>
         {messages.map((m, i) => (
-          <div key={i} className="space-y-1">
-            <Bubble role={m.role}>
-              {typing?.index === i ? m.content.slice(0, typing.shown) : m.content}
-            </Bubble>
-            {m.role === "assistant" && typing?.index !== i && (
-              <MicroFeedback targetType="bloomy_answer" targetId={answerId(m)} question="Энэ хариулт тусалсан уу?" className="pl-2" />
-            )}
-          </div>
+          <Bubble key={i} role={m.role}>
+            {typing?.index === i ? m.content.slice(0, typing.shown) : m.content}
+          </Bubble>
         ))}
         {thinking && (
           <div className="flex justify-start">
@@ -251,13 +242,6 @@ export default function AiChat() {
       </form>
     </Card>
   );
-}
-
-// Same answer text → same id, so ratings group per answer (AI vs fixed replies) without storing the text.
-function answerId(message) {
-  let hash = 5381;
-  for (const char of message.content) hash = ((hash << 5) + hash + char.codePointAt(0)) >>> 0;
-  return `${message.source ?? "ai"}:${hash.toString(36)}`;
 }
 
 function Bubble({ role, children }) {

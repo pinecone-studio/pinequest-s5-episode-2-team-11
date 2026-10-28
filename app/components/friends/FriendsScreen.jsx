@@ -20,7 +20,6 @@ import Avatar from "../avatar/Avatar";
 import { friendMoodToday } from "../avatar/useTodayMood";
 import { MOODS } from "../../../lib/log-entries";
 import BottomSheet from "../ui/BottomSheet";
-import MyFriendCode from "./MyFriendCode";
 
 const Label = ({ children }) => (
   <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2">{children}</p>
@@ -192,7 +191,6 @@ export default function FriendsScreen() {
       )}
       {sheet === "friends" && (
         <BottomSheet title="Найз нэмэх" onClose={() => setSheet(null)}>
-          <div className="mb-4"><MyFriendCode /></div>
           <MyFriends />
         </BottomSheet>
       )}
@@ -296,7 +294,7 @@ function MyFriends() {
   return (
     <div>
       <p className="text-xs font-semibold text-slate-400">
-        Найзынхаа кодыг оруулаарай. Найз чинь дээрх кодоор чамайг нэмнэ.
+        Найзынхаа кодыг оруулаарай. Өөрийн код чинь <b>Профайл</b> хэсэгт байгаа.
       </p>
 
       <form onSubmit={submit} className="mt-3 flex gap-2">

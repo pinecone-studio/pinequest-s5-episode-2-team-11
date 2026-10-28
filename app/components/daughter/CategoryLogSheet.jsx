@@ -8,7 +8,6 @@ import {
   CATEGORY_BY_KEY, FLOWS, MOODS, PAINS, SKIN, SLEEP_DEFAULT, SLEEP_MAX, SLEEP_MIN, SLEEP_QUALITY, SYMPTOM_ITEMS,
   deleteEntry, saveEntry,
 } from "../../../lib/log-entries";
-import { sendNotification } from "../../../lib/push-client";
 import { supabase } from "../../../lib/supabase";
 import BottomSheet from "../ui/BottomSheet";
 
@@ -39,7 +38,7 @@ const ready = (category, value) => {
 
 /** One-tap log sheet for a single category; with `entry` it edits/deletes that entry. */
 export default function CategoryLogSheet({ date, category, entry = null, isPeriodDay = false, onClose }) {
-  const { profile, session, setToast, linked, guardianName, shareWithMom, startPeriod, savePeriodStartDates, periodStarts } = useFamily();
+  const { profile, setToast, linked, guardianName, shareWithMom, startPeriod, savePeriodStartDates, periodStarts } = useFamily();
   const today = localDateKey(new Date());
   const meta = CATEGORY_BY_KEY[category];
   const [value, setValue] = useState(() => initialValue(category, entry));
@@ -76,7 +75,6 @@ export default function CategoryLogSheet({ date, category, entry = null, isPerio
     if (category === "mood" && share !== sharedBefore) {
       const { error: shareError } = await supabase.rpc("set_my_day_share_mood", { p_log_date: date, p_share: share });
       if (shareError) console.error("[day_logs] share_mood:", shareError);
-      else if (share) sendNotification(session, "mood_shared");
     }
     setBusy(false);
     setToast("Хадгаллаа");

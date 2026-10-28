@@ -8,6 +8,7 @@ import MotherMessages from "../mother/MotherMessages";
 import MotherSupplies from "../mother/MotherSupplies";
 import MotherCalendar from "../mother/MotherCalendar";
 import LearnHub from "../learn/LearnHub";
+import SettingsScreen from "../settings/SettingsScreen";
 import ProfileScreen from "../settings/ProfileScreen";
 import FriendsScreen from "../friends/FriendsScreen";
 import NotConfigured from "../system/NotConfigured";
@@ -38,6 +39,7 @@ export default function CurrentScreen({ family, pathname }) {
     return <LoadError kind={loadError ?? "no_profile"} onRetry={reload} onSignOut={signOut} />;
   }
   if (tab === "me") return <ProfileScreen />;
+  if (tab === "settings") return <SettingsScreen />;
   if (needsAvatarSetup) return <AvatarSetup />;
   if (tab === "learn") return <LearnHub />;
 
