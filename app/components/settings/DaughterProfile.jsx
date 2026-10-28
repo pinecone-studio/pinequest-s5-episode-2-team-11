@@ -138,18 +138,20 @@ function QaList({ items }) {
 }
 
 /** Daughter's Profile tab as a grouped settings list (Settings page merged in as «Апп»). */
-export default function DaughterProfile() {
+export default function DaughterProfile({ mode = "profile" }) {
   const { profile, setToast, linked, guardianName, cycleLength } = useFamily();
   const { theme, setTheme } = useTheme();
   const [language, setLanguage] = useLanguage();
   const avatar = useAvatar(profile?.id, setToast);
   const [sheet, setSheet] = useState(null);
+  const showProfile = mode === "profile";
+  const showSettings = mode === "settings";
   const close = () => setSheet(null);
   const subtitle = avatar.loaded ? `${t("Түв.", "Lv.")} ${avatar.level} · 🌸 ${avatar.petals}` : null;
 
   return (
     <div className="space-y-5">
-      <ProfileCard compact subtitle={subtitle} />
+      {showProfile && <ProfileCard compact subtitle={subtitle} />}
 
       <SettingsGroup title={t("Миний зүйлс", "My things")}>
         <SettingsRow emoji="🎒" label={t("Миний цүнх", "My bag")} onClick={() => setSheet("bag")} />
@@ -162,7 +164,7 @@ export default function DaughterProfile() {
           ? <SettingsRow emoji="💗" label={`${t("Асран хамгаалагч", "Guardian")} · ${guardianName || t("Холбогдсон", "Connected")}`} onClick={() => setSheet("guardian")} />
           : <SettingsRow emoji="🔗" label={t("Асран хамгаалагчтай холбогдох", "Connect to a guardian")} onClick={() => setSheet("connect")} />}
         {/* TODO: «➕ Асран хамгаалагч нэмэх» — a family has one guardian (families.created_by) today. */}
-      </SettingsGroup>
+      </SettingsGroup>}
 
       <SettingsGroup title={t("Нууцлал", "Privacy")}>
         <SettingsRow emoji="🔒" label={t("Нууц тэмдэглэлийн түгжээ", "Private note lock")} onClick={() => setSheet("pin")} />
