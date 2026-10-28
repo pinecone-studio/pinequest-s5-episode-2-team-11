@@ -5,6 +5,7 @@ import { Check, X, Wind, Timer, Lock, RotateCcw, Play, Pause, Heart } from "luci
 import { SOS_TOTAL, SOS_STEPS } from "../../../lib/data";
 import { formatSeconds } from "../../../lib/helpers";
 import StretchFigure from "./StretchFigure";
+import { t } from "../../../lib/i18n";
 
 export default function SosModal() {
   const {
@@ -30,14 +31,14 @@ export default function SosModal() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <p className="text-xs font-extrabold uppercase tracking-widest bb-text-7C4DCC">
-              Сарын тэмдгийн өвдөлтийн үед
+              {t("Сарын тэмдгийн өвдөлтийн үед", "For period pain")}
             </p>
-            <h3 className="text-xl font-black text-slate-700">Өвдөлтөө зөөлрүүлж тайвширъя 🤍</h3>
+            <h3 className="text-xl font-black text-slate-700">{t("Өвдөлтөө зөөлрүүлж тайвширъя 🤍", "Let's ease the pain and relax 🤍")}</h3>
           </div>
           <button
             onClick={() => setSosOpen(false)}
             className="w-10 h-10 rounded-full bg-white border border-slate-100 flex items-center justify-center"
-            aria-label="Хаах"
+            aria-label={t("Хаах", "Close")}
           >
             <X className="w-5 h-5 text-slate-500" />
           </button>
@@ -64,9 +65,9 @@ export default function SosModal() {
             <Wind className="relative w-8 h-8 text-white" />
           </div>
           <p className="mt-1 text-lg font-black text-slate-700">
-            {breathIn ? "Амьсгаа ав…" : "Амьсгаагаа гарга…"}
+            {breathIn ? t("Амьсгаа ав…", "Breathe in…") : t("Амьсгаагаа гарга…", "Breathe out…")}
           </p>
-          <p className="text-xs font-bold text-slate-500">4 секунд оруулж, 4 секунд гаргана</p>
+          <p className="text-xs font-bold text-slate-500">{t("4 секунд оруулж, 4 секунд гаргана", "In for 4 seconds, out for 4 seconds")}</p>
         </div>
 
         {/* Таймер ба сунгалтын зургууд */}
@@ -80,7 +81,7 @@ export default function SosModal() {
                 onClick={() => setSosRunning((r) => !r)}
                 disabled={sosSeconds === 0}
                 className="w-9 h-9 rounded-xl bb-bg-FDE7F1 flex items-center justify-center disabled:opacity-40"
-                aria-label={sosRunning ? "Түр зогсоох" : "Үргэлжлүүлэх"}
+                aria-label={sosRunning ? t("Түр зогсоох", "Pause") : t("Үргэлжлүүлэх", "Continue")}
               >
                 {sosRunning ? (
                   <Pause className="w-4 h-4 bb-text-B83B7E" />
@@ -94,7 +95,7 @@ export default function SosModal() {
                   setSosRunning(true);
                 }}
                 className="w-9 h-9 rounded-xl bb-bg-FDE7F1 flex items-center justify-center"
-                aria-label="Дахин эхлүүлэх"
+                aria-label={t("Дахин эхлүүлэх", "Restart")}
               >
                 <RotateCcw className="w-4 h-4 bb-text-B83B7E" />
               </button>
@@ -125,7 +126,7 @@ export default function SosModal() {
                   <div className="h-14">
                     <StretchFigure type={s.figure} active={active || done} />
                   </div>
-                  <p className="mt-1 text-xs font-extrabold text-slate-400">{i + 1} минут</p>
+                  <p className="mt-1 text-xs font-extrabold text-slate-400">{i + 1} {t("минут", "min")}</p>
                   <p className="text-xs font-extrabold text-slate-700 leading-tight">
                     {done && !active ? "✓ " : ""}
                     {s.cardTitle || s.title}
@@ -144,7 +145,7 @@ export default function SosModal() {
             </div>
           ) : (
             <p className="mt-3 text-center text-sm font-extrabold bb-text-B83B7E bloom-pop">
-              Сайн байлаа 🌸 Одоо хэвлий дээрээ халуун жин тавиад жаахан амраарай.
+              {t("Сайн байлаа 🌸 Одоо хэвлий дээрээ халуун жин тавиад жаахан амраарай.", "Well done 🌸 Now put a warm compress on your belly and rest a little.")}
             </p>
           )}
         </div>
@@ -162,22 +163,21 @@ export default function SosModal() {
         >
           {sosSent ? (
             <>
-              <Check className="w-5 h-5" /> Асран хамгаалагчид зөөлөн мэдэгдэл очлоо
+              <Check className="w-5 h-5" /> {t("Асран хамгаалагчид зөөлөн мэдэгдэл очлоо", "A gentle notice was sent to your guardian")}
             </>
           ) : linked ? (
             <>
-              <Heart className="w-5 h-5" /> Асран хамгаалагчид мэдэгдэх
+              <Heart className="w-5 h-5" /> {t("Асран хамгаалагчид мэдэгдэх", "Let my guardian know")}
             </>
           ) : (
             <>
-              <Lock className="w-5 h-5" /> Мэдэгдэхийн тулд асран хамгаалагчтайгаа холбогдоорой
+              <Lock className="w-5 h-5" /> {t("Мэдэгдэхийн тулд асран хамгаалагчтайгаа холбогдоорой", "Connect with your guardian to send notices")}
             </>
           )}
         </button>
 
         <p className="mt-4 text-xs font-semibold text-slate-400 text-center leading-relaxed">
-          Өвдөлт тэвчихийн аргагүй, толгой эргэх, ухаан балартах эсвэл бөөлжих шинж илэрвэл том хүнд даруй
-          хэлж, эмчид хандаарай.
+          {t("Өвдөлт тэвчихийн аргагүй, толгой эргэх, ухаан балартах эсвэл бөөлжих шинж илэрвэл том хүнд даруй хэлж, эмчид хандаарай.", "If the pain is unbearable, or you feel dizzy, faint or throw up, tell an adult right away and see a doctor.")}
         </p>
       </div>
     </div>

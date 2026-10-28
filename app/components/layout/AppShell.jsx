@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useFamily } from "../../../context/FamilyContext";
 import { useFriends } from "../../../context/FriendsContext";
@@ -10,6 +10,11 @@ import CurrentScreen from "./CurrentScreen";
 import SosModal from "../sos/SosModal";
 import ChildSwitcher from "../mother/ChildSwitcher";
 import { useTheme } from "../../../context/ThemeContext";
+import { useT } from "../../../context/LanguageContext";
+import { requestAppSettingsFocus } from "../settings/appSettingsFocus";
+import NotificationInbox from "../notifications/NotificationInbox";
+import { useInbox } from "../notifications/useInbox";
+import { syncPushSubscription } from "../../../lib/push-client";
 
 // Хаяг → таб
 const TAB_BY_PATH = {
@@ -24,7 +29,7 @@ const TAB_BY_PATH = {
   "/daughter/messages": "messages",
   "/friends": "friends",
   "/learn": "learn",
-  "/settings": "settings",
+  "/settings": "me", // хуучин тохиргооны хуудас → Профайлын «Апп» хэсэг
   "/profile": "me",
 };
 
@@ -36,6 +41,8 @@ export default function AppShell() {
   const pathname = usePathname();
   const family = useFamily();
   const { theme } = useTheme();
+  // Хэл солигдоход бүх дэлгэц дахин зурагдана (доорх компонентууд lib/i18n-ийн t()-г шууд ашиглана)
+  useT();
   const { unansweredIncoming } = useFriends();
   const {
     authLoading,
@@ -49,17 +56,36 @@ export default function AppShell() {
     daughterName,
     tab,
     setTab,
-    momUnread,
     toast,
     lowSupplyCount,
     sosOpen,
   } = family;
-  // Охины хонхны тоо: асран хамгаалагчийн уншаагүй үг + хариулаагүй найзын SOS
-  const teenUnread = (family.teenInbox ?? []).filter((n) => !n.read).length + (unansweredIncoming ?? 0);
+  // Хонх: notify()-оор ирсэн бүх мэдэгдэл (найзын SOS ч мөн адил inbox-д бичигддэг)
+  const inbox = useInbox(session && ready ? family.profile?.id : null);
+  const [inboxOpen, setInboxOpen] = useState(false);
+
+  // A guardian's answer to «Ярилцмаар байна» also shows as a toast the moment it arrives.
+  const seenInboxRef = useRef(null);
+  useEffect(() => {
+    const ids = new Set(inbox.rows.map((row) => row.id));
+    if (seenInboxRef.current) {
+      inbox.rows.filter((row) => row.event === "talk_reply" && !row.read && !seenInboxRef.current.has(row.id) && Date.now() - new Date(row.created_at).getTime() < 120_000).forEach((row) => family.setToast(row.body));
+    }
+    seenInboxRef.current = ids;
+  }, [inbox.rows, family.setToast]);
+
+  // Энэ төхөөрөмж өмнө нь мэдэгдэл зөвшөөрсөн бол бүртгэлийг нэвтэрсэн хэрэглэгчид шилжүүлнэ
+  useEffect(() => {
+    if (session && ready) syncPushSubscription(session);
+  }, [session, ready]);
 
   useEffect(() => {
     setTab(TAB_BY_PATH[pathname] ?? "home");
-  }, [pathname, setTab]);
+    if (pathname === "/settings") {
+      requestAppSettingsFocus();
+      router.replace("/profile");
+    }
+  }, [pathname, setTab, router]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -82,7 +108,6 @@ export default function AppShell() {
       learn: "/learn",
       messages: view === "mother" ? "/mother/messages" : "/daughter/messages",
       me: "/profile",
-      settings: "/settings",
     };
     router.push(routes[nextTab] ?? "/");
   };
@@ -101,9 +126,12 @@ export default function AppShell() {
           showNav={showNav}
           view={view}
           tab={tab}
-          momUnread={view === "mother" ? momUnread : teenUnread}
-          onOpenSettings={() => navigateToTab("settings")}
-          onOpenNotifications={() => navigateToTab("messages")}
+          momUnread={inbox.unread}
+          onOpenSettings={() => {
+            requestAppSettingsFocus();
+            navigateToTab("me");
+          }}
+          onOpenNotifications={() => setInboxOpen(true)}
           onLogoClick={() => {
             if (session) navigateToTab("home");
             else window.dispatchEvent(new Event("bloomy-auth-back"));
@@ -124,6 +152,16 @@ export default function AppShell() {
           />
         )}
         {sosOpen && <SosModal />}
+        {inboxOpen && (
+          <NotificationInbox
+            inbox={inbox}
+            onClose={() => setInboxOpen(false)}
+            onOpen={(url) => {
+              setInboxOpen(false);
+              if (url) router.push(url);
+            }}
+          />
+        )}
         {toast && (
           <div
             className="fixed top-20 left-0 right-0 flex justify-center px-4 pointer-events-none"

@@ -2,12 +2,18 @@
 
 import { useEffect, useState } from "react";
 import {
+  Activity,
   ArrowLeft,
+  Backpack,
+  Ban,
   BookOpen,
   HeartHandshake,
   HeartPulse,
   ChevronRight,
+  CircleCheck,
   CircleHelp,
+  Clock,
+  Droplet,
   Droplets,
   Eye,
   LockKeyhole,
@@ -15,19 +21,29 @@ import {
   Moon,
   Package,
   ShieldCheck,
+  Shirt,
+  ShowerHead,
+  Siren,
+  Smile,
   Sparkles,
+  Sprout,
   Sun,
   Stethoscope,
   TriangleAlert,
   UsersRound,
   Venus,
+  Zap,
 } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import { girlCategories, guardianCategories } from "../../../lib/learnContent";
 import { supabase } from "../../../lib/supabase";
 import { guardianMaleGuide } from "../../../src/content/guardian-male-guide";
+import GuardianQuizSheet from "./GuardianQuizSheet";
+import EmotionCoachingLesson from "./EmotionCoachingLesson";
 import GuardianMaleGuide from "./GuardianMaleGuide";
 import Card from "../ui/Card";
+import MangaShelf from "./MangaShelf";
+import { t } from "../../../lib/i18n";
 
 const TONES = {
   lilac: { background: "#E9DDFC", color: "#6A3BB8" },
@@ -63,6 +79,7 @@ const TOPIC_TILE_STYLES = {
 };
 
 function RoleChip({ children, tone }) {
+  const TONES = useTones();
   return (
     <span
       className="inline-flex rounded-full px-3 py-1 text-xs font-extrabold"
@@ -78,6 +95,7 @@ function TopicCard({ category, index, onClick, tile = false }) {
   if (tile) {
     const tileStyle = TOPIC_TILE_STYLES[category.id] ?? { background: "#B83B7E", Icon: Sun };
     const Icon = tileStyle.Icon;
+    const accent = tileStyle.background;
     return (
       <button
         type="button"
@@ -125,50 +143,77 @@ function TopicDetail({ category, index, total, counter, onBack, onNext, nextLabe
   return (
     <div className="space-y-4 pb-4">
       <header
-        className="rounded-b-[2rem] p-4 pb-6 shadow-sm"
-        style={{ backgroundColor: tone.background, color: tone.color }}
+        className="relative overflow-hidden rounded-[2rem] p-4 pb-5 text-white shadow-lg"
+        style={{ background: `linear-gradient(135deg, ${accent} 0%, ${accent}D9 100%)` }}
       >
-        <div className="flex items-start gap-3">
+        {/* чимэглэлийн том дүрс */}
+        <Icon className="pointer-events-none absolute -right-4 -bottom-6 h-32 w-32 opacity-15" aria-hidden="true" />
+        <div className="relative flex items-center justify-between">
           <button
             type="button"
             onClick={onBack}
-            aria-label="Буцах"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/80"
+            aria-label={t("Буцах", "Back")}
+            className="flex h-10 w-10 items-center justify-center rounded-full text-white active:scale-90 transition"
+            style={glass}
           >
             <ArrowLeft className="h-5 w-5" aria-hidden="true" />
           </button>
-          <div className="min-w-0 flex-1 pt-1">
-            <span className="inline-flex rounded-full bg-white/80 px-2.5 py-1 text-xs font-extrabold">
-              {counter ?? `${String(index + 1).padStart(2, "0")} / ${total}`}
-            </span>
-            <h1 className="mt-2 text-xl font-black leading-tight">{category.title}</h1>
-            <p className="mt-1 text-sm font-bold opacity-80">{category.subtitle}</p>
+          <span className="rounded-full px-3 py-1 text-xs font-extrabold text-white" style={glass}>
+            {counter ?? `${String(index + 1).padStart(2, "0")} / ${total}`}
+          </span>
+        </div>
+        <div className="relative mt-4 flex items-center gap-3">
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl" style={glass}>
+            <Icon className="h-7 w-7 text-white" aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <h1 className="text-xl font-black leading-tight text-white">{category.title}</h1>
+            <p className="mt-0.5 text-sm font-bold text-white/85">{category.subtitle}</p>
           </div>
         </div>
+        {total > 1 && (
+          <div className="relative mt-4 flex gap-1" aria-hidden="true">
+            {Array.from({ length: total }, (_, i) => (
+              <span
+                key={i}
+                className="h-1.5 flex-1 rounded-full"
+                style={{ backgroundColor: i <= index ? "#FFFFFF" : "rgba(255,255,255,0.3)" }}
+              />
+            ))}
+          </div>
+        )}
       </header>
 
       <div className="space-y-3 px-1">
         {category.isWarning && category.warningText && (
           <div
             role="note"
-            className="flex items-start gap-2 rounded-2xl border-2 p-3 text-sm font-extrabold leading-relaxed"
-            style={{ borderColor: tone.color, backgroundColor: tone.background, color: tone.color }}
+            className="flex items-start gap-3 rounded-2xl border-2 p-3 text-sm font-extrabold leading-relaxed"
+            style={{ borderColor: accent, backgroundColor: `${accent}1F` }}
           >
-            <TriangleAlert className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
-            <p>{category.warningText}</p>
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-white" style={{ backgroundColor: accent }}>
+              <TriangleAlert className="h-4 w-4" aria-hidden="true" />
+            </span>
+            <p className="text-slate-700">{category.warningText}</p>
           </div>
         )}
-        {category.points.map((point, pointIndex) => (
-          <Card key={`${category.id}-${pointIndex}`} className="!flex items-start gap-3 !rounded-2xl !p-4">
-            <span
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-black"
-              style={{ backgroundColor: tone.background, color: tone.color }}
+        {category.points.map((point, pointIndex) => {
+          const PointIcon = icons[pointIndex] ?? Icon;
+          return (
+            <Card
+              key={`${category.id}-${pointIndex}`}
+              className="!flex items-start gap-3 !rounded-2xl !p-4"
             >
-              {pointIndex + 1}
-            </span>
-            <p className="min-w-0 flex-1 text-sm font-semibold leading-relaxed text-slate-700">{point}</p>
-          </Card>
-        ))}
+              <span
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                style={{ backgroundColor: `${accent}26`, color: accent }}
+              >
+                <PointIcon className="h-5 w-5" strokeWidth={2.2} aria-hidden="true" />
+              </span>
+              <p className="min-w-0 flex-1 pt-0.5 text-sm font-semibold leading-relaxed text-slate-700">{point}</p>
+            </Card>
+          );
+        })}
       </div>
 
       <div className="space-y-2 px-1 pt-1">
@@ -188,6 +233,7 @@ function TopicDetail({ category, index, total, counter, onBack, onNext, nextLabe
 
 export default function LearningLibrary({ onMoreMaterials }) {
   const { view, profile, session, guardianGender } = useFamily();
+  const tones = useTones();
   const isGirl = view === "daughter";
   const [selectedId, setSelectedId] = useState(null);
   const [guideCompletedIds, setGuideCompletedIds] = useState([]);
@@ -214,7 +260,7 @@ export default function LearningLibrary({ onMoreMaterials }) {
           const stored = JSON.parse(window.localStorage.getItem(pendingKey) ?? "[]");
           if (Array.isArray(stored)) pendingIds = stored.filter((id) => guardianMaleGuide.some((card) => card.id === id));
         } catch {
-          if (!cancelled) setGuideError("Түр хадгалсан явцыг уншиж чадсангүй.");
+          if (!cancelled) setGuideError(t("Түр хадгалсан явцыг уншиж чадсангүй.", "Couldn't read the saved progress."));
         }
       }
 
@@ -224,12 +270,12 @@ export default function LearningLibrary({ onMoreMaterials }) {
           { onConflict: "user_id,card_id" },
         );
         if (error) {
-          if (!cancelled) setGuideError("Танилцуулгын явцыг хадгалж чадсангүй. Дахин оролдоно уу.");
+          if (!cancelled) setGuideError(t("Танилцуулгын явцыг хадгалж чадсангүй. Дахин оролдоно уу.", "Couldn't save the intro progress. Please try again."));
         } else if (pendingKey) {
           try {
             window.localStorage.removeItem(pendingKey);
           } catch {
-            if (!cancelled) setGuideError("Хадгалсан танилцуулгын түр хуулбарыг арилгаж чадсангүй.");
+            if (!cancelled) setGuideError(t("Хадгалсан танилцуулгын түр хуулбарыг арилгаж чадсангүй.", "Couldn't clear the saved intro copy."));
           }
         }
       }
@@ -240,14 +286,14 @@ export default function LearningLibrary({ onMoreMaterials }) {
         .eq("user_id", profile.id);
       if (cancelled) return;
       if (error) {
-        setGuideError("Картын явцыг ачаалж чадсангүй. Supabase тохиргоогоо шалгаарай.");
+        setGuideError(t("Картын явцыг ачаалж чадсангүй. Supabase тохиргоогоо шалгаарай.", "Couldn't load card progress. Check your Supabase setup."));
         return;
       }
       setGuideCompletedIds((data ?? []).map((row) => row.card_id));
     };
 
     loadProgress().catch(() => {
-      if (!cancelled) setGuideError("Картын явцыг ачаалж чадсангүй. Дахин оролдоно уу.");
+      if (!cancelled) setGuideError(t("Картын явцыг ачаалж чадсангүй. Дахин оролдоно уу.", "Couldn't load card progress. Please try again."));
     });
     return () => { cancelled = true; };
   }, [guardianGender, isGirl, profile?.id, session?.user?.email]);
@@ -258,7 +304,7 @@ export default function LearningLibrary({ onMoreMaterials }) {
       .from("guardian_guide_progress")
       .upsert({ user_id: profile.id, card_id: cardId }, { onConflict: "user_id,card_id" });
     if (error) {
-      setGuideError("Картын явцыг хадгалж чадсангүй. Дахин оролдоно уу.");
+      setGuideError(t("Картын явцыг хадгалж чадсангүй. Дахин оролдоно уу.", "Couldn't save card progress. Please try again."));
       return false;
     }
     setGuideCompletedIds((current) => current.includes(cardId) ? current : [...current, cardId]);
@@ -298,12 +344,12 @@ export default function LearningLibrary({ onMoreMaterials }) {
     <div className="space-y-4 pb-4">
       <header className="space-y-2">
         <RoleChip tone={isGirl ? "lilac" : "rose"}>
-          {isGirl ? "Өсвөр насны охин" : "Асран хамгаалагч"}
+          {isGirl ? t("Өсвөр насны охин", "Teen girl") : t("Асран хамгаалагч", "Guardian")}
         </RoleChip>
         <div>
-          <h1 className="text-2xl font-black leading-tight text-slate-800">Суралцах</h1>
+          <h1 className="text-2xl font-black leading-tight text-slate-800">{t("Суралцах", "Learn")}</h1>
           <p className="mt-1 text-sm font-semibold text-slate-500">
-            {isGirl ? "Биеийнхээ тухай мэдэх ёстой бүхэн" : "Охиндоо хэрхэн дэмжлэг үзүүлэх вэ"}
+            {isGirl ? t("Биеийнхээ тухай мэдэх ёстой бүхэн", "Everything to know about your body") : t("Охиндоо хэрхэн дэмжлэг үзүүлэх вэ", "How to support your daughter")}
           </p>
         </div>
       </header>
@@ -314,7 +360,7 @@ export default function LearningLibrary({ onMoreMaterials }) {
           onClick={onMoreMaterials}
           className="flex min-h-12 w-full items-center justify-between rounded-2xl border border-slate-100 bg-white px-4 py-3 text-left text-sm font-extrabold text-slate-700 shadow-sm"
         >
-          <span>{isGirl ? "Хэрэглэлийн заавар, хооллолтын зөвлөгөө" : "Нэмэлт зөвлөгөө, AI туслах"}</span>
+          <span>{isGirl ? t("Хэрэглэлийн заавар, хооллолтын зөвлөгөө", "Supply guide and nutrition tips") : t("Нэмэлт зөвлөгөө, AI туслах", "More tips and AI helper")}</span>
           <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" aria-hidden="true" />
         </button>
       )}
@@ -330,12 +376,12 @@ export default function LearningLibrary({ onMoreMaterials }) {
               >
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-black text-slate-800">Аавуудад · {guideCompletedIds.length}/{guardianMaleGuide.length}</p>
-                    <p className="mt-1 text-xs font-semibold text-slate-500">Танилцуулгын картаа үргэлжлүүлээрэй</p>
+                    <p className="text-sm font-black text-slate-800">{t("Аавуудад ·", "For dads ·")} {guideCompletedIds.length}/{guardianMaleGuide.length}</p>
+                    <p className="mt-1 text-xs font-semibold text-slate-500">{t("Танилцуулгын картаа үргэлжлүүлээрэй", "Continue your intro cards")}</p>
                   </div>
                   <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" aria-hidden="true" />
                 </div>
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-label="Аавуудад зориулсан картын явц" aria-valuemin={0} aria-valuemax={guardianMaleGuide.length} aria-valuenow={guideCompletedIds.length}>
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-label={t("Аавуудад зориулсан картын явц", "Progress of the cards for dads")} aria-valuemin={0} aria-valuemax={guardianMaleGuide.length} aria-valuenow={guideCompletedIds.length}>
                   <div className="h-full rounded-full bb-grad-guide transition-all" style={{ width: `${(guideCompletedIds.length / guardianMaleGuide.length) * 100}%` }} />
                 </div>
               </button>
@@ -345,6 +391,34 @@ export default function LearningLibrary({ onMoreMaterials }) {
         </>
       )}
 
+      {isGirl && (
+        <Card className="!p-4">
+          <div className="flex items-center gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bb-grad-sos text-white">
+              {readCount === categories.length ? <Sparkles className="h-5 w-5" aria-hidden="true" /> : <BookOpen className="h-5 w-5" aria-hidden="true" />}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-black text-slate-800">
+                {readCount === categories.length ? t("Бүх сэдвийг уншиж дуусгалаа! 🎉", "You've read every topic! 🎉") : t(`${readCount} / ${categories.length} сэдэв уншсан`, `${readCount} / ${categories.length} topics read`)}
+              </p>
+              <p className="mt-0.5 text-xs font-semibold text-slate-500">
+                {readCount === 0 ? t("Эхний сэдвээсээ эхлээрэй 🌸", "Start with the first topic 🌸") : readCount === categories.length ? t("Чи үнэхээр гайхалтай байна", "You're doing amazing") : t("Сайн явж байна, үргэлжлүүлээрэй", "Going well, keep it up")}
+              </p>
+            </div>
+          </div>
+          <div
+            className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100"
+            role="progressbar"
+            aria-label={t("Уншсан сэдвийн явц", "Topics read progress")}
+            aria-valuemin={0}
+            aria-valuemax={categories.length}
+            aria-valuenow={readCount}
+          >
+            <div className="h-full rounded-full bb-grad-sos transition-all" style={{ width: `${(readCount / categories.length) * 100}%` }} />
+          </div>
+        </Card>
+      )}
+
       <section
         className="grid grid-cols-3 gap-2"
         aria-label="Сэдвүүд"
@@ -352,14 +426,19 @@ export default function LearningLibrary({ onMoreMaterials }) {
         {categories.map((category) => (
           <TopicCard
             key={category.id}
+            className={isGirl && visibleCategories.length % 2 === 1 && position === visibleCategories.length - 1 ? "col-span-2" : undefined}
+          >
+          <TopicCard
             category={category}
             index={categories.findIndex((item) => item.id === category.id)}
             tile
             onClick={() => setSelectedId(category.id)}
           />
+          </div>
         ))}
       </section>
 
+      {isGirl && <MangaShelf />}
     </div>
   );
 }

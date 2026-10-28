@@ -5,6 +5,7 @@ import { useFamily } from "../../../context/FamilyContext";
 import type { FamilyLinkingContext } from "../../../types/family-linking";
 import Card from "../ui/Card";
 import SectionTitle from "../ui/SectionTitle";
+import { t } from "../../../lib/i18n";
 
 export default function FamilyLinkingSection() {
   const {
@@ -32,31 +33,31 @@ export default function FamilyLinkingSection() {
   const isGuardian = view === "mother";
 
   const disconnect = async () => {
-    if (window.confirm("Асран хамгаалагчтай холболтоо салгах уу?")) {
+    if (window.confirm(t("Асран хамгаалагчтай холболтоо салгах уу?", "Disconnect from your guardian?"))) {
       await leaveFamily();
     }
   };
 
   return (
     <Card>
-      <SectionTitle icon={Users} title={isGuardian ? "Гэр бүлийн холбоос" : "Гэр бүл"} right={null} titleStyle={{}} />
+      <SectionTitle icon={Users} title={isGuardian ? t("Гэр бүлийн холбоос", "Family link") : t("Гэр бүл", "Family")} right={null} titleStyle={{}} />
 
       {isGuardian ? (
         <div>
           <p className="text-sm font-semibold text-slate-500">
             {children.length
-              ? `${children.length} хүүхэд гэр бүлийн урилгын кодоор холбогдсон.`
-              : "Гэр бүлийн урилгын кодоо охинтойгоо хуваалцаарай."}
+              ? t(`${children.length} хүүхэд гэр бүлийн урилгын кодоор холбогдсон.`, `${children.length} child(ren) connected with the family invite code.`)
+              : t("Гэр бүлийн урилгын кодоо охинтойгоо хуваалцаарай.", "Share your family invite code with your daughter.")}
           </p>
           <div className="mt-3 flex items-center gap-2">
             <span className="flex-1 rounded-2xl bb-bg-FFF7FB py-3 text-center text-lg font-black tracking-wider text-slate-700">
-              {familyCode || "Код үүсгэж байна…"}
+              {familyCode || t("Код үүсгэж байна…", "Creating code…")}
             </span>
             <button
               type="button"
               onClick={copyCode}
               disabled={!familyCode}
-              aria-label="Гэр бүлийн урилгын код хуулах"
+              aria-label={t("Гэр бүлийн урилгын код хуулах", "Copy family invite code")}
               className="flex h-12 w-12 items-center justify-center rounded-2xl bb-bg-FDE7F1 bb-text-B83B7E disabled:opacity-50"
             >
               {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
@@ -65,14 +66,14 @@ export default function FamilyLinkingSection() {
               type="button"
               onClick={shareCode}
               disabled={!familyCode}
-              aria-label="Гэр бүлийн урилгын код хуваалцах"
+              aria-label={t("Гэр бүлийн урилгын код хуваалцах", "Share family invite code")}
               className="flex h-12 w-12 items-center justify-center rounded-2xl border-2 border-slate-100 bg-white bb-text-B83B7E disabled:opacity-50"
             >
               <Share2 className="h-5 w-5" />
             </button>
           </div>
           {children.length > 0 && (
-            <ul className="mt-3 space-y-2" aria-label="Холбогдсон хүүхдүүд">
+            <ul className="mt-3 space-y-2" aria-label={t("Холбогдсон хүүхдүүд", "Connected children")}>
               {children.map((child) => {
                 const selected = child.id === activeChildId;
                 return (
@@ -83,8 +84,8 @@ export default function FamilyLinkingSection() {
                       aria-pressed={selected}
                       className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-sm font-bold transition ${selected ? "bb-border-F48FB1 bb-bg-FDE7F1 text-slate-700" : "border-transparent bb-bg-FFF7FB text-slate-600"}`}
                     >
-                      <span>{child.display_name || "Охин"}</span>
-                      {selected && <span className="text-xs font-extrabold bb-text-B83B7E">Сонгосон</span>}
+                      <span>{child.display_name || t("Охин", "Daughter")}</span>
+                      {selected && <span className="text-xs font-extrabold bb-text-B83B7E">{t("Сонгосон", "Selected")}</span>}
                     </button>
                   </li>
                 );
@@ -99,9 +100,9 @@ export default function FamilyLinkingSection() {
               <Check className="h-5 w-5" />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="font-extrabold text-slate-700">Асран хамгаалагчтай холбогдсон</p>
+              <p className="font-extrabold text-slate-700">{t("Асран хамгаалагчтай холбогдсон", "Connected to guardian")}</p>
               <p className="mt-0.5 text-sm font-semibold text-slate-500">
-                {guardianName ? `Guardian: ${guardianName}` : "Холболт идэвхтэй байна."}
+                {guardianName ? `Guardian: ${guardianName}` : t("Холболт идэвхтэй байна.", "The connection is active.")}
               </p>
             </div>
           </div>
@@ -112,17 +113,17 @@ export default function FamilyLinkingSection() {
             className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-pink-100 bg-white py-2.5 text-sm font-extrabold bb-text-B83B7E disabled:opacity-60"
           >
             {unlinking ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Link2Off className="h-4 w-4" />}
-            {unlinking ? "Салгаж байна…" : "Холболтыг салгах"}
+            {unlinking ? t("Салгаж байна…", "Disconnecting…") : t("Холболтыг салгах", "Disconnect")}
           </button>
           {linkError && <p className="mt-2 text-sm font-semibold text-rose-600">{linkError}</p>}
         </div>
       ) : (
         <div>
           <p className="text-sm font-semibold leading-relaxed text-slate-500">
-            Guardian-тайгаа холбогдох нь сонголттой. Кодоо хүссэн үедээ оруулж болно.
+            {t("Guardian-тайгаа холбогдох нь сонголттой. Кодоо хүссэн үедээ оруулж болно.", "Connecting with a guardian is optional. You can enter the code any time.")}
           </p>
           <label htmlFor="guardian-access-code" className="mt-4 block text-xs font-extrabold uppercase tracking-wider text-slate-400">
-            Асран хамгаалагчийн урилгын код
+            {t("Асран хамгаалагчийн урилгын код", "Guardian invite code")}
           </label>
           <div className="mt-2 flex items-center overflow-hidden rounded-2xl border-2 border-slate-100 bg-white bb-focus-within-border-F48FB1">
             <span className="pl-4 font-black bb-text-F48FB1">BLOOM-</span>
@@ -154,9 +155,9 @@ export default function FamilyLinkingSection() {
             className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bb-bg-E0679F py-3 font-extrabold text-white transition active:scale-95 disabled:opacity-50"
           >
             {joining && <LoaderCircle className="h-4 w-4 animate-spin" />}
-            {joining ? "Холбож байна…" : "Холбогдох"}
+            {joining ? t("Холбож байна…", "Connecting…") : t("Холбогдох", "Connect")}
           </button>
-          <span className="sr-only" aria-live="polite">{linkStatus === "connecting" ? "Холболт үүсгэж байна" : "Холбогдоогүй"}</span>
+          <span className="sr-only" aria-live="polite">{linkStatus === "connecting" ? t("Холболт үүсгэж байна", "Creating connection") : t("Холбогдоогүй", "Not connected")}</span>
         </div>
       )}
     </Card>

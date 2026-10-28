@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { getBloomLevel, getLateStatus, getPrediction, getSeason, localDateKey } from "../../../lib/cycle";
+import { t } from "../../../lib/i18n";
 
 const SEASONS = {
-  winter: { label: "❄️ Өвөл", color: "#E0679F" },
-  spring: { label: "🌱 Хавар", color: "#B794F4" },
-  summer: { label: "☀️ Зун", color: "#F48FB1" },
-  autumn: { label: "🍂 Намар", color: "#C9A6D7" },
+  winter: { get label() { return t("❄️ Өвөл", "❄️ Winter"); }, color: "#E0679F" },
+  spring: { get label() { return t("🌱 Хавар", "🌱 Spring"); }, color: "#B794F4" },
+  summer: { get label() { return t("☀️ Зун", "☀️ Summer"); }, color: "#F48FB1" },
+  autumn: { get label() { return t("🍂 Намар", "🍂 Autumn"); }, color: "#C9A6D7" },
 };
 const SEGMENT_SEASON = { period: "winter", follicular: "spring", ovulation: "summer", luteal: "autumn" };
 const MONTH_DAY = (key) => `${key.slice(5, 7)}/${key.slice(8, 10)}`;
@@ -101,15 +102,15 @@ export default function CycleRing({ day = 1, cycleLength = 28, periodLength = 5,
       <div className="cycle-ring-copy absolute inset-0 flex flex-col items-center justify-center px-8 text-center">
         <span className="rounded-full px-2 py-0.5 text-[10px] font-extrabold text-slate-700" style={{ background: `${seasonUi.color}35` }}>{seasonUi.label}</span>
         {periodDay ? (
-          <span className="mt-2 text-sm font-black leading-tight text-slate-700">Сарын тэмдгийн {periodDay} дэх өдөр</span>
+          <span className="mt-2 text-sm font-black leading-tight text-slate-700">{t(`Сарын тэмдгийн ${periodDay} дахь өдөр`, `Period day ${periodDay}`)}</span>
         ) : !hasHadPeriod ? (
-          <span className="mt-2 text-lg font-black leading-tight text-slate-700">Бэлтгэл үе 🌱</span>
+          <span className="mt-2 text-lg font-black leading-tight text-slate-700">{t("Бэлтгэл үе 🌱", "Getting ready 🌱")}</span>
         ) : effectiveLate ? (
-          <><span className="mt-2 text-sm font-black leading-tight text-slate-700">Хоцорч байна</span><span className="mt-1 text-[9px] font-bold leading-tight text-slate-500">Эхний жилүүдэд ингэх нь хэвийн 💗</span></>
+          <><span className="mt-2 text-sm font-black leading-tight text-slate-700">{t("Хоцорч байна", "Running late")}</span><span className="mt-1 text-[9px] font-bold leading-tight text-slate-500">{t("Эхний жилүүдэд ингэх нь хэвийн 💗", "This is normal in the first years 💗")}</span></>
         ) : prediction ? (
-          <><span className="mt-2 text-lg font-black leading-tight text-slate-700">{calculatedDaysUntil} хоногийн дараа</span><span className="mt-1 text-[10px] font-bold text-slate-500">{MONTH_DAY(prediction.rangeStart)} – {MONTH_DAY(prediction.rangeEnd)}</span></>
+          <><span className="mt-2 text-lg font-black leading-tight text-slate-700">{calculatedDaysUntil} {t("хоногийн дараа", "days to go")}</span><span className="mt-1 text-[10px] font-bold text-slate-500">{MONTH_DAY(prediction.rangeStart)} – {MONTH_DAY(prediction.rangeEnd)}</span></>
         ) : (
-          <span className="mt-2 text-lg font-black leading-tight text-slate-700">Бэлтгэл үе 🌱</span>
+          <span className="mt-2 text-lg font-black leading-tight text-slate-700">{t("Бэлтгэл үе 🌱", "Getting ready 🌱")}</span>
         )}
       </div>
     </div>

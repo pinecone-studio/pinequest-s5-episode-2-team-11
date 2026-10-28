@@ -30,7 +30,7 @@
     "**/*.mts",
     "**/*.ts",
     "**/*.tsx"
-  ],
+, "app/components/daughter/CyclePredictionCard.jsx"  ],
   "exclude": [
     "node_modules"
   ]
