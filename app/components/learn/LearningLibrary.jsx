@@ -52,6 +52,8 @@ import { useTheme } from "../../../context/ThemeContext";
 import { girlCategories, guardianRoles } from "../../../lib/learnContent";
 import { supabase } from "../../../lib/supabase";
 import { guardianMaleGuide } from "../../../src/content/guardian-male-guide";
+import GuardianQuizSheet from "./GuardianQuizSheet";
+import EmotionCoachingLesson from "./EmotionCoachingLesson";
 import GuardianMaleGuide from "./GuardianMaleGuide";
 import Card from "../ui/Card";
 import MangaShelf from "./MangaShelf";
@@ -355,6 +357,7 @@ export default function LearningLibrary({ onMoreMaterials }) {
   const [guideCompletedIds, setGuideCompletedIds] = useState([]);
   const [guideError, setGuideError] = useState("");
   const [showMaleGuide, setShowMaleGuide] = useState(false);
+  const [guardianSheet, setGuardianSheet] = useState(null); // "quiz" | "coaching"
   const role = guardianRoles.find((item) => item.id === roleId) ?? guardianRoles[0];
   const categories = isGirl ? girlCategories : role.categories;
   const readSet = useMemo(() => new Set(readIds), [readIds]);
@@ -558,6 +561,17 @@ export default function LearningLibrary({ onMoreMaterials }) {
               {guideError && <p role="status" className="mt-2 text-xs font-semibold text-rose-700">{guideError}</p>}
             </Card>
           )}
+          <div className="grid grid-cols-2 gap-2">
+            {[["quiz", "🧠", t("Та хэр мэдэх вэ?", "Quick quiz"), t("10 үнэн/худал", "10 true/false")], ["coaching", "💗", t("Мэдрэмжид хариулах", "Respond to feelings"), t("5 алхам · 2 мин", "5 steps · 2 min")]].map(([id, emoji, title, sub]) => (
+              <button key={id} type="button" onClick={() => setGuardianSheet(id)} className="rounded-2xl border border-slate-100 bg-white p-3 text-left shadow-sm active:scale-[0.98]">
+                <span className="text-2xl" aria-hidden="true">{emoji}</span>
+                <span className="mt-1 block text-sm font-black leading-tight text-slate-800">{title}</span>
+                <span className="block text-[11px] font-semibold text-slate-500">{sub}</span>
+              </button>
+            ))}
+          </div>
+          {guardianSheet === "quiz" && <GuardianQuizSheet onClose={() => setGuardianSheet(null)} />}
+          {guardianSheet === "coaching" && <EmotionCoachingLesson onClose={() => setGuardianSheet(null)} />}
           <div role="group" aria-label={t("Асран хамгаалагчийн үүрэг", "Guardian role")} className="grid grid-cols-3 gap-1 rounded-2xl bb-bg-FDE7F1 p-1">
             {guardianRoles.map((item) => (
               <button

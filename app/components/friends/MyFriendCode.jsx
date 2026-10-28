@@ -29,7 +29,7 @@ export default function MyFriendCode() {
 
   return (
     <Card>
-      <SectionTitle icon={UserPlus} title={t("Миний код", "My code")} />
+      <SectionTitle icon={UserPlus} title={t("Миний найзын код", "My friend code")} />
       <div className="flex items-center gap-2 rounded-2xl bb-bg-FDE7F1 p-3">
         <p className="flex-1 text-2xl font-black tracking-widest bb-text-B83B7E">{friendCode || "……"}</p>
         <button

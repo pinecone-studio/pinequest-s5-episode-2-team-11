@@ -9,6 +9,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { sendNotification } from "../lib/push-client";
 import { useFamily } from "./FamilyContext";
 import { SOS_REPLIES, SOS_WINDOW_HOURS, friendError, placeOf } from "../lib/friends";
 import { t } from "../lib/i18n";
@@ -81,7 +82,7 @@ export function FriendsProvider({ children }) {
   const loadIncoming = useCallback(async () => {
     const { data } = await supabase
       .from("pad_requests")
-      .select("id, sender_name, place, created_at, resolved, pad_responses(reply, responder_id)")
+      .select("id, sender_id, sender_name, place, created_at, resolved, pad_responses(reply, responder_id)")
       .neq("sender_id", userId)
       .eq("resolved", false)
       .gte("created_at", sinceIso())
@@ -172,6 +173,7 @@ export function FriendsProvider({ children }) {
     const { data, error } = await supabase.rpc("add_friend", { p_code: code.trim() });
     if (error) return friendError(error);
     await loadFriends();
+    if (data?.id) sendNotification(session, "friend_added", [data.id]);
     setToast(t(`${data?.display_name || "Найз"} найзаар нэмэгдлээ 💗`, `${data?.display_name || "Найз"} added as a friend 💗`));
     return null;
   };
@@ -249,6 +251,8 @@ export function FriendsProvider({ children }) {
     await new Promise((r) => setTimeout(r, Math.max(0, 1200 - (Date.now() - started))));
     setSending(false);
     if (error) return setToast(friendError(error));
+    // Urgent push to every chosen friend (lock screen shows only "{name} чамаас тусламж хүсч байна").
+    sendNotification(session, "friend_sos", selectedFriends.map((friend) => friend.id), place.trim().slice(0, 40) || null);
     await loadOutgoing();
     setToast(t(`${selectedFriends.length} найзад дохио очлоо 📣`, `Alert sent to ${selectedFriends.length} friend(s) 📣`));
   };
@@ -266,6 +270,7 @@ export function FriendsProvider({ children }) {
       setToast(friendError(error));
       return loadIncoming();
     }
+    if (reply === "coming" && request.sender_id) sendNotification(session, "friend_coming", [request.sender_id]);
     setToast(reply === "no" ? t("Хариу илгээлээ", "Reply sent") : t(`${request.sender_name}-д хариу очлоо 💗`, `Reply sent to ${request.sender_name} 💗`));
   };
 
