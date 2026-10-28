@@ -15,6 +15,9 @@ import CyclePredictionCard from "./CyclePredictionCard";
 import TodayMoodCard from "./TodayMoodCard";
 import CycleLegend from "./CycleLegend";
 import CouponRewards from "../avatar/CouponRewards";
+import FeedbackPromptCard from "../feedback/FeedbackPromptCard";
+import StoryCards from "../connection/StoryCards";
+import { sendTalkRequest } from "../connection/TalkRequestSheet";
 
 export default function DaughterHome() {
   const [cycleModalOpen, setCycleModalOpen] = useState(false);
@@ -37,6 +40,7 @@ export default function DaughterHome() {
     cyclePeriods,
     periodPrediction,
     startPeriod,
+    setToast,
   } = useFamily();
   return (
     <div className="space-y-4">
@@ -54,6 +58,7 @@ export default function DaughterHome() {
       </div>
 
       <IncomingSosCard />
+      <StoryCards onTalk={() => sendTalkRequest("body", setToast)} />
       <FriendsQuickCard />
 
       <HoroscopeCard />
@@ -125,6 +130,9 @@ export default function DaughterHome() {
       <TodayMoodCard />
 
       <CouponRewards featured />
+
+      {/* Санал хүсэлт: хүнд өдөр харагдахгүй; найзын SOS-ийн дараах асуулт энд */}
+      <FeedbackPromptCard role="daughter" />
 
       {cycleModalOpen && (
         <PeriodCycleTracker onBack={() => setCycleModalOpen(false)} cycleLength={cycleLength} periodLength={periodLength} lastPeriodStart={lastPeriodStart} />
