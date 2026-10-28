@@ -4,7 +4,7 @@
  * Найзууд болон хэрэглэл хүсэх хэсэг.
  * Өгөгдөл: context/FriendsContext.jsx · Database: supabase/friends.sql
  */
-
+import { t } from "../../../lib/i18n";
 import { useState } from "react";
 import { Users, Plus, Lock, UserPlus, Loader2, ChevronRight, Phone, X } from "lucide-react";
 import { useFriends } from "../../../context/FriendsContext";
