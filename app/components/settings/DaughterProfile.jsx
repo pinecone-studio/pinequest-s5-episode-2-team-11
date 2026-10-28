@@ -153,47 +153,47 @@ export default function DaughterProfile({ mode = "profile" }) {
     <div className="space-y-5">
       {showProfile && <ProfileCard compact subtitle={subtitle} />}
 
-      <SettingsGroup title={t("Миний зүйлс", "My things")}>
+      {showProfile && <SettingsGroup title={t("Миний зүйлс", "My things")} className="my-things-list">
         <SettingsRow emoji="🎒" label={t("Миний цүнх", "My bag")} onClick={() => setSheet("bag")} />
         <SettingsRow emoji="🎁" label={t("Миний хүслүүд", "My wishes")} value={t("Удахгүй", "Coming soon")} onClick={() => setSheet("wishes")} />
         <SettingsRow emoji="📅" label={t("Миний мөчлөг", "My cycle")} value={cycleLength ? t(`${cycleLength} хоног`, `${cycleLength} days`) : null} onClick={() => setSheet("cycle")} />
-      </SettingsGroup>
+      </SettingsGroup>}
 
-      <SettingsGroup title={t("Гэр бүл", "Family")}>
+      {showSettings && <SettingsGroup title={t("Гэр бүл", "Family")}>
         {linked
           ? <SettingsRow emoji="💗" label={`${t("Асран хамгаалагч", "Guardian")} · ${guardianName || t("Холбогдсон", "Connected")}`} onClick={() => setSheet("guardian")} />
           : <SettingsRow emoji="🔗" label={t("Асран хамгаалагчтай холбогдох", "Connect to a guardian")} onClick={() => setSheet("connect")} />}
         {/* TODO: «➕ Асран хамгаалагч нэмэх» — a family has one guardian (families.created_by) today. */}
       </SettingsGroup>}
 
-      <SettingsGroup title={t("Нууцлал", "Privacy")}>
+      {showSettings && <SettingsGroup title={t("Нууцлал", "Privacy")}>
         <SettingsRow emoji="🔒" label={t("Нууц тэмдэглэлийн түгжээ", "Private note lock")} onClick={() => setSheet("pin")} />
         <SettingsRow emoji="🔔" label={t("Мэдэгдэл", "Notifications")} onClick={() => setSheet("notifications")} />
-      </SettingsGroup>
+      </SettingsGroup>}
 
-      <SettingsGroup id="app" title={t("Апп", "App")}>
+      {showSettings && <SettingsGroup id="app" title={t("Апп", "App")}>
         <SettingsRow emoji="🌐" label={t("Хэл", "Language")} value={LANGUAGES.find((item) => item.id === language)?.label} onClick={() => setSheet("language")} />
         <SettingsRow emoji="🎨" label={t("Өнгө", "Appearance")} value={THEMES.find((item) => item.id === theme)?.label} onClick={() => setSheet("theme")} />
-      </SettingsGroup>
+      </SettingsGroup>}
 
-      <SettingsGroup title={t("Тусламж", "Help & legal")}>
+      {showProfile && <SettingsGroup title={t("Тусламж", "Help & legal")}>
         <SettingsRow emoji="💗" label={t("Итгэдэг том хүнтэй ярилцах", "Talk to a trusted adult")} onClick={() => setSheet("safety")} />
         <SettingsRow emoji="❓" label={t("Тусламж", "Help")} onClick={() => setSheet("help")} />
         <SettingsRow emoji="📄" label={t("Нууцлалын бодлого", "Privacy policy")} onClick={() => setSheet("policy")} />
-      </SettingsGroup>
+      </SettingsGroup>}
 
-      {sheet === "bag" && <BottomSheet title={t("🎒 Миний цүнх", "🎒 My bag")} onClose={close}><div className="pb-2"><DaughterSupplies embedded /></div></BottomSheet>}
-      {sheet === "wishes" && <BottomSheet title={t("🎁 Миний хүслүүд", "🎁 My wishes")} onClose={close}><div className="pb-2"><ComingSoon /></div></BottomSheet>}
-      {sheet === "cycle" && <MyCycleSheet onClose={close} />}
-      {sheet === "guardian" && <GuardianSheet onClose={close} />}
-      {sheet === "connect" && <BottomSheet title={t("🔗 Асран хамгаалагчтай холбогдох", "🔗 Connect to a guardian")} onClose={close}><div className="pb-2"><GuardianConnectForm /></div></BottomSheet>}
-      {sheet === "pin" && <BottomSheet title={t("🔒 Нууц тэмдэглэлийн түгжээ", "🔒 Private note lock")} onClose={close}><div className="pb-2"><PrivateNotePinSettings /></div></BottomSheet>}
-      {sheet === "notifications" && <BottomSheet title={t("🔔 Мэдэгдэл", "🔔 Notifications")} onClose={close}><NotificationSettings /></BottomSheet>}
-      {sheet === "language" && <BottomSheet title={t("🌐 Хэл", "🌐 Language")} onClose={close}><div className="pb-2"><SegmentedChoice options={LANGUAGES} value={language} onChange={setLanguage} /></div></BottomSheet>}
-      {sheet === "theme" && <BottomSheet title={t("🎨 Өнгө", "🎨 Appearance")} onClose={close}><div className="pb-2"><SegmentedChoice options={THEMES} value={theme} onChange={setTheme} /></div></BottomSheet>}
-      {sheet === "help" && <BottomSheet title={t("❓ Тусламж", "❓ Help")} onClose={close}><QaList items={localizedQuestions(FAQ)} /></BottomSheet>}
-      {sheet === "safety" && <BottomSheet title={t("💗 Чи ганцаараа биш", "💗 You are not alone")} onClose={close}><SafetyCard /></BottomSheet>}
-      {sheet === "policy" && <BottomSheet title={t("📄 Нууцлалын бодлого", "📄 Privacy policy")} onClose={close}>
+      {showProfile && sheet === "bag" && <BottomSheet title={t("🎒 Миний цүнх", "🎒 My bag")} onClose={close}><div className="pb-2"><DaughterSupplies embedded /></div></BottomSheet>}
+      {showProfile && sheet === "wishes" && <BottomSheet title={t("🎁 Миний хүслүүд", "🎁 My wishes")} onClose={close}><div className="pb-2"><ComingSoon /></div></BottomSheet>}
+      {showProfile && sheet === "cycle" && <MyCycleSheet onClose={close} />}
+      {showSettings && sheet === "guardian" && <GuardianSheet onClose={close} />}
+      {showSettings && sheet === "connect" && <BottomSheet title={t("🔗 Асран хамгаалагчтай холбогдох", "🔗 Connect to a guardian")} onClose={close}><div className="pb-2"><GuardianConnectForm /></div></BottomSheet>}
+      {showSettings && sheet === "pin" && <BottomSheet title={t("🔒 Нууц тэмдэглэлийн түгжээ", "🔒 Private note lock")} onClose={close}><div className="pb-2"><PrivateNotePinSettings /></div></BottomSheet>}
+      {showSettings && sheet === "notifications" && <BottomSheet title={t("🔔 Мэдэгдэл", "🔔 Notifications")} onClose={close}><NotificationSettings /></BottomSheet>}
+      {showSettings && sheet === "language" && <BottomSheet title={t("🌐 Хэл", "🌐 Language")} onClose={close}><div className="pb-2"><SegmentedChoice options={LANGUAGES} value={language} onChange={setLanguage} /></div></BottomSheet>}
+      {showSettings && sheet === "theme" && <BottomSheet title={t("🎨 Өнгө", "🎨 Appearance")} onClose={close}><div className="pb-2"><SegmentedChoice options={THEMES} value={theme} onChange={setTheme} /></div></BottomSheet>}
+      {showProfile && sheet === "help" && <BottomSheet title={t("❓ Тусламж", "❓ Help")} onClose={close}><QaList items={localizedQuestions(FAQ)} /></BottomSheet>}
+      {showProfile && sheet === "safety" && <BottomSheet title={t("💗 Чи ганцаараа биш", "💗 You are not alone")} onClose={close}><SafetyCard /></BottomSheet>}
+      {showProfile && sheet === "policy" && <BottomSheet title={t("📄 Нууцлалын бодлого", "📄 Privacy policy")} onClose={close}>
         <p className="mb-3 w-fit rounded-full bg-amber-100 px-3 py-1 text-[11px] font-extrabold text-amber-700">{t("📝 Ноорог · хянагдаж байна", "📝 Draft · under review")}</p>
         <QaList items={localizedQuestions(POLICY)} />
       </BottomSheet>}
