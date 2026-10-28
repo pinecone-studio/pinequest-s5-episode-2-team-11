@@ -149,6 +149,8 @@ body {
   background-color: #302638;
   color: #f4edf6;
 }
+.my-things-list > div { border-color: #f3c5dc; }
+.theme-dark .my-things-list > div { border-color: #68445e; }
 .daughter-supply-request-card {
   background-image: linear-gradient(135deg, #e0679f, #b83b7e);
   border-color: #e0679f;
