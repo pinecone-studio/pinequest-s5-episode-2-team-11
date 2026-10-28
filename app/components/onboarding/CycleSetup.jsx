@@ -6,7 +6,7 @@ import { useFamily } from "../../../context/FamilyContext";
 import { toDateStr, addDays } from "../../../lib/dates";
 import { t } from "../../../lib/i18n";
 
-function Stepper({ id, label, hint, value, setValue, min, max }) {
+export function Stepper({ id, label, hint, value, setValue, min, max }) {
   return (
     <div>
       <label

@@ -63,7 +63,7 @@ export default function InstallAppButton() {
         <p className="mt-3 max-w-xs rounded-2xl bb-bg-FDE7F1-70 px-4 py-3 text-center text-xs font-semibold text-slate-600">
           {isIos ? (
             <>
-              {t("Safari-ийн", "In Safari, tap")} <Share2 className="inline w-3.5 h-3.5 align-[-2px]" /> {t("Хуваалцах товчийг дараад", "Share, then choose")}{" "}
+              {t("Safari-ийн", "In Safari, tap")} <Share2 className="inline w-3.5 h-3.5 align-[-2px]" /> {t("Хуваалцах товчийг дараад", "Share, then choose")} {" "}
               <b>{t("Нүүр дэлгэцэд нэмэх", "Add to Home Screen")}</b>{t("-ийг сонгоно уу.", ".")}
             </>
           ) : (

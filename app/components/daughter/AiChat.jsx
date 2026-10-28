@@ -115,7 +115,7 @@ export default function AiChat() {
       }
     }
     setThinking(false);
-    setMessages([...next, { role: "assistant", content: reply }]);
+    setMessages([...next, { role: "assistant", content: reply, source: reply === fallback.reply ? "auto" : "ai" }]);
     setChips(nextChips);
     setTyping({ index: next.length, shown: 0 });
     saveToDb([
@@ -179,9 +179,11 @@ export default function AiChat() {
       <div ref={listRef} className="mt-3 max-h-96 overflow-y-auto space-y-3 pr-1">
         <Bubble role="assistant">{GREETING()}</Bubble>
         {messages.map((m, i) => (
-          <Bubble key={i} role={m.role}>
-            {typing?.index === i ? m.content.slice(0, typing.shown) : m.content}
-          </Bubble>
+          <div key={i}>
+            <Bubble role={m.role}>
+              {typing?.index === i ? m.content.slice(0, typing.shown) : m.content}
+            </Bubble>
+          </div>
         ))}
         {thinking && (
           <div className="flex justify-start">

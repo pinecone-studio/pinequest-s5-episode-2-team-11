@@ -164,7 +164,6 @@ export default function GuardianMaleGuide({
         </article>
 
         {error && <p role="alert" className="rounded-xl bg-rose-50 px-3 py-2 text-sm font-bold text-rose-800">{error}</p>}
-
         <button
           type="button"
           onClick={nextCard}

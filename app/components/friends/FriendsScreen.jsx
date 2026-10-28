@@ -21,6 +21,7 @@ import { friendMoodToday } from "../avatar/useTodayMood";
 import { MOODS } from "../../../lib/log-entries";
 import BottomSheet from "../ui/BottomSheet";
 import { t } from "../../../lib/i18n";
+import MyFriendCode from "./MyFriendCode";
 
 const Label = ({ children }) => (
   <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2">{children}</p>
@@ -192,6 +193,7 @@ export default function FriendsScreen() {
       )}
       {sheet === "friends" && (
         <BottomSheet title={t("Найз нэмэх", "Add friend")} onClose={() => setSheet(null)}>
+          <div className="mb-4"><MyFriendCode /></div>
           <MyFriends />
         </BottomSheet>
       )}
