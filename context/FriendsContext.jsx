@@ -103,7 +103,8 @@ export function FriendsProvider({ children }) {
 
   const loadAll = useCallback(async () => {
     if (!active) return;
-    setFriendCode(profile?.friend_code ?? "");
+    // profile-д friend_code ирээгүй бол доорх effect уншина — хоосон утгаар бүү дар
+    if (profile?.friend_code) setFriendCode(profile.friend_code);
     await Promise.all([loadFriends(), loadGroups(), loadOutgoing(), loadIncoming()]);
   }, [active, profile?.friend_code, loadFriends, loadGroups, loadOutgoing, loadIncoming]);
 
