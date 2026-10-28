@@ -1,5 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 768" width="512" height="768">
-  <!-- Hair front: smooth cap with a middle part. -->
-  <path d="M108 236 C104 118 180 70 256 70 C332 70 408 118 404 236 C390 170 330 150 256 160 C182 150 122 170 108 236 Z" fill="var(--c1)"/>
-  <path d="M256 74 L256 150" fill="none" stroke="var(--c2)" stroke-width="8" stroke-linecap="round"/>
-</svg>
