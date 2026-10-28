@@ -144,8 +144,8 @@ function LegacyLearnHub() {
       )}
       {!isDaughter && (
         <>
-          <ParentAiAssistant />
           <ParentLearningTopics />
+          <ParentAiAssistant />
         </>
       )}
 
