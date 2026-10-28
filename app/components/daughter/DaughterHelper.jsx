@@ -14,10 +14,11 @@ import PageHeader from "../ui/PageHeader";
 import AiChat from "./AiChat";
 import TalkRequestSheet from "../connection/TalkRequestSheet";
 import DaughterSupplies from "./DaughterSupplies";
+import { t } from "../../../lib/i18n";
 
 const SECTIONS = [
-  { id: "chat", label: "Блүми эгч", Icon: MessageCircleHeart },
-  { id: "supplies", label: "Хэрэгсэл", Icon: Package },
+  { id: "chat", get label() { return t("Блүми эгч", "Big Sis Bloomy"); }, Icon: MessageCircleHeart },
+  { id: "supplies", get label() { return t("Хэрэгсэл", "Supplies"); }, Icon: Package },
 ];
 
 export default function DaughterHelper({ initial = "chat" }) {
@@ -27,7 +28,7 @@ export default function DaughterHelper({ initial = "chat" }) {
 
   return (
     <div className="space-y-4">
-      <PageHeader sub="Асуулт, хэрэгсэл нэг дор" title="Туслах" />
+      <PageHeader sub={t("Асуулт, хэрэгсэл нэг дор", "Questions and supplies in one place")} title={t("Туслах", "Helper")} />
 
       <div className="grid grid-cols-2 gap-1 rounded-2xl bg-white border border-slate-100 p-1 bloom-fade" role="tablist">
         {SECTIONS.map(({ id, label, Icon }) => {
@@ -78,8 +79,8 @@ export default function DaughterHelper({ initial = "chat" }) {
             <Wind className="w-6 h-6 text-white" />
           </span>
           <span className="flex-1 relative min-w-0">
-            <span className="block font-black text-white">Сарын тэмдгийн өвдөлтийн үед</span>
-            <span className="block text-xs font-bold text-white/85">Өвдөлт мэдрэгдэхэд хийх 3 минутын амьсгал, сунгалтын дасгал</span>
+            <span className="block font-black text-white">{t("Сарын тэмдгийн өвдөлтийн үед", "For period pain")}</span>
+            <span className="block text-xs font-bold text-white/85">{t("Өвдөлт мэдрэгдэхэд хийх 3 минутын амьсгал, сунгалтын дасгал", "3-minute breathing and stretching for when it hurts")}</span>
           </span>
           <ChevronRight className="w-5 h-5 relative shrink-0 text-white" />
         </button>

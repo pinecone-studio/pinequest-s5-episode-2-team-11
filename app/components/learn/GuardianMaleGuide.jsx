@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, BookOpen, Check, X } from "lucide-react";
 import { guardianMaleGuide } from "../../../src/content/guardian-male-guide";
-import MicroFeedback from "../feedback/MicroFeedback";
+import { t } from "../../../lib/i18n";
 
 const BG = "#FFF7FB";
 const INK = "#3B1631";
@@ -23,7 +23,7 @@ export default function GuardianMaleGuide({
   const [error, setError] = useState("");
 
   const card = guardianMaleGuide[cardIndex];
-  const closeLabel = onboarding ? "Бүртгэл рүү үргэлжлүүлэх" : "Хаах";
+  const closeLabel = onboarding ? t("Бүртгэл рүү үргэлжлүүлэх", "Continue to sign up") : t("Хаах", "Close");
 
   const nextCard = async () => {
     if (!card || saving) return;
@@ -32,7 +32,7 @@ export default function GuardianMaleGuide({
     try {
       const saved = await onComplete?.(card.id);
       if (saved === false) {
-        setError("Явцыг хадгалж чадсангүй. Дахин оролдоно уу.");
+        setError(t("Явцыг хадгалж чадсангүй. Дахин оролдоно уу.", "Couldn't save progress. Please try again."));
         return;
       }
       const completedAfterCurrent = new Set([...completedIds, card.id]);
@@ -40,7 +40,7 @@ export default function GuardianMaleGuide({
       if (nextIncompleteIndex >= 0) setCardIndex(nextIncompleteIndex);
       else onClose?.();
     } catch {
-      setError("Явцыг хадгалж чадсангүй. Дахин оролдоно уу.");
+      setError(t("Явцыг хадгалж чадсангүй. Дахин оролдоно уу.", "Couldn't save progress. Please try again."));
     } finally {
       setSaving(false);
     }
@@ -52,20 +52,20 @@ export default function GuardianMaleGuide({
         <div className="mx-auto max-w-md space-y-5">
           <div className="flex justify-end">
             <button type="button" onClick={onClose} className="min-h-11 rounded-xl px-4 text-sm font-extrabold text-slate-500">
-              Алгасах
+              {t("Алгасах", "Skip")}
             </button>
           </div>
           <header className="rounded-[2rem] p-6 text-center" style={{ backgroundColor: BLUE, color: BLUE_INK }}>
             <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white/80">
               <BookOpen className="h-7 w-7" aria-hidden="true" />
             </span>
-            <h1 className="mt-4 text-2xl font-black leading-tight">Та охиныхоо хамгийн том дэмжигч байж чадна</h1>
+            <h1 className="mt-4 text-2xl font-black leading-tight">{t("Та охиныхоо хамгийн том дэмжигч байж чадна", "You can be your daughter's biggest supporter")}</h1>
             <p className="mt-2 text-sm font-semibold leading-relaxed">
-              Охиноо ойлгож, тайван дэмжихэд туслах таван богино картыг үзээрэй.
+              {t("Охиноо ойлгож, тайван дэмжихэд туслах таван богино картыг үзээрэй.", "See five short cards to help you understand and calmly support your daughter.")}
             </p>
           </header>
 
-          <section aria-label="Танилцуулгын 5 карт" className="space-y-2">
+          <section aria-label={t("Танилцуулгын 5 карт", "5 intro cards")} className="space-y-2">
             {guardianMaleGuide.map((item, index) => (
               <div key={item.id} className="flex min-h-14 items-center gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-black" style={{ backgroundColor: BLUE, color: BLUE_INK }}>
@@ -83,10 +83,10 @@ export default function GuardianMaleGuide({
               className="min-h-12 w-full rounded-2xl px-4 py-3 text-sm font-extrabold text-white"
               style={{ backgroundColor: "#C2185B" }}
             >
-              Эхлэх
+              {t("Эхлэх", "Start")}
             </button>
             <button type="button" onClick={onClose} className="min-h-12 w-full rounded-2xl bg-white px-4 py-3 text-sm font-extrabold" style={{ color: INK }}>
-              Дараа үзэх · Зөвлөх хэсэгт хадгалагдана
+              {t("Дараа үзэх · Зөвлөх хэсэгт хадгалагдана", "View later · Saved in the guide section")}
             </button>
           </div>
         </div>
@@ -107,12 +107,12 @@ export default function GuardianMaleGuide({
           )}
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-3 text-sm font-extrabold">
-              <span>Карт {cardIndex + 1} / {guardianMaleGuide.length}</span>
+              <span>{t("Карт", "Card")} {cardIndex + 1} / {guardianMaleGuide.length}</span>
               <button type="button" onClick={onClose} aria-label={closeLabel} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white">
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
-            <div className="mt-2 flex gap-1" aria-label={`${cardIndex + 1}-р карт, нийт ${guardianMaleGuide.length}`}>
+            <div className="mt-2 flex gap-1" aria-label={t(`${cardIndex + 1}-р карт, нийт ${guardianMaleGuide.length}`, `Card ${cardIndex + 1} of ${guardianMaleGuide.length}`)}>
               {guardianMaleGuide.map((item, index) => (
                 <span key={item.id} className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#E8DCE5]">
                   <span className="block h-full rounded-full" style={{ width: index <= cardIndex ? "100%" : "0%", backgroundColor: "#C2185B" }} />
@@ -156,18 +156,14 @@ export default function GuardianMaleGuide({
           ))}
 
           <footer className="space-y-2 border-t border-slate-100 pt-3">
-            <p className="text-xs font-bold text-slate-500">Эх сурвалж: {card.source}</p>
+            <p className="text-xs font-bold text-slate-500">{t("Эх сурвалж:", "Source:")} {card.source}</p>
             <p className="inline-flex rounded-full bg-amber-50 px-3 py-1.5 text-xs font-extrabold text-amber-900">
-              Эмчийн хяналт шаардлагатай
+              {t("Эмчийн хяналт шаардлагатай", "Needs a doctor's care")}
             </p>
           </footer>
         </article>
 
         {error && <p role="alert" className="rounded-xl bg-rose-50 px-3 py-2 text-sm font-bold text-rose-800">{error}</p>}
-        {completedIds.length === guardianMaleGuide.length && (
-          <MicroFeedback targetType="lesson" targetId="guardian-male-guide" question="Ойлгомжтой байсан уу?" className="justify-center" />
-        )}
-
         <button
           type="button"
           onClick={nextCard}
@@ -176,7 +172,7 @@ export default function GuardianMaleGuide({
           style={{ backgroundColor: "#C2185B" }}
         >
           {completedIds.includes(card.id) ? <Check className="h-4 w-4" aria-hidden="true" /> : <ArrowRight className="h-4 w-4" aria-hidden="true" />}
-          {saving ? "Хадгалж байна…" : completedIds.length + (completedIds.includes(card.id) ? 0 : 1) === guardianMaleGuide.length ? "Дуусгах" : "Дараах карт"}
+          {saving ? t("Хадгалж байна…", "Saving…") : completedIds.length + (completedIds.includes(card.id) ? 0 : 1) === guardianMaleGuide.length ? t("Дуусгах", "Finish") : t("Дараах карт", "Next card")}
         </button>
       </div>
     </main>

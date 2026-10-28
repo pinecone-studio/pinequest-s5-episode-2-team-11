@@ -10,6 +10,7 @@ import CurrentScreen from "./CurrentScreen";
 import SosModal from "../sos/SosModal";
 import ChildSwitcher from "../mother/ChildSwitcher";
 import { useTheme } from "../../../context/ThemeContext";
+import { useT } from "../../../context/LanguageContext";
 import { requestAppSettingsFocus } from "../settings/appSettingsFocus";
 import NotificationInbox from "../notifications/NotificationInbox";
 import { useInbox } from "../notifications/useInbox";
@@ -40,6 +41,8 @@ export default function AppShell() {
   const pathname = usePathname();
   const family = useFamily();
   const { theme } = useTheme();
+  // Хэл солигдоход бүх дэлгэц дахин зурагдана (доорх компонентууд lib/i18n-ийн t()-г шууд ашиглана)
+  useT();
   const { unansweredIncoming } = useFriends();
   const {
     authLoading,

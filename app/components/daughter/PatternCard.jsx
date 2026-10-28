@@ -7,8 +7,9 @@ import { LOG_ENTRIES_CHANGED, MOODS, SKIN, SYMPTOM_ITEMS, dayLogsFromEntries, fe
 import { seasonPatterns } from "../../../lib/patterns";
 import { supabase } from "../../../lib/supabase";
 import Card from "../ui/Card";
+import { t } from "../../../lib/i18n";
 
-const SEASON_LABEL = { winter: "❄️ Өвөл", spring: "🌱 Хавар", summer: "☀️ Зун", autumn: "🍂 Намар" };
+const SEASON_LABEL = { get winter() { return t("❄️ Өвөл", "❄️ Winter"); }, get spring() { return t("🌱 Хавар", "🌱 Spring"); }, get summer() { return t("☀️ Зун", "☀️ Summer"); }, get autumn() { return t("🍂 Намар", "🍂 Autumn"); } };
 const label = (pairs, key) => pairs.find(([value]) => value === key)?.[1] ?? key;
 const moodOf = (average) => MOODS.find((option) => option.value === Math.round(average));
 
@@ -44,11 +45,11 @@ export default function PatternCard() {
 
   return (
     <Card className="!p-4">
-      <h2 className="font-black text-slate-700">✨ Чиний хэв маяг</h2>
+      <h2 className="font-black text-slate-700">{t("✨ Чиний хэв маяг", "✨ Your patterns")}</h2>
       {!pattern ? (
-        <p className="mt-2 text-sm font-bold text-slate-400">Ачаалж байна…</p>
+        <p className="mt-2 text-sm font-bold text-slate-400">{t("Ачаалж байна…", "Loading…")}</p>
       ) : !pattern.seasons.length ? (
-        <p className="mt-2 text-sm font-semibold leading-relaxed text-slate-500">Нэг бүтэн мөчлөг тэмдэглэвэл чиний улирал бүрийн хэв маяг энд гарна 🌱</p>
+        <p className="mt-2 text-sm font-semibold leading-relaxed text-slate-500">{t("Нэг бүтэн мөчлөг тэмдэглэвэл чиний улирал бүрийн хэв маяг энд гарна 🌱", "Log one full cycle and your patterns for each season will show here 🌱")}</p>
       ) : (
         <ul className="mt-3 space-y-2">
           {pattern.seasons.map((season) => {
@@ -57,14 +58,14 @@ export default function PatternCard() {
               mood && `${mood.emoji} ${mood.label}`,
               ...season.topSymptoms.map((item) => `⚡ ${label(SYMPTOM_ITEMS, item)}`),
               ...season.topSkin.map((item) => `🧴 ${label(SKIN, item)}`),
-              season.avgSleep != null && `😴 ${season.avgSleep} цаг`,
+              season.avgSleep != null && t(`😴 ${season.avgSleep} цаг`, `😴 ${season.avgSleep} h`),
             ].filter(Boolean);
             return (
               <li key={season.season} className="rounded-2xl bg-slate-50 p-3">
                 <p className="text-xs font-black text-slate-600">{SEASON_LABEL[season.season]}</p>
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
                   {chips.length ? chips.map((chip) => <span key={chip} className="rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold text-slate-600">{chip}</span>)
-                    : <span className="text-[11px] font-semibold text-slate-400">Онцгой зүйл тэмдэглэгдээгүй</span>}
+                    : <span className="text-[11px] font-semibold text-slate-400">{t("Онцгой зүйл тэмдэглэгдээгүй", "Nothing special logged")}</span>}
                 </div>
               </li>
             );
@@ -72,7 +73,7 @@ export default function PatternCard() {
         </ul>
       )}
       <p className="mt-3 border-t border-slate-100 pt-2 text-xs font-semibold text-slate-400">
-        🔒 Зөвхөн чамд харагдана{pattern?.cyclesUsed ? ` · Өмнөх ${pattern.cyclesUsed} мөчлөгөөс` : ""}
+        {t("🔒 Зөвхөн чамд харагдана", "🔒 Only you can see this")}{pattern?.cyclesUsed ? t(` · Өмнөх ${pattern.cyclesUsed} мөчлөгөөс`, ` · From your last ${pattern.cyclesUsed} cycles`) : ""}
       </p>
     </Card>
   );

@@ -56,6 +56,8 @@ import GuardianQuizSheet from "./GuardianQuizSheet";
 import EmotionCoachingLesson from "./EmotionCoachingLesson";
 import GuardianMaleGuide from "./GuardianMaleGuide";
 import Card from "../ui/Card";
+import MangaShelf from "./MangaShelf";
+import { t } from "../../../lib/i18n";
 
 const TONES = {
   lilac: { background: "#E9DDFC", color: "#6A3BB8" },
@@ -157,7 +159,7 @@ function TopicCard({ category, index, read, onClick, guardian, tile = false }) {
       <button
         type="button"
         onClick={onClick}
-        aria-label={`${category.title}. ${category.subtitle}${read ? ". Уншсан" : ""}`}
+        aria-label={`${category.title}. ${category.subtitle}${read ? t(". Уншсан", ". Read") : ""}`}
         className="group relative flex min-h-[150px] w-full flex-col overflow-hidden rounded-3xl p-3.5 text-left text-white transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300 active:scale-[0.97]"
         style={{
           background: `linear-gradient(150deg, ${accent} 0%, ${accent}E6 55%, ${accent}B3 100%)`,
@@ -174,7 +176,7 @@ function TopicCard({ category, index, read, onClick, guardian, tile = false }) {
           </span>
           {read ? (
             <span className="flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-black" style={{ backgroundColor: "#FFFFFF", color: accent }}>
-              <Check className="h-3 w-3" strokeWidth={3.5} aria-hidden="true" /> Уншсан
+              <Check className="h-3 w-3" strokeWidth={3.5} aria-hidden="true" /> {t("Уншсан", "Read")}
             </span>
           ) : (
             <span className="rounded-full px-2 py-1 text-[10px] font-black text-white" style={{ backgroundColor: "rgba(255,255,255,0.25)" }}>
@@ -210,7 +212,7 @@ function TopicCard({ category, index, read, onClick, guardian, tile = false }) {
       {guardian ? (
         <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" aria-hidden="true" />
       ) : read ? (
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-800" aria-label="Уншсан">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-800" aria-label={t("Уншсан", "Read")}>
           <Check className="h-4 w-4" aria-hidden="true" />
         </span>
       ) : (
@@ -236,7 +238,7 @@ function TopicDetail({ category, index, total, counter, read, onBack, onToggleRe
           <button
             type="button"
             onClick={onBack}
-            aria-label="Буцах"
+            aria-label={t("Буцах", "Back")}
             className="flex h-10 w-10 items-center justify-center rounded-full text-white active:scale-90 transition"
             style={glass}
           >
@@ -310,7 +312,7 @@ function TopicDetail({ category, index, total, counter, read, onBack, onToggleRe
               read ? "bg-emerald-100 text-emerald-800" : "bb-grad-sos text-white"
             }`}
           >
-            {read ? "Уншсан ✓" : "Уншсан гэж тэмдэглэх"}
+            {read ? t("Уншсан ✓", "Read ✓") : t("Уншсан гэж тэмдэглэх", "Mark as read")}
           </button>
         ) : null}
         {onNext && (
@@ -330,7 +332,7 @@ function TopicDetail({ category, index, total, counter, read, onBack, onToggleRe
             onClick={onList}
             className="min-h-12 w-full rounded-2xl bg-slate-100 px-4 py-3 text-sm font-extrabold text-slate-700 transition active:scale-[0.99]"
           >
-            Бүх сэдэв рүү буцах
+            {t("Бүх сэдэв рүү буцах", "Back to all topics")}
           </button>
         )}
       </div>
@@ -404,7 +406,7 @@ export default function LearningLibrary({ onMoreMaterials }) {
           const stored = JSON.parse(window.localStorage.getItem(pendingKey) ?? "[]");
           if (Array.isArray(stored)) pendingIds = stored.filter((id) => guardianMaleGuide.some((card) => card.id === id));
         } catch {
-          if (!cancelled) setGuideError("Түр хадгалсан явцыг уншиж чадсангүй.");
+          if (!cancelled) setGuideError(t("Түр хадгалсан явцыг уншиж чадсангүй.", "Couldn't read the saved progress."));
         }
       }
 
@@ -414,12 +416,12 @@ export default function LearningLibrary({ onMoreMaterials }) {
           { onConflict: "user_id,card_id" },
         );
         if (error) {
-          if (!cancelled) setGuideError("Танилцуулгын явцыг хадгалж чадсангүй. Дахин оролдоно уу.");
+          if (!cancelled) setGuideError(t("Танилцуулгын явцыг хадгалж чадсангүй. Дахин оролдоно уу.", "Couldn't save the intro progress. Please try again."));
         } else if (pendingKey) {
           try {
             window.localStorage.removeItem(pendingKey);
           } catch {
-            if (!cancelled) setGuideError("Хадгалсан танилцуулгын түр хуулбарыг арилгаж чадсангүй.");
+            if (!cancelled) setGuideError(t("Хадгалсан танилцуулгын түр хуулбарыг арилгаж чадсангүй.", "Couldn't clear the saved intro copy."));
           }
         }
       }
@@ -430,14 +432,14 @@ export default function LearningLibrary({ onMoreMaterials }) {
         .eq("user_id", profile.id);
       if (cancelled) return;
       if (error) {
-        setGuideError("Картын явцыг ачаалж чадсангүй. Supabase тохиргоогоо шалгаарай.");
+        setGuideError(t("Картын явцыг ачаалж чадсангүй. Supabase тохиргоогоо шалгаарай.", "Couldn't load card progress. Check your Supabase setup."));
         return;
       }
       setGuideCompletedIds((data ?? []).map((row) => row.card_id));
     };
 
     loadProgress().catch(() => {
-      if (!cancelled) setGuideError("Картын явцыг ачаалж чадсангүй. Дахин оролдоно уу.");
+      if (!cancelled) setGuideError(t("Картын явцыг ачаалж чадсангүй. Дахин оролдоно уу.", "Couldn't load card progress. Please try again."));
     });
     return () => { cancelled = true; };
   }, [guardianGender, isGirl, profile?.id, session?.user?.email]);
@@ -448,7 +450,7 @@ export default function LearningLibrary({ onMoreMaterials }) {
       .from("guardian_guide_progress")
       .upsert({ user_id: profile.id, card_id: cardId }, { onConflict: "user_id,card_id" });
     if (error) {
-      setGuideError("Картын явцыг хадгалж чадсангүй. Дахин оролдоно уу.");
+      setGuideError(t("Картын явцыг хадгалж чадсангүй. Дахин оролдоно уу.", "Couldn't save card progress. Please try again."));
       return false;
     }
     setGuideCompletedIds((current) => current.includes(cardId) ? current : [...current, cardId]);
@@ -495,7 +497,7 @@ export default function LearningLibrary({ onMoreMaterials }) {
         onBack={() => setSelectedId(null)}
         onToggleRead={isGirl ? toggleRead : null}
         onNext={selectedIndex < categories.length - 1 ? openNext : null}
-        nextLabel="Дараагийн сэдэв →"
+        nextLabel={t("Дараагийн сэдэв →", "Next topic →")}
         onList={!isGirl ? () => setSelectedId(null) : null}
       />
     );
@@ -515,12 +517,12 @@ export default function LearningLibrary({ onMoreMaterials }) {
     <div className="space-y-4 pb-4">
       <header className="space-y-2">
         <RoleChip tone={isGirl ? "lilac" : "rose"}>
-          {isGirl ? "Өсвөр насны охин" : "Асран хамгаалагч"}
+          {isGirl ? t("Өсвөр насны охин", "Teen girl") : t("Асран хамгаалагч", "Guardian")}
         </RoleChip>
         <div>
-          <h1 className="text-2xl font-black leading-tight text-slate-800">Суралцах</h1>
+          <h1 className="text-2xl font-black leading-tight text-slate-800">{t("Суралцах", "Learn")}</h1>
           <p className="mt-1 text-sm font-semibold text-slate-500">
-            {isGirl ? "Биеийнхээ тухай мэдэх ёстой бүхэн" : "Охиндоо хэрхэн дэмжлэг үзүүлэх вэ"}
+            {isGirl ? t("Биеийнхээ тухай мэдэх ёстой бүхэн", "Everything to know about your body") : t("Охиндоо хэрхэн дэмжлэг үзүүлэх вэ", "How to support your daughter")}
           </p>
         </div>
       </header>
@@ -531,7 +533,7 @@ export default function LearningLibrary({ onMoreMaterials }) {
           onClick={onMoreMaterials}
           className="flex min-h-12 w-full items-center justify-between rounded-2xl border border-slate-100 bg-white px-4 py-3 text-left text-sm font-extrabold text-slate-700 shadow-sm"
         >
-          <span>{isGirl ? "Хэрэглэлийн заавар, хооллолтын зөвлөгөө" : "Нэмэлт зөвлөгөө, AI туслах"}</span>
+          <span>{isGirl ? t("Хэрэглэлийн заавар, хооллолтын зөвлөгөө", "Supply guide and nutrition tips") : t("Нэмэлт зөвлөгөө, AI туслах", "More tips and AI helper")}</span>
           <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" aria-hidden="true" />
         </button>
       )}
@@ -547,12 +549,12 @@ export default function LearningLibrary({ onMoreMaterials }) {
               >
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-black text-slate-800">Аавуудад · {guideCompletedIds.length}/{guardianMaleGuide.length}</p>
-                    <p className="mt-1 text-xs font-semibold text-slate-500">Танилцуулгын картаа үргэлжлүүлээрэй</p>
+                    <p className="text-sm font-black text-slate-800">{t("Аавуудад ·", "For dads ·")} {guideCompletedIds.length}/{guardianMaleGuide.length}</p>
+                    <p className="mt-1 text-xs font-semibold text-slate-500">{t("Танилцуулгын картаа үргэлжлүүлээрэй", "Continue your intro cards")}</p>
                   </div>
                   <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" aria-hidden="true" />
                 </div>
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-label="Аавуудад зориулсан картын явц" aria-valuemin={0} aria-valuemax={guardianMaleGuide.length} aria-valuenow={guideCompletedIds.length}>
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-label={t("Аавуудад зориулсан картын явц", "Progress of the cards for dads")} aria-valuemin={0} aria-valuemax={guardianMaleGuide.length} aria-valuenow={guideCompletedIds.length}>
                   <div className="h-full rounded-full bb-grad-guide transition-all" style={{ width: `${(guideCompletedIds.length / guardianMaleGuide.length) * 100}%` }} />
                 </div>
               </button>
@@ -560,7 +562,7 @@ export default function LearningLibrary({ onMoreMaterials }) {
             </Card>
           )}
           <div className="grid grid-cols-2 gap-2">
-            {[["quiz", "🧠", "Та хэр мэдэх вэ?", "10 үнэн/худал"], ["coaching", "💗", "Мэдрэмжид хариулах", "5 алхам · 2 мин"]].map(([id, emoji, title, sub]) => (
+            {[["quiz", "🧠", t("Та хэр мэдэх вэ?", "Quick quiz"), t("10 үнэн/худал", "10 true/false")], ["coaching", "💗", t("Мэдрэмжид хариулах", "Respond to feelings"), t("5 алхам · 2 мин", "5 steps · 2 min")]].map(([id, emoji, title, sub]) => (
               <button key={id} type="button" onClick={() => setGuardianSheet(id)} className="rounded-2xl border border-slate-100 bg-white p-3 text-left shadow-sm active:scale-[0.98]">
                 <span className="text-2xl" aria-hidden="true">{emoji}</span>
                 <span className="mt-1 block text-sm font-black leading-tight text-slate-800">{title}</span>
@@ -570,7 +572,7 @@ export default function LearningLibrary({ onMoreMaterials }) {
           </div>
           {guardianSheet === "quiz" && <GuardianQuizSheet onClose={() => setGuardianSheet(null)} />}
           {guardianSheet === "coaching" && <EmotionCoachingLesson onClose={() => setGuardianSheet(null)} />}
-          <div role="group" aria-label="Асран хамгаалагчийн үүрэг" className="grid grid-cols-3 gap-1 rounded-2xl bb-bg-FDE7F1 p-1">
+          <div role="group" aria-label={t("Асран хамгаалагчийн үүрэг", "Guardian role")} className="grid grid-cols-3 gap-1 rounded-2xl bb-bg-FDE7F1 p-1">
             {guardianRoles.map((item) => (
               <button
                 key={item.id}
@@ -596,7 +598,7 @@ export default function LearningLibrary({ onMoreMaterials }) {
           </div>
           <div className="flex items-center justify-between gap-2 px-1">
             <h2 className="text-sm font-black text-slate-700">{role.sectionLabel}</h2>
-            <span className="text-xs font-bold text-slate-500">{categories.length} сэдэв</span>
+            <span className="text-xs font-bold text-slate-500">{categories.length} {t("сэдэв", "topics")}</span>
           </div>
         </>
       )}
@@ -609,17 +611,17 @@ export default function LearningLibrary({ onMoreMaterials }) {
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-black text-slate-800">
-                {readCount === categories.length ? "Бүх сэдвийг уншиж дуусгалаа! 🎉" : `${readCount} / ${categories.length} сэдэв уншсан`}
+                {readCount === categories.length ? t("Бүх сэдвийг уншиж дуусгалаа! 🎉", "You've read every topic! 🎉") : t(`${readCount} / ${categories.length} сэдэв уншсан`, `${readCount} / ${categories.length} topics read`)}
               </p>
               <p className="mt-0.5 text-xs font-semibold text-slate-500">
-                {readCount === 0 ? "Эхний сэдвээсээ эхлээрэй 🌸" : readCount === categories.length ? "Чи үнэхээр гайхалтай байна" : "Сайн явж байна, үргэлжлүүлээрэй"}
+                {readCount === 0 ? t("Эхний сэдвээсээ эхлээрэй 🌸", "Start with the first topic 🌸") : readCount === categories.length ? t("Чи үнэхээр гайхалтай байна", "You're doing amazing") : t("Сайн явж байна, үргэлжлүүлээрэй", "Going well, keep it up")}
               </p>
             </div>
           </div>
           <div
             className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100"
             role="progressbar"
-            aria-label="Уншсан сэдвийн явц"
+            aria-label={t("Уншсан сэдвийн явц", "Topics read progress")}
             aria-valuemin={0}
             aria-valuemax={categories.length}
             aria-valuenow={readCount}
@@ -631,7 +633,7 @@ export default function LearningLibrary({ onMoreMaterials }) {
 
       <section
         className={isGirl ? "grid grid-cols-2 gap-3" : "space-y-2.5"}
-        aria-label="Сэдвүүд"
+        aria-label={t("Сэдвүүд", "Topics")}
       >
         {visibleCategories.map((category, position) => (
           <div
@@ -650,6 +652,7 @@ export default function LearningLibrary({ onMoreMaterials }) {
         ))}
       </section>
 
+      {isGirl && <MangaShelf />}
     </div>
   );
 }

@@ -9,7 +9,7 @@ import DaughterSupplies from "../daughter/DaughterSupplies";
 import { Stepper } from "../onboarding/CycleSetup";
 import BottomSheet from "../ui/BottomSheet";
 import { LANGUAGES, SegmentedChoice, THEMES, useLanguage } from "./AppSettingsSection";
-import FeedbackSurvey from "../feedback/FeedbackSurvey";
+import SafetyCard from "../safety/SafetyCard";
 import GuardianConnectForm from "./GuardianConnectForm";
 import NotificationSettings from "./NotificationSettings";
 import PrivateNotePinSettings from "./PrivateNotePinSettings";
@@ -72,7 +72,7 @@ function GuardianSheet({ onClose }) {
   );
 }
 
-function DeleteAccountSheet({ onClose }) {
+export function DeleteAccountSheet({ onClose }) {
   const { linked, setToast } = useFamily();
   const [understood, setUnderstood] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -133,7 +133,7 @@ function QaList({ items }) {
 
 /** Daughter's Profile tab as a grouped settings list (Settings page merged in as «Апп»). */
 export default function DaughterProfile() {
-  const { profile, setToast, linked, guardianName, cycleLength, signOut, noPeriodYet } = useFamily();
+  const { profile, setToast, linked, guardianName, cycleLength } = useFamily();
   const { theme, setTheme } = useTheme();
   const [language, setLanguage] = useLanguage();
   const avatar = useAvatar(profile?.id, setToast);
@@ -169,16 +169,10 @@ export default function DaughterProfile() {
       </SettingsGroup>
 
       <SettingsGroup title="Тусламж">
-        <SettingsRow emoji="💌" label="Санал хүсэлт" onClick={() => setSheet("feedback")} />
+        <SettingsRow emoji="💗" label="Итгэдэг том хүнтэй ярилцах" onClick={() => setSheet("safety")} />
         <SettingsRow emoji="❓" label="Тусламж" onClick={() => setSheet("help")} />
         <SettingsRow emoji="📄" label="Нууцлалын бодлого" onClick={() => setSheet("policy")} />
       </SettingsGroup>
-
-      <SettingsGroup>
-        <SettingsRow emoji="👋" label="Гарах" chevron={false} onClick={() => setSheet("logout")} />
-      </SettingsGroup>
-
-      <button type="button" onClick={() => setSheet("delete")} className="mx-auto block px-3 py-2 text-xs font-bold text-rose-500">Бүртгэл устгах</button>
 
       {sheet === "bag" && <BottomSheet title="🎒 Миний цүнх" onClose={close}><div className="pb-2"><DaughterSupplies embedded /></div></BottomSheet>}
       {sheet === "wishes" && <BottomSheet title="🎁 Миний хүслүүд" onClose={close}><div className="pb-2"><ComingSoon /></div></BottomSheet>}
@@ -190,21 +184,11 @@ export default function DaughterProfile() {
       {sheet === "language" && <BottomSheet title="🌐 Хэл" onClose={close}><div className="pb-2"><SegmentedChoice options={LANGUAGES} value={language} onChange={setLanguage} /></div></BottomSheet>}
       {sheet === "theme" && <BottomSheet title="🎨 Өнгө" onClose={close}><div className="pb-2"><SegmentedChoice options={THEMES} value={theme} onChange={setTheme} /></div></BottomSheet>}
       {sheet === "help" && <BottomSheet title="❓ Тусламж" onClose={close}><QaList items={FAQ} /></BottomSheet>}
+      {sheet === "safety" && <BottomSheet title="💗 Чи ганцаараа биш" onClose={close}><SafetyCard /></BottomSheet>}
       {sheet === "policy" && <BottomSheet title="📄 Нууцлалын бодлого" onClose={close}>
         <p className="mb-3 w-fit rounded-full bg-amber-100 px-3 py-1 text-[11px] font-extrabold text-amber-700">📝 Ноорог · хянагдаж байна</p>
         <QaList items={POLICY} />
       </BottomSheet>}
-      {sheet === "logout" && <BottomSheet title="Гарах" onClose={close}>
-        <div className="space-y-3 pb-2">
-          <p className="text-base font-black text-slate-700">Гарахдаа итгэлтэй байна уу?</p>
-          <div className="grid grid-cols-2 gap-2">
-            <button type="button" onClick={close} className="rounded-2xl bg-slate-100 py-3 text-sm font-extrabold text-slate-600">Болих</button>
-            <button type="button" onClick={() => { close(); signOut(); }} className="rounded-2xl bb-bg-E0679F py-3 text-sm font-extrabold text-white">Гарах</button>
-          </div>
-        </div>
-      </BottomSheet>}
-      {sheet === "delete" && <DeleteAccountSheet onClose={close} />}
-      {sheet === "feedback" && <FeedbackSurvey role="daughter" noPeriodYet={noPeriodYet} onClose={close} />}
     </div>
   );
 }

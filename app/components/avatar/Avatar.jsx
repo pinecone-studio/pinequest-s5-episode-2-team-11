@@ -11,6 +11,7 @@
  */
 
 import { SKIN_TONES, STARTER_LOOK, itemById } from "../../../lib/wardrobe";
+import { t } from "../../../lib/i18n";
 
 // Нэг пиксел = 4 нэгж → viewBox 120×200 нь 30×50 пикселийн тор.
 // Дүрийг бүхэлд нь OFF мөрөөр доош шилжүүлж төвд байрлуулна.
@@ -438,7 +439,7 @@ export default function Avatar({
   mood = null,
   walking = false,
   idle = false,
-  label = "Миний дүр",
+  label = t("Миний дүр", "My avatar"),
   crop = "0 0 120 200",
   size = 120,
   className = "",

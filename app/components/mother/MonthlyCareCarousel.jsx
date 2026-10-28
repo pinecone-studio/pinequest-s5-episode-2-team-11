@@ -10,6 +10,7 @@ import { getPhaseKey } from "../../../lib/helpers";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
 import ThinkingDots from "../ui/ThinkingDots";
+import { t } from "../../../lib/i18n";
 
 const SWIPE_RATIO = 0.2; // өргөний 20%-иас илүү чирвэл дараагийн охин руу шилжинэ
 
@@ -126,13 +127,13 @@ export default function MonthlyCareCarousel() {
     <Card>
       <SectionTitle
         icon={HeartHandshake}
-        title="Сарын халамжийн зөвлөгөө"
+        title={t("Сарын халамжийн зөвлөгөө", "Monthly care tips")}
         right={
           currentResult?.status === "done" && (
             <button
               onClick={() => analyze(child, true)}
               className="w-8 h-8 rounded-xl bg-white border border-slate-100 flex items-center justify-center active:scale-90"
-              aria-label="Дахин шинжлэх"
+              aria-label={t("Дахин шинжлэх", "Analyze again")}
             >
               <RefreshCw className="w-4 h-4 text-slate-400" />
             </button>
@@ -191,7 +192,7 @@ function SwipeControl({ current, count, drag, onPrev, onNext }) {
     <div className="mt-4 flex justify-center">
       <div className="h-11 flex items-center rounded-full border-2 bb-border-F48FB1 bg-white">
         {hasPrev && (
-          <button onClick={onPrev} className={arrow} aria-label="Өмнөх охин">
+          <button onClick={onPrev} className={arrow} aria-label={t("Өмнөх охин", "Previous daughter")}>
             <ArrowLeft className="w-5 h-5" strokeWidth={2.5} />
           </button>
         )}
@@ -203,7 +204,7 @@ function SwipeControl({ current, count, drag, onPrev, onNext }) {
           {current + 1}/{count}
         </span>
         {hasNext && (
-          <button onClick={onNext} className={arrow} aria-label="Дараагийн охин">
+          <button onClick={onNext} className={arrow} aria-label={t("Дараагийн охин", "Next daughter")}>
             <ArrowRight className="w-5 h-5" strokeWidth={2.5} />
           </button>
         )}
@@ -213,7 +214,7 @@ function SwipeControl({ current, count, drag, onPrev, onNext }) {
 }
 
 function Slide({ child, result, onRetry }) {
-  const name = child.display_name || "Охин";
+  const name = child.display_name || t("Охин", "Daughter");
   const { status, data, days } = result ?? { status: "loading" };
 
   return (
@@ -221,24 +222,24 @@ function Slide({ child, result, onRetry }) {
       <div className="text-center">
         <p className="font-black text-slate-700">{name}</p>
         <p className="text-xs font-semibold text-slate-400">
-          Сүүлийн 30 хоног{days ? ` · ${days} өдрийн бүртгэл` : ""}
+          {t("Сүүлийн 30 хоног", "Last 30 days")}{days ? t(` · ${days} өдрийн бүртгэл`, ` · ${days} days logged`) : ""}
         </p>
       </div>
 
       <div className="mt-3 min-h-24">
-        {status === "loading" && <ThinkingDots label="Сарын бүртгэлийг шинжилж байна…" />}
+        {status === "loading" && <ThinkingDots label={t("Сарын бүртгэлийг шинжилж байна…", "Analyzing the month's logs…")} />}
         {status === "empty" && (
           <p className="rounded-2xl bb-bg-FFF7FB p-4 text-sm font-semibold text-slate-500">
             {child.share_mood === false
-              ? `${name} бүртгэлээ хуваалцах тохиргоог унтраасан байна. Түүний хувийн орон зайг хүндэтгэе 🤍`
-              : `${name} сүүлийн 1 сард өдрийн бүртгэл хөтлөөгүй байна.`}
+              ? t(`${name} бүртгэлээ хуваалцах тохиргоог унтраасан байна. Түүний хувийн орон зайг хүндэтгэе 🤍`, `${name} has turned off log sharing. Let's respect her privacy 🤍`)
+              : t(`${name} сүүлийн 1 сард өдрийн бүртгэл хөтлөөгүй байна.`, `${name} hasn't kept daily logs in the past month.`)}
           </p>
         )}
         {status === "error" && (
           <div className="rounded-2xl bb-bg-FFF7FB p-4 text-sm font-semibold text-slate-500">
-            AI зөвлөгөө гаргаж чадсангүй.{" "}
+            {t("AI зөвлөгөө гаргаж чадсангүй.", "Couldn't generate AI tips.")}{" "}
             <button onClick={onRetry} className="font-extrabold bb-text-B83B7E underline">
-              Дахин оролдох
+              {t("Дахин оролдох", "Try again")}
             </button>
           </div>
         )}
