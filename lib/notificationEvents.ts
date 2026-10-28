@@ -6,7 +6,23 @@
 export type Priority = "urgent" | "normal" | "quiet";
 export type PrefKey = "friends_enabled" | "guardian_enabled" | "reminders_enabled" | "diary_reminder";
 export type Audience = "friends" | "guardians" | "daughter" | "self";
-export type NotifyData = { senderId?: string | null; senderName?: string | null; detail?: string | null; url?: string | null };
+export type NotifyData = {
+  senderId?: string | null;
+  senderName?: string | null;
+  detail?: string | null;
+  url?: string | null;
+  /** "Ээж" / "Аав" / "Асран хамгаалагч", filled in by the server from guardian_gender. */
+  relation?: string | null;
+  /** Picks one of an event's fixed lock-screen lines (e.g. talk_reply). */
+  variant?: string | null;
+};
+
+/** Guardian's one-tap answers to «Ярилцмаар байна». */
+export const TALK_REPLIES: Record<string, { label: string; text: (relation: string) => string }> = {
+  now: { label: "Одоо очлоо 🏃‍♀️", text: (relation) => `${relation} чинь одоо ирж байна 💗` },
+  later: { label: "10 минутын дараа", text: (relation) => `${relation} чинь 10 минутын дараа ирнэ 💗` },
+  tonight: { label: "Өнөө орой 🍵", text: (relation) => `${relation} чинь өнөө орой ярилцъя гэж байна 🍵` },
+};
 
 export type EventConfig = {
   audience: Audience;
@@ -81,6 +97,19 @@ export const EVENTS = {
     title: () => "Bloomy", body: (d) => `${name(d)}-д онцгой мэдээ байна 🌸`, url: "/mother/calendar", groupKey: (d) => `period_confirmed_${sender(d)}`,
   },
   // ---------- Daughter ----------
+  // ---------- Connection (girl chooses what to share) ----------
+  talk_request: {
+    audience: "guardians", priority: "normal", icon: "💬", client: false, pref: "guardian_enabled",
+    title: () => "Bloomy", body: (d) => `${name(d)} тантай ярилцмаар байна 💬`, url: "/mother", groupKey: (d) => `talk_${sender(d)}`,
+  },
+  talk_reply: {
+    audience: "daughter", priority: "urgent", icon: "💗", client: false,
+    title: () => "Bloomy 💗", body: (d) => TALK_REPLIES[d.variant ?? ""]?.text(d.relation || "Асран хамгаалагч") ?? "Хариу ирлээ 💗", url: "/daughter", groupKey: () => "talk_reply",
+  },
+  guardian_story: {
+    audience: "daughter", priority: "normal", icon: "💌", client: false, pref: "guardian_enabled",
+    title: () => "Bloomy", body: (d) => `${d.relation || "Асран хамгаалагч"} чинь чамд нэг түүх үлдээлээ 💌`, url: "/daughter", groupKey: () => "guardian_story",
+  },
   guardian_message: {
     audience: "daughter", priority: "normal", icon: "💌", client: true, pref: "guardian_enabled",
     title: () => "Bloomy", body: () => "Танд шинэ мессеж ирлээ 💌", url: "/daughter/messages", groupKey: () => "guardian_message",
