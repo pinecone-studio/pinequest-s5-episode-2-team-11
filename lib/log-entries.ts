@@ -4,6 +4,7 @@
  * Dates are plain local 'YYYY-MM-DD' keys; never derived via toISOString().
  */
 import { addDaysToLocalDateKey } from "./cycle";
+import { pair, t } from "./i18n";
 
 export type Category = "mood" | "skin" | "symptoms" | "period" | "sleep";
 export type Flow = "light" | "medium" | "heavy" | "spotting";
@@ -17,33 +18,33 @@ export type EntryValue =
 export type LogEntry = { id: string; user_id?: string; log_date: string; category: Category; value: any; logged_at: string };
 
 export const CATEGORIES: { key: Category; emoji: string; label: string }[] = [
-  { key: "mood", emoji: "😊", label: "Сэтгэл" },
-  { key: "skin", emoji: "🧴", label: "Арьс" },
-  { key: "symptoms", emoji: "⚡", label: "Шинж тэмдэг" },
-  { key: "period", emoji: "💧", label: "Сарын тэмдэг" },
-  { key: "sleep", emoji: "😴", label: "Нойр" },
+  { key: "mood", emoji: "😊", get label() { return t("Сэтгэл", "Mood"); } },
+  { key: "skin", emoji: "🧴", get label() { return t("Арьс", "Skin"); } },
+  { key: "symptoms", emoji: "⚡", get label() { return t("Шинж тэмдэг", "Symptoms"); } },
+  { key: "period", emoji: "💧", get label() { return t("Сарын тэмдэг", "Period"); } },
+  { key: "sleep", emoji: "😴", get label() { return t("Нойр", "Sleep"); } },
 ];
 export const CATEGORY_BY_KEY = Object.fromEntries(CATEGORIES.map((category) => [category.key, category])) as Record<Category, (typeof CATEGORIES)[number]>;
 /** CSS variable per category (globals.css defines light + dark values). */
 export const categoryColor = (key: Category) => `var(--cat-${key})`;
 
 export const MOODS = [
-  { value: 5, emoji: "😄", label: "Маш сайхан" },
-  { value: 4, emoji: "🙂", label: "Сайхан" },
-  { value: 3, emoji: "😐", label: "Дундаж" },
-  { value: 2, emoji: "😟", label: "Тавгүй" },
-  { value: 1, emoji: "😣", label: "Хэцүү" },
+  { value: 5, emoji: "😄", get label() { return t("Маш сайхан", "Great"); } },
+  { value: 4, emoji: "🙂", get label() { return t("Сайхан", "Good"); } },
+  { value: 3, emoji: "😐", get label() { return t("Дундаж", "Okay"); } },
+  { value: 2, emoji: "😟", get label() { return t("Тавгүй", "Down"); } },
+  { value: 1, emoji: "😣", get label() { return t("Хэцүү", "Rough"); } },
 ];
-export const SKIN: [string, string][] = [["oily", "Тослог"], ["dry", "Хуурай"], ["pimples", "Батга"], ["sensitive", "Мэдрэмтгий"], ["normal", "Хэвийн"]];
-export const PAINS: [number, string][] = [[0, "Өвдөхгүй"], [1, "Бага"], [2, "Дунд"], [3, "Их"]];
-export const SYMPTOM_ITEMS: [string, string][] = [["cramps", "Гэдэс өвдөх"], ["tired", "Ядрах"], ["bloating", "Хэвлий дүүрэх"], ["breast_tenderness", "Хөх өвдөх"], ["headache", "Толгой өвдөх"]];
-export const FLOWS: [Flow, string][] = [["spotting", "Дусал"], ["light", "Бага"], ["medium", "Дунд"], ["heavy", "Их"]];
-export const SLEEP_QUALITY: [SleepQuality, string, string][] = [["good", "Сайн", "😊"], ["ok", "Дунд", "😐"], ["bad", "Муу", "😣"]];
+export const SKIN: [string, string][] = [pair("oily", "Тослог", "Oily"), pair("dry", "Хуурай", "Dry"), pair("pimples", "Батга", "Pimples"), pair("sensitive", "Мэдрэмтгий", "Sensitive"), pair("normal", "Хэвийн", "Normal")];
+export const PAINS: [number, string][] = [pair(0, "Өвдөхгүй", "No pain"), pair(1, "Бага", "Mild"), pair(2, "Дунд", "Medium"), pair(3, "Их", "Strong")];
+export const SYMPTOM_ITEMS: [string, string][] = [pair("cramps", "Гэдэс өвдөх", "Cramps"), pair("tired", "Ядрах", "Tiredness"), pair("bloating", "Хэвлий дүүрэх", "Bloating"), pair("breast_tenderness", "Хөх өвдөх", "Breast tenderness"), pair("headache", "Толгой өвдөх", "Headache")];
+export const FLOWS: [Flow, string][] = [pair("spotting", "Дусал", "Spotting"), pair("light", "Бага", "Light"), pair("medium", "Дунд", "Medium"), pair("heavy", "Их", "Heavy")];
+export const SLEEP_QUALITY: [SleepQuality, string, string][] = [pair("good", "Сайн", "Good", "😊"), pair("ok", "Дунд", "Okay", "😐"), pair("bad", "Муу", "Bad", "😣")];
 export const SLEEP_MIN = 4;
 export const SLEEP_MAX = 12;
 export const SLEEP_DEFAULT = 9;
 
-const PAIN_SUMMARY = ["Өвдөлтгүй", "Өвдөлт бага", "Өвдөлт дунд", "Өвдөлт их"];
+const PAIN_SUMMARY = () => ([t("Өвдөлтгүй", "No pain"), t("Өвдөлт бага", "Mild pain"), t("Өвдөлт дунд", "Moderate pain"), t("Өвдөлт их", "Strong pain")]);
 const labelOf = (pairs: [string, string][], key: string) => pairs.find(([value]) => value === key)?.[1] ?? key;
 
 /** One-line summary for a timeline card, e.g. "Өвдөлт бага, Ядрах". Never includes note text. */
@@ -57,12 +58,12 @@ export function summarizeEntry(entry: Pick<LogEntry, "category" | "value">): str
     case "skin":
       return (value.items ?? []).map((item: string) => labelOf(SKIN, item)).join(", ");
     case "symptoms":
-      return [value.pain != null ? PAIN_SUMMARY[value.pain] : null, ...(value.items ?? []).map((item: string) => labelOf(SYMPTOM_ITEMS, item))].filter(Boolean).join(", ");
+      return [value.pain != null ? PAIN_SUMMARY()[value.pain] : null, ...(value.items ?? []).map((item: string) => labelOf(SYMPTOM_ITEMS, item))].filter(Boolean).join(", ");
     case "period":
       return labelOf(FLOWS, value.flow);
     case "sleep": {
       const quality = SLEEP_QUALITY.find(([key]) => key === value.quality);
-      return `${value.hours} цаг${quality ? ` ${quality[2]}` : ""}`;
+      return t(`${value.hours} цаг${quality ? ` ${quality[2]}` : ""}`, `${value.hours} h${quality ? ` ${quality[2]}` : ""}`);
     }
     default:
       return "";

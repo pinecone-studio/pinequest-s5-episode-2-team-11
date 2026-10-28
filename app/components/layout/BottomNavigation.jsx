@@ -1,3 +1,4 @@
+import { t } from "../../../lib/i18n";
 import { Sparkles, BookOpen, Home, Package, Users, User, CalendarDays } from "lucide-react";
 
 // center: true — голд нь томоор харагдах үндсэн таб
@@ -6,18 +7,18 @@ export default function BottomNavigation({ view, linked, lowSupplyCount, unanswe
   const items =
     view === "mother"
       ? [
-          { id: "calendar", label: "Календарь", icon: CalendarDays },
-          { id: "supplies", label: "Хэрэгсэл", icon: Package, badge: linked ? lowSupplyCount : 0 },
-          { id: "home", label: "Халамж", icon: Home, center: true },
-          { id: "learn", label: "Суралцах", icon: BookOpen },
-          { id: "me", label: "Профайл", icon: User },
+          { id: "calendar", label: t("Календарь", "Calendar"), icon: CalendarDays },
+          { id: "supplies", label: t("Хэрэгсэл", "Supplies"), icon: Package, badge: linked ? lowSupplyCount : 0 },
+          { id: "home", label: t("Халамж", "Care"), icon: Home, center: true },
+          { id: "learn", label: t("Суралцах", "Learn"), icon: BookOpen },
+          { id: "me", label: t("Профайл", "Profile"), icon: User },
         ]
       : [
-          { id: "insights", label: "Туслах", icon: Sparkles, badge: lowSupplyCount, match: ["supplies"] },
-          { id: "friends", label: "Найзууд", icon: Users, badge: unansweredIncoming },
-          { id: "home", label: "Өнөөдөр", icon: Home, center: true },
-          { id: "learn", label: "Суралцах", icon: BookOpen },
-          { id: "me", label: "Профайл", icon: User },
+          { id: "insights", label: t("Туслах", "Helper"), icon: Sparkles, badge: lowSupplyCount, match: ["supplies"] },
+          { id: "friends", label: t("Найзууд", "Friends"), icon: Users, badge: unansweredIncoming },
+          { id: "home", label: t("Өнөөдөр", "Today"), icon: Home, center: true },
+          { id: "learn", label: t("Суралцах", "Learn"), icon: BookOpen },
+          { id: "me", label: t("Профайл", "Profile"), icon: User },
         ];
 
   return (

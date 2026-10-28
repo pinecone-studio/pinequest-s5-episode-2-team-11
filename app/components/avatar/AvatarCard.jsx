@@ -16,11 +16,12 @@ import { useTodayMood } from "./useTodayMood";
 import { MOODS } from "../../../lib/log-entries";
 import { PetalIcon, Sparkle, XpIcon } from "./icons";
 import { AVATAR_BACKGROUNDS, DAILY_GIFT, XP_PER_LEVEL } from "../../../lib/wardrobe";
+import { t } from "../../../lib/i18n";
 
 const ACTIONS = [
-  { id: "walk", label: "Алхах", Icon: Footprints },
-  { id: "shop", label: "Дэлгүүр", Icon: ShoppingBag },
-  { id: "closet", label: "Шүүгээ", Icon: Shirt },
+  { id: "walk", get label() { return t("Алхах", "Walk"); }, Icon: Footprints },
+  { id: "shop", get label() { return t("Дэлгүүр", "Shop"); }, Icon: ShoppingBag },
+  { id: "closet", get label() { return t("Шүүгээ", "Closet"); }, Icon: Shirt },
 ];
 
 export default function AvatarCard() {
@@ -37,9 +38,9 @@ export default function AvatarCard() {
       <Card className="!p-4">
         {/* ---------- Гарчиг ---------- */}
         <div className="flex items-center justify-between gap-2">
-          <p className="font-black text-slate-800">Миний дүр</p>
+          <p className="font-black text-slate-800">{t("Миний дүр", "My avatar")}</p>
           <div className="flex items-center gap-1.5">
-            <span className="rounded-full bb-grad-sos text-white text-xs font-black px-2.5 py-1">Түв. {av.level}</span>
+            <span className="rounded-full bb-grad-sos text-white text-xs font-black px-2.5 py-1">{t("Түв.", "Lv.")} {av.level}</span>
             <span className="inline-flex items-center gap-1 rounded-full bb-bg-FDE7F1 bb-text-B83B7E text-xs font-black px-2.5 py-1">
               <PetalIcon size={14} /> {av.petals}
             </span>
@@ -49,7 +50,7 @@ export default function AvatarCard() {
         {/* ---------- Дүр (том, голдоо) ---------- */}
         <button
           onClick={() => setStudioTab("closet")}
-          aria-label="Дүрээ өөрчлөх"
+          aria-label={t("Дүрээ өөрчлөх", "Change my avatar")}
           className="relative mt-3 w-full overflow-hidden rounded-3xl border bb-border-F8D3E6 flex justify-center pt-5 pb-3 active:scale-95 transition"
           style={{ background: AVATAR_BACKGROUNDS.find((option) => option.id === av.background)?.background }}
         >
@@ -82,7 +83,7 @@ export default function AvatarCard() {
               <XpIcon size={13} /> {av.xp % XP_PER_LEVEL}/{XP_PER_LEVEL} XP
             </span>
             <span className="inline-flex items-center gap-1">
-              <Footprints className="w-3.5 h-3.5" /> Өнөөдөр {av.walkToday.steps.toLocaleString()} алхам
+              <Footprints className="w-3.5 h-3.5" /> {t("Өнөөдөр", "Today")} {av.walkToday.steps.toLocaleString()} {t("алхам", "steps")}
             </span>
           </div>
         </div>
@@ -92,7 +93,7 @@ export default function AvatarCard() {
             onClick={av.claimGift}
             className="mt-3 w-full rounded-2xl py-2.5 text-sm font-extrabold bb-bg-E9DDFC bb-text-7C4DCC flex items-center justify-center gap-2 active:scale-95 transition"
           >
-            <Gift className="w-4 h-4" /> Өдрийн бэлэг авах · +{DAILY_GIFT} XP
+            <Gift className="w-4 h-4" /> {t("Өдрийн бэлэг авах · +", "Claim daily gift · +")}{DAILY_GIFT} XP
           </button>
         )}
 

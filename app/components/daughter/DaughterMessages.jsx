@@ -15,6 +15,7 @@ import { formatTime } from "../../../lib/dates";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
 import PageHeader from "../ui/PageHeader";
+import { t } from "../../../lib/i18n";
 
 const ICON = { sos: "🆘", reply: "💬", care: "💌", supply: "🛍️", period: "🩸" };
 
@@ -34,7 +35,7 @@ export default function DaughterMessages() {
       key: `sos-${r.id}`,
       kind: "sos",
       at: r.created_at,
-      text: `${r.sender_name}: Яг одоо хэрэглэл хэрэгтэй байна${placeOf(r.place).short ? ` · 📍 ${placeOf(r.place).short}` : ""}`,
+      text: t(`${r.sender_name}: Яг одоо хэрэглэл хэрэгтэй байна${placeOf(r.place).short ? ` · 📍 ${placeOf(r.place).short}` : ""}`, `${r.sender_name}: Needs supplies right now${placeOf(r.place).short ? ` · 📍 ${placeOf(r.place).short}` : ""}`),
       sos: r,
     })),
     ...(outgoing?.responses ?? []).map((r) => ({
@@ -60,17 +61,17 @@ export default function DaughterMessages() {
             router.replace("/daughter");
           }}
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm border border-slate-100 active:scale-90"
-          aria-label="Буцах"
+          aria-label={t("Буцах", "Back")}
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
-        <PageHeader sub="Найз, асран хамгаалагчаас" title="Мэдэгдэл 💌" />
+        <PageHeader sub={t("Найз, асран хамгаалагчаас", "From friends and guardian")} title={t("Мэдэгдэл 💌", "Notifications 💌")} />
       </div>
 
       <Card>
-        <SectionTitle icon={Bell} title="Ирсэн мэдэгдэл" />
+        <SectionTitle icon={Bell} title={t("Ирсэн мэдэгдэл", "Inbox")} />
         {items.length === 0 ? (
-          <p className="text-sm text-slate-400 font-semibold py-6 text-center">Одоогоор мэдэгдэл алга 🌸</p>
+          <p className="text-sm text-slate-400 font-semibold py-6 text-center">{t("Одоогоор мэдэгдэл алга 🌸", "No notifications yet 🌸")}</p>
         ) : (
           <div className="space-y-2">
             {items.map((n) => (
@@ -85,7 +86,7 @@ export default function DaughterMessages() {
 
                   {n.sos &&
                     (n.sos.myReply ? (
-                      <p className="mt-2 text-xs font-extrabold bb-text-B83B7E">✓ Чиний хариу: {replyText(n.sos.myReply)}</p>
+                      <p className="mt-2 text-xs font-extrabold bb-text-B83B7E">{t("✓ Чиний хариу:", "✓ Your reply:")} {replyText(n.sos.myReply)}</p>
                     ) : (
                       <div className="mt-2 grid grid-cols-2 gap-1.5">
                         {Object.entries(SOS_REPLIES).map(([code, text]) => (

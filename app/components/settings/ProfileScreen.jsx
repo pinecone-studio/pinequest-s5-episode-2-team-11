@@ -6,23 +6,23 @@ import { useFamily } from "../../../context/FamilyContext";
 import BottomSheet from "../ui/BottomSheet";
 import Card from "../ui/Card";
 import AppSettingsSection from "./AppSettingsSection";
-import DaughterProfile from "./DaughterProfile";
+import DaughterProfile, { DeleteAccountSheet } from "./DaughterProfile";
 import FamilyLinkingSection from "./FamilyLinkingSection";
+import MyFriendCode from "../friends/MyFriendCode";
 import NotificationSettings from "./NotificationSettings";
-import FeedbackSurvey from "../feedback/FeedbackSurvey";
 import { SettingsGroup, SettingsRow } from "./SettingsList";
 import ProfileCard from "./ProfileCard";
 import { APP_SETTINGS_FOCUS_EVENT, takeAppSettingsFocus } from "./appSettingsFocus";
+import { t } from "../../../lib/i18n";
 
 export default function ProfileScreen() {
   const { view, guardianGender, updateGuardianGender, signOut } = useFamily();
   const [savingGender, setSavingGender] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
+  const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const isMother = view === "mother";
 
-  // Header gear → scroll to the «Апп» section.
   useEffect(() => {
     const focusApp = () => {
       if (!takeAppSettingsFocus()) return;
@@ -35,21 +35,53 @@ export default function ProfileScreen() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-black leading-tight text-slate-700 bloom-fade">Профайл</h2>
+      <h2 className="text-2xl font-black leading-tight text-slate-700 bloom-fade">{t("Профайл", "Profile")}</h2>
 
-      {!isMother ? <DaughterProfile /> : (
+      {!isMother ? (
+        <>
+          <DaughterProfile />
+          <MyFriendCode />
+          <FamilyLinkingSection />
+          <button
+            type="button"
+            onClick={() => setDeleteAccountOpen(true)}
+            className="mx-auto block px-3 py-2 text-xs font-bold text-rose-500"
+          >
+            {t("Бүртгэл устгах", "Delete account")}
+          </button>
+          {deleteAccountOpen && <DeleteAccountSheet onClose={() => setDeleteAccountOpen(false)} />}
+          <button
+            type="button"
+            onClick={() => setConfirmLogout(true)}
+            className="w-full rounded-2xl border border-slate-100 bg-white py-3 text-center text-sm font-extrabold text-rose-600 transition active:scale-95"
+          >
+            {t("Гарах", "Sign out")}
+          </button>
+          {confirmLogout && (
+            <BottomSheet title={t("Гарах", "Sign out")} onClose={() => setConfirmLogout(false)}>
+              <div className="space-y-3 pb-2">
+                <p className="text-base font-black text-slate-700">{t("Гарахдаа итгэлтэй байна уу?", "Are you sure you want to sign out?")}</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button type="button" onClick={() => setConfirmLogout(false)} className="rounded-2xl bg-slate-100 py-3 text-sm font-extrabold text-slate-600">{t("Болих", "Cancel")}</button>
+                  <button type="button" onClick={() => { setConfirmLogout(false); signOut(); }} className="rounded-2xl bb-bg-E0679F py-3 text-sm font-extrabold text-white">{t("Гарах", "Sign out")}</button>
+                </div>
+              </div>
+            </BottomSheet>
+          )}
+        </>
+      ) : (
         <>
           <ProfileCard />
           <Card className="!p-4">
-            <h2 className="text-sm font-black text-slate-700">Танд тохирох зөвлөгөө</h2>
+            <h2 className="text-sm font-black text-slate-700">{t("Танд тохирох зөвлөгөө", "Tips for you")}</h2>
             <p className="mt-1 text-xs font-semibold leading-relaxed text-slate-500">
-              Энэ мэдээлэл зөвхөн таны зөвлөгөөг тохируулахад ашиглагдана.
+              {t("Энэ мэдээлэл зөвхөн таны зөвлөгөөг тохируулахад ашиглагдана.", "This is only used to tailor your tips.")}
             </p>
             <div className="mt-3 grid grid-cols-1 gap-2">
               {[
-                { value: "female", label: "Эмэгтэй" },
-                { value: "male", label: "Эрэгтэй" },
-                { value: "unspecified", label: "Хэлэхгүй байя" },
+                { value: "female", label: t("Эмэгтэй", "Female") },
+                { value: "male", label: t("Эрэгтэй", "Male") },
+                { value: "unspecified", label: t("Хэлэхгүй байя", "Prefer not to say") },
               ].map((option) => (
                 <button
                   key={option.value}
@@ -66,39 +98,35 @@ export default function ProfileScreen() {
                     }
                   }}
                   className={`min-h-11 rounded-xl border px-4 py-2 text-left text-sm font-extrabold transition disabled:opacity-60 ${
-                    guardianGender === option.value
-                      ? "border-pink-300 bb-bg-FDE7F1 bb-text-B83B7E"
-                      : "border-slate-100 bg-white text-slate-600"
+                    guardianGender === option.value ? "border-pink-300 bb-bg-FDE7F1 bb-text-B83B7E" : "border-slate-100 bg-white text-slate-600"
                   }`}
                 >
                   {option.label}
                 </button>
               ))}
             </div>
-            {savingGender && <p role="status" className="mt-2 text-xs font-semibold text-slate-500">Хадгалж байна…</p>}
+            {savingGender && <p role="status" className="mt-2 text-xs font-semibold text-slate-500">{t("Хадгалж байна…", "Saving…")}</p>}
           </Card>
           <FamilyLinkingSection />
           <SettingsGroup>
-            <SettingsRow emoji="🔔" label="Мэдэгдэл" onClick={() => setNotificationsOpen(true)} />
-            <SettingsRow emoji="💌" label="Санал хүсэлт" onClick={() => setFeedbackOpen(true)} />
+            <SettingsRow emoji="🔔" label={t("Мэдэгдэл", "Notifications")} onClick={() => setNotificationsOpen(true)} />
           </SettingsGroup>
-          {feedbackOpen && <FeedbackSurvey role="guardian" onClose={() => setFeedbackOpen(false)} />}
-          {notificationsOpen && <BottomSheet title="🔔 Мэдэгдэл" onClose={() => setNotificationsOpen(false)}><NotificationSettings /></BottomSheet>}
+          {notificationsOpen && <BottomSheet title={t("🔔 Мэдэгдэл", "🔔 Notifications")} onClose={() => setNotificationsOpen(false)}><NotificationSettings /></BottomSheet>}
           <AppSettingsSection />
           <button
             type="button"
             onClick={() => setConfirmLogout(true)}
             className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-slate-100 bg-white py-3 font-extrabold bb-text-7C4DCC transition active:scale-95"
           >
-            <LogOut className="h-4 w-4" /> Гарах
+            <LogOut className="h-4 w-4" /> {t("Гарах", "Sign out")}
           </button>
           {confirmLogout && (
-            <BottomSheet title="Гарах" onClose={() => setConfirmLogout(false)}>
+            <BottomSheet title={t("Гарах", "Sign out")} onClose={() => setConfirmLogout(false)}>
               <div className="space-y-3 pb-2">
-                <p className="text-base font-black text-slate-700">Гарахдаа итгэлтэй байна уу?</p>
+                <p className="text-base font-black text-slate-700">{t("Гарахдаа итгэлтэй байна уу?", "Are you sure you want to sign out?")}</p>
                 <div className="grid grid-cols-2 gap-2">
-                  <button type="button" onClick={() => setConfirmLogout(false)} className="rounded-2xl bg-slate-100 py-3 text-sm font-extrabold text-slate-600">Болих</button>
-                  <button type="button" onClick={() => { setConfirmLogout(false); signOut(); }} className="rounded-2xl bb-bg-E0679F py-3 text-sm font-extrabold text-white">Гарах</button>
+                  <button type="button" onClick={() => setConfirmLogout(false)} className="rounded-2xl bg-slate-100 py-3 text-sm font-extrabold text-slate-600">{t("Болих", "Cancel")}</button>
+                  <button type="button" onClick={() => { setConfirmLogout(false); signOut(); }} className="rounded-2xl bb-bg-E0679F py-3 text-sm font-extrabold text-white">{t("Гарах", "Sign out")}</button>
                 </div>
               </div>
             </BottomSheet>

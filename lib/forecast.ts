@@ -9,6 +9,7 @@ import {
   addDaysToLocalDateKey as addDays, daysBetweenLocalDateKeys as daysBetween, seasonForCycleDay,
   type CyclePosition, type Season,
 } from "./cycle";
+import { list, t } from "./i18n";
 
 export const SYMPTOMS = ["cramps", "tired", "acne", "bloating", "breast_tenderness", "headache"] as const;
 export type Symptom = (typeof SYMPTOMS)[number];
@@ -160,34 +161,25 @@ export const isGoodPattern = (stats: ForecastStats) =>
 /* ================= Titles and local (level 3 / before-first) text ================= */
 
 export function forecastTitle(position: CyclePosition): string {
-  if (position.phase !== "cycle") return "🌱 Бэлтгэл үе";
+  if (position.phase !== "cycle") return t("🌱 Бэлтгэл үе", "🌱 Getting ready");
   const { season, cycleDay, daysUntilNext, late } = position;
-  if (season === "winter") return `❄️ Өвөл · Сарын тэмдгийн ${cycleDay} дэх өдөр`;
-  if (season === "spring") return `🌱 Хавар · ${cycleDay} дэх өдөр`;
-  if (season === "summer") return `☀️ Зун · ${cycleDay} дэх өдөр`;
-  if (late) return "🍂 Намар · Сарын тэмдэг хоцорч байна";
-  if (daysUntilNext != null && daysUntilNext >= 1) return `🍂 Намар · Сарын тэмдэг ${daysUntilNext} хоногийн дараа`;
-  return "🍂 Намар · Сарын тэмдэг ойрхон байна";
+  if (season === "winter") return t(`❄️ Өвөл · Сарын тэмдгийн ${cycleDay} дэх өдөр`, `❄️ Winter · Period day ${cycleDay}`);
+  if (season === "spring") return t(`🌱 Хавар · ${cycleDay} дэх өдөр`, `🌱 Spring · Day ${cycleDay}`);
+  if (season === "summer") return t(`☀️ Зун · ${cycleDay} дэх өдөр`, `☀️ Summer · Day ${cycleDay}`);
+  if (late) return t("🍂 Намар · Сарын тэмдэг хоцорч байна", "🍂 Autumn · Period is late");
+  if (daysUntilNext != null && daysUntilNext >= 1) return t(`🍂 Намар · Сарын тэмдэг ${daysUntilNext} хоногийн дараа`, `🍂 Autumn · Period in ${daysUntilNext} days`);
+  return t("🍂 Намар · Сарын тэмдэг ойрхон байна", "🍂 Autumn · Period is close");
 }
 
 export const SEASON_TEXT: Record<Season, string> = {
-  winter: "Сарын тэмдгийн үе. Амарч, дулаацах цаг. Өвдвөл дулаан жин тавиарай 🔥",
-  spring: "Ихэнх охид энэ үед эрч хүч нэмэгддэг. Шинэ зүйл туршаад үзээрэй ✨",
-  summer: "Эрч хүч хамгийн их үе байж болно. Найзуудтайгаа гадаа тоглоорой ☀️",
-  autumn: "Сарын тэмдэг ойртож байна. Ядрах, сэтгэл хөдлөх нь хэвийн. Цүнхэндээ пад хийгээрэй 🎒",
+  get winter() { return t("Сарын тэмдгийн үе. Амарч, дулаацах цаг. Өвдвөл дулаан жин тавиарай 🔥", "Period time. Time to rest and stay warm. If it hurts, use a warm compress 🔥"); },
+  get spring() { return t("Ихэнх охид энэ үед эрч хүч нэмэгддэг. Шинэ зүйл туршаад үзээрэй ✨", "Most girls get more energy now. Try something new ✨"); },
+  get summer() { return t("Эрч хүч хамгийн их үе байж болно. Найзуудтайгаа гадаа тоглоорой ☀️", "This may be when you have the most energy. Play outside with friends ☀️"); },
+  get autumn() { return t("Сарын тэмдэг ойртож байна. Ядрах, сэтгэл хөдлөх нь хэвийн. Цүнхэндээ пад хийгээрэй 🎒", "Your period is getting close. Feeling tired or emotional is normal. Put a pad in your bag 🎒"); },
 };
 export const LOG_MORE_HINT = "🌱 Тэмдэглэх тусам зөвлөгөө чамд илүү тохирох болно";
 
-export const PREP_TIPS = [
-  "Сургуулийн цүнхэндээ пад, нойтон салфетка хийчихвэл санаа амар байна 🎒",
-  "Бие чинь өөрчлөгдөж байгаа нь өсөлтийн хэвийн, сайхан үе шат 🌱",
-  "Асуух зүйл байвал итгэдэг том хүнтэйгээ ярилцаарай 💗",
-  "Анхны сарын тэмдэг ихэвчлэн 10–15 насанд ирдэг. Охин бүрийнх өөр цагтаа ирнэ ✨",
-  "Хөх томрох, үс ургах нь сарын тэмдэг ойртож буйн шинж байж болно 🌸",
-  "Сургууль дээр гэнэт ирвэл багш, эмчээсээ тусламж хүсэж болно. Энэ ичмээр зүйл биш 🤍",
-  "Цагаан шүүрэл гарах нь хэвийн. Бие чинь бэлтгэж байна гэсэн үг 🌷",
-  "Пад хэрхэн хэрэглэхийг урьдчилж мэдчихвэл айх зүйлгүй 📖",
-];
+export const PREP_TIPS = list([["Сургуулийн цүнхэндээ пад, нойтон салфетка хийчихвэл санаа амар байна 🎒", "Pack a pad and wet wipes in your school bag for peace of mind 🎒"], ["Бие чинь өөрчлөгдөж байгаа нь өсөлтийн хэвийн, сайхан үе шат 🌱", "Your body changing is a normal, beautiful part of growing up 🌱"], ["Асуух зүйл байвал итгэдэг том хүнтэйгээ ярилцаарай 💗", "If you have questions, talk with an adult you trust 💗"], ["Анхны сарын тэмдэг ихэвчлэн 10–15 насанд ирдэг. Охин бүрийнх өөр цагтаа ирнэ ✨", "A first period usually comes between ages 10 and 15. Every girl's comes in its own time ✨"], ["Хөх томрох, үс ургах нь сарын тэмдэг ойртож буйн шинж байж болно 🌸", "Breast growth and new hair can be signs your period is coming 🌸"], ["Сургууль дээр гэнэт ирвэл багш, эмчээсээ тусламж хүсэж болно. Энэ ичмээр зүйл биш 🤍", "If it comes suddenly at school, you can ask a teacher or the nurse for help. Nothing to be embarrassed about 🤍"], ["Цагаан шүүрэл гарах нь хэвийн. Бие чинь бэлтгэж байна гэсэн үг 🌷", "White discharge is normal. It means your body is getting ready 🌷"], ["Пад хэрхэн хэрэглэхийг урьдчилж мэдчихвэл айх зүйлгүй 📖", "If you learn how to use a pad ahead of time, there's nothing to fear 📖"]]);
 
 /** Rotates daily by date, so every day shows a different tip. */
 export const prepTipFor = (today: string) => PREP_TIPS[((daysBetween("2024-01-01", today) % PREP_TIPS.length) + PREP_TIPS.length) % PREP_TIPS.length];
@@ -223,7 +215,10 @@ export function safetyLines(periods: ForecastPeriod[], logs: ForecastDayLog[], c
     return logsBetween(start, next).some((log) => log.mood != null && log.mood <= 2);
   });
 
-  return [strongPainCycles >= 2 ? SAFETY_PAIN : null, lowMoodEveryCycle ? SAFETY_MOOD : null].filter((line): line is string => Boolean(line));
+  return [
+    strongPainCycles >= 2 ? t(SAFETY_PAIN, "Your pain is often strong. Talk with your guardian and see a doctor.") : null,
+    lowMoodEveryCycle ? t(SAFETY_MOOD, "If you often feel down, talk with an adult you trust 💗") : null,
+  ].filter((line): line is string => Boolean(line));
 }
 
 /* ================= Text: tips, template, validation ================= */
@@ -239,6 +234,19 @@ export const TIPS: Record<Symptom | "low_mood" | "pad", string | null> = {
   pad: "Цүнхэндээ пад хийгээрэй 🎒",
 };
 export const POSITIVE_TIPS = ["Өнөөдөр шинэ зүйл туршаад үзээрэй ✨", "Найзуудтайгаа гадаа тоглоорой ☀️"];
+// AI-ийн хариуг шалгахад монгол текстээр харьцуулна; дэлгэцэнд tipLabel()-ээр орчуулна
+const TIP_EN: Record<string, string> = {
+  "Эрт унтаарай 😴": "Go to bed early 😴",
+  "Дулаан жин бэлдээрэй 🔥": "Get a warm compress ready 🔥",
+  "Өөртөө эелдэг хандаарай 💗": "Be kind to yourself 💗",
+  "Ус сайн уугаарай 💧": "Drink plenty of water 💧",
+  "Нүүрээ зөөлөн угаагаарай 🫧": "Wash your face gently 🫧",
+  "Амарч, ус уугаарай 💧": "Rest and drink water 💧",
+  "Цүнхэндээ пад хийгээрэй 🎒": "Put a pad in your bag 🎒",
+  "Өнөөдөр шинэ зүйл туршаад үзээрэй ✨": "Try something new today ✨",
+  "Найзуудтайгаа гадаа тоглоорой ☀️": "Play outside with your friends ☀️"
+};
+export const tipLabel = (tip: string) => t(tip, TIP_EN[tip] ?? tip);
 export const ALL_TIPS = [...new Set([...Object.values(TIPS), ...POSITIVE_TIPS].filter((tip): tip is string => Boolean(tip)))];
 
 /**
@@ -257,25 +265,25 @@ export function allowedTips(stats: ForecastStats): string[] {
 
 type Feeling = Symptom | "low_mood" | "short_sleep" | "good" | "okay";
 /** [level 1 "back then", level 2 "usually"] */
-const FEELING: Record<Feeling, [string, string]> = {
-  tired: ["чи ядарч байсан", "чи ихэвчлэн ядардаг"],
-  cramps: ["хэвлий чинь өвдөж байсан", "хэвлий чинь ихэвчлэн өвддөг"],
-  acne: ["батга гарч байсан", "ихэвчлэн батга гардаг"],
-  bloating: ["гэдэс чинь дүүрч байсан", "гэдэс чинь ихэвчлэн дүүрдэг"],
-  breast_tenderness: ["хөх чинь эмзэглэж байсан", "хөх чинь ихэвчлэн эмзэглэдэг"],
-  headache: ["толгой чинь өвдөж байсан", "толгой чинь ихэвчлэн өвддөг"],
-  low_mood: ["сэтгэл чинь жаахан унаж байсан", "сэтгэл чинь ихэвчлэн жаахан унадаг"],
-  short_sleep: ["чи бага унтсан байсан", "чи ихэвчлэн бага унтдаг"],
-  good: ["чи сэтгэл сайхан, эрч хүчтэй байсан", "чи ихэвчлэн сэтгэл сайхан, эрч хүчтэй байдаг"],
-  okay: ["чи гайгүй байсан", "чи ихэвчлэн гайгүй байдаг"],
-};
-const SEASON_OF: Record<Season, string> = { winter: "Өвлийн", spring: "Хаврын", summer: "Зуны", autumn: "Намрын" };
+const FEELING = (): Record<Feeling, [string, string]> => ({
+  tired: [t("чи ядарч байсан", "you were tired"), t("чи ихэвчлэн ядардаг", "you usually feel tired")],
+  cramps: [t("хэвлий чинь өвдөж байсан", "your belly hurt"), t("хэвлий чинь ихэвчлэн өвддөг", "your belly usually hurts")],
+  acne: [t("батга гарч байсан", "you had pimples"), t("ихэвчлэн батга гардаг", "you usually get pimples")],
+  bloating: [t("гэдэс чинь дүүрч байсан", "you felt bloated"), t("гэдэс чинь ихэвчлэн дүүрдэг", "you usually feel bloated")],
+  breast_tenderness: [t("хөх чинь эмзэглэж байсан", "your breasts were tender"), t("хөх чинь ихэвчлэн эмзэглэдэг", "your breasts are usually tender")],
+  headache: [t("толгой чинь өвдөж байсан", "you had a headache"), t("толгой чинь ихэвчлэн өвддөг", "you usually get headaches")],
+  low_mood: [t("сэтгэл чинь жаахан унаж байсан", "you felt a bit down"), t("сэтгэл чинь ихэвчлэн жаахан унадаг", "you usually feel a bit down")],
+  short_sleep: [t("чи бага унтсан байсан", "you slept too little"), t("чи ихэвчлэн бага унтдаг", "you usually sleep too little")],
+  good: [t("чи сэтгэл сайхан, эрч хүчтэй байсан", "you felt happy and energetic"), t("чи ихэвчлэн сэтгэл сайхан, эрч хүчтэй байдаг", "you usually feel happy and energetic")],
+  okay: [t("чи гайгүй байсан", "you felt okay"), t("чи ихэвчлэн гайгүй байдаг", "you usually feel okay")],
+});
+const SEASON_OF: Record<Season, string> = { get winter() { return t("Өвлийн", "winter"); }, get spring() { return t("Хаврын", "spring"); }, get summer() { return t("Зуны", "summer"); }, get autumn() { return t("Намрын", "autumn"); } };
 
 function whenPhrase(stats: ForecastStats): string {
-  if (stats.level === 2) return `${SEASON_OF[stats.season]} үед`;
+  if (stats.level === 2) return t(`${SEASON_OF[stats.season]} үед`, `During ${SEASON_OF[stats.season]}`);
   const [kind, value] = stats.dayLabel.split("_");
-  if (kind === "before") return `Өмнө нь сарын тэмдэг ирэхээс ${value} хоногийн өмнө`;
-  return stats.season === "winter" ? `Өмнө нь сарын тэмдгийн ${value} дэх өдөр` : `Өмнө нь мөчлөгийн ${value} дэх өдөр`;
+  if (kind === "before") return t(`Өмнө нь сарын тэмдэг ирэхээс ${value} хоногийн өмнө`, `Before, ${value} days before your period`);
+  return stats.season === "winter" ? t(`Өмнө нь сарын тэмдгийн ${value} дэх өдөр`, `Before, on day ${value} of your period`) : t(`Өмнө нь мөчлөгийн ${value} дэх өдөр`, `Before, on day ${value} of your cycle`);
 }
 
 /** Offline / AI-failure text built from the same stats. */
@@ -285,8 +293,8 @@ export function templateForecast(stats: ForecastStats): { text: string; tip: str
   if (shortSleep(stats)) signals.push("short_sleep");
   if (!signals.length) signals.push(isGoodPattern(stats) ? "good" : "okay");
   const form = stats.level === 1 ? 0 : 1;
-  const first = `${whenPhrase(stats)} ${signals.slice(0, 2).map((signal) => FEELING[signal][form]).join(", бас ")}.`;
-  return { text: `${first} Өнөөдөр ч ийм байж магадгүй.`, tip: allowedTips(stats)[0] };
+  const first = `${whenPhrase(stats)} ${signals.slice(0, 2).map((signal) => FEELING()[signal][form]).join(t(", бас ", ", and "))}.`;
+  return { text: t(`${first} Өнөөдөр ч ийм байж магадгүй.`, `${first} It might be like this today too.`), tip: allowedTips(stats)[0] };
 }
 
 const FORBIDDEN = /[A-Za-z]|мг|мл|таблет|ибупрофен|парацетамол|эм уу|эм ууж|онош|өвчин|аюул|үхэ|жин хас|калори|хоолны дэглэм|тураа/i;

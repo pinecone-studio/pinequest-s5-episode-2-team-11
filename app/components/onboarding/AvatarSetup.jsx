@@ -7,18 +7,19 @@ import Avatar from "../avatar/Avatar";
 import { useAvatar } from "../avatar/useAvatar";
 import { SLOT_CROP } from "../avatar/icons";
 import { AVATAR_BACKGROUNDS, ITEMS, SKIN_TONES } from "../../../lib/wardrobe";
+import { t } from "../../../lib/i18n";
 
 const STEPS = [
-  { id: "skin", label: "Арьс" },
-  { id: "hair", label: "Үс" },
-  { id: "eyes", label: "Нүд" },
-  { id: "outfit", label: "Хувцас" },
+  { id: "skin", get label() { return t("Арьс", "Skin"); } },
+  { id: "hair", get label() { return t("Үс", "Hair"); } },
+  { id: "eyes", get label() { return t("Нүд", "Eyes"); } },
+  { id: "outfit", get label() { return t("Хувцас", "Outfit"); } },
 ];
 
 const OUTFIT_SLOTS = [
-  { id: "top", label: "Дээд" },
-  { id: "bottom", label: "Доод" },
-  { id: "shoes", label: "Гутал" },
+  { id: "top", get label() { return t("Дээд", "Top"); } },
+  { id: "bottom", get label() { return t("Доод", "Bottom"); } },
+  { id: "shoes", get label() { return t("Гутал", "Shoes"); } },
 ];
 
 // Арьсны өнгийг цайвараас бараан руу эрэмбэлж харуулна (хадгалах индекс хэвээр)
@@ -90,7 +91,7 @@ export default function AvatarSetup() {
   const background = AVATAR_BACKGROUNDS.find((option) => option.id === av.background)?.background;
 
   const done = () => {
-    setToast("Таны дүр бэлэн боллоо ✨");
+    setToast(t("Таны дүр бэлэн боллоо ✨", "Your avatar is ready ✨"));
     finishAvatarSetup();
   };
 
@@ -98,8 +99,8 @@ export default function AvatarSetup() {
     <div className="px-2 pt-4 pb-10 bloom-fade space-y-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-700">Өөрийн дүрээ бүтээе</h2>
-          <p className="mt-1 text-sm font-semibold text-slate-400">Дараа нь «Миний дүр» хэсгээс хэзээ ч өөрчилж болно.</p>
+          <h2 className="text-2xl font-black text-slate-700">{t("Өөрийн дүрээ бүтээе", "Let's make your avatar")}</h2>
+          <p className="mt-1 text-sm font-semibold text-slate-400">{t("Дараа нь «Миний дүр» хэсгээс хэзээ ч өөрчилж болно.", "You can change it any time later in \"My avatar\".")}</p>
         </div>
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#f7d7e8] to-[#ded0ff] shadow-md shadow-[#d88ab8]/20 ring-1 ring-white/20">
           <Sparkles className="h-6 w-6 text-[#8d579e]" />
@@ -107,7 +108,7 @@ export default function AvatarSetup() {
       </div>
 
       <div className="flex justify-center rounded-3xl border bb-border-F8D3E6 py-4" style={{ background }}>
-        <Avatar look={av.look} skin={av.skin} idle size={150} label={`${profile?.display_name ?? "Миний"} дүр`} />
+        <Avatar look={av.look} skin={av.skin} idle size={150} label={t(`${profile?.display_name ?? "Миний"} дүр`, `${profile?.display_name ?? "Миний"}'s avatar`)} />
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-1" role="tablist">
@@ -122,7 +123,7 @@ export default function AvatarSetup() {
         {step === "skin" && (
           <div className="flex flex-wrap gap-3">
             {SKIN_ORDER.map((i) => (
-              <Swatch key={i} color={SKIN_TONES[i]} active={av.skin === i} label={`Арьсны өнгө ${i + 1}`} onClick={() => av.setSkin(i)} />
+              <Swatch key={i} color={SKIN_TONES[i]} active={av.skin === i} label={t(`Арьсны өнгө ${i + 1}`, `Skin tone ${i + 1}`)} onClick={() => av.setSkin(i)} />
             ))}
           </div>
         )}
@@ -130,7 +131,7 @@ export default function AvatarSetup() {
         {step === "eyes" && (
           <div className="flex flex-wrap gap-3">
             {owned("eyes").map((item) => (
-              <Swatch key={item.id} color={item.color} active={av.look.eyes === item.id} label={`${item.name} нүд`} onClick={() => av.equip(item.id)} />
+              <Swatch key={item.id} color={item.color} active={av.look.eyes === item.id} label={t(`${item.name} нүд`, `${item.name} eyes`)} onClick={() => av.equip(item.id)} />
             ))}
           </div>
         )}
@@ -157,7 +158,7 @@ export default function AvatarSetup() {
                 <ItemTile key={item.id} item={item} av={av} onClick={() => av.equip(item.id)} />
               ))}
             </div>
-            <p className="text-xs font-semibold text-slate-400">Алхаж дэлбээ цуглуулаад дэлгүүрээс илүү олон хувцас аваарай 🌸</p>
+            <p className="text-xs font-semibold text-slate-400">{t("Алхаж дэлбээ цуглуулаад дэлгүүрээс илүү олон хувцас аваарай 🌸", "Walk to collect petals and get more outfits from the shop 🌸")}</p>
           </div>
         )}
       </div>
@@ -167,11 +168,11 @@ export default function AvatarSetup() {
         onClick={last ? done : () => setStep(STEPS[stepIndex + 1].id)}
         className="w-full bb-bg-E0679F text-white font-extrabold rounded-2xl py-4 active:scale-95 transition shadow-lg bb-shadow-F48FB1-30"
       >
-        {last ? "Болсон ✨" : "Дараах"}
+        {last ? t("Болсон ✨", "Done ✨") : t("Дараах", "Next")}
       </button>
       {!last && (
         <button type="button" onClick={done} className="w-full rounded-2xl bb-bg-FDE7F1 bb-text-B83B7E font-extrabold py-4 active:scale-95 transition">
-          Дараа нь хийнэ
+          {t("Дараа нь хийнэ", "Do it later")}
         </button>
       )}
     </div>

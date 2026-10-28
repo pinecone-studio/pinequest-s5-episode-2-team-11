@@ -10,8 +10,9 @@ import { toggleSelectedPeriodDay } from "../../../lib/period-edit";
 import { supabase } from "../../../lib/supabase";
 import BottomSheet from "../ui/BottomSheet";
 import DayDetailSheet from "./DayDetailSheet";
+import { monthName, monthTitle as monthTitleOf, t, yearLabel } from "../../../lib/i18n";
 
-const WEEKDAYS = ["Да", "Мя", "Лх", "Пү", "Ба", "Бя", "Ня"];
+const WEEKDAYS = () => ([t("Да", "Mo"), t("Мя", "Tu"), t("Лх", "We"), t("Пү", "Th"), t("Ба", "Fr"), t("Бя", "Sa"), t("Ня", "Su")]);
 const DAY_MS = 86_400_000;
 
 function monthKey(date) {
@@ -166,11 +167,11 @@ export default function PeriodCycleTracker({ onBack, onDayPress, cycleLength: cy
       // On failure savePeriodDays logs + toasts and we stay in edit mode with draftDays intact.
       if (await savePeriodDays([...draftDays])) {
         setEditing(false);
-        setToast("Хадгаллаа");
+        setToast(t("Хадгаллаа", "Saved"));
       }
     } catch (error) {
       console.error("[period_logs] save threw:", error);
-      setToast("Хадгалж чадсангүй. Дахин оролдоно уу.");
+      setToast(t("Хадгалж чадсангүй. Дахин оролдоно уу.", "Couldn't save. Please try again."));
     } finally {
       savingRef.current = false;
       setSaving(false);
@@ -186,7 +187,7 @@ export default function PeriodCycleTracker({ onBack, onDayPress, cycleLength: cy
     if (ok) {
       setPeriodDraft(period);
       setSettingsOpen(false);
-      setToast("Мөчлөгийн тохиргоог хадгаллаа");
+      setToast(t("Мөчлөгийн тохиргоог хадгаллаа", "Cycle settings saved"));
     }
   };
 
@@ -231,7 +232,7 @@ export default function PeriodCycleTracker({ onBack, onDayPress, cycleLength: cy
       type="button"
       disabled={editing && key > today}
       onClick={() => editing ? togglePeriodDay(date) : handleDayPress(date)}
-      aria-label={`${dateLabelWithMonth(date)}${isLogged ? `, сарын тэмдгийн ${periodNumber} дахь өдөр` : isPredicted ? ", таамагласан өдөр" : ""}${isToday ? ", өнөөдөр" : ""}${hasLog ? ", тэмдэглэлтэй" : ""}${isPending ? ", баталгаажуулах хүсэлттэй" : ""}`}
+      aria-label={`${dateLabelWithMonth(date)}${isLogged ? t(`, сарын тэмдгийн ${periodNumber} дахь өдөр`, `, period day ${periodNumber}`) : isPredicted ? t(", таамагласан өдөр", ", predicted day") : ""}${isToday ? t(", өнөөдөр", ", today") : ""}${hasLog ? t(", тэмдэглэлтэй", ", has logs") : ""}${isPending ? t(", баталгаажуулах хүсэлттэй", ", needs confirmation") : ""}`}
       className={`relative mx-auto flex h-[64px] w-full max-w-[48px] flex-col items-center justify-start pt-1 ${editing && key > today ? "cursor-not-allowed opacity-25" : ""}`}
     >
       {!miniature && hasPeriod && (isLogged || isToday) && !editing && <span className={`absolute left-0 top-0 z-10 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-extrabold ${isLogged ? "bg-[#b83b7e] text-white" : "bg-slate-500 text-white"}`}>{isLogged ? periodNumber : cycleNumber}</span>}
@@ -245,33 +246,33 @@ export default function PeriodCycleTracker({ onBack, onDayPress, cycleLength: cy
         {dayDots?.has("period") && <span className="text-[8px] leading-none">🩸</span>}
         {CATEGORIES.filter(({ key: category }) => category !== "period" && dayDots?.has(category)).map(({ key: category }) => <span key={category} className="h-[5px] w-[5px] rounded-full" style={{ backgroundColor: categoryColor(category) }} />)}
       </span>}
-      {!miniature && isToday && <span className="text-[7px] font-black leading-none tracking-wide text-[#b83b7e]">ӨНӨӨДӨР</span>}
+      {!miniature && isToday && <span className="text-[7px] font-black leading-none tracking-wide text-[#b83b7e]">{t("ӨНӨӨДӨР", "TODAY")}</span>}
     </button>;
   };
 
   const renderMiniMonth = (date) => {
     const dates = monthDates(date);
     return <button key={monthKey(date)} type="button" onClick={() => openMonth(date)} className="rounded-2xl p-2 text-left text-slate-700 transition hover:bg-pink-50">
-      <span className="mb-1 block text-center text-xs font-black text-slate-700">{date.getMonth() + 1} сар</span>
+      <span className="mb-1 block text-center text-xs font-black text-slate-700">{monthName(date.getMonth() + 1)}</span>
       <span className="grid grid-cols-7 gap-y-0.5">{dates.map((day, index) => day ? renderDay(day, true) : <span key={`mini-empty-${monthKey(date)}-${index}`} aria-hidden="true" className="h-7" />)}</span>
     </button>;
   };
 
-  const monthTitle = (date) => `${date.getFullYear() !== currentMonth.getFullYear() ? `${date.getFullYear()} оны ` : ""}${date.getMonth() + 1} сар`;
+  const monthTitle = (date) => monthTitleOf(date.getMonth() + 1, date.getFullYear() !== currentMonth.getFullYear() ? date.getFullYear() : undefined);
 
   return <>
     <div aria-hidden="true" className="fixed inset-0 z-[69]" style={{ backgroundColor: theme === "dark" ? "#211b29" : "#fff7fb" }} />
     <main ref={mainRef} style={{ backgroundColor: theme === "dark" ? "#211b29" : "#fff7fb", "--calendar-safe-top": "env(safe-area-inset-top)" }} className="fixed inset-y-0 left-0 right-0 z-[70] mx-auto w-full max-w-md overflow-x-hidden overflow-y-auto overscroll-contain px-4 pb-[calc(env(safe-area-inset-bottom)+96px)] pt-0 text-slate-700">
     <header style={{ height: "calc(56px + env(safe-area-inset-top))", paddingTop: "env(safe-area-inset-top)" }} className="sticky top-0 z-30 -mx-4 flex box-border items-center justify-between gap-3 bg-white/95 px-4 backdrop-blur">
-      <button type="button" onClick={onBack} aria-label="Хаах" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-600 hover:bg-pink-50"><X className="h-5 w-5" /></button>
-      <div role="tablist" aria-label="Хуанлийн харагдац" style={theme === "dark" ? { backgroundColor: "#392d3e" } : undefined} className="grid grid-cols-2 rounded-full bg-pink-50 p-1">
-        {[{ id: "month", label: "Сар" }, { id: "year", label: "Жил" }].map((item) => <button key={item.id} type="button" role="tab" aria-selected={viewMode === item.id} disabled={editing} onClick={() => setViewMode(item.id)} style={theme === "dark" && viewMode === item.id ? { backgroundColor: "#514054", color: "#f2a5c9" } : undefined} className={`rounded-full px-5 py-1.5 text-xs font-extrabold disabled:opacity-50 ${viewMode === item.id ? "bg-white text-[#b83b7e] shadow-sm" : "text-slate-500"}`}>{item.label}</button>)}
+      <button type="button" onClick={onBack} aria-label={t("Хаах", "Close")} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-600 hover:bg-pink-50"><X className="h-5 w-5" /></button>
+      <div role="tablist" aria-label={t("Хуанлийн харагдац", "Calendar view")} style={theme === "dark" ? { backgroundColor: "#392d3e" } : undefined} className="grid grid-cols-2 rounded-full bg-pink-50 p-1">
+        {[{ id: "month", label: t("Сар", "Month") }, { id: "year", label: t("Жил", "Year") }].map((item) => <button key={item.id} type="button" role="tab" aria-selected={viewMode === item.id} disabled={editing} onClick={() => setViewMode(item.id)} style={theme === "dark" && viewMode === item.id ? { backgroundColor: "#514054", color: "#f2a5c9" } : undefined} className={`rounded-full px-5 py-1.5 text-xs font-extrabold disabled:opacity-50 ${viewMode === item.id ? "bg-white text-[#b83b7e] shadow-sm" : "text-slate-500"}`}>{item.label}</button>)}
       </div>
-      <button type="button" aria-label="Мөчлөгийн тохиргоо" onClick={() => { setCycleDraft(cycleLengthProp ?? 28); setPeriodDraft(periodLengthProp ?? 5); setSettingsOpen(true); }} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-600 hover:bg-pink-50"><Settings2 className="h-5 w-5" /></button>
+      <button type="button" aria-label={t("Мөчлөгийн тохиргоо", "Cycle settings")} onClick={() => { setCycleDraft(cycleLengthProp ?? 28); setPeriodDraft(periodLengthProp ?? 5); setSettingsOpen(true); }} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-600 hover:bg-pink-50"><Settings2 className="h-5 w-5" /></button>
     </header>
 
     {viewMode === "month" ? <>
-      <div style={{ top: "calc(56px + env(safe-area-inset-top))" }} className="sticky z-20 -mx-4 grid grid-cols-7 bg-white/95 px-4 py-2 text-center text-[11px] font-extrabold text-slate-500 backdrop-blur">{WEEKDAYS.map((day) => <span key={day}>{day}</span>)}</div>
+      <div style={{ top: "calc(56px + env(safe-area-inset-top))" }} className="sticky z-20 -mx-4 grid grid-cols-7 bg-white/95 px-4 py-2 text-center text-[11px] font-extrabold text-slate-500 backdrop-blur">{WEEKDAYS().map((day) => <span key={day}>{day}</span>)}</div>
       <div className="mx-auto max-w-md">
         {months.map(({ date, key, dates }) => <section key={key} ref={(node) => { monthRefs.current[key] = node; }} className="py-2">
           <h2 className="mb-2 text-center text-base font-black text-slate-700">{monthTitle(date)}</h2>
@@ -280,9 +281,9 @@ export default function PeriodCycleTracker({ onBack, onDayPress, cycleLength: cy
       </div>
     </> : <section className="mx-auto max-w-md pb-6">
       <div style={{ top: "calc(56px + env(safe-area-inset-top))" }} className="sticky z-20 flex items-center justify-center gap-6 bg-white/95 py-3 backdrop-blur">
-        <button type="button" aria-label="Өмнөх жил" onClick={() => setSelectedYear((year) => year - 1)} className="rounded-full p-2 text-slate-500"><ChevronLeft className="h-5 w-5" /></button>
-        <h2 className="text-base font-black text-slate-700">{selectedYear} он</h2>
-        <button type="button" aria-label="Дараагийн жил" onClick={() => setSelectedYear((year) => year + 1)} className="rounded-full p-2 text-slate-500"><ChevronRight className="h-5 w-5" /></button>
+        <button type="button" aria-label={t("Өмнөх жил", "Previous year")} onClick={() => setSelectedYear((year) => year - 1)} className="rounded-full p-2 text-slate-500"><ChevronLeft className="h-5 w-5" /></button>
+        <h2 className="text-base font-black text-slate-700">{yearLabel(selectedYear)}</h2>
+        <button type="button" aria-label={t("Дараагийн жил", "Next year")} onClick={() => setSelectedYear((year) => year + 1)} className="rounded-full p-2 text-slate-500"><ChevronRight className="h-5 w-5" /></button>
       </div>
       <div className="grid grid-cols-3 gap-1">{Array.from({ length: 12 }, (_, index) => renderMiniMonth(new Date(selectedYear, index, 1)))}</div>
     </section>}
@@ -290,23 +291,23 @@ export default function PeriodCycleTracker({ onBack, onDayPress, cycleLength: cy
     <div style={{ background: theme === "dark" ? "linear-gradient(to top, #211b29, rgb(33 27 41 / 95%), transparent)" : "linear-gradient(to top, #fff7fb, rgb(255 247 251 / 95%), transparent)" }} className="pointer-events-none fixed inset-x-0 bottom-0 z-40 mx-auto flex w-full max-w-md justify-center px-4 pb-[max(14px,env(safe-area-inset-bottom))] pt-7">
       <div className="pointer-events-auto flex w-full max-w-md items-center justify-center gap-2">
         {editing ? <>
-          <button type="button" onClick={() => setEditing(false)} disabled={saving} className="flex-1 rounded-full bg-white px-4 py-3 text-sm font-extrabold text-slate-600 shadow-md">Болих</button>
-          <button type="button" onClick={saveEditedDays} disabled={saving} className="flex-1 rounded-full bg-[#e0679f] px-4 py-3 text-sm font-extrabold text-white shadow-md disabled:opacity-60">{saving ? "Хадгалж байна…" : "Хадгалах"}</button>
-        </> : <button type="button" onClick={beginEdit} className="flex items-center justify-center gap-2 rounded-full bg-[#e0679f] px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-pink-300/40"><CalendarDays className="h-4 w-4" /> Сарын тэмдгийн өдрүүдийг засах</button>}
+          <button type="button" onClick={() => setEditing(false)} disabled={saving} className="flex-1 rounded-full bg-white px-4 py-3 text-sm font-extrabold text-slate-600 shadow-md">{t("Болих", "Cancel")}</button>
+          <button type="button" onClick={saveEditedDays} disabled={saving} className="flex-1 rounded-full bg-[#e0679f] px-4 py-3 text-sm font-extrabold text-white shadow-md disabled:opacity-60">{saving ? t("Хадгалж байна…", "Saving…") : t("Хадгалах", "Save")}</button>
+        </> : <button type="button" onClick={beginEdit} className="flex items-center justify-center gap-2 rounded-full bg-[#e0679f] px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-pink-300/40"><CalendarDays className="h-4 w-4" /> {t("Сарын тэмдгийн өдрүүдийг засах", "Edit period days")}</button>}
       </div>
     </div>
 
     {selectedDate && <DayDetailSheet key={selectedDate} date={selectedDate} pendingPeriod={selectedPending} onClose={() => { setSelectedDate(""); setSelectedPending(null); }} />}
 
-    {settingsOpen && <BottomSheet title="Мөчлөгийн тохиргоо" onClose={() => setSettingsOpen(false)}>
+    {settingsOpen && <BottomSheet title={t("Мөчлөгийн тохиргоо", "Cycle settings")} onClose={() => setSettingsOpen(false)}>
       <div className="space-y-4 pb-2">
-        <label className="block text-sm font-bold text-slate-600">Мөчлөгийн үргэлжлэх хугацаа
-          <span className="mt-1 flex items-center gap-2"><input type="number" min={15} max={60} value={cycleDraft} onChange={(event) => setCycleDraft(Number(event.target.value))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-700" /><span className="text-xs">хоног</span></span>
+        <label className="block text-sm font-bold text-slate-600">{t("Мөчлөгийн үргэлжлэх хугацаа", "Cycle length")}
+          <span className="mt-1 flex items-center gap-2"><input type="number" min={15} max={60} value={cycleDraft} onChange={(event) => setCycleDraft(Number(event.target.value))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-700" /><span className="text-xs">{t("хоног", "days")}</span></span>
         </label>
-        <label className="block text-sm font-bold text-slate-600">Сарын тэмдгийн үргэлжлэх хугацаа
-          <span className="mt-1 flex items-center gap-2"><input type="number" min={2} max={7} value={periodDraft} onChange={(event) => setPeriodDraft(Number(event.target.value))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-700" /><span className="text-xs">хоног</span></span>
+        <label className="block text-sm font-bold text-slate-600">{t("Сарын тэмдгийн үргэлжлэх хугацаа", "Period length")}
+          <span className="mt-1 flex items-center gap-2"><input type="number" min={2} max={7} value={periodDraft} onChange={(event) => setPeriodDraft(Number(event.target.value))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-700" /><span className="text-xs">{t("хоног", "days")}</span></span>
         </label>
-        <button type="button" disabled={settingsSaving} onClick={saveCycleSettings} className="w-full rounded-2xl bg-[#e0679f] py-3 text-sm font-extrabold text-white disabled:opacity-60">{settingsSaving ? "Хадгалж байна…" : "Хадгалах"}</button>
+        <button type="button" disabled={settingsSaving} onClick={saveCycleSettings} className="w-full rounded-2xl bg-[#e0679f] py-3 text-sm font-extrabold text-white disabled:opacity-60">{settingsSaving ? t("Хадгалж байна…", "Saving…") : t("Хадгалах", "Save")}</button>
       </div>
     </BottomSheet>}
     </main>
