@@ -398,7 +398,14 @@ create policy "pad responses: read" on public.pad_responses
 do $$
 declare t text;
 begin
-  foreach t in array array['friendships', 'pad_requests', 'pad_request_recipients', 'pad_responses'] loop
+  foreach t in array array[
+    'friendships',
+    'friend_groups',
+    'friend_group_members',
+    'pad_requests',
+    'pad_request_recipients',
+    'pad_responses'
+  ] loop
     if not exists (
       select 1 from pg_publication_tables
       where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t

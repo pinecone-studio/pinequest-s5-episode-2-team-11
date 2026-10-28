@@ -42,7 +42,7 @@ export default function ProfileScreen() {
           <button
             type="button"
             onClick={() => setDeleteAccountOpen(true)}
-            className="mx-auto block px-3 py-2 text-xs font-bold text-rose-500"
+            className="w-full rounded-2xl border border-slate-100 bg-white py-3 text-center text-sm font-extrabold text-rose-600 transition active:scale-95"
           >
             {t("Бүртгэл устгах", "Delete account")}
           </button>
