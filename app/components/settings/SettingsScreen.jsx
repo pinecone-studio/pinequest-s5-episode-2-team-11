@@ -3,17 +3,20 @@
 import { Languages, Moon, Sun, Lock, Unlock, ShieldCheck } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import { useTheme } from "../../../context/ThemeContext";
-import { useLang } from "../../../context/LanguageContext";
+import { useLang, useT } from "../../../context/LanguageContext";
 import Card from "../ui/Card";
 import PageHeader from "../ui/PageHeader";
 import SectionTitle from "../ui/SectionTitle";
 import PrivateNotePinSettings from "./PrivateNotePinSettings";
 import ChildPurchaseControls from "./ChildPurchaseControls";
+import DaughterProfile from "./DaughterProfile";
+import MyFriendCode from "../friends/MyFriendCode";
 
 export default function SettingsScreen() {
   const { theme, setTheme } = useTheme();
   const { view, shareWithMom, setShareWithMom } = useFamily();
   const { lang: language, setLang: selectLanguage } = useLang();
+  const t = useT();
 
   if (view === "daughter") {
     return (
