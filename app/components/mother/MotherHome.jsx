@@ -101,8 +101,7 @@ export default function MotherHome() {
             {linked && hasCycle ? (
               isPeriod ? (
                 <>
-                  <span className="text-2xl font-black leading-none">{day}</span>
-                  <span className="text-xs font-extrabold">{t("дэх өдөр", "")}</span>
+                  <span className="text-sm font-extrabold leading-tight">{t(`${day} дахь өдөр`, `Period day ${day}`)}</span>
                 </>
               ) : daysLate > 0 || daysUntil === 0 ? (
                 <span className="text-2xl">⏳</span>

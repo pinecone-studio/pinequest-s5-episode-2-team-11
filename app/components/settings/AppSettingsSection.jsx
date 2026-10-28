@@ -1,29 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Languages, Moon, Sun } from "lucide-react";
 import { useTheme } from "../../../context/ThemeContext";
+import { useLang } from "../../../context/LanguageContext";
+import { t } from "../../../lib/i18n";
 import Card from "../ui/Card";
 import SectionTitle from "../ui/SectionTitle";
 
 export const LANGUAGES = [{ id: "mn", label: "Монгол" }, { id: "en", label: "English" }];
-export const THEMES = [{ id: "light", label: "Цайвар", Icon: Sun }, { id: "dark", label: "Бараан", Icon: Moon }];
-const LANGUAGE_KEY = "bloomy-language";
+export const THEMES = [
+  { id: "light", get label() { return t("Цайвар", "Light"); }, Icon: Sun },
+  { id: "dark", get label() { return t("Бараан", "Dark"); }, Icon: Moon },
+];
 
-/** Language choice stored on this device (the app has no translations yet). */
+/** Use the app-wide language preference so every screen updates together. */
 export function useLanguage() {
-  const [language, setLanguageState] = useState("mn");
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(LANGUAGE_KEY);
-      if (saved === "en" || saved === "mn") setLanguageState(saved);
-    } catch { /* localStorage боломжгүй */ }
-  }, []);
-  const setLanguage = (next) => {
-    setLanguageState(next);
-    try { localStorage.setItem(LANGUAGE_KEY, next); } catch { /* localStorage боломжгүй */ }
-  };
-  return [language, setLanguage];
+  const { lang, setLang } = useLang();
+  return [lang, setLang];
 }
 
 export function SegmentedChoice({ options, value, onChange }) {
@@ -50,13 +43,13 @@ export default function AppSettingsSection() {
   const [language, setLanguage] = useLanguage();
   return (
     <section id="app" className="scroll-mt-20 space-y-3">
-      <h3 className="px-1 text-xs font-black uppercase tracking-wider text-slate-400">Апп</h3>
+      <h3 className="px-1 text-xs font-black uppercase tracking-wider text-slate-400">{t("Апп", "App")}</h3>
       <Card className="p-3">
-        <SectionTitle icon={Languages} title="Хэл" />
+        <SectionTitle icon={Languages} title={t("Хэл", "Language")} />
         <SegmentedChoice options={LANGUAGES} value={language} onChange={setLanguage} />
       </Card>
       <Card className="p-3">
-        <SectionTitle icon={theme === "dark" ? Moon : Sun} title="Өнгө" />
+        <SectionTitle icon={theme === "dark" ? Moon : Sun} title={t("Өнгө", "Appearance")} />
         <SegmentedChoice options={THEMES} value={theme} onChange={setTheme} />
       </Card>
     </section>

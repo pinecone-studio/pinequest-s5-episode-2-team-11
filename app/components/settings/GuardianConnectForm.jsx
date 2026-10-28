@@ -2,6 +2,7 @@
 
 import { AlertCircle, LoaderCircle } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
+import { t } from "../../../lib/i18n";
 
 /** Daughter enters her guardian's invite code. There is no daughter-side unlink: only the guardian can unlink. */
 export default function GuardianConnectForm() {
@@ -9,10 +10,10 @@ export default function GuardianConnectForm() {
   return (
     <div>
       <p className="text-sm font-semibold leading-relaxed text-slate-500">
-        Асран хамгаалагчтайгаа холбогдох нь сонголттой. Түүний өгсөн кодыг хүссэн үедээ оруулж болно.
+        {t("Асран хамгаалагчтайгаа холбогдох нь сонголттой. Түүний өгсөн кодыг хүссэн үедээ оруулж болно.", "Connecting to a guardian is optional. You can enter the code they gave you whenever you're ready.")}
       </p>
       <label htmlFor="guardian-access-code" className="mt-4 block text-xs font-extrabold uppercase tracking-wider text-slate-400">
-        Асран хамгаалагчийн урилгын код
+        {t("Асран хамгаалагчийн урилгын код", "Guardian invite code")}
       </label>
       <div className="mt-2 flex items-center overflow-hidden rounded-2xl border-2 border-slate-100 bg-white bb-focus-within-border-F48FB1">
         <span className="pl-4 font-black bb-text-F48FB1">BLOOM-</span>
@@ -44,9 +45,9 @@ export default function GuardianConnectForm() {
         className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bb-bg-E0679F py-3 font-extrabold text-white transition active:scale-95 disabled:opacity-50"
       >
         {joining && <LoaderCircle className="h-4 w-4 animate-spin" />}
-        {joining ? "Холбож байна…" : "Холбогдох"}
+        {joining ? t("Холбож байна…", "Connecting…") : t("Холбогдох", "Connect")}
       </button>
-      <span className="sr-only" aria-live="polite">{linkStatus === "connecting" ? "Холболт үүсгэж байна" : "Холбогдоогүй"}</span>
+      <span className="sr-only" aria-live="polite">{linkStatus === "connecting" ? t("Холболт үүсгэж байна", "Connecting") : t("Холбогдоогүй", "Not connected")}</span>
     </div>
   );
 }
