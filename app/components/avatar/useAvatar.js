@@ -22,6 +22,7 @@ import {
   levelOf,
 } from "../../../lib/wardrobe";
 import { t } from "../../../lib/i18n";
+import { usePremium } from "./usePremium";
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -75,7 +76,7 @@ export function useAvatar(userId, onToast = () => {}) {
   const [loaded, setLoaded] = useState(false);
   const [avatarSyncReady, setAvatarSyncReady] = useState(false);
   // Bloomy Plus — асран хамгаалагч идэвхжүүлнэ (supabase/premium-subscriptions.sql)
-  const [premium, setPremium] = useState({ active: false, expiresAt: null });
+  const premium = usePremium(userId);
   const toastRef = useRef(onToast);
   toastRef.current = onToast;
 
@@ -138,26 +139,6 @@ export function useAvatar(userId, onToast = () => {}) {
       cancelled = true;
     };
   }, [key, userId]);
-
-  useEffect(() => {
-    setPremium({ active: false, expiresAt: null });
-    if (!supabase || !userId) return;
-    let cancelled = false;
-    supabase
-      .from("premium_subscriptions")
-      .select("active, expires_at")
-      .eq("child_id", userId)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (error) console.warn("[premium_subscriptions] load:", error.message);
-        if (cancelled || !data) return;
-        const live = data.active && (!data.expires_at || new Date(data.expires_at) > new Date());
-        setPremium({ active: Boolean(live), expiresAt: live ? data.expires_at : null });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [userId]);
 
   useEffect(() => {
     if (!loaded) return;
