@@ -20,8 +20,8 @@ import Avatar from "../avatar/Avatar";
 import { friendMoodToday } from "../avatar/useTodayMood";
 import { MOODS } from "../../../lib/log-entries";
 import BottomSheet from "../ui/BottomSheet";
-import { t } from "../../../lib/i18n";
-import MyFriendCode from "./MyFriendCode";
+import { useFamily } from "../../../context/FamilyContext";
+import { GroupPhotoComposer, GroupPhotoFeed } from "./GroupPhotoSection";
 
 const Label = ({ children }) => (
   <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-2">{children}</p>
@@ -360,10 +360,12 @@ function MyFriends() {
 function MyGroups({ nameOf }) {
   const { friends, groups, activeGroup, setActiveGroupId, createGroup, toggleMember, deleteGroup } =
     useFriends();
+  const { session } = useFamily();
   const [editingId, setEditingId] = useState(null);
   const [confirmDel, setConfirmDel] = useState(null);
   const [creating, setCreating] = useState(false);
   const [draft, setDraft] = useState({ name: "", emoji: "💗", members: [] });
+  const [photoRefreshKey, setPhotoRefreshKey] = useState(0);
   const canCreate = draft.name.trim() && draft.members.length > 0;
 
   const create = async () => {
@@ -393,10 +395,20 @@ function MyGroups({ nameOf }) {
         }
       />
 
+      <GroupPhotoComposer
+        groups={groups}
+        accessToken={session?.access_token}
+        onPosted={(groupId) => {
+          setActiveGroupId(groupId);
+          setPhotoRefreshKey((key) => key + 1);
+        }}
+      />
+
       <div className="space-y-2">
         {groups.map((g) => {
           const on = activeGroup?.id === g.id;
-          const editing = editingId === g.id;
+          const canManage = g.ownerId === session?.user?.id;
+          const editing = canManage && editingId === g.id;
           const last = g.members.length <= 1;
           const others = friends.filter((f) => !g.members.includes(f.id));
           return (
@@ -415,21 +427,23 @@ function MyGroups({ nameOf }) {
                   <div className="flex-1 min-w-0">
                     <p className="font-extrabold text-slate-700">{g.name}</p>
                     <p className="text-xs font-semibold text-slate-400 bx-trunc">
-                      {g.members.length} {t("найз ·", "friends ·")} {g.members.map(nameOf).join(", ")}
+                      {g.members.length + 1} гишүүн
                     </p>
                   </div>
                 </button>
-                <button
-                  onClick={() => {
-                    setEditingId(editing ? null : g.id);
-                    setConfirmDel(null);
-                  }}
-                  className={`text-xs font-extrabold rounded-full px-3 py-1.5 shrink-0 active:scale-95 transition ${
-                    editing ? "bb-bg-F48FB1 text-white" : "bb-bg-E9DDFC bb-text-7C4DCC"
-                  }`}
-                >
-                  {editing ? t("Болсон", "Done") : t("Засах", "Edit")}
-                </button>
+                {canManage && (
+                  <button
+                    onClick={() => {
+                      setEditingId(editing ? null : g.id);
+                      setConfirmDel(null);
+                    }}
+                    className={`text-xs font-extrabold rounded-full px-3 py-1.5 shrink-0 active:scale-95 transition ${
+                      editing ? "bb-bg-F48FB1 text-white" : "bb-bg-E9DDFC bb-text-7C4DCC"
+                    }`}
+                  >
+                    {editing ? "Болсон" : "Засах"}
+                  </button>
+                )}
               </div>
 
               {editing && (
@@ -493,6 +507,14 @@ function MyGroups({ nameOf }) {
                     {confirmDel === g.id ? t("Дахин дарж устгана уу", "Tap again to delete") : t("Бүлэг устгах", "Delete group")}
                   </button>
                 </div>
+              )}
+              {on && (
+                <GroupPhotoFeed
+                  group={g}
+                  accessToken={session?.access_token}
+                  viewerId={session?.user?.id}
+                  refreshKey={photoRefreshKey}
+                />
               )}
             </div>
           );

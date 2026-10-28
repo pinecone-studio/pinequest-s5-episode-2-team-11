@@ -1,36 +1,25 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Activity,
   ArrowLeft,
   Backpack,
   Ban,
   BookOpen,
-  CalendarCheck,
-  CalendarDays,
-  Check,
+  HeartHandshake,
+  HeartPulse,
   ChevronRight,
   CircleCheck,
   CircleHelp,
   Clock,
   Droplet,
   Droplets,
-  Dumbbell,
-  Flower2,
-  GlassWater,
-  Heart,
-  HeartPulse,
-  Hourglass,
-  Layers,
+  Eye,
   LockKeyhole,
-  MessageCircle,
+  MessageCircleHeart,
   Moon,
   Package,
-  Palette,
-  Pill,
-  Repeat,
-  Ruler,
   ShieldCheck,
   Shirt,
   ShowerHead,
@@ -39,17 +28,14 @@ import {
   Sparkles,
   Sprout,
   Sun,
-  Thermometer,
-  Timer,
-  Trash2,
+  Stethoscope,
   TriangleAlert,
-  Users,
+  UsersRound,
   Venus,
   Zap,
 } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
-import { useTheme } from "../../../context/ThemeContext";
-import { girlCategories, guardianRoles } from "../../../lib/learnContent";
+import { girlCategories, guardianCategories } from "../../../lib/learnContent";
 import { supabase } from "../../../lib/supabase";
 import { guardianMaleGuide } from "../../../src/content/guardian-male-guide";
 import GuardianQuizSheet from "./GuardianQuizSheet";
@@ -69,73 +55,28 @@ const TONES = {
   alert: { background: "#FDE7F1", color: "#9F1239" },
 };
 
-// Бараан горимд цайвар pastel өнгө тод харагддаг тул бараан хувилбар
-const TONES_DARK = {
-  lilac: { background: "#3B2F55", color: "#D9C6FF" },
-  peach: { background: "#4A3A2C", color: "#FFD9A8" },
-  mint: { background: "#24413A", color: "#B9EBD2" },
-  sky: { background: "#283F5A", color: "#C4DCFF" },
-  butter: { background: "#43303B", color: "#F8C9DF" },
-  rose: { background: "#4A2C3D", color: "#F8C9DF" },
-  alert: { background: "#4E2733", color: "#FFC2CF" },
-};
-
-function useTones() {
-  const { theme } = useTheme();
-  return theme === "dark" ? TONES_DARK : TONES;
-}
-
-// Асран хамгаалагчийн сэдвүүдэд (охины тайлгүй) тон бүрийн тод өнгө
-const TONE_ACCENT = {
-  lilac: "#7C4DCC",
-  peach: "#E8756D",
-  mint: "#279B72",
-  sky: "#248FC5",
-  butter: "#D08712",
-  rose: "#B83B7E",
-  alert: "#D63D4D",
-};
-
-// Мөр бүрийн дүрс (сэдвийн дарааллаар). Дутвал сэдвийн дүрсийг ашиглана.
-const POINT_ICONS = {
-  what: [Sparkles, Smile, Layers, Droplets],
-  when: [CalendarDays, Flower2, Sprout, Droplet, Ruler],
-  cycle: [Clock, Repeat, CalendarCheck, Droplet, Palette],
-  products: [Package, Shirt, CircleCheck, Timer],
-  kit: [Backpack, MessageCircle, Shirt, CalendarDays],
-  hygiene: [ShowerHead, Ban, Trash2],
-  body: [Activity, Thermometer, GlassWater, Pill, Dumbbell],
-  doctor: [Hourglass, Clock, Droplets, Zap, HeartPulse, Siren],
-  myths: [Sparkles, MessageCircle, Users],
-};
-
-function topicLook(category) {
-  const girl = GIRL_TOPIC_STYLES[category.id];
-  return {
-    accent: girl?.background ?? TONE_ACCENT[category.tone] ?? "#B83B7E",
-    Icon: girl?.Icon ?? (category.isWarning ? TriangleAlert : BookOpen),
-  };
-}
-
-const STORAGE_PREFIX = "bloom:learn-progress:";
-const GUARDIAN_ROLE_STORAGE_PREFIX = "bloom:guardian-learning-role:";
 const PENDING_GUIDE_PREFIX = "bloom:pending-guardian-guide:";
 
-const GIRL_TOPIC_STYLES = {
-  what: { background: "#E94E78", Icon: Droplets },
-  when: { background: "#A64FAD", Icon: Venus },
-  cycle: { background: "#5B68D8", Icon: Moon },
-  products: { background: "#575BC8", Icon: LockKeyhole },
-  kit: { background: "#D08712", Icon: BookOpen },
-  hygiene: { background: "#248FC5", Icon: Sparkles },
-  body: { background: "#279B72", Icon: ShieldCheck },
-  doctor: { background: "#D63D4D", Icon: TriangleAlert },
-  myths: { background: "#E8756D", Icon: CircleHelp },
+const TOPIC_TILE_STYLES = {
+  what: { background: "#FADAD9", Icon: Droplets },
+  when: { background: "#F3C3C5", Icon: Venus },
+  cycle: { background: "#E9ABAE", Icon: Moon },
+  products: { background: "#E0959C", Icon: LockKeyhole },
+  kit: { background: "#D78289", Icon: BookOpen },
+  hygiene: { background: "#CE6F79", Icon: Sparkles },
+  body: { background: "#C65C69", Icon: ShieldCheck },
+  doctor: { background: "#F3C3C5", Icon: TriangleAlert },
+  myths: { background: "#E9ABAE", Icon: CircleHelp },
+  "guardian-talk-early": { background: "#FADAD9", Icon: MessageCircleHeart },
+  "guardian-calm-response": { background: "#F3C3C5", Icon: HeartHandshake },
+  "guardian-growth": { background: "#E9ABAE", Icon: Eye },
+  "guardian-teach": { background: "#E0959C", Icon: BookOpen },
+  "guardian-supplies": { background: "#D78289", Icon: Package },
+  "guardian-pain-mood": { background: "#CE6F79", Icon: HeartPulse },
+  "guardian-privacy": { background: "#C65C69", Icon: LockKeyhole },
+  "guardian-family": { background: "#F3C3C5", Icon: UsersRound },
+  "guardian-doctor": { background: "#E9ABAE", Icon: Stethoscope },
 };
-
-function isGuardianRoleId(value) {
-  return guardianRoles.some((role) => role.id === value);
-}
 
 function RoleChip({ children, tone }) {
   const TONES = useTones();
@@ -149,45 +90,28 @@ function RoleChip({ children, tone }) {
   );
 }
 
-function TopicCard({ category, index, read, onClick, guardian, tile = false }) {
-  const tone = useTones()[category.tone];
+function TopicCard({ category, index, onClick, tile = false }) {
+  const tone = TONES[category.tone];
   if (tile) {
-    const tileStyle = GIRL_TOPIC_STYLES[category.id] ?? { background: "#B83B7E", Icon: Sun };
+    const tileStyle = TOPIC_TILE_STYLES[category.id] ?? { background: "#B83B7E", Icon: Sun };
     const Icon = tileStyle.Icon;
     const accent = tileStyle.background;
     return (
       <button
         type="button"
         onClick={onClick}
-        aria-label={`${category.title}. ${category.subtitle}${read ? t(". Уншсан", ". Read") : ""}`}
-        className="group relative flex min-h-[150px] w-full flex-col overflow-hidden rounded-3xl p-3.5 text-left text-white transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300 active:scale-[0.97]"
-        style={{
-          background: `linear-gradient(150deg, ${accent} 0%, ${accent}E6 55%, ${accent}B3 100%)`,
-          boxShadow: `0 10px 22px -10px ${accent}`,
-        }}
+        aria-label={`${category.title}. ${category.subtitle}`}
+        className="relative flex aspect-[0.88] min-h-32 w-full flex-col items-center justify-end gap-2 overflow-hidden rounded-2xl p-2.5 text-center shadow-sm transition hover:brightness-105 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300 active:scale-[0.98]"
+        style={{ backgroundColor: tileStyle.background, color: "#501923" }}
       >
-        {/* чимэглэл: том бүдэг дүрс + гэрлийн толбо */}
-        <Icon className="pointer-events-none absolute -right-5 -bottom-5 h-24 w-24 opacity-20 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6" aria-hidden="true" />
-        <span className="pointer-events-none absolute -left-6 -top-8 h-20 w-20 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.18)" }} aria-hidden="true" />
-
-        <span className="relative flex w-full items-start justify-between">
-          <span className="flex h-11 w-11 items-center justify-center rounded-2xl" style={{ backgroundColor: "rgba(255,255,255,0.25)" }}>
-            <Icon className="h-5 w-5 text-white" strokeWidth={2.3} aria-hidden="true" />
-          </span>
-          {read ? (
-            <span className="flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-black" style={{ backgroundColor: "#FFFFFF", color: accent }}>
-              <Check className="h-3 w-3" strokeWidth={3.5} aria-hidden="true" /> {t("Уншсан", "Read")}
-            </span>
-          ) : (
-            <span className="rounded-full px-2 py-1 text-[10px] font-black text-white" style={{ backgroundColor: "rgba(255,255,255,0.25)" }}>
-              {String(index + 1).padStart(2, "0")}
-            </span>
-          )}
+        <span aria-hidden="true" className="absolute -right-4 -top-5 h-16 w-16 rounded-full bg-[#CE6F79]/10" />
+        <span aria-hidden="true" className="absolute -bottom-5 -left-4 h-14 w-14 rounded-full bg-[#CE6F79]/10" />
+        <span aria-hidden="true" className="absolute left-3 top-1/2 h-2 w-2 rounded-full bg-[#CE6F79]/25" />
+        <span className="absolute left-2.5 top-2.5 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/60 ring-1 ring-[#CE6F79]/25">
+          <Icon className="h-5 w-5" strokeWidth={2.2} aria-hidden="true" />
         </span>
-
-        <span className="relative mt-auto pt-4">
-          <span className="block text-[15px] font-black leading-tight">{category.title}</span>
-          <span className="mt-1 block text-[11px] font-bold leading-snug text-white/85">{category.subtitle}</span>
+        <span className="relative z-10 line-clamp-3 w-full text-left text-xs font-black leading-tight">
+          {category.title}
         </span>
       </button>
     );
@@ -209,23 +133,13 @@ function TopicCard({ category, index, read, onClick, guardian, tile = false }) {
         <span className="block text-sm font-black leading-snug text-slate-800">{category.title}</span>
         <span className="mt-0.5 block text-xs font-semibold text-slate-500">{category.subtitle}</span>
       </span>
-      {guardian ? (
-        <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" aria-hidden="true" />
-      ) : read ? (
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-800" aria-label={t("Уншсан", "Read")}>
-          <Check className="h-4 w-4" aria-hidden="true" />
-        </span>
-      ) : (
-        <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" aria-hidden="true" />
-      )}
+      <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" aria-hidden="true" />
     </button>
   );
 }
 
-function TopicDetail({ category, index, total, counter, read, onBack, onToggleRead, onNext, nextLabel, onList }) {
-  const { accent, Icon } = topicLook(category);
-  const icons = POINT_ICONS[category.id] ?? [];
-  const glass = { backgroundColor: "rgba(255,255,255,0.22)" };
+function TopicDetail({ category, index, total, counter, onBack, onNext, nextLabel }) {
+  const tone = TONES[category.tone];
   return (
     <div className="space-y-4 pb-4">
       <header
@@ -303,36 +217,13 @@ function TopicDetail({ category, index, total, counter, read, onBack, onToggleRe
       </div>
 
       <div className="space-y-2 px-1 pt-1">
-        {onToggleRead ? (
-          <button
-            type="button"
-            onClick={onToggleRead}
-            aria-pressed={read}
-            className={`min-h-12 w-full rounded-2xl px-4 py-3 text-sm font-extrabold transition active:scale-[0.99] ${
-              read ? "bg-emerald-100 text-emerald-800" : "bb-grad-sos text-white"
-            }`}
-          >
-            {read ? t("Уншсан ✓", "Read ✓") : t("Уншсан гэж тэмдэглэх", "Mark as read")}
-          </button>
-        ) : null}
         {onNext && (
           <button
             type="button"
             onClick={onNext}
-            className={`min-h-12 w-full rounded-2xl px-4 py-3 text-sm font-extrabold transition active:scale-[0.99] ${
-              onToggleRead ? "bg-slate-100 text-slate-700" : "bb-grad-sos text-white"
-            }`}
+            className="min-h-12 w-full rounded-2xl bb-grad-sos px-4 py-3 text-sm font-extrabold text-white transition active:scale-[0.99]"
           >
             {nextLabel}
-          </button>
-        )}
-        {onList && (
-          <button
-            type="button"
-            onClick={onList}
-            className="min-h-12 w-full rounded-2xl bg-slate-100 px-4 py-3 text-sm font-extrabold text-slate-700 transition active:scale-[0.99]"
-          >
-            {t("Бүх сэдэв рүү буцах", "Back to all topics")}
           </button>
         )}
       </div>
@@ -344,50 +235,13 @@ export default function LearningLibrary({ onMoreMaterials }) {
   const { view, profile, session, guardianGender } = useFamily();
   const tones = useTones();
   const isGirl = view === "daughter";
-  const userId = profile?.id ?? session?.user?.id ?? "local";
-  const storageKey = `${STORAGE_PREFIX}${userId}`;
-  const guardianRoleStorageKey = `${GUARDIAN_ROLE_STORAGE_PREFIX}${userId}`;
-  const [readIds, setReadIds] = useState([]);
-  const [storageError, setStorageError] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
-  const [roleId, setRoleId] = useState(() => {
-    const initialRole = session?.user?.user_metadata?.guardian_type;
-    return isGuardianRoleId(initialRole) ? initialRole : "mom";
-  });
   const [guideCompletedIds, setGuideCompletedIds] = useState([]);
   const [guideError, setGuideError] = useState("");
   const [showMaleGuide, setShowMaleGuide] = useState(false);
-  const [guardianSheet, setGuardianSheet] = useState(null); // "quiz" | "coaching"
-  const role = guardianRoles.find((item) => item.id === roleId) ?? guardianRoles[0];
-  const categories = isGirl ? girlCategories : role.categories;
-  const readSet = useMemo(() => new Set(readIds), [readIds]);
-  const visibleCategories = categories;
-  const readCount = isGirl ? categories.filter((category) => readSet.has(category.id)).length : 0;
+  const categories = isGirl ? girlCategories : guardianCategories;
   const selectedIndex = categories.findIndex((category) => category.id === selectedId);
   const selected = selectedIndex >= 0 ? categories[selectedIndex] : null;
-
-  useEffect(() => {
-    if (!isGirl) return;
-    try {
-      const saved = JSON.parse(window.localStorage.getItem(storageKey) ?? "[]");
-      setReadIds(Array.isArray(saved) ? saved.filter((id) => girlCategories.some((category) => category.id === id)) : []);
-      setStorageError(false);
-    } catch {
-      setReadIds([]);
-      setStorageError(true);
-    }
-  }, [isGirl, storageKey]);
-
-  useEffect(() => {
-    if (isGirl) return;
-    const initialRole = session?.user?.user_metadata?.guardian_type;
-    try {
-      const savedRole = window.localStorage.getItem(guardianRoleStorageKey);
-      setRoleId(guardianGender === "male" ? "dad" : isGuardianRoleId(savedRole) ? savedRole : isGuardianRoleId(initialRole) ? initialRole : "mom");
-    } catch {
-      setRoleId(guardianGender === "male" ? "dad" : isGuardianRoleId(initialRole) ? initialRole : "mom");
-    }
-  }, [guardianGender, guardianRoleStorageKey, isGirl, session?.user?.user_metadata?.guardian_type]);
 
   useEffect(() => {
     if (isGirl || guardianGender !== "male" || !profile?.id) {
@@ -458,30 +312,6 @@ export default function LearningLibrary({ onMoreMaterials }) {
     return true;
   };
 
-  const selectGuardianRole = (nextRoleId) => {
-    setRoleId(nextRoleId);
-    setSelectedId(null);
-    try {
-      window.localStorage.setItem(guardianRoleStorageKey, nextRoleId);
-    } catch {
-      // Сонгосон төрөл тухайн дэлгэцэд идэвхтэй хэвээр байна.
-    }
-  };
-
-  const toggleRead = () => {
-    if (!selected) return;
-    const next = readSet.has(selected.id)
-      ? readIds.filter((id) => id !== selected.id)
-      : [...readIds, selected.id];
-    setReadIds(next);
-    try {
-      window.localStorage.setItem(storageKey, JSON.stringify(next));
-      setStorageError(false);
-    } catch {
-      setStorageError(true);
-    }
-  };
-
   const openNext = () => {
     if (selectedIndex < categories.length - 1) setSelectedId(categories[selectedIndex + 1].id);
   };
@@ -492,13 +322,10 @@ export default function LearningLibrary({ onMoreMaterials }) {
         category={selected}
         index={selectedIndex}
         total={categories.length}
-        counter={!isGirl ? `${role.label} · ${String(selectedIndex + 1).padStart(2, "0")} / ${categories.length}` : undefined}
-        read={readSet.has(selected.id)}
+        counter={!isGirl ? `Асран хамгаалагч · ${String(selectedIndex + 1).padStart(2, "0")} / ${categories.length}` : undefined}
         onBack={() => setSelectedId(null)}
-        onToggleRead={isGirl ? toggleRead : null}
         onNext={selectedIndex < categories.length - 1 ? openNext : null}
-        nextLabel={t("Дараагийн сэдэв →", "Next topic →")}
-        onList={!isGirl ? () => setSelectedId(null) : null}
+        nextLabel="Дараагийн сэдэв →"
       />
     );
   }
@@ -561,45 +388,6 @@ export default function LearningLibrary({ onMoreMaterials }) {
               {guideError && <p role="status" className="mt-2 text-xs font-semibold text-rose-700">{guideError}</p>}
             </Card>
           )}
-          <div className="grid grid-cols-2 gap-2">
-            {[["quiz", "🧠", t("Та хэр мэдэх вэ?", "Quick quiz"), t("10 үнэн/худал", "10 true/false")], ["coaching", "💗", t("Мэдрэмжид хариулах", "Respond to feelings"), t("5 алхам · 2 мин", "5 steps · 2 min")]].map(([id, emoji, title, sub]) => (
-              <button key={id} type="button" onClick={() => setGuardianSheet(id)} className="rounded-2xl border border-slate-100 bg-white p-3 text-left shadow-sm active:scale-[0.98]">
-                <span className="text-2xl" aria-hidden="true">{emoji}</span>
-                <span className="mt-1 block text-sm font-black leading-tight text-slate-800">{title}</span>
-                <span className="block text-[11px] font-semibold text-slate-500">{sub}</span>
-              </button>
-            ))}
-          </div>
-          {guardianSheet === "quiz" && <GuardianQuizSheet onClose={() => setGuardianSheet(null)} />}
-          {guardianSheet === "coaching" && <EmotionCoachingLesson onClose={() => setGuardianSheet(null)} />}
-          <div role="group" aria-label={t("Асран хамгаалагчийн үүрэг", "Guardian role")} className="grid grid-cols-3 gap-1 rounded-2xl bb-bg-FDE7F1 p-1">
-            {guardianRoles.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                aria-pressed={roleId === item.id}
-                onClick={() => selectGuardianRole(item.id)}
-                className={`min-h-11 rounded-xl px-2 py-2 text-sm font-extrabold transition ${
-                  roleId === item.id ? "bg-white bb-text-B83B7E shadow-sm" : "text-slate-500"
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-          <div
-            className="rounded-3xl border border-slate-100 p-4 shadow-sm"
-            style={{ backgroundColor: tones[role.tone].background, color: tones[role.tone].color }}
-          >
-            <div className="flex items-start gap-3">
-              <Heart className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
-              <p className="text-sm font-bold leading-relaxed">{role.intro}</p>
-            </div>
-          </div>
-          <div className="flex items-center justify-between gap-2 px-1">
-            <h2 className="text-sm font-black text-slate-700">{role.sectionLabel}</h2>
-            <span className="text-xs font-bold text-slate-500">{categories.length} {t("сэдэв", "topics")}</span>
-          </div>
         </>
       )}
 
@@ -632,20 +420,18 @@ export default function LearningLibrary({ onMoreMaterials }) {
       )}
 
       <section
-        className={isGirl ? "grid grid-cols-2 gap-3" : "space-y-2.5"}
-        aria-label={t("Сэдвүүд", "Topics")}
+        className="grid grid-cols-3 gap-2"
+        aria-label="Сэдвүүд"
       >
-        {visibleCategories.map((category, position) => (
-          <div
+        {categories.map((category) => (
+          <TopicCard
             key={category.id}
             className={isGirl && visibleCategories.length % 2 === 1 && position === visibleCategories.length - 1 ? "col-span-2" : undefined}
           >
           <TopicCard
             category={category}
             index={categories.findIndex((item) => item.id === category.id)}
-            read={readSet.has(category.id)}
-            guardian={!isGirl}
-            tile={isGirl}
+            tile
             onClick={() => setSelectedId(category.id)}
           />
           </div>
