@@ -692,7 +692,7 @@ export function FamilyProvider({ children }) {
           ? "sent_copy"
           : DAUGHTER_KIND_EVENT[kind] ?? "guardian_signal";
       const { ok, limited } = await sendNotification(session, event, [recipientId], text);
-      if (limited) setToast(t("Саяхан илгээсэн байна. Түр хүлээгээд дахин оролдоорой.", "You just sent one. Please wait a moment and try again."));
+            if (limited) setToast(t("Хүсэлт аль хэдийн илгээгдсэн байна 💌", "Already sent 💌"));
       else if (!ok) setToast(t("Илгээж чадсангүй. Интернэтээ шалгаарай.", "Couldn't send. Check your internet."));
       if (ok) loadNotifications();
       return ok;

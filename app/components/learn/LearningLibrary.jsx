@@ -114,6 +114,9 @@ function TopicCard({ category, index, onClick, tile = false, read = false, locke
           boxShadow: `0 8px 18px -10px ${accent}`,
         }}
       >
+        {locked && (
+          <span aria-hidden="true" className="pointer-events-none absolute inset-0 z-[1]" style={{ background: "linear-gradient(160deg, rgba(36,26,44,0.35) 0%, rgba(36,26,44,0.62) 100%)" }} />
+        )}
         {/* чимэглэл: том бүдэг дүрс, гэрлийн толбо */}
         <Icon className="pointer-events-none absolute -right-3 -bottom-3 h-16 w-16 opacity-20 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6" aria-hidden="true" />
         <span aria-hidden="true" className="pointer-events-none absolute -left-5 -top-6 h-14 w-14 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.18)" }} />
@@ -123,8 +126,8 @@ function TopicCard({ category, index, onClick, tile = false, read = false, locke
             <Icon className="h-[18px] w-[18px] text-white" strokeWidth={2.3} aria-hidden="true" />
           </span>
           {locked ? (
-            <span className="flex h-6 w-6 items-center justify-center rounded-full" style={{ backgroundColor: "#FFFFFF", color: accent }} aria-hidden="true">
-              <Crown className="h-3.5 w-3.5" strokeWidth={2.6} />
+            <span className="relative z-[2] flex h-7 w-7 items-center justify-center rounded-full shadow-md" style={{ backgroundColor: "#FFFFFF", color: "#2B2230" }} aria-hidden="true">
+              <LockKeyhole className="h-3.5 w-3.5" strokeWidth={2.6} />
             </span>
           ) : read ? (
             <span className="flex h-5 w-5 items-center justify-center rounded-full" style={{ backgroundColor: "#FFFFFF", color: accent }} aria-hidden="true">
@@ -137,8 +140,13 @@ function TopicCard({ category, index, onClick, tile = false, read = false, locke
           )}
         </span>
 
-        <span className="relative mt-auto line-clamp-3 w-full text-[12.5px] font-black leading-tight">
-          {category.title}
+        <span className={`relative z-[2] mt-auto w-full ${locked ? "opacity-90" : ""}`}>
+          {locked && (
+            <span className="mb-1 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-black" style={{ backgroundColor: "#FFD45C", color: "#3A2A10" }}>
+              <Crown className="h-2.5 w-2.5" strokeWidth={3} aria-hidden="true" /> Plus
+            </span>
+          )}
+          <span className="line-clamp-3 block text-[12.5px] font-black leading-tight">{category.title}</span>
         </span>
       </button>
     );
