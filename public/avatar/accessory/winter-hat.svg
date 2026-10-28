@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 768" width="512" height="768">
+  <!-- Accessory: knitted winter hat with a pom-pom. -->
+  <circle cx="256" cy="34" r="30" fill="var(--c2)"/>
+  <path d="M104 200 C100 70 180 30 256 30 C332 30 412 70 408 200 Z" fill="var(--c1)"/>
+  <rect x="96" y="176" width="320" height="44" rx="22" fill="var(--c2)"/>
+  <path d="M176 70 L176 170 M256 40 L256 170 M336 70 L336 170" fill="none" stroke="var(--c2)" stroke-width="6" stroke-linecap="round" opacity="0.6"/>
+</svg>

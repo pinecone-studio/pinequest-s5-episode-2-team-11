@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 768" width="512" height="768">
+  <!-- Bottom: knee-length skirt (c1 skirt, c2 waistband). -->
+  <path d="M190 540 L322 540 L360 660 Q256 684 152 660 Z" fill="var(--c1)"/>
+  <rect x="188" y="534" width="136" height="20" rx="8" fill="var(--c2)"/>
+</svg>

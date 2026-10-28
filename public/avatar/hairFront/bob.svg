@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 768" width="512" height="768">
+  <!-- Hair front: straight fringe + sides over the ears. -->
+  <path d="M108 240 C100 118 180 70 256 70 C332 70 412 118 404 240 C396 196 380 178 360 176 L152 176 C132 178 116 196 108 240 Z" fill="var(--c1)"/>
+  <path d="M100 200 L100 372 Q120 382 142 372 L142 210 Z" fill="var(--c1)"/>
+  <path d="M412 200 L412 372 Q392 382 370 372 L370 210 Z" fill="var(--c1)"/>
+  <path d="M186 104 Q226 90 258 96" fill="none" stroke="var(--c2)" stroke-width="10" stroke-linecap="round"/>
+</svg>
