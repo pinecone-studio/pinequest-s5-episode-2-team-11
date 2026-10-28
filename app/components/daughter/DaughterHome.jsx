@@ -16,6 +16,7 @@ import TodayMoodCard from "./TodayMoodCard";
 import CycleLegend from "./CycleLegend";
 import CouponRewards from "../avatar/CouponRewards";
 import FeedbackPromptCard from "../feedback/FeedbackPromptCard";
+import StoryCards from "../connection/StoryCards";
 
 export default function DaughterHome() {
   const [cycleModalOpen, setCycleModalOpen] = useState(false);
@@ -55,6 +56,7 @@ export default function DaughterHome() {
       </div>
 
       <IncomingSosCard />
+      <StoryCards />
       <FriendsQuickCard />
 
       <HoroscopeCard />
