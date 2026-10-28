@@ -74,6 +74,8 @@ export function useAvatar(userId, onToast = () => {}) {
   const [state, setState] = useState(fresh);
   const [loaded, setLoaded] = useState(false);
   const [avatarSyncReady, setAvatarSyncReady] = useState(false);
+  // Bloomy Plus — асран хамгаалагч идэвхжүүлнэ (supabase/premium-subscriptions.sql)
+  const [premium, setPremium] = useState({ active: false, expiresAt: null });
   const toastRef = useRef(onToast);
   toastRef.current = onToast;
 
@@ -136,6 +138,26 @@ export function useAvatar(userId, onToast = () => {}) {
       cancelled = true;
     };
   }, [key, userId]);
+
+  useEffect(() => {
+    setPremium({ active: false, expiresAt: null });
+    if (!supabase || !userId) return;
+    let cancelled = false;
+    supabase
+      .from("premium_subscriptions")
+      .select("active, expires_at")
+      .eq("child_id", userId)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (error) console.warn("[premium_subscriptions] load:", error.message);
+        if (cancelled || !data) return;
+        const live = data.active && (!data.expires_at || new Date(data.expires_at) > new Date());
+        setPremium({ active: Boolean(live), expiresAt: live ? data.expires_at : null });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
   useEffect(() => {
     if (!loaded) return;
@@ -207,6 +229,7 @@ export function useAvatar(userId, onToast = () => {}) {
   const buy = (id) => {
     const item = itemById(id);
     if (!item || state.owned.includes(id)) return false;
+    if (item.premium && !premium.active) return onToast(t("Энэ хувцас Bloomy Plus-д багтдаг. Асран хамгаалагчаасаа асуугаарай ✨", "This outfit is part of Bloomy Plus. Ask your guardian ✨")), false;
     if (level < item.level) return onToast(t(`${item.level}-р түвшинд нээгдэнэ`, `Unlocks at level ${item.level}`)), false;
     if (state.petals < item.price) return onToast(t(`${item.price - state.petals} дэлбээ дутуу байна. Алхаад цуглуулаарай!`, `You need ${item.price - state.petals} more petals. Go for a walk to collect them!`)), false;
     setState((s) => ({
@@ -238,6 +261,8 @@ export function useAvatar(userId, onToast = () => {}) {
     ...state,
     loaded,
     level,
+    premium: premium.active,
+    premiumUntil: premium.expiresAt,
     availableXp,
     spendXp,
     walkToday,

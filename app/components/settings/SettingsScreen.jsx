@@ -9,6 +9,7 @@ import PageHeader from "../ui/PageHeader";
 import SectionTitle from "../ui/SectionTitle";
 import PrivateNotePinSettings from "./PrivateNotePinSettings";
 import ChildPurchaseControls from "./ChildPurchaseControls";
+import PremiumControls from "./PremiumControls";
 import DaughterProfile from "./DaughterProfile";
 import MyFriendCode from "../friends/MyFriendCode";
 
@@ -91,6 +92,7 @@ export default function SettingsScreen() {
         <PrivateNotePinSettings />
         </>
       )}
+      {view === "mother" && <PremiumControls />}
       {view === "mother" && <ChildPurchaseControls />}
 
       <div className="flex items-start gap-2.5 rounded-2xl bb-bg-FDE7F1-70 p-3">

@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { X, Lock, Check, Footprints, ShoppingBag, Shirt } from "lucide-react";
+import { X, Lock, Check, Crown, Footprints, ShoppingBag, Shirt } from "lucide-react";
 import Avatar from "./Avatar";
 import WalkMode from "./WalkMode";
 import { PetalIcon, SLOT_CROP, XpIcon } from "./icons";
@@ -17,7 +17,7 @@ import {
   XP_PER_LEVEL,
   itemById,
 } from "../../../lib/wardrobe";
-import { t } from "../../../lib/i18n";
+import { locale, t } from "../../../lib/i18n";
 
 const TABS = [
   { id: "walk", get label() { return t("Алхах", "Walk"); }, Icon: Footprints },
@@ -79,6 +79,11 @@ function ItemTile({ item, onClick, active, badge, locked, av }) {
       </span>
       <span className="text-xs font-extrabold text-slate-600 text-center leading-tight">{item.name}</span>
       <span className="text-xs font-black text-slate-400">{badge}</span>
+      {item.premium && (
+        <span className="absolute top-1.5 left-1.5 w-6 h-6 rounded-full bb-grad-sos flex items-center justify-center" aria-label="Bloomy Plus">
+          <Crown className="w-3 h-3 text-white" />
+        </span>
+      )}
       {locked && (
         <span className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center">
           <Lock className="w-3 h-3 text-slate-400" />
@@ -88,12 +93,39 @@ function ItemTile({ item, onClick, active, badge, locked, av }) {
   );
 }
 
+function PlusBanner({ av }) {
+  const until = av.premiumUntil ? new Date(av.premiumUntil).toLocaleDateString(locale()) : null;
+  return (
+    <div className="flex items-start gap-3 rounded-2xl bb-grad-4 p-3">
+      <span className="w-9 h-9 shrink-0 rounded-xl bb-grad-sos flex items-center justify-center">
+        <Crown className="w-4 h-4 text-white" />
+      </span>
+      <div className="min-w-0">
+        <p className="text-sm font-black text-slate-700">
+          Bloomy Plus {av.premium ? t("идэвхтэй ✨", "is on ✨") : ""}
+        </p>
+        <p className="text-xs font-semibold text-slate-500 leading-snug">
+          {av.premium
+            ? until
+              ? t(`${until} хүртэл. Plus хувцсыг дэлбээгээрээ аваарай!`, `Until ${until}. Get Plus outfits with your petals!`)
+              : t("Plus хувцсыг дэлбээгээрээ аваарай!", "Get Plus outfits with your petals!")
+            : t(
+                "Онцгой хувцас, хавчаар, гутал. Асран хамгаалагч чинь Тохиргоо хэсгээс асаана.",
+                "Special outfits, clips and shoes. Your guardian can turn it on in Settings.",
+              )}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function Shop({ av }) {
-  const [slot, setSlot] = useState("top");
+  const [slot, setSlot] = useState("plus");
   const [tryId, setTryId] = useState(null);
   const tried = tryId ? itemById(tryId) : null;
   const preview = tried ? { ...av.look, [tried.slot]: tried.id } : av.look;
-  const list = ITEMS.filter((i) => i.slot === slot && i.price > 0);
+  const list = ITEMS.filter((i) => (slot === "plus" ? i.premium : i.slot === slot && i.price > 0 && !i.premium));
+  const plusLocked = (item) => item.premium && !av.premium;
 
   return (
     <div className="space-y-4">
@@ -104,7 +136,14 @@ function Shop({ av }) {
         <Avatar look={preview} skin={av.skin} idle size={100} />
       </div>
 
+      {slot === "plus" && <PlusBanner av={av} />}
+
       <div className="flex gap-2 overflow-x-auto pb-1">
+        <button onClick={() => setSlot("plus")} className={chip(slot === "plus")}>
+          <span className="inline-flex items-center gap-1">
+            <Crown className="w-3 h-3" /> Plus
+          </span>
+        </button>
         {SLOTS.map((s) => (
           <button key={s.id} onClick={() => setSlot(s.id)} className={chip(slot === s.id)}>
             {s.label}
@@ -115,7 +154,7 @@ function Shop({ av }) {
       <div className="grid grid-cols-3 gap-2">
         {list.map((item) => {
           const owned = av.owned.includes(item.id);
-          const locked = av.level < item.level;
+          const locked = av.level < item.level || plusLocked(item);
           return (
             <ItemTile
               key={item.id}
@@ -124,7 +163,13 @@ function Shop({ av }) {
               active={tryId === item.id}
               locked={locked && !owned}
               onClick={() => setTryId(item.id)}
-              badge={owned ? t("Байгаа ✓", "Owned ✓") : locked ? t(`Түв. ${item.level}`, `Lv. ${item.level}`) : <Price n={item.price} />}
+              badge={
+                owned
+                  ? t("Байгаа ✓", "Owned ✓")
+                  : av.level < item.level
+                    ? t(`Түв. ${item.level}`, `Lv. ${item.level}`)
+                    : <Price n={item.price} />
+              }
             />
           );
         })}
@@ -141,10 +186,12 @@ function Shop({ av }) {
         ) : (
           <button
             onClick={() => av.buy(tried.id) && setTryId(null)}
-            disabled={av.level < tried.level}
+            disabled={av.level < tried.level || plusLocked(tried)}
             className="w-full rounded-2xl py-3.5 font-extrabold bb-grad-sos text-white active:scale-95 transition disabled:opacity-50"
           >
-            {av.level < tried.level
+            {plusLocked(tried)
+              ? t("Bloomy Plus хэрэгтэй · асран хамгаалагчаасаа асуугаарай", "Needs Bloomy Plus · ask your guardian")
+              : av.level < tried.level
               ? t(`${tried.level}-р түвшинд нээгдэнэ`, `Unlocks at level ${tried.level}`)
               : t(`«${tried.name}» авах · ${tried.price} дэлбээ`, `Buy "${tried.name}" · ${tried.price} petals`)}
           </button>
