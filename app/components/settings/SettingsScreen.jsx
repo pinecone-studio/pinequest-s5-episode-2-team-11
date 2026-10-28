@@ -3,6 +3,7 @@
 import { Languages, Moon, Sun, Lock, Unlock, ShieldCheck } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import { useTheme } from "../../../context/ThemeContext";
+import { useLang } from "../../../context/LanguageContext";
 import { useLang, useT } from "../../../context/LanguageContext";
 import Card from "../ui/Card";
 import PageHeader from "../ui/PageHeader";
