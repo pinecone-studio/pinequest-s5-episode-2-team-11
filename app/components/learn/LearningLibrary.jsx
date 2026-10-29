@@ -37,11 +37,8 @@ import {
 } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import { girlCategories, guardianCategories } from "../../../lib/learnContent";
-import { supabase } from "../../../lib/supabase";
-import { guardianMaleGuide } from "../../../src/content/guardian-male-guide";
 import GuardianQuizSheet from "./GuardianQuizSheet";
 import EmotionCoachingLesson from "./EmotionCoachingLesson";
-import GuardianMaleGuide from "./GuardianMaleGuide";
 import Card from "../ui/Card";
 import MangaShelf from "./MangaShelf";
 import { t } from "../../../lib/i18n";
@@ -55,8 +52,6 @@ const TONES = {
   rose: { background: "#F8D3E6", color: "#962D66" },
   alert: { background: "#FDE7F1", color: "#9F1239" },
 };
-
-const PENDING_GUIDE_PREFIX = "bloom:pending-guardian-guide:";
 
 const TOPIC_TILE_STYLES = {
   what: { background: "#DC3F6B", Icon: Droplets },
@@ -269,12 +264,9 @@ function TopicDetail({ category, index, total, counter, onBack, onNext, nextLabe
 }
 
 export default function LearningLibrary({ onMoreMaterials }) {
-  const { view, profile, session, guardianGender } = useFamily();
+  const { view, profile, session } = useFamily();
   const isGirl = view === "daughter";
   const [selectedId, setSelectedId] = useState(null);
-  const [guideCompletedIds, setGuideCompletedIds] = useState([]);
-  const [guideError, setGuideError] = useState("");
-  const [showMaleGuide, setShowMaleGuide] = useState(false);
   const categories = isGirl ? girlCategories : guardianCategories;
   const selectedIndex = categories.findIndex((category) => category.id === selectedId);
   const selected = selectedIndex >= 0 ? categories[selectedIndex] : null;
@@ -306,75 +298,6 @@ export default function LearningLibrary({ onMoreMaterials }) {
   };
   const readCount = isGirl ? categories.filter((c) => readIds.includes(c.id)).length : 0;
 
-  useEffect(() => {
-    if (isGirl || guardianGender !== "male" || !profile?.id) {
-      setGuideCompletedIds([]);
-      setGuideError("");
-      return;
-    }
-
-    let cancelled = false;
-    const loadProgress = async () => {
-      const email = session?.user?.email?.trim().toLowerCase();
-      const pendingKey = email ? `${PENDING_GUIDE_PREFIX}${email}` : null;
-      let pendingIds = [];
-      if (pendingKey) {
-        try {
-          const stored = JSON.parse(window.localStorage.getItem(pendingKey) ?? "[]");
-          if (Array.isArray(stored)) pendingIds = stored.filter((id) => guardianMaleGuide.some((card) => card.id === id));
-        } catch {
-          if (!cancelled) setGuideError(t("Түр хадгалсан явцыг уншиж чадсангүй.", "Couldn't read the saved progress."));
-        }
-      }
-
-      if (pendingIds.length) {
-        const { error } = await supabase.from("guardian_guide_progress").upsert(
-          pendingIds.map((cardId) => ({ user_id: profile.id, card_id: cardId })),
-          { onConflict: "user_id,card_id" },
-        );
-        if (error) {
-          if (!cancelled) setGuideError(t("Танилцуулгын явцыг хадгалж чадсангүй. Дахин оролдоно уу.", "Couldn't save the intro progress. Please try again."));
-        } else if (pendingKey) {
-          try {
-            window.localStorage.removeItem(pendingKey);
-          } catch {
-            if (!cancelled) setGuideError(t("Хадгалсан танилцуулгын түр хуулбарыг арилгаж чадсангүй.", "Couldn't clear the saved intro copy."));
-          }
-        }
-      }
-
-      const { data, error } = await supabase
-        .from("guardian_guide_progress")
-        .select("card_id")
-        .eq("user_id", profile.id);
-      if (cancelled) return;
-      if (error) {
-        setGuideError(t("Картын явцыг ачаалж чадсангүй. Supabase тохиргоогоо шалгаарай.", "Couldn't load card progress. Check your Supabase setup."));
-        return;
-      }
-      setGuideCompletedIds((data ?? []).map((row) => row.card_id));
-    };
-
-    loadProgress().catch(() => {
-      if (!cancelled) setGuideError(t("Картын явцыг ачаалж чадсангүй. Дахин оролдоно уу.", "Couldn't load card progress. Please try again."));
-    });
-    return () => { cancelled = true; };
-  }, [guardianGender, isGirl, profile?.id, session?.user?.email]);
-
-  const completeGuideCard = async (cardId) => {
-    if (!profile?.id || !guardianMaleGuide.some((card) => card.id === cardId)) return false;
-    const { error } = await supabase
-      .from("guardian_guide_progress")
-      .upsert({ user_id: profile.id, card_id: cardId }, { onConflict: "user_id,card_id" });
-    if (error) {
-      setGuideError(t("Картын явцыг хадгалж чадсангүй. Дахин оролдоно уу.", "Couldn't save card progress. Please try again."));
-      return false;
-    }
-    setGuideCompletedIds((current) => current.includes(cardId) ? current : [...current, cardId]);
-    setGuideError("");
-    return true;
-  };
-
   const openNext = () => {
     if (selectedIndex < categories.length - 1) openTopic(categories[selectedIndex + 1].id);
   };
@@ -389,16 +312,6 @@ export default function LearningLibrary({ onMoreMaterials }) {
         onBack={() => setSelectedId(null)}
         onNext={selectedIndex < categories.length - 1 ? openNext : null}
         nextLabel="Дараагийн сэдэв →"
-      />
-    );
-  }
-
-  if (showMaleGuide) {
-    return (
-      <GuardianMaleGuide
-        completedIds={guideCompletedIds}
-        onComplete={completeGuideCard}
-        onClose={() => setShowMaleGuide(false)}
       />
     );
   }
@@ -426,32 +339,6 @@ export default function LearningLibrary({ onMoreMaterials }) {
           <span>{isGirl ? t("Хэрэглэлийн заавар, хооллолтын зөвлөгөө", "Supply guide and nutrition tips") : t("Нэмэлт зөвлөгөө, AI туслах", "More tips and AI helper")}</span>
           <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" aria-hidden="true" />
         </button>
-      )}
-
-      {!isGirl && (
-        <>
-          {guardianGender === "male" && guideCompletedIds.length < guardianMaleGuide.length && (
-            <Card className="!p-4">
-              <button
-                type="button"
-                onClick={() => setShowMaleGuide(true)}
-                className="w-full text-left"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-black text-slate-800">{t("Аавуудад ·", "For dads ·")} {guideCompletedIds.length}/{guardianMaleGuide.length}</p>
-                    <p className="mt-1 text-xs font-semibold text-slate-500">{t("Танилцуулгын картаа үргэлжлүүлэн үзээрэй", "Continue your intro cards")}</p>
-                  </div>
-                  <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" aria-hidden="true" />
-                </div>
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-label={t("Аавуудад зориулсан картын явц", "Progress of the cards for dads")} aria-valuemin={0} aria-valuemax={guardianMaleGuide.length} aria-valuenow={guideCompletedIds.length}>
-                  <div className="h-full rounded-full bb-grad-guide transition-all" style={{ width: `${(guideCompletedIds.length / guardianMaleGuide.length) * 100}%` }} />
-                </div>
-              </button>
-              {guideError && <p role="status" className="mt-2 text-xs font-semibold text-rose-700">{guideError}</p>}
-            </Card>
-          )}
-        </>
       )}
 
       {isGirl && (

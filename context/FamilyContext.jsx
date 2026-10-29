@@ -64,7 +64,6 @@ export function FamilyProvider({ children }) {
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(supabaseConfigured);
   const [profile, setProfile] = useState(null);
-  const [guardianGender, setGuardianGender] = useState(null);
   const [family, setFamily] = useState(null); // { id, code }
   const [members, setMembers] = useState([]); // гэр бүлийн бүх профайл
   const [activeChildId, setActiveChildIdState] = useState(null);
@@ -170,26 +169,6 @@ export function FamilyProvider({ children }) {
 
   /* ================= Тооцоолсон утгууд ================= */
   const view = profile?.role ?? null; // "mother" | "daughter"
-  useEffect(() => {
-    if (view !== "mother" || !userId) {
-      setGuardianGender(null);
-      return;
-    }
-    let cancelled = false;
-    supabase.rpc("get_my_guardian_gender")
-      .then(({ data, error }) => {
-        if (cancelled) return;
-        if (error) {
-          setToast(t("Хүйсийн мэдээлэл ачаалж чадсангүй. Дахин оролдоно уу.", "Couldn't load gender info. Please try again."));
-          return;
-        }
-        setGuardianGender(data ?? "unspecified");
-      })
-      .catch(() => {
-        if (!cancelled) setToast(t("Хүйсийн мэдээлэл ачаалж чадсангүй. Дахин оролдоно уу.", "Couldn't load gender info. Please try again."));
-      });
-    return () => { cancelled = true; };
-  }, [userId, view]);
 
   const guardianProfile = members.find((member) => member.role === "mother") ?? null;
   const guardianName = guardianProfile?.display_name || null;
@@ -745,7 +724,7 @@ export function FamilyProvider({ children }) {
   }, [view, tab, momUnread, momInbox]);
 
   /* ================= Нэвтрэлтийн үйлдлүүд ================= */
-  const signUp = async ({ role, guardianGender: selectedGuardianGender, name, birthDate, email, password }) => {
+  const signUp = async ({ role, name, birthDate, email, password }) => {
     // Сесс үүсэхээс өмнө тэмдэглэнэ — тэгэхгүй бол дүр бүтээх алхам алгасагдана
     try {
       if (role === "daughter") window.localStorage.setItem(AVATAR_SETUP_KEY, "1");
@@ -756,7 +735,6 @@ export function FamilyProvider({ children }) {
       options: {
         data: {
           role,
-          guardian_gender: role === "mother" ? selectedGuardianGender ?? "unspecified" : "unspecified",
           display_name: name.trim(),
           birth_date: birthDate || null,
         },
@@ -1306,23 +1284,6 @@ export function FamilyProvider({ children }) {
     return true;
   };
 
-  const updateGuardianGender = async (gender) => {
-    if (view !== "mother" || !["female", "male", "unspecified"].includes(gender)) return false;
-    try {
-      const { data, error } = await supabase.rpc("set_my_guardian_gender", { p_gender: gender });
-      if (error) {
-        setToast(t("Хүйсийн мэдээлэл хадгалж чадсангүй. Дахин оролдоно уу.", "Couldn't save gender info. Please try again."));
-        return false;
-      }
-      setGuardianGender(data);
-      setToast(t("Хүйсийн мэдээлэл шинэчлэгдлээ.", "Gender info updated."));
-      return true;
-    } catch {
-      setToast(t("Хүйсийн мэдээлэл хадгалж чадсангүй. Дахин оролдоно уу.", "Couldn't save gender info. Please try again."));
-      return false;
-    }
-  };
-
   const updateEmail = async (email) => {
     const nextEmail = email.trim();
     if (!nextEmail || nextEmail === session?.user?.email) return true;
@@ -1365,12 +1326,10 @@ export function FamilyProvider({ children }) {
     loadError,
     reload: () => loadAll(),
     profile,
-    guardianGender: view === "mother" ? guardianGender : null,
     signUp,
     signIn,
     signOut,
     updateName,
-    updateGuardianGender,
     updateEmail,
     birthDate,
     // гэр бүл

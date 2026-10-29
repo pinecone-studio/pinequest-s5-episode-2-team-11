@@ -6,7 +6,7 @@
  * Audio is in the private "guardian-stories" bucket; GET returns 5-minute signed URLs only.
  */
 import { notify } from "../../../lib/notify";
-import { relationWord } from "../../../lib/relation";
+import { GUARDIAN_RELATION } from "../../../lib/relation";
 import { authenticatedProfile } from "../../../lib/supabase-admin";
 
 export const runtime = "nodejs";
@@ -56,8 +56,7 @@ export async function POST(request: Request) {
   const { error } = await admin.from("guardian_stories").insert({ id, guardian_id: profile.id, daughter_id: daughter.id, family_id: profile.family_id, ...row });
   if (error) return json({ error: "save_failed" }, 500);
 
-  const { data: me } = await admin.from("profiles").select("guardian_gender").eq("id", profile.id).maybeSingle();
-  await notify(admin, "guardian_story", [daughter.id], { senderId: profile.id, senderName: profile.display_name, relation: relationWord(me?.guardian_gender) });
+  await notify(admin, "guardian_story", [daughter.id], { senderId: profile.id, senderName: profile.display_name, relation: GUARDIAN_RELATION });
   return json({ ok: true, id });
 }
 
@@ -70,8 +69,6 @@ export async function GET(request: Request) {
     ? await query.eq("guardian_id", profile.id)
     : await query.eq("daughter_id", profile.id).eq("hidden", false);
 
-  const guardianIds = [...new Set((rows ?? []).map((row) => row.guardian_id))];
-  const { data: guardians } = guardianIds.length ? await admin.from("profiles").select("id, guardian_gender").in("id", guardianIds) : { data: [] };
   const stories = await Promise.all((rows ?? []).map(async (row) => {
     const signed = row.audio_path ? await admin.storage.from(BUCKET).createSignedUrl(row.audio_path, SIGNED_SECONDS) : null;
     return {
@@ -81,7 +78,7 @@ export async function GET(request: Request) {
       durationSec: row.duration_sec,
       createdAt: row.created_at,
       audioUrl: signed?.data?.signedUrl ?? null,
-      relation: relationWord((guardians ?? []).find((guardian) => guardian.id === row.guardian_id)?.guardian_gender),
+      relation: GUARDIAN_RELATION,
     };
   }));
   return json({ stories });

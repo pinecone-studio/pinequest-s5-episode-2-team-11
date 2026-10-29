@@ -1,5 +1,5 @@
-/** Relation word for a guardian, from profiles.guardian_gender (read on the server only). */
-export const relationWord = (gender: string | null | undefined) => (gender === "female" ? "Ээж" : gender === "male" ? "Аав" : "Асран хамгаалагч");
+/** Relation word for a guardian. The app no longer asks for gender, so it is always neutral. */
+export const GUARDIAN_RELATION = "Асран хамгаалагч";
 
 // Mongolian case endings follow vowel harmony, so they are spelled out per word.
 const GENITIVE: Record<string, string> = { Ээж: "Ээжийн", Аав: "Аавын", "Асран хамгаалагч": "Асран хамгаалагчийн" };

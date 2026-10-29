@@ -7,10 +7,8 @@ import RoleSelect from "./RoleSelect";
 import InstallGuide from "./InstallGuide";
 import BloomyLogo from "../ui/BloomyLogo";
 import { toDateStr } from "../../../lib/dates";
-import GuardianMaleGuide from "../learn/GuardianMaleGuide";
 import { t } from "../../../lib/i18n";
 
-const PENDING_GUIDE_PREFIX = "bloom:pending-guardian-guide:";
 // Шинэ бүртгэлийн нууц үгийн доод урт (хуучин 6 тэмдэгттэй бүртгэлүүд нэвтэрсээр байна)
 const MIN_SIGNUP_PASSWORD = 8;
 
@@ -19,8 +17,6 @@ export default function AuthScreen() {
   const { signUp, signIn } = useFamily();
   const [stage, setStage] = useState("install");
   const [role, setRole] = useState(null);
-  const [guardianGender, setGuardianGender] = useState(null);
-  const [onboardingGuideCompleted, setOnboardingGuideCompleted] = useState([]);
   const [name, setName] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [email, setEmail] = useState("");
@@ -46,31 +42,15 @@ export default function AuthScreen() {
     return (
       <RoleSelect
         onBack={() => setStage("install")}
-        onPick={(r, selectedGuardianGender = null) => {
+        onPick={(r) => {
           setRole(r);
-          setGuardianGender(selectedGuardianGender);
-          setOnboardingGuideCompleted([]);
-          setStage(r === "mother" && selectedGuardianGender === "male" ? "male-guide" : "signup");
+          setStage("signup");
           setMessage("");
         }}
         onLogin={() => {
           setStage("login");
           setMessage("");
         }}
-      />
-    );
-  }
-
-  if (stage === "male-guide") {
-    return (
-      <GuardianMaleGuide
-        onboarding
-        completedIds={onboardingGuideCompleted}
-        onComplete={(cardId) => {
-          setOnboardingGuideCompleted((current) => current.includes(cardId) ? current : [...current, cardId]);
-          return true;
-        }}
-        onClose={() => setStage("signup")}
       />
     );
   }
@@ -88,19 +68,9 @@ export default function AuthScreen() {
     if (!canSubmit || busy) return;
     setBusy(true);
     setMessage("");
-    if (isSignup && role === "mother" && guardianGender === "male" && onboardingGuideCompleted.length) {
-      try {
-        const key = `${PENDING_GUIDE_PREFIX}${email.trim().toLowerCase()}`;
-        const saved = JSON.parse(window.localStorage.getItem(key) ?? "[]");
-        const pending = Array.isArray(saved) ? saved : [];
-        window.localStorage.setItem(key, JSON.stringify([...new Set([...pending, ...onboardingGuideCompleted])]));
-      } catch {
-        setMessage(t("Танилцуулгын явцыг түр хадгалж чадсангүй. Зөвлөх хэсгээс картыг дахин үзэж болно.", "Couldn't save the intro progress. You can view the cards again in the guide section."));
-      }
-    }
     let err;
     if (isSignup) {
-      err = await signUp({ role, guardianGender, name, birthDate: isDaughter ? birthDate : null, email, password });
+      err = await signUp({ role, name, birthDate: isDaughter ? birthDate : null, email, password });
       if (err === "existing_user") {
         setStage("login");
         err = await signIn({ email, password });

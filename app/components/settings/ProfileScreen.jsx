@@ -16,7 +16,6 @@ import { t } from "../../../lib/i18n";
 
 export default function ProfileScreen() {
   const { view, signOut } = useFamily();
-  const { view } = useFamily();
   const { openTutorial } = useOnboarding();
   const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
