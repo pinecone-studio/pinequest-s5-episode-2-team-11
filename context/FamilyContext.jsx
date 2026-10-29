@@ -308,6 +308,7 @@ export function FamilyProvider({ children }) {
     periods: cyclePeriods,
     today,
     hasHadPeriod: Boolean(lastPeriodStart) && !noPeriodYet,
+    periodLength,
   });
   const needsCycleSetup = view === "daughter" && !lastPeriodStart && !profile?.no_period_yet;
 
@@ -1196,6 +1197,16 @@ export function FamilyProvider({ children }) {
     }
 
     if (!kitOwnerId) return false;
+    const reportKitSaveError = (operation, error) => {
+      const details = [error?.message, error?.details, error?.hint].filter(Boolean).join(" ");
+      console.warn(`[kit_checks] ${operation} failed:`, error?.code ?? "unknown", details || error?.statusText || "No error details returned");
+      const schemaOrPolicyMissing = (/child_id/i.test(details) && ["42703", "PGRST204", "PGRST200"].includes(error?.code))
+        || error?.code === "42501"
+        || /row-level security|permission denied/i.test(details);
+      setToast(schemaOrPolicyMissing
+        ? t("Цүнх хадгалахад Supabase-ийн олон хүүхдийн тохиргоо дутуу байна. supabase/multi-child-guardian.sql migration-ийг ажиллуулаарай.", "Bag saving needs the multi-child Supabase migration. Run supabase/multi-child-guardian.sql.")
+        : t("Цүнхний жагсаалтыг хадгалж чадсангүй. Дахин оролдоно уу.", "Couldn't save the bag list. Try again."));
+    };
     const currentIds = kitRows.filter((row) => row.child_id === kitOwnerId).map((row) => row.item_id);
     const removeIds = currentIds.filter((id) => !nextIds.includes(id));
     const addIds = nextIds.filter((id) => !currentIds.includes(id));
@@ -1208,7 +1219,7 @@ export function FamilyProvider({ children }) {
         .eq("child_id", kitOwnerId)
         .in("item_id", removeIds);
       if (error) {
-        setToast(t("Цүнхний жагсаалтыг хадгалж чадсангүй. Дахин оролдоно уу.", "Couldn't save the bag list. Try again."));
+        reportKitSaveError("delete", error);
         return false;
       }
     }
@@ -1219,7 +1230,7 @@ export function FamilyProvider({ children }) {
         .insert(addIds.map((item_id) => ({ family_id: familyId, child_id: kitOwnerId, item_id })));
       if (error) {
         await loadKit(familyId);
-        setToast(t("Цүнхний жагсаалтыг хадгалж чадсангүй. Дахин оролдоно уу.", "Couldn't save the bag list. Try again."));
+        reportKitSaveError("insert", error);
         return false;
       }
     }

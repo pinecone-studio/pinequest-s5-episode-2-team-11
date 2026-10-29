@@ -86,7 +86,7 @@ export default function MotherCalendar() {
   const childStarts = [...new Set([lastPeriodStart, ...(periodLogs ?? []).filter((row) => row.status === "confirmed").map((row) => row.log_date)].filter(Boolean))].sort();
   const pendingDates = new Set((periodLogs ?? []).filter((row) => row.status === "pending").map((row) => row.log_date));
   const periodDays = periodDayKeys(childStarts, periodLength, today);
-  const prediction = predictPeriodRange({ starts: childStarts, today, hasHadPeriod: Boolean(lastPeriodStart) && !noPeriodYet });
+  const prediction = predictPeriodRange({ starts: childStarts, today, hasHadPeriod: Boolean(lastPeriodStart) && !noPeriodYet, periodLength });
   const rangeDates = useMemo(() => {
     const keys = new Set();
     if (!prediction.rangeStart || !prediction.rangeEnd) return keys;

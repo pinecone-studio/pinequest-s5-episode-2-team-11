@@ -1,16 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { X } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import { supabase } from "../../../lib/supabase";
-import BottomSheet from "../ui/BottomSheet";
 import { t } from "../../../lib/i18n";
 
-/**
- * Private note for one day. The text is stored in day_logs.note and only read
- * through /api/private-notes (PIN-checked when a PIN is set) — never through
- * log_entries, the timeline, or anything a guardian can call.
- */
+const formatDiaryDate = (date) => {
+  const [year, month, day] = date.split("-").map(Number);
+  return t(`${year} оны ${month} сарын ${day}`, new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric" }).format(new Date(year, month - 1, day)));
+};
+
+/** PIN-protected personal note for a selected calendar day. */
 export default function PrivateNoteSheet({ date, onClose }) {
   const { session, noteUnlockToken, unlockPrivateNotes, setToast } = useFamily();
   const [loading, setLoading] = useState(true);
@@ -24,31 +25,27 @@ export default function PrivateNoteSheet({ date, onClose }) {
   const post = (body, token) => fetch("/api/private-notes", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token ?? ""}`, ...(token ? { "x-note-unlock-token": token } : {}) },
-    body: JSON.stringify(body),
-    cache: "no-store",
+    body: JSON.stringify(body), cache: "no-store",
   });
-
-  const fetchNote = async (token) => {
-    const response = await post({ action: "note", date }, token);
-    const result = await response.json();
-    if (response.ok) setNote(result.note ?? "");
-    else if (response.status === 423) setPinRequired(true);
-    else setError(result.error || t("Тэмдэглэл ачаалж чадсангүй.", "Couldn't load the note."));
-  };
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const response = await post({ action: "status", date });
-        const lock = response.ok ? await response.json() : { enabled: false, hasNote: false };
+        const status = response.ok ? await response.json() : { enabled: false, hasNote: false };
         if (cancelled) return;
-        setPinEnabled(Boolean(lock.enabled));
-        const needsPin = Boolean(lock.enabled && lock.hasNote && !noteUnlockToken);
+        setPinEnabled(Boolean(status.enabled));
+        const needsPin = Boolean(status.enabled && status.hasNote && !noteUnlockToken);
         setPinRequired(needsPin);
-        if (!needsPin && lock.hasNote) await fetchNote(noteUnlockToken);
-      } catch (e) {
-        if (!cancelled) setError(t("Тэмдэглэл ачаалж чадсангүй.", "Couldn't load the note."));
+        if (!needsPin && status.hasNote) {
+          const response = await post({ action: "note", date }, noteUnlockToken);
+          const result = await response.json();
+          if (!cancelled && response.ok) setNote(result.note ?? "");
+          else if (!cancelled && response.status === 423) setPinRequired(true);
+        }
+      } catch (loadError) {
+        if (!cancelled) console.warn("[private-notes] existing note could not be loaded:", loadError);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -67,46 +64,59 @@ export default function PrivateNoteSheet({ date, onClose }) {
       if (!response.ok) throw new Error(result.error || t("PIN шалгаж чадсангүй.", "Couldn't check the PIN."));
       unlockPrivateNotes(result.token);
       setPinRequired(false); setPin("");
-      await fetchNote(result.token);
-    } catch (e) { setError(e.message); }
+      const noteResponse = await post({ action: "note", date }, result.token);
+      const noteResult = await noteResponse.json();
+      if (!noteResponse.ok) throw new Error(noteResult.error || t("Тэмдэглэл ачаалж чадсангүй.", "Couldn't load the note."));
+      setNote(noteResult.note ?? "");
+    } catch (unlockError) { setError(unlockError.message); }
     finally { setBusy(false); }
   };
 
   const save = async () => {
-    if (busy) return;
+    if (busy || loading || pinRequired) return;
     setBusy(true); setError("");
-    const { error: saveError } = await supabase.rpc("save_my_day_note", { p_log_date: date, p_note: note.trim() || null });
-    setBusy(false);
-    if (saveError) {
+    try {
+      const { error: saveError } = await supabase.rpc("save_my_day_note", { p_log_date: date, p_note: note.trim() || null });
+      if (saveError) throw saveError;
+      setToast(t("Тэмдэглэл хадгаллаа", "Diary entry saved"));
+      onClose();
+    } catch (saveError) {
       console.error("[day_logs] note:", saveError);
+      setError(t("Хадгалж чадсангүй. Supabase-ийн log-entries migration-ийг шалгана уу.", "Couldn't save. Check the Supabase log-entries migration."));
       setToast(t("Хадгалж чадсангүй. Дахин оролдоно уу.", "Couldn't save. Please try again."));
-      return;
+    } finally {
+      setBusy(false);
     }
-    setToast(t("Хадгаллаа", "Saved"));
+  };
+
+  const close = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
     onClose();
   };
 
   return (
-    <BottomSheet title={t("🔒 Нууц тэмдэглэл", "🔒 Private note")} onClose={onClose} layer={90}>
-      {loading ? (
-        <p className="py-6 text-center text-sm font-bold text-slate-400">{t("Ачаалж байна…", "Loading…")}</p>
-      ) : pinRequired ? (
-        <form onSubmit={unlock} className="space-y-2 pb-2">
-          <p className="text-xs font-semibold text-slate-500">{t("Хадгалсан тэмдэглэлээ үзэхийн тулд PIN-ээ оруулна уу.", "Enter your PIN to see your saved note.")}</p>
-          <div className="flex gap-2">
-            <input aria-label={t("Нууц тэмдэглэлийн PIN", "Private note PIN")} inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={pin} onChange={(event) => setPin(event.target.value.replace(/\D/g, ""))} className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm" placeholder="PIN" />
-            <button type="submit" disabled={busy} className="rounded-xl bb-bg-E0679F px-4 py-2 text-xs font-extrabold text-white disabled:opacity-50">{busy ? t("Шалгаж байна…", "Checking…") : t("Нээх", "Open")}</button>
-          </div>
-          {error && <p role="alert" className="text-sm font-bold text-rose-600">{error}</p>}
-        </form>
-      ) : (
-        <div className="space-y-2 pb-2">
-          <textarea value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} rows={4} placeholder={t("Өөр юу болсон бэ?", "What else happened?")} className="w-full resize-none rounded-2xl border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-700 outline-none focus:border-pink-300" />
-          <p className="text-xs font-semibold text-slate-400">{pinEnabled ? t("PIN-ээр хамгаалагдсан. Зөвхөн чамд харагдана.", "PIN protected. Only you can see it.") : t("Зөвхөн чамд харагдана", "Only you can see this")}</p>
-          {error && <p role="alert" className="text-sm font-bold text-rose-600">{error}</p>}
-          <button type="button" onClick={save} disabled={busy || Boolean(error)} className="w-full rounded-2xl bb-bg-E0679F py-3.5 text-sm font-extrabold text-white disabled:opacity-60">{busy ? t("Хадгалж байна…", "Saving…") : t("Хадгалах", "Save")}</button>
+    <div className="diary-overlay" style={{ zIndex: 120 }} onClick={onClose}>
+      <section role="dialog" aria-modal="true" aria-label={t("Өдрийн тэмдэглэл", "Daily diary")} onClick={(event) => event.stopPropagation()} className="diary-dialog">
+        <div className="diary-book">
+          <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={close} aria-label={t("Хаах", "Close")} className="diary-close"><X className="h-5 w-5" /></button>
+          <time className="diary-date" dateTime={date}>{formatDiaryDate(date)}</time>
+          {loading ? <p className="diary-status">{t("Ачаалж байна…", "Loading…")}</p> : pinRequired ? (
+            <form onSubmit={unlock} className="diary-pin-form">
+              <p>{t("Өмнөх тэмдэглэлээ нээхийн тулд PIN-ээ оруулна уу.", "Enter your PIN to open this saved entry.")}</p>
+              <input aria-label="PIN" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={pin} onChange={(event) => setPin(event.target.value.replace(/\D/g, ""))} placeholder="PIN" />
+              <button type="submit" disabled={busy}>{busy ? t("Шалгаж байна…", "Checking…") : t("Нээх", "Open")}</button>
+            </form>
+          ) : (
+            <textarea autoFocus value={note} onChange={(event) => setNote(event.target.value)} maxLength={500} placeholder={t("Энд дарж бичээрэй…", "Tap here and start writing…")} aria-label={t("Өдрийн тэмдэглэлээ бичих", "Write your diary entry")} />
+          )}
+          {error && <p role="alert" className="diary-error">{error}</p>}
         </div>
-      )}
-    </BottomSheet>
+        <footer className="diary-footer">
+          <span>{t("500 хүртэлх тэмдэгт", "Up to 500 characters")}{pinEnabled ? ` · ${t("PIN хамгаалалттай", "PIN protected")}` : ` · ${t("Зөвхөн чамд харагдана", "Only you can see this")}`}</span>
+          <button type="button" onClick={save} disabled={busy || loading || pinRequired} className="diary-save">{busy ? t("Хадгалж байна…", "Saving…") : t("Хадгалах", "Save entry")}</button>
+        </footer>
+      </section>
+    </div>
   );
 }

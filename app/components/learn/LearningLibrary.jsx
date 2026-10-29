@@ -49,8 +49,8 @@ import BottomSheet from "../ui/BottomSheet";
 import { usePremium } from "../avatar/usePremium";
 import { t } from "../../../lib/i18n";
 
-// Охины 4–9-р сэдэв зөвхөн Bloomy Plus эрхтэй үед нээгдэнэ (эхний 3 нь үнэгүй)
-const FREE_TOPIC_COUNT = 3;
+// Охины 5-аас хойших сэдэв Bloomy Plus эрхтэй үед нээгдэнэ (эхний 4 нь үнэгүй)
+const FREE_TOPIC_COUNT = 4;
 
 const TONES = {
   lilac: { background: "#E9DDFC", color: "#6A3BB8" },
@@ -68,6 +68,7 @@ const TOPIC_TILE_STYLES = {
   what: { background: "#DC3F6B", Icon: Droplets },
   when: { background: "#A64FAD", Icon: Venus },
   cycle: { background: "#5B68D8", Icon: Moon },
+  pain: { background: "#D63D4D", Icon: HeartPulse },
   products: { background: "#575BC8", Icon: LockKeyhole },
   kit: { background: "#B8740C", Icon: BookOpen },
   hygiene: { background: "#1F7FB0", Icon: Sparkles },
@@ -226,10 +227,10 @@ function TopicDetail({ category, index, total, counter, onBack, onNext, nextLabe
         {category.isWarning && category.warningText && (
           <div
             role="note"
-            className="flex items-start gap-3 rounded-2xl border-2 p-3 text-sm font-extrabold leading-relaxed"
-            style={{ borderColor: accent, backgroundColor: `${accent}1F` }}
+            className={`flex items-start gap-3 rounded-2xl p-3 text-sm font-extrabold leading-relaxed ${category.warningTone === "soft" ? "border bb-border-F8D3E6 bb-bg-FDE7F1-50" : "border-2"}`}
+            style={category.warningTone === "soft" ? undefined : { borderColor: accent, backgroundColor: `${accent}1F` }}
           >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-white" style={{ backgroundColor: accent }}>
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-white" style={{ backgroundColor: category.warningTone === "soft" ? "#B83B7E" : accent }}>
               <TriangleAlert className="h-4 w-4" aria-hidden="true" />
             </span>
             <p className="text-slate-700">{category.warningText}</p>
