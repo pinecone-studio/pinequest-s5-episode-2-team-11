@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Pencil, LogOut } from "lucide-react";
+import { Check, Copy, LogOut, Pencil, Share2, Users } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import Card from "../ui/Card";
 import SectionTitle from "../ui/SectionTitle";
 import PageHeader from "../ui/PageHeader";
 import MyFriendCode from "../friends/MyFriendCode";
-import Avatar from "../avatar/Avatar";
-import FamilyLinkingSection from "./FamilyLinkingSection";
+import FamilyMemberPhoto from "../avatar/FamilyMemberPhoto";
 
 export default function ProfileScreen() {
   const {
@@ -182,15 +181,7 @@ export default function ProfileScreen() {
                       aria-pressed={selectedDaughterId === daughter.id}
                       className={`flex items-center gap-2 rounded-full py-2 pl-2 pr-4 text-sm font-extrabold transition ${selectedDaughterId === daughter.id ? "bb-bg-E0679F text-white" : "bb-bg-FFF7FB bb-text-B83B7E"}`}
                     >
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/90">
-                        <Avatar
-                          look={daughter.avatar_look}
-                          skin={daughter.avatar_skin}
-                          crop="12 8 96 96"
-                          size={36}
-                          label={`${daughter.display_name || "Охин"}-ы дүр`}
-                        />
-                      </span>
+                      <FamilyMemberPhoto member={daughter} />
                       <span>{daughter.display_name || "Охин"}</span>
                     </button>
                   ))}
@@ -282,7 +273,6 @@ export default function ProfileScreen() {
       </Card>
 
       <MyFriendCode />
-      <FamilyLinkingSection />
       <button
         type="button"
         onClick={signOut}

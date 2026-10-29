@@ -1,6 +1,7 @@
 "use client";
 
 import { useFamily } from "../../../context/FamilyContext";
+import FamilyMemberPhoto from "../avatar/FamilyMemberPhoto";
 
 /** 2+ охинтой асран хамгаалагч аль охиныхоо мэдээллийг харахаа сонгоно (бүх таб дээр). */
 export default function ChildSwitcher() {
@@ -17,8 +18,9 @@ export default function ChildSwitcher() {
             type="button"
             onClick={() => setActiveChildId(child.id)}
             aria-pressed={activeChildId === child.id}
-            className={`shrink-0 rounded-full px-4 py-2 text-sm font-extrabold transition ${activeChildId === child.id ? "bb-bg-E0679F text-white" : "bb-bg-FFF7FB text-slate-600"}`}
+            className={`flex shrink-0 items-center gap-2 rounded-full py-1.5 pl-2 pr-4 text-sm font-extrabold transition ${activeChildId === child.id ? "bb-bg-E0679F text-white" : "bb-bg-FFF7FB text-slate-600"}`}
           >
+            <FamilyMemberPhoto member={child} size={34} />
             {child.display_name || "Охин"}
           </button>
         ))}

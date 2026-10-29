@@ -13,7 +13,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_SUPPLIES, KIT_ITEMS, MOOD_FALLBACK, MOOD_OPTIONS, PHASES, SOS_STEPS, SOS_TOTAL } from "../lib/data";
-import { genitive, getMomNudges, getPhaseKey } from "../lib/helpers";
+import { addNameSuffix, genitive, getMomNudges, getPhaseKey } from "../lib/helpers";
 import { cycleStatus, formatTime, toDateStr } from "../lib/dates";
 import { predictPeriodRange } from "../lib/cycle";
 import { supabase, supabaseConfigured } from "../lib/supabase";
@@ -95,8 +95,6 @@ export function FamilyProvider({ children }) {
 
   /* ================= Дэлгэцийн төлөв ================= */
   const [tab, setTab] = useState("home");
-  const [learnTab, setLearnTab] = useState("pad");
-  const [selectedDaughterId, setSelectedDaughterId] = useState(null);
   const [learnTab, setLearnTab] = useState("topics");
   const [codeInput, setCodeInput] = useState("");
   const [codeError, setCodeError] = useState("");
@@ -143,36 +141,24 @@ export function FamilyProvider({ children }) {
 
   /* ================= Тооцоолсон утгууд ================= */
   const view = profile?.role ?? null; // "mother" | "daughter"
-  const daughters = view === "mother" ? members.filter((member) => member.role === "daughter" && member.id !== userId) : [];
-  useEffect(() => {
-    if (view !== "mother") return;
-    const savedId = familyId ? localStorage.getItem(`bloomy:selected-daughter:${familyId}`) : null;
-    setSelectedDaughterId((currentId) => {
-      if (daughters.some((daughter) => daughter.id === currentId)) return currentId;
-      if (daughters.some((daughter) => daughter.id === savedId)) return savedId;
-      return daughters[0]?.id ?? null;
-    });
-  }, [view, familyId, members]);
-  const selectDaughter = (id) => {
-    setSelectedDaughterId(id);
-    if (familyId) localStorage.setItem(`bloomy:selected-daughter:${familyId}`, id);
-  };
-  const daughterProfile = view === "daughter"
-    ? profile
-    : (daughters.find((daughter) => daughter.id === selectedDaughterId) ?? daughters[0] ?? null);
   const guardianProfile = members.find((member) => member.role === "mother") ?? null;
   const guardianName = guardianProfile?.display_name || null;
   const childProfiles = members.filter((member) => member.role === "daughter");
   useEffect(() => {
-    if (view !== "mother") {
-      setActiveChildId(null);
-      return;
-    }
-    setActiveChildId((current) => childProfiles.some((child) => child.id === current) ? current : (childProfiles[0]?.id ?? null));
-  }, [view, members]);
+    if (view !== "mother") return;
+    const savedId = familyId ? localStorage.getItem(`bloomy:selected-daughter:${familyId}`) : null;
+    setActiveChildId((current) => childProfiles.some((child) => child.id === current)
+      ? current
+      : childProfiles.some((child) => child.id === savedId) ? savedId : (childProfiles[0]?.id ?? null));
+  }, [view, familyId, members]);
   const activeChild = childProfiles.find((child) => child.id === activeChildId) ?? (view === "mother" ? childProfiles[0] ?? null : null);
-  const daughterProfile =
-    view === "daughter" ? profile : activeChild;
+  const daughters = view === "mother" ? childProfiles : [];
+  const selectedDaughterId = activeChild?.id ?? "";
+  const selectDaughter = (id) => {
+    setActiveChildId(id);
+    if (familyId) localStorage.setItem(`bloomy:selected-daughter:${familyId}`, id);
+  };
+  const daughterProfile = view === "daughter" ? profile : activeChild;
   const linked =
     view === "daughter"
       ? members.some((member) => member.role === "mother" && member.id !== userId)
@@ -226,9 +212,6 @@ export function FamilyProvider({ children }) {
     senderName: members.find((member) => member.id === n.sender_id)?.display_name ?? "",
     recipientName: members.find((member) => member.id === n.recipient_id)?.display_name ?? "",
   }));
-  const momInbox = view === "mother" ? inbox : [];
-  const teenInbox = view === "daughter" ? inbox : [];
-  const inbox = notifications.map((n) => ({ ...n, time: formatTime(n.created_at) }));
   const momInbox = view === "mother"
     ? inbox.filter((message) => message.recipient_role === "mother" && (message.sender_id === activeChild?.id || !message.sender_id))
     : [];
@@ -598,18 +581,10 @@ export function FamilyProvider({ children }) {
       } else {
         await loadNotifications();
       }
-      if (!familyId || !recipientId) return false;
-      const { error } = await supabase
-        .from("notifications")
-        .insert({ family_id: familyId, sender_id: userId, recipient_id: recipientId, recipient_role: recipientRole, kind, text });
-      if (error) setToast("Илгээж чадсангүй. Интернэтээ шалгаарай.");
       return !error;
     },
     [familyId, userId, loadNotifications],
   );
-  const sendToMom = (text, kind, aboutId = null) =>
-    notify("mother", text, aboutId ? `target:${aboutId}:${kind}` : kind);
-  const sendToTeen = (text, kind = "care") => notify("daughter", text, kind, daughterProfile?.id ?? null);
   const guardianId = view === "mother" ? userId : members.find((member) => member.role === "mother")?.id;
   const sendToMom = (text, kind) => notify("mother", text, kind, guardianId);
   const sendToTeen = (text, kind = "care") => notify("daughter", text, kind, view === "mother" ? activeChild?.id : null);
@@ -938,7 +913,7 @@ export function FamilyProvider({ children }) {
   const markNudgeDone = async () => {
     setNudgesDone((p) => [...p, currentNudge]);
     await sendToTeen("Ээж чамд зориулж жаахан халамж бэлдлээ 💗", "care");
-    setToast(`${daughterName}-д мэдэгдэл очлоо 🌸`);
+    setToast(`${addNameSuffix(daughterName, "д")}-д мэдэгдэл очлоо 🌸`);
     setTimeout(fetchNudge, 500);
   };
 

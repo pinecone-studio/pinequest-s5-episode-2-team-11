@@ -13,10 +13,10 @@ import { useFamily } from "../../../context/FamilyContext";
 import { supabase } from "../../../lib/supabase";
 import { askAi } from "../../../lib/ai-client";
 import { toDateStr } from "../../../lib/dates";
+import { genitive } from "../../../lib/helpers";
 import { periodDayKeys, predictPeriodRange } from "../../../lib/cycle";
 import CycleRing from "../daughter/CycleRing";
 import CycleLegend from "../daughter/CycleLegend";
-import { genitive } from "../../../lib/helpers";
 import Card from "../ui/Card";
 import PageHeader from "../ui/PageHeader";
 import SectionTitle from "../ui/SectionTitle";
@@ -209,20 +209,6 @@ export default function MotherCalendar() {
               {aiError && <p className="mt-2 text-xs font-semibold bb-text-7C4DCC">{aiError}</p>}
             </>
           )}
-        </Card>
-            ) : (
-              <button
-                onClick={askSummary}
-                disabled={aiLoading}
-                className="mt-4 w-full rounded-2xl bb-grad-sos text-white py-3 text-sm font-extrabold flex items-center justify-center gap-2 active:scale-95 transition disabled:opacity-60"
-              >
-                {aiLoading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                {aiLoading ? "Тойм гаргаж байна…" : "AI-аар 7 хоногийн тойм, зөвлөмж авах"}
-              </button>
-            )}
-            {aiError && <p className="mt-2 text-xs font-semibold bb-text-7C4DCC">{aiError}</p>}
-          </>
-        )}
         <p className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-slate-400">
           <Lock className="h-3.5 w-3.5 shrink-0" /> Охины хувийн тэмдэглэл танд харагдахгүй.
         </p>
@@ -243,7 +229,7 @@ export default function MotherCalendar() {
               <button onClick={() => setCalendarOpen(false)} aria-label="Буцах" className="w-10 h-10 rounded-full bg-white border-2 border-slate-100 flex items-center justify-center text-slate-500">
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <h2 className="text-lg font-black text-slate-800">{daughterName ? `${daughterName}-ийн хуанли` : "Охины хуанли"}</h2>
+              <h2 className="text-lg font-black text-slate-800">{daughterName ? `${genitive(daughterName)} хуанли` : "Охины хуанли"}</h2>
             </div>
       <Card className="!p-3">
         <div className="mb-1 flex items-center justify-between">

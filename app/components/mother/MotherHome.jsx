@@ -4,9 +4,9 @@ import { useState } from "react";
 import { useFamily } from "../../../context/FamilyContext";
 import { Copy, Share2, Users, Check, Lock, HeartHandshake, Send } from "lucide-react";
 import { MOM_QUICK_NOTES } from "../../../lib/data";
+import { addNameSuffix } from "../../../lib/helpers";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
-import ChildrenOverview from "./ChildrenOverview";
 import MonthlyCareCarousel from "./MonthlyCareCarousel";
 
 export default function MotherHome() {
@@ -37,8 +37,9 @@ export default function MotherHome() {
   const sendCareMessage = async (message) => {
     const sentToDaughter = await sendToTeen(message, "care");
     if (!sentToDaughter) return false;
-    const savedCopy = await sendToMom(`${daughterName}-д илгээсэн үг: ${message}`, "care", selectedDaughterId);
-    setToast(savedCopy ? `${daughterName}-д илгээлээ 💌` : `${daughterName}-д илгээлээ, хуулбар мэдэгдэл хадгалагдсангүй.`);
+    const daughterDative = addNameSuffix(daughterName, "д");
+    const savedCopy = await sendToMom(`${daughterDative} илгээсэн үг: ${message}`, "care", selectedDaughterId);
+    setToast(savedCopy ? `${daughterDative} илгээлээ 💌` : `${daughterDative} илгээлээ, хуулбар мэдэгдэл хадгалагдсангүй.`);
     return true;
   };
 
@@ -52,8 +53,6 @@ export default function MotherHome() {
           <h2 className="text-2xl font-black text-slate-700">Гэр бүлийн халамж</h2>
         </div>
       </div>
-
-      <ChildrenOverview />
 
       {!linked && (
         <Card className="bb-grad-5">
@@ -148,7 +147,7 @@ export default function MotherHome() {
 
       {linked && (
         <Card>
-          <SectionTitle icon={HeartHandshake} title={`${daughterName}-д зөөлөн үг илгээх`} />
+          <SectionTitle icon={HeartHandshake} title={`${addNameSuffix(daughterName, "д")} зөөлөн үг илгээх`} />
           <div className="flex flex-wrap gap-2">
             {MOM_QUICK_NOTES.map((message) => (
               <button
@@ -175,13 +174,13 @@ export default function MotherHome() {
               onChange={(event) => setCustomMessage(event.target.value)}
               maxLength={300}
               placeholder="Өөрийн үгээ энд бичээрэй…"
-              aria-label={`${daughterName}-д илгээх зөөлөн үг`}
+              aria-label={`${addNameSuffix(daughterName, "д")} илгээх зөөлөн үг`}
               className="min-w-0 flex-1 rounded-2xl border-2 border-pink-100 bg-white px-4 py-3 text-sm font-semibold text-slate-700 placeholder:text-slate-400 focus:border-pink-300 focus:outline-none"
             />
             <button
               type="submit"
               disabled={!customMessage.trim()}
-              aria-label={`${daughterName}-д илгээх`}
+              aria-label={`${addNameSuffix(daughterName, "д")} илгээх`}
               className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bb-bg-E0679F text-white disabled:cursor-not-allowed disabled:opacity-40 active:scale-95"
             >
               <Send className="h-4 w-4" />
