@@ -39,7 +39,7 @@ export default function InstallAppButton() {
 
   const install = async () => {
     if (!installPrompt) {
-      setShowInstructions((open) => !open);
+      if (isIos || isSamsungBrowser) setShowInstructions((open) => !open);
       return;
     }
 
@@ -61,20 +61,16 @@ export default function InstallAppButton() {
         <Plus className="w-5 h-5" /> {t("Апп татах", "Add to Home Screen")}
       </button>
 
-      {showInstructions && (
+      {showInstructions && (isIos || isSamsungBrowser) && (
         <p className="mt-3 max-w-xs rounded-2xl bb-bg-FDE7F1-70 px-4 py-3 text-center text-xs font-semibold text-slate-600">
           {isIos ? (
             <>
               {t("Safari-ийн", "In Safari, tap")} <Share2 className="inline w-3.5 h-3.5 align-[-2px]" /> {t("Хуваалцах товчийг дараад", "Share, then choose")} {" "}
               <b>{t("Апп татах", "Add to Home Screen")}</b>{t("-ийг сонгоно уу.", ".")}
             </>
-          ) : isSamsungBrowser ? (
-            <>
-              {t("Samsung Internet-ийн", "In Samsung Internet, tap")} <b>☰</b> {t("цэсийг нээгээд “Хуудсыг нэмэх” → “Нүүр дэлгэц” → “Нэмэх”-ийг сонгоно уу.", "then choose “Add page to” → “Home screen” → “Add”.")}
-            </>
           ) : (
             <>
-              {t("Chrome-ийн", "In Chrome, open the")} <b>⋮</b> {t("цэсийг нээгээд", "menu and choose")} <b>{t("Апп суулгах", "Install app")}</b> {t("эсвэл", "or")} <b>{t("Апп татах", "Add to Home Screen")}</b>{t("-ийг сонгоно уу.", ".")}
+              {t("Samsung Internet-ийн", "In Samsung Internet, tap")} <b>☰</b> {t("цэсийг нээгээд “Хуудсыг нэмэх” → “Нүүр дэлгэц” → “Нэмэх”-ийг сонгоно уу.", "then choose “Add page to” → “Home screen” → “Add”.")}
             </>
           )}
         </p>
