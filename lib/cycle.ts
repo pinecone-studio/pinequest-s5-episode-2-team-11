@@ -1,3 +1,5 @@
+import { monthDay, t } from "./i18n";
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export type PeriodLog = string | {
@@ -16,7 +18,12 @@ export type Prediction = {
   rangeStart: string;
   rangeEnd: string;
   periodLength: number;
+  cycleLength: number;
   cycleLengths: number[];
+  nextStarts: string[];
+  predictedDays: string[];
+  overdueDays: string[];
+  late: boolean;
 };
 
 export type CycleInfo = {
@@ -47,19 +54,22 @@ export function localDateKey(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-const parseLocalDate = (value: string): Date => {
+export const dateFromLocalKey = (value: string): Date => {
   const [year, month, day] = value.split("-").map(Number);
   return new Date(year, month - 1, day);
 };
 
-const addDays = (value: string, amount: number): string => {
-  const date = parseLocalDate(value);
+export const addDaysToLocalDateKey = (value: string, amount: number): string => {
+  const date = dateFromLocalKey(value);
   date.setDate(date.getDate() + amount);
   return localDateKey(date);
 };
 
-const differenceInDays = (from: string, to: string): number =>
-  Math.round((parseLocalDate(to).getTime() - parseLocalDate(from).getTime()) / DAY_MS);
+export const daysBetweenLocalDateKeys = (from: string, to: string): number =>
+  Math.round((dateFromLocalKey(to).getTime() - dateFromLocalKey(from).getTime()) / DAY_MS);
+
+const addDays = addDaysToLocalDateKey;
+const differenceInDays = daysBetweenLocalDateKeys;
 
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
 
@@ -71,7 +81,7 @@ const periodStart = (period: PeriodLog): string | null => {
 const durationOf = (period: PeriodLog): number | null => {
   if (typeof period === "string") return null;
   const duration = period.duration ?? period.periodLength ?? period.period_length ?? period.length;
-  return typeof duration === "number" && Number.isFinite(duration) ? clamp(duration, 2, 7) : null;
+  return typeof duration === "number" && Number.isFinite(duration) ? duration : null;
 };
 
 export function getConfirmedPeriods(periods: PeriodLog[] = [], today = localDateKey(new Date())): PeriodLog[] {
@@ -84,7 +94,7 @@ export function getConfirmedPeriods(periods: PeriodLog[] = [], today = localDate
     .sort((a, b) => periodStart(a)!.localeCompare(periodStart(b)!));
 }
 
-export function getPrediction(confirmedPeriods: PeriodLog[] = [], today = localDateKey(new Date())): Prediction | null {
+export function getPrediction(confirmedPeriods: PeriodLog[] = [], today = localDateKey(new Date()), configuredPeriodLength?: number): Prediction | null {
   const periods = getConfirmedPeriods(confirmedPeriods, today);
   if (!periods.length) return null;
 
@@ -93,46 +103,72 @@ export function getPrediction(confirmedPeriods: PeriodLog[] = [], today = localD
   const cycleLengths = starts.slice(1)
     .map((start, index) => differenceInDays(starts[index], start))
     .slice(-6)
-    .map((length) => clamp(length, 21, 45));
+    .filter((length) => length >= 15 && length <= 60);
+  const cycleLength = clamp(cycleLengths.length
+    ? Math.round(cycleLengths.reduce((sum, length) => sum + length, 0) / cycleLengths.length)
+    : 28, 21, 45);
   const periodLengths = periods.map(durationOf).filter((length): length is number => length !== null);
-  const periodLength = clamp(
-    periodLengths.length ? Math.round(periodLengths.reduce((sum, length) => sum + length, 0) / periodLengths.length) : 5,
-    2,
-    7,
-  );
+  const loggedPeriodLength = periodLengths.length
+    ? Math.round(periodLengths.reduce((sum, length) => sum + length, 0) / periodLengths.length)
+    : 5;
+  const periodLength = clamp(Number.isFinite(configuredPeriodLength) ? Math.round(configuredPeriodLength!) : loggedPeriodLength, 2, 7);
 
-  let fromDays: number;
-  let toDays: number;
-  if (cycleLengths.length === 0) {
-    fromDays = 28 - 4;
-    toDays = 28 + 4;
-  } else {
-    fromDays = clamp(Math.min(...cycleLengths) - 2, 21, 45);
-    toDays = clamp(Math.max(...cycleLengths) + 2, 21, 45);
+  // A missed predicted start (no newer confirmed log) turns grey up to today;
+  // the following cycles keep stepping from that start.
+  const firstStart = addDays(lastStart, cycleLength);
+  const late = firstStart < today;
+  const overdueDays: string[] = [];
+  if (late) {
+    for (let date = firstStart; date <= today; date = addDays(date, 1)) overdueDays.push(date);
   }
+  const nextStarts: string[] = [];
+  for (let start = firstStart; nextStarts.length < 3; start = addDays(start, cycleLength)) {
+    if (!late || start > today) nextStarts.push(start);
+  }
+  const predictedDays = nextStarts
+    .flatMap((start) => Array.from({ length: periodLength }, (_, offset) => addDays(start, offset)))
+    .filter((date) => date > today);
 
   return {
     starts,
-    rangeStart: addDays(lastStart, fromDays),
-    rangeEnd: addDays(lastStart, toDays),
+    rangeStart: firstStart,
+    rangeEnd: addDays(firstStart, periodLength - 1),
     periodLength,
+    cycleLength,
     cycleLengths,
+    nextStarts,
+    predictedDays,
+    overdueDays,
+    late,
   };
 }
 
+/** Confirmed period_logs rows → periods with their logged duration (pending/removed rows are dropped). */
+export function periodsFromLogs(rows: { log_date: string; status?: string; period_length?: number | null }[] = []): PeriodLog[] {
+  return rows
+    .filter((row) => row.status === "confirmed")
+    .map((row) => ({ startDate: row.log_date, duration: row.period_length == null ? null : Number(row.period_length), status: "confirmed" as const }));
+}
+
 // Compatibility bridge for screens being migrated to the new cycle API.
-export function predictPeriodRange({ starts = [], today = localDateKey(new Date()), hasHadPeriod = true }: {
+export function predictPeriodRange({ starts = [], periods, today = localDateKey(new Date()), hasHadPeriod = true, periodLength }: {
   starts?: string[];
+  periods?: PeriodLog[];
   today?: string;
   hasHadPeriod?: boolean;
+  periodLength?: number;
 }) {
-  const prediction = hasHadPeriod ? getPrediction(starts, today) : null;
+  const prediction = hasHadPeriod ? getPrediction(periods?.length ? periods : starts, today, periodLength) : null;
   return {
     starts: prediction?.starts ?? [],
     rangeStart: prediction?.rangeStart ?? null,
     rangeEnd: prediction?.rangeEnd ?? null,
     periodLength: prediction?.periodLength ?? 5,
-    late: Boolean(prediction && today > prediction.rangeEnd),
+    cycleLength: prediction?.cycleLength ?? 28,
+    nextStarts: prediction?.nextStarts ?? [],
+    predictedDays: prediction?.predictedDays ?? [],
+    overdueDays: prediction?.overdueDays ?? [],
+    late: Boolean(prediction?.late),
     overNinetyDays: Boolean(prediction?.starts.at(-1) && differenceInDays(prediction.starts.at(-1)!, today) > 90),
     cycleLengths: prediction?.cycleLengths ?? [],
   };
@@ -163,11 +199,40 @@ export function getSeason(date: string | Date, cycleInfo: CycleInfo): Season {
   const dayIndex = differenceInDays(lastStart, key);
   if (dayIndex < 0) return "spring";
   const autumnFromDay = Math.max(Math.ceil(length * 0.7), (cycleInfo.prediction ? differenceInDays(lastStart, cycleInfo.prediction.rangeStart) - 7 : length - 7));
+  return seasonForCycleDay(dayIndex, length, duration, autumnFromDay);
+}
+
+/** Season of a 0-based day inside a cycle of `cycleLength` days; also used to split past cycles into seasons. */
+export function seasonForCycleDay(dayIndex: number, cycleLength: number, periodLength: number, autumnFromDay = Math.max(Math.ceil(cycleLength * 0.7), cycleLength - 7)): Season {
   if (dayIndex >= autumnFromDay) return "autumn";
-  if (dayIndex < duration) return "winter";
-  if (dayIndex < length * 0.45) return "spring";
-  if (dayIndex < length * 0.7) return "summer";
+  if (dayIndex < periodLength) return "winter";
+  if (dayIndex < cycleLength * 0.45) return "spring";
+  if (dayIndex < cycleLength * 0.7) return "summer";
   return "autumn";
+}
+
+export type CyclePosition =
+  | { phase: "before_first" }
+  | { phase: "cycle"; season: Season; cycleDay: number; daysUntilNext: number | null; cycleStart: string; late: boolean };
+
+/**
+ * Where today sits in the cycle. Uses the same inputs as CycleRing
+ * (context cycleLength, predicted period length) so both show the same season.
+ */
+export function getCyclePosition(today: string, periods: PeriodLog[] = [], { cycleLength, periodLength }: { cycleLength?: number; periodLength?: number } = {}): CyclePosition {
+  const confirmed = getConfirmedPeriods(periods, today);
+  if (!confirmed.length) return { phase: "before_first" };
+  const prediction = getPrediction(confirmed, today);
+  const cycleStart = periodStart(confirmed.at(-1)!)!;
+  const season = getSeason(today, { periods: confirmed, cycleLength: cycleLength ?? prediction?.cycleLength, periodLength: prediction?.periodLength ?? periodLength, prediction });
+  return {
+    phase: "cycle",
+    season,
+    cycleDay: differenceInDays(cycleStart, today) + 1,
+    daysUntilNext: prediction ? differenceInDays(today, prediction.rangeStart) : null,
+    cycleStart,
+    late: Boolean(prediction?.late),
+  };
 }
 
 export function getBloomLevel(today: string, cycleInfo: CycleInfo): number {
@@ -199,7 +264,7 @@ export function getLateStatus(today: string, prediction: Prediction | null, peri
   const lastStart = confirmed.length ? periodStart(confirmed.at(-1)!) : null;
   if (!lastStart || !prediction) return null;
   if (differenceInDays(lastStart, today) > 90) return "very_late";
-  if (today > prediction.rangeEnd) return "late";
+  if (prediction.late) return "late";
   return "on_time";
 }
 
@@ -211,9 +276,9 @@ export function getCyclePatternInsight(periods: PeriodLog[], dayLogs: { log_date
   const relevant = dayLogs.filter((row) => row.log_date >= (completedStarts[0] ?? today) && row.log_date < (completedStarts.at(-1) ?? today));
   const moodRows = relevant.filter((row) => Number.isFinite(row.mood) && Number(row.mood) >= 1 && Number(row.mood) <= 5);
   const phaseDefs = [
-    { key: "period", label: "Сарын тэмдгийн үе (1–5 дахь өдөр)", from: 1, to: 5 },
-    { key: "early", label: "Дараах үе (6–14 дэх өдөр)", from: 6, to: 14 },
-    { key: "later", label: "Мөчлөгийн сүүл хэсэг (15+ дахь өдөр)", from: 15, to: 60 },
+    { key: "period", label: t("Сарын тэмдгийн үе (1–5 дахь өдөр)", "Period (days 1–5)"), from: 1, to: 5 },
+    { key: "early", label: t("Дараах үе (6–14 дэх өдөр)", "After the period (days 6–14)"), from: 6, to: 14 },
+    { key: "later", label: t("Мөчлөгийн сүүл хэсэг (15+ дахь өдөр)", "Late cycle (day 15+)"), from: 15, to: 60 },
   ];
   const moodByPhase = phaseDefs.map((phase) => {
     const values = moodRows.filter((row) => {
@@ -254,5 +319,5 @@ export function periodDayKeys(starts: string[] = [], periodLength = 5, today = l
 export function dateLabelMongolian(date: Date, { includeYear = false }: { includeYear?: boolean } = {}): string {
   const month = date.getMonth() + 1;
   const day = date.getDate();
-  return includeYear ? `${date.getFullYear()} оны ${month} сарын ${day}` : `${month} сарын ${day}`;
+  return monthDay(month, day, includeYear ? date.getFullYear() : undefined);
 }

@@ -1,143 +1,152 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { AlertCircle, Heart, LoaderCircle, Moon, Sparkles } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { LoaderCircle } from "lucide-react";
 import { askAi } from "../../../lib/ai-client";
+import { addDaysToLocalDateKey, getCyclePosition, localDateKey } from "../../../lib/cycle";
+import {
+  LOG_MORE_HINT, SEASON_TEXT, tipLabel, forecastTitle, prepTipFor, safetyLines, statsForPosition, templateForecast, validateForecast,
+} from "../../../lib/forecast";
+import { LOG_ENTRIES_CHANGED, dayLogsFromEntries, fetchEntries } from "../../../lib/log-entries";
+import { supabase } from "../../../lib/supabase";
 import { useFamily } from "../../../context/FamilyContext";
+import { t } from "../../../lib/i18n";
+import { useLang } from "../../../context/LanguageContext";
 
-const localDateKey = (date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
+const AI_TIMEOUT_MS = 5000; // server gives the AI 3 s; this covers the round trip
+const TRANSIENT_ERRORS = new Set(["timeout", "network_error"]);
 
-function readPreviousPrePeriodEntries(lastPeriodStart, cycleLength, today) {
-  const prefix = "bloom:tracker-log:";
-  const periodStart = new Date(`${lastPeriodStart}T00:00:00`);
-  const entries = [];
-  try {
-    Object.keys(window.localStorage).forEach((key) => {
-      if (!key.startsWith(prefix)) return;
-      const dateKey = key.slice(prefix.length);
-      if (dateKey >= lastPeriodStart || dateKey >= today || !/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) return;
-      let dayLog;
-      try { dayLog = JSON.parse(window.localStorage.getItem(key)); } catch { return; }
-      const date = new Date(`${dateKey}T00:00:00`);
-      const diff = Math.floor((date - periodStart) / 86400000);
-      const cycleOffset = ((diff % cycleLength) + cycleLength) % cycleLength;
-      const daysBeforePeriod = cycleLength - cycleOffset;
-      if (daysBeforePeriod < 3 || daysBeforePeriod > 5) return;
-      const values = { ...(dayLog?.AM ?? {}), ...(dayLog?.PM ?? {}) };
-      const filtered = {};
-      ["emotion", "skin", "symptoms", "sleep", "period"].forEach((category) => {
-        if (typeof values[category] === "string") filtered[category] = values[category];
-      });
-      if (Object.keys(filtered).length) entries.push({ date: dateKey, daysBeforePeriod, values: filtered });
+const normalizePeriods = (periods) => (periods ?? [])
+  .map((period) => typeof period === "string" ? { startDate: period, duration: null } : { startDate: period.startDate ?? period.log_date, duration: period.duration ?? null })
+  .filter((period) => period.startDate);
+
+/**
+ * Хувийн мөчлөгийн таамаг — зөвхөн охинд, мөчлөгийн өдөр бүр. Өмнөх
+ * мөчлөгүүдийн ижил өдөр (эсвэл улирлын) бүртгэлээс тооцоолсон статистикийг
+ * (нэр, огноо, id, тэмдэглэлгүй) AI руу илгээж, хариуг мөчлөг × өдрөөр кэшлэнэ.
+ */
+export default function CyclePredictionCard() {
+  const { view, profile, session, cyclePeriods, cycleLength } = useFamily();
+  const today = localDateKey(new Date());
+  const periods = useMemo(() => normalizePeriods(cyclePeriods), [cyclePeriods]);
+  const position = useMemo(() => getCyclePosition(today, cyclePeriods ?? [], { cycleLength }), [today, cyclePeriods, cycleLength]);
+  const inCycle = position.phase === "cycle";
+  const [logs, setLogs] = useState(null);
+  const [forecast, setForecast] = useState(null);
+  const requestedRef = useRef("");
+
+  // 3 completed cycles + the current one; autumn windows never reach before the oldest start.
+  const from = useMemo(() => {
+    const oldest = periods.map((period) => period.startDate).sort().slice(-4)[0];
+    return oldest ? addDaysToLocalDateKey(oldest, -1) : today;
+  }, [periods, today]);
+
+  // Reads log_entries (mood, symptoms/pain, skin → acne, sleep). Note text is never in there.
+  useEffect(() => {
+    if (view !== "daughter" || !inCycle || !supabase || !profile?.id) return;
+    let cancelled = false;
+    const load = () => fetchEntries(supabase, from, today).then(({ data, error }) => {
+      if (cancelled) return;
+      if (error) console.warn("[forecast] log entries:", error.message);
+      setLogs(dayLogsFromEntries(data).map(({ log_date, mood, pain, symptoms, sleepHours }) => ({ log_date, mood, pain, symptoms, sleepHours })));
     });
-  } catch {
-    return [];
-  }
-  return entries.sort((a, b) => a.date.localeCompare(b.date)).slice(-60);
-}
+    load();
+    // Today's card is keyed by cycle day + cached, so new logs today never regenerate it.
+    window.addEventListener(LOG_ENTRIES_CHANGED, load);
+    return () => { cancelled = true; window.removeEventListener(LOG_ENTRIES_CHANGED, load); };
+  }, [view, inCycle, profile?.id, from, today]);
 
-const configMessages = {
-  ai_not_configured: "AI тохиргоо дутуу байна. Серверт GEMINI_API_KEY нэмэх шаардлагатай.",
-  ai_invalid_key: "Gemini API түлхүүр хүчингүй байна. Google AI Studio-оос түлхүүрээ шалгана уу.",
-  ai_quota_exceeded: "Gemini API-н хэрэглээний хязгаарт хүрсэн байна. Google AI Studio дээр quota тохиргоог шалгана уу.",
-  unauthorized: "Нэвтрэлтийн хугацаа дууссан байна. Дахин нэвтэрч оролдоорой.",
-  ai_failed: "AI үйлчилгээ хүсэлтэд хариу өгсөнгүй. Серверийн API түлхүүр, model тохиргоог шалгана уу.",
-  timeout: "AI хариу удааширлаа. Дахин оролдоорой.",
-  network_error: "Сервертэй холбогдож чадсангүй. Интернэтээ шалгана уу.",
-};
-
-export default function CyclePredictionCard({ daysUntil, cycleLength, lastPeriodStart }) {
-  const { session } = useFamily();
-  const [prediction, setPrediction] = useState(null);
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
+  const rawStats = useMemo(() => (inCycle && logs ? statsForPosition(position, periods, logs) : null), [inCycle, position, periods, logs]);
+  // Same numbers → same object, so a refetch after today's logging never restarts the request.
+  const statsJson = rawStats ? JSON.stringify(rawStats) : "";
+  const stats = useMemo(() => (statsJson ? JSON.parse(statsJson) : null), [statsJson]);
+  const { lang } = useLang();
+  const safety = useMemo(() => (inCycle && logs ? safetyLines(periods, logs, position.cycleStart) : []), [inCycle, logs, periods, position, lang]);
 
   useEffect(() => {
-    if (!lastPeriodStart || !cycleLength || daysUntil < 3 || daysUntil > 5) return;
-    let mounted = true;
-    const today = localDateKey(new Date());
-    const expectedDate = new Date(`${lastPeriodStart}T00:00:00`);
-    expectedDate.setDate(expectedDate.getDate() + cycleLength);
-    const cacheKey = `bloom:cycle-prediction:${localDateKey(expectedDate)}`;
-    let entries = [];
-    try {
-      entries = readPreviousPrePeriodEntries(lastPeriodStart, cycleLength, today);
-      const cached = window.localStorage.getItem(cacheKey);
-      if (cached) {
-        setPrediction(JSON.parse(cached));
-        return () => { mounted = false; };
-      }
-    } catch {
-      setMessage("Өмнөх бүртгэлүүдийг уншиж чадсангүй.");
-      return () => { mounted = false; };
+    if (!stats || !inCycle || !profile?.id) return;
+    const cycleStart = position.cycleStart;
+    // One text per cycle day: new logs during the day never regenerate it.
+    const key = `${cycleStart}:${stats.dayLabel}:${lang}`;
+    if (requestedRef.current === key) return;
+    requestedRef.current = key;
+    // AI болон кэш зөвхөн монгол текст гаргадаг — англи хэлэнд орчуулсан загвар текстийг шууд харуулна
+    if (lang === "en") {
+      setForecast(templateForecast(stats));
+      return () => { requestedRef.current = ""; };
     }
-    if (!entries.length) return () => { mounted = false; };
+    setForecast(null);
+    let cancelled = false;
 
-    setLoading(true);
-    askAi(session, { type: "cycle_prediction", daysUntil, entries }, 30000, { detailed: true })
-      .then((response) => {
-        if (!mounted) return;
-        if (response?.prediction && Array.isArray(response.tips)) {
-          setPrediction(response);
-          try { window.localStorage.setItem(cacheKey, JSON.stringify(response)); } catch { /* cache is optional */ }
-        } else {
-          setMessage(configMessages[response?.error] ?? "Таамгийг гаргаж чадсангүй. Дахин оролдоорой.");
-        }
-      })
-      .finally(() => { if (mounted) setLoading(false); });
+    (async () => {
+      const cached = await supabase.from("forecast_cache").select("text, tip")
+        .eq("user_id", profile.id).eq("cycle_start", cycleStart).eq("day_label", stats.dayLabel).maybeSingle();
+      if (cached.error) console.warn("[forecast] cache read:", cached.error.message);
+      if (cached.data) {
+        if (!cancelled) setForecast(cached.data);
+        return;
+      }
 
-    return () => { mounted = false; };
-  }, [daysUntil, cycleLength, lastPeriodStart, session]);
+      let result = null;
+      let source = "template";
+      let transient = typeof navigator !== "undefined" && navigator.onLine === false;
+      if (!transient) {
+        // The request body is exactly { type, stats } — see lib/forecast.ts ForecastStats.
+        const response = await askAi(session, { type: "cycle_forecast", stats }, AI_TIMEOUT_MS, { detailed: true });
+        result = validateForecast(response, stats);
+        if (result) source = "ai";
+        else if (TRANSIENT_ERRORS.has(response?.error)) transient = true;
+      }
+      result ??= templateForecast(stats);
+      if (!cancelled) setForecast(result);
+      // Offline results are not cached so the AI gets a chance once she is back online.
+      if (transient) return;
+      const { error } = await supabase.from("forecast_cache").upsert({
+        user_id: profile.id, cycle_start: cycleStart, day_label: stats.dayLabel, text: result.text, tip: result.tip, source,
+      });
+      if (error) console.warn("[forecast] cache write:", error.message);
+    })().catch((error) => {
+      console.error("[forecast]", error);
+      if (!cancelled) setForecast(templateForecast(stats));
+    });
 
-  if (!lastPeriodStart || daysUntil < 3 || daysUntil > 5) return null;
+    return () => {
+      cancelled = true;
+      requestedRef.current = "";
+    };
+  }, [stats, inCycle, position, profile?.id, session, lang]);
 
+  if (view !== "daughter") return null;
+
+  // Level 3 (no usable history) and before the first period use local text only.
+  const local = !inCycle ? prepTipFor(today) : logs && !stats ? SEASON_TEXT[position.season] : null;
+  const loading = inCycle && (!logs || (stats && !forecast));
   return (
     <section className="rounded-3xl border border-pink-200 bg-white p-4 shadow-sm bloom-fade">
-      <div className="flex items-center gap-2">
-        <span className="flex h-10 w-10 items-center justify-center rounded-2xl bb-bg-FDE7F1 bb-text-B83B7E"><Sparkles className="h-5 w-5" /></span>
-        <div className="min-w-0 flex-1">
-          <h2 className="font-black text-slate-700">Мөчлөгийн өмнөх хувийн таамаг</h2>
-          <p className="text-xs font-bold bb-text-B83B7E">Сарын тэмдэг ойртож байна</p>
-        </div>
-      </div>
+      <h2 className="font-black text-slate-700">{forecastTitle(position)}</h2>
 
-      <p className="mt-3 text-xs leading-relaxed text-slate-500">
-        Өмнөх мөчлөгүүдийн 3–5 хоногийн өмнөх ангилсан бүртгэлийг AI үйлчилгээнд боловсруулахаар илгээнэ. Хувийн өдрийн тэмдэглэлийн бичвэр илгээгдэхгүй.
-      </p>
-
-      {loading && <p className="mt-4 flex items-center gap-2 text-sm font-bold text-slate-600"><LoaderCircle className="h-4 w-4 animate-spin" /> Таны өмнөх бүртгэлийг харьцуулж байна…</p>}
-
-      {!loading && !prediction && !message && (
-        <p className="mt-4 flex items-start gap-2 text-sm font-semibold leading-relaxed text-slate-600">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 bb-text-7C4DCC" />
-          Өмнөх мөчлөгийн энэ өдрүүдийн бүртгэл хараахан алга. Дараагийн удаа сэтгэл хөдлөл, шинж тэмдэг, нойроо тэмдэглэвэл өөрийн хэв маягийг гаргаж эхэлнэ.
-        </p>
-      )}
-
-      {message && <p role="status" className="mt-4 text-sm font-bold text-rose-600">{message}</p>}
-
-      {prediction && (
-        <div className="mt-4 space-y-3">
-          <p className="rounded-2xl bb-bg-FDE7F1-50 p-3 text-sm font-bold leading-relaxed text-slate-700">{prediction.prediction}</p>
-          {prediction.pattern && <p className="text-sm leading-relaxed text-slate-600">{prediction.pattern}</p>}
-          {prediction.tips.length > 0 && (
-            <div className="space-y-2">
-              {prediction.tips.map((tip, index) => (
-                <p key={`${index}-${tip}`} className="flex items-start gap-2 text-sm font-semibold leading-relaxed text-slate-600">
-                  {index === 0 ? <Heart className="mt-0.5 h-4 w-4 shrink-0 bb-text-B83B7E" /> : <Moon className="mt-0.5 h-4 w-4 shrink-0 bb-text-7C4DCC" />}
-                  {tip}
-                </p>
-              ))}
-            </div>
+      {loading ? (
+        <p className="mt-3 flex items-center gap-2 text-sm font-bold text-slate-500"><LoaderCircle className="h-4 w-4 animate-spin" /> {t("Өмнөх бүртгэлээ харж байна…", "Looking at your past logs…")}</p>
+      ) : (
+        <div className="mt-3 space-y-3">
+          {local ? (
+            <>
+              <p className="text-sm font-bold leading-relaxed text-slate-700">{local}</p>
+              {inCycle && <p className="text-xs font-semibold text-slate-400">{t(LOG_MORE_HINT, "🌱 The more you log, the better your tips will fit you")}</p>}
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-bold leading-relaxed text-slate-700">{forecast.text}</p>
+              <span className="inline-block rounded-full bb-bg-FDE7F1 px-3 py-1 text-xs font-extrabold bb-text-B83B7E">{tipLabel(forecast.tip)}</span>
+            </>
           )}
-          {prediction.dataNote && <p className="border-t border-slate-100 pt-2 text-xs text-slate-400">{prediction.dataNote}</p>}
+          {safety.map((line) => <p key={line} className="rounded-2xl bb-bg-FDE7F1-50 p-3 text-sm font-bold leading-relaxed bb-text-B83B7E">{line}</p>)}
         </div>
       )}
+
+      <p className="mt-3 border-t border-slate-100 pt-2 text-xs font-semibold text-slate-400">
+        {t("🔒 Зөвхөн чамд харагдана", "🔒 Only you can see this")}{stats ? t(` · Өмнөх ${stats.cyclesUsed} мөчлөгөөс`, ` · From your last ${stats.cyclesUsed} cycles`) : ""}
+      </p>
     </section>
   );
 }

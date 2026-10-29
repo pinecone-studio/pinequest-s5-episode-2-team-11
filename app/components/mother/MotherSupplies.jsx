@@ -1,95 +1,129 @@
 "use client";
 
 import { useFamily } from "../../../context/FamilyContext";
-import { Package, Check, Plus, Minus, Trash2 } from "lucide-react";
+import { Package, Check, Plus, Minus, RefreshCw, Trash2 } from "lucide-react";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
 import PageHeader from "../ui/PageHeader";
 import SchoolBagChecklist from "../supplies/SchoolBagChecklist";
 import AddSupplyForm from "../supplies/AddSupplyForm";
+import { t } from "../../../lib/i18n";
+
+// Хэрэглэл бүрийн өнгө (цайвар, бараан горимд хоёуланд нь уншигдана)
+const SUPPLY_ACCENTS = { day: "#E0679F", night: "#8B5CF6", liner: "#2E9E74" };
+const EXTRA_ACCENTS = ["#D08712", "#2D8FC7", "#D9604F"];
 
 export default function MotherSupplies() {
   const { supplies, updateSupply, restock, removeSupply, daughterName } = useFamily();
 
   return (
     <div className="space-y-4">
-      <PageHeader sub={`${daughterName} · хэрэгслийг хянаарай`} title="Хэрэгслийн үлдэгдэл 📦" />
+      <PageHeader sub={t(`${daughterName} · хэрэгслийг хянаарай`, `${daughterName} · keep track of supplies`)} title={t("Хэрэгслийн үлдэгдэл 📦", "Supplies left 📦")} />
 
       {/* Хэрэгслийн үлдэгдэл */}
       <Card>
-        <SectionTitle icon={Package} title="Ариун цэврийн хэрэгсэл" />
-        <div className="space-y-5">
-          {Object.entries(supplies).map(([key, s]) => {
-            const pct = s.count / s.max;
+        <SectionTitle icon={Package} title={t("Ариун цэврийн хэрэгсэл", "Hygiene supplies")} />
+        <div className="space-y-3">
+          {Object.entries(supplies).map(([key, s], index) => {
+            const pct = s.max ? s.count / s.max : 0;
+            const empty = s.count <= 0;
             const low = pct <= 0.3;
+            const full = s.count >= s.max;
+            const accent = SUPPLY_ACCENTS[key] ?? EXTRA_ACCENTS[index % EXTRA_ACCENTS.length];
+            const status = empty
+              ? { text: t("Дууссан", "Out"), cls: "bg-rose-500 text-white" }
+              : low
+                ? { text: t("Бага үлдсэн", "Running low"), cls: "bg-rose-100 text-rose-700" }
+                : { text: t("Хангалттай", "Enough"), cls: "bg-emerald-100 text-emerald-700" };
             return (
-              <div key={key}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="flex items-center gap-2 font-extrabold text-slate-700 text-sm">
-                    <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bb-bg-FFF7FB text-xl">
-                      {s.emoji}
-                      {(key === "day" || key === "night") && (
-                        <span
-                          aria-label={`${s.count} ширхэг үлдсэн`}
-                          className={`absolute -right-2 -top-2 rounded-full px-1.5 py-0.5 text-[9px] font-black leading-none text-white shadow-sm ${key === "day" ? "bb-bg-E0679F" : "bb-bg-B794F4"}`}
-                        >
-                          {s.count}ш
-                        </span>
-                      )}
-                    </span>
-                    {s.label}
-                    {key.startsWith("custom_") && <button onClick={() => removeSupply(key)} className="ml-1 text-slate-300 hover:text-rose-500" aria-label={`${s.label} устгах`}><Trash2 className="h-4 w-4" /></button>}
-                    {low && (
-                      <span className="text-xs font-black bb-bg-E9DDFC bb-text-6A3BB8 rounded-full px-2 py-0.5">
-                        Дуусах дөхсөн
-                      </span>
-                    )}
-                  </span>
-                  <span className="text-xs font-extrabold text-slate-400">
-                    {s.count} / {s.max}
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-1 mb-2.5">
-                  {Array.from({ length: s.max }).map((_, i) => (
-                    <span
-                      key={i}
-                      className="h-5 flex-1 rounded-md transition-all duration-300"
-                      style={{
-                        minWidth: 8,
-                        maxWidth: 22,
-                        background: i < s.count ? (low ? "#B794F4" : "#CDB4F5") : "#F1F5F9",
-                      }}
-                    />
-                  ))}
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => updateSupply(key, -1)}
-                    className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center active:scale-90"
-                    aria-label="Хасах"
+              <div key={key} className="rounded-2xl border border-slate-100 bg-white p-3.5 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <span
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-xl"
+                    style={{ backgroundColor: `${accent}26` }}
+                    aria-hidden="true"
                   >
-                    <Minus className="w-4 h-4 text-slate-500" />
-                  </button>
+                    {s.emoji}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-extrabold text-slate-700">{s.label}</p>
+                    <span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-black ${status.cls}`}>{status.text}</span>
+                  </div>
+                  <p className="shrink-0 text-right leading-none">
+                    <span className="text-2xl font-black" style={{ color: accent }}>{s.count}</span>
+                    <span className="text-xs font-extrabold text-slate-400">/{s.max}</span>
+                  </p>
+                </div>
+
+                <div
+                  role="progressbar"
+                  aria-label={t(`${s.label}-ийн үлдэгдэл`, `${s.label} remaining`)}
+                  aria-valuemin={0}
+                  aria-valuemax={s.max}
+                  aria-valuenow={s.count}
+                  className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-100"
+                >
+                  <div
+                    className="h-full rounded-full transition-all duration-300"
+                    style={{ width: `${Math.min(100, Math.max(0, pct * 100))}%`, backgroundColor: accent }}
+                  />
+                </div>
+
+                <div className="mt-3 flex items-center gap-2">
+                  <div className="flex shrink-0 items-center rounded-xl bg-slate-100 p-1">
+                    <button
+                      type="button"
+                      onClick={() => updateSupply(key, -1)}
+                      disabled={empty}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 transition active:scale-90 disabled:opacity-30"
+                      aria-label={t(`${s.label} хасах`, `Decrease ${s.label}`)}
+                    >
+                      <Minus className="h-4 w-4" strokeWidth={2.6} />
+                    </button>
+                    <span className="h-5 w-px bg-slate-200" aria-hidden="true" />
+                    <button
+                      type="button"
+                      onClick={() => updateSupply(key, 1)}
+                      disabled={full}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 transition active:scale-90 disabled:opacity-30"
+                      aria-label={t(`${s.label} нэмэх`, `Increase ${s.label}`)}
+                    >
+                      <Plus className="h-4 w-4" strokeWidth={2.6} />
+                    </button>
+                  </div>
                   <button
-                    onClick={() => updateSupply(key, 1)}
-                    className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center active:scale-90"
-                    aria-label="Нэмэх"
-                  >
-                    <Plus className="w-4 h-4 text-slate-500" />
-                  </button>
-                  <button
+                    type="button"
                     onClick={() => restock(key)}
-                    disabled={s.count === s.max}
-                    className="flex-1 h-9 rounded-xl bb-bg-E0679F bb-disabled-bg-FDE7F1 bb-disabled-text-B83B7E text-white text-xs font-extrabold active:scale-95 transition flex items-center justify-center gap-1"
+                    disabled={full}
+                    className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl px-3 text-xs font-extrabold transition active:scale-95 disabled:cursor-default"
+                    style={
+                      full
+                        ? { backgroundColor: `${accent}1F`, color: accent }
+                        : low
+                          ? { backgroundColor: accent, color: "#FFFFFF", boxShadow: `0 6px 14px -8px ${accent}` }
+                          : { backgroundColor: "transparent", color: accent, border: `2px solid ${accent}` }
+                    }
                   >
-                    {s.count === s.max ? (
+                    {full ? (
                       <>
-                        <Check className="w-3.5 h-3.5" /> Дүүрэн
+                        <Check className="h-3.5 w-3.5" strokeWidth={3} /> {t("Дүүрсэн", "Full")}
                       </>
                     ) : (
-                      "Нөхөн дүүргэсэн"
+                      <>
+                        <RefreshCw className="h-3.5 w-3.5" strokeWidth={2.6} /> {t("Нөхөж дүүргэх", "Restock")}
+                      </>
                     )}
                   </button>
+                  {key.startsWith("custom_") && (
+                    <button
+                      type="button"
+                      onClick={() => removeSupply(key)}
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-400 transition hover:text-rose-500"
+                      aria-label={t(`${s.label} устгах`, `Delete ${s.label}`)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             );

@@ -71,9 +71,9 @@ export function Sparkle({ size = 14, color = "#fff", className = "" }) {
 
 // Дэлгүүрийн жижиг зурагт тухайн хэсгийг тайрч харуулах
 export const SLOT_CROP = {
-  hair: "8 2 104 100",
-  acc: "8 2 104 100",
-  top: "20 84 80 62",
-  bottom: "24 126 72 70",
-  shoes: "34 168 52 30",
+  hair: "4 8 112 104",
+  acc: "4 8 112 104",
+  top: "20 96 80 62",
+  bottom: "24 138 72 60",
+  shoes: "30 158 60 36",
 };

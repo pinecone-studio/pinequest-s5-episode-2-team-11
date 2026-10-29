@@ -10,11 +10,13 @@ const ITERATIONS = 150_000;
 const TOKEN_TTL_MS = 15 * 60 * 1000;
 const json = (body: unknown, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 
+class MissingServerConfigError extends Error {}
+
 function clients() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const service = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !anon || !service) throw new Error("Server configuration missing");
+  if (!url || !anon || !service) throw new MissingServerConfigError("Private notes require Supabase URL, anon key, and server service role key");
   return {
     auth: createClient(url, anon, { auth: { persistSession: false, autoRefreshToken: false } }),
     admin: createClient(url, service, { auth: { persistSession: false, autoRefreshToken: false } }),
@@ -126,7 +128,11 @@ export async function POST(request: Request) {
     }
 
     return json({ error: "Үйлдэл танигдсангүй." }, 400);
-  } catch {
+  } catch (error) {
+    if (error instanceof MissingServerConfigError) {
+      return json({ error: "Нууц тэмдэглэлийн серверийн тохиргоо дутуу байна. SUPABASE_SERVICE_ROLE_KEY-ийг .env.local-д нэмээд dev серверээ дахин асаана уу." }, 503);
+    }
+    console.error("[private-notes] request failed:", error);
     return json({ error: "Хүсэлтийг боловсруулж чадсангүй." }, 500);
   }
 }

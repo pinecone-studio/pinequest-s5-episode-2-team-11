@@ -12,6 +12,27 @@ body {
   height: 100dvh;
   overflow: hidden;
 }
+.learn-content-shell {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+.learn-content-app {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  overflow: hidden;
+}
+.learn-content-app > header { flex: none; }
+.learn-content-main {
+  min-height: 0;
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px 16px calc(160px + env(safe-area-inset-bottom));
+}
 .learn-viewport-app {
   display: flex;
   height: 100%;
@@ -33,35 +54,35 @@ body {
 }
 .lesson-card { display: flex; flex-direction: column; overflow: hidden; }
 .lesson-category-heading {
-  border: 1px solid #eadcf3;
-  background: linear-gradient(110deg, #f4e8fb, #fff0f6);
-  color: #8052a6;
+  border: 1px solid #e0959c;
+  background: linear-gradient(110deg, #fadad9, #f3c3c5);
+  color: #8a3e46;
 }
 .lesson-category-option {
-  border: 1px solid #eee2f1;
-  background: #fff;
-  box-shadow: 0 3px 12px rgb(111 73 119 / 7%);
+  border: 1px solid #e9abae;
+  background: #fadad9;
+  box-shadow: 0 3px 12px rgb(198 92 105 / 12%);
 }
-.lesson-category-option:hover { border-color: #d8bee7; background: #fffaff; }
-.lesson-category-option-active { border-color: #d8bee7; background: linear-gradient(110deg, #fff2f8, #f8f1ff); }
-.lesson-topic-details { border: 1px solid #f0e3f1; background: #fffafd; }
-.lesson-category-number { background: #f4e8fb; color: #8052a6; }
+.lesson-category-option:hover { border-color: #d78289; background: #f3c3c5; }
+.lesson-category-option-active { border-color: #d78289; background: linear-gradient(110deg, #f3c3c5, #e9abae); }
+.lesson-topic-details { border: 1px solid #e0959c; background: #fadad9; }
+.lesson-category-number { background: #e9abae; color: #8a3e46; }
 .theme-dark .lesson-category-option { border-color: #55465a; background: #302638; box-shadow: 0 3px 12px rgb(0 0 0 / 15%); }
 .theme-dark .lesson-category-option:hover { border-color: #80648b; background: #382d3b; }
 .theme-dark .lesson-category-option-active { border-color: #80648b; background: linear-gradient(110deg, #49364f, #483540); }
 .theme-dark .lesson-topic-details { border-color: #55465a; background: #302638; }
 .theme-dark .lesson-category-number { background: #49364f; color: #e2b9ee; }
-.lesson-slide { background: linear-gradient(145deg, #fff8fc, #f7f1fc); }
+.lesson-slide { background: linear-gradient(145deg, #fadad9, #f3c3c5); }
 .lesson-info-card {
-  border: 1px solid #eee4f2;
-  background: #fff;
-  box-shadow: 0 3px 12px rgb(111 73 119 / 7%);
+  border: 1px solid #e0959c;
+  background: #fadad9;
+  box-shadow: 0 3px 12px rgb(198 92 105 / 12%);
 }
 .theme-dark .lesson-category-heading { border-color: #55435c; background: linear-gradient(110deg, #49364f, #483540); color: #e2b9ee; }
 .theme-dark .lesson-slide { background: linear-gradient(145deg, #382d3b, #342d40); }
 .theme-dark .lesson-info-card { border-color: #55465a; background: #302638; box-shadow: 0 3px 12px rgb(0 0 0 / 15%); }
 .lesson-illustration { height: clamp(64px, 15vh, 118px); max-width: none; }
-.lesson-illustration-panel { display: flex; flex: none; aspect-ratio: 1.27; min-height: 0; height: auto; max-height: 34vh; max-width: none; align-items: center; justify-content: center; padding: 8px; border-radius: 1.5rem; background: #f8f4fc; }
+.lesson-illustration-panel { display: flex; flex: none; aspect-ratio: 1.27; min-height: 0; height: auto; max-height: 34vh; max-width: none; align-items: center; justify-content: center; padding: 8px; border-radius: 1.5rem; background: #f3c3c5; }
 .wrapped-pad-art { position: relative; display: flex; width: 100%; height: 100%; align-items: center; justify-content: center; }
 .wrapped-pad-art::before {
   position: absolute;
@@ -71,7 +92,7 @@ body {
   height: 77%;
   aspect-ratio: 1;
   border-radius: 9999px;
-  background: #fde7f1;
+  background: #e9abae;
   content: "";
   transform: translate(-50%, -50%);
 }
@@ -80,7 +101,7 @@ body {
 @keyframes pad-wrapper-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -2px; } }
 @media (prefers-reduced-motion: reduce) { .wrapped-pad-art img { animation: none; } }
 .lesson-slide-copy { font-size: clamp(13px, 1.9vh, 16px); line-height: 1.4; }
-.lesson-info-card-first { border-color: transparent; background: #fff5f9; box-shadow: none; }
+.lesson-info-card-first { border-color: transparent; background: #f3c3c5; box-shadow: none; }
 @media (max-height: 700px) {
   .lesson-illustration { height: clamp(54px, 11vh, 78px); }
   .lesson-illustration-panel { max-height: 30vh; }
@@ -94,6 +115,24 @@ body {
   .lesson-slide-copy { font-size: 13px; line-height: 1.32; }
 }
 
+/* Day-log category colors: calendar dots and day-view circles (soft pastels, both themes). */
+:root {
+  --cat-mood: #8ec9f0;
+  --cat-skin: #f9b99a;
+  --cat-symptoms: #9fd89a;
+  --cat-period: #c7a6f2;
+  --cat-sleep: #9aa6f0;
+  --selected-day: #fbd3e6;
+}
+.theme-dark {
+  --cat-mood: #6aa8d4;
+  --cat-skin: #d9957a;
+  --cat-symptoms: #76b571;
+  --cat-period: #a387d6;
+  --cat-sleep: #7d8ad8;
+  --selected-day: #5c3651;
+}
+
 /* Dark mode is scoped to the app shell so the selected theme covers every tab. */
 .theme-dark {
   color: #f1e8f4;
@@ -103,6 +142,12 @@ body {
 .theme-dark .bb-bg-FFF7FB-85,
 .theme-dark .bg-white {
   background-color: #302638;
+}
+.settings-choice-active { border: 1px solid transparent; }
+.theme-dark .settings-choice-active {
+  background-color: #58364c;
+  border-color: #8e5475;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 4%);
 }
 .theme-dark .theme-switch-thumb { background-color: #fff; }
 .theme-dark .bg-white\/95 { background-color: rgb(48 38 56 / 95%); }
@@ -125,6 +170,8 @@ body {
   background-color: #302638;
   color: #f4edf6;
 }
+.my-things-list > div { border-color: #f3c5dc; }
+.theme-dark .my-things-list > div { border-color: #68445e; }
 .daughter-supply-request-card {
   background-image: linear-gradient(135deg, #e0679f, #b83b7e);
   border-color: #e0679f;
@@ -153,6 +200,9 @@ body {
 .theme-dark .text-slate-500 { color: #c1b4c8; }
 .theme-dark .text-slate-400 { color: #a99aaf; }
 .theme-dark .text-slate-300 { color: #918298; }
+.theme-dark .period-mini-month:hover,
+.theme-dark .period-mini-month:focus-visible { background-color: #49334e; box-shadow: inset 0 0 0 1px #9e557b; }
+.theme-dark .period-mini-month:active { background-color: #57394d; }
 .theme-dark .cycle-ring-center { fill: #302938; }
 .theme-dark .cycle-ring-copy .text-slate-700 { color: #f4edf6; }
 .theme-dark .cycle-ring-copy .text-slate-500 { color: #d7cadf; }
@@ -228,6 +278,44 @@ body {
 .theme-dark ::placeholder { color: #a99aaf; }
 .theme-dark .journal-note-input { color: #352d3a; }
 .theme-dark .journal-note-input::placeholder { color: #776a7a; }
+
+
+.diary-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  padding: max(12px, env(safe-area-inset-top)) 14px max(12px, env(safe-area-inset-bottom));
+  background: rgb(22 15 24 / 76%);
+  backdrop-filter: blur(7px);
+}
+.diary-dialog { width: min(100%, 640px); max-height: 100%; overflow: visible; padding: 0; background: transparent; color: #574747; animation: diary-rise .24s ease-out; }
+@keyframes diary-rise { from { transform: translateY(20px); opacity: .7; } to { transform: translateY(0); opacity: 1; } }
+.diary-book { container-type: inline-size; position: relative; width: 100%; aspect-ratio: 690 / 651; overflow: hidden; background: transparent url('/images/diary-note.png') center / 100% 100% no-repeat; filter: drop-shadow(0 12px 24px rgb(0 0 0 / 24%)); }
+.diary-dialog .diary-book { width: 95%; margin-inline: auto; }
+.diary-close { position: absolute; z-index: 2; top: 3%; right: 3%; display: grid; width: clamp(28px, 4cqw, 42px); height: clamp(28px, 4cqw, 42px); place-items: center; border: 1px solid rgb(141 104 92 / 35%); border-radius: 50%; color: #876c69; background: rgb(255 255 255 / 88%); cursor: pointer; }
+.diary-date { position: absolute; top: 79.8%; left: 52%; width: 28%; overflow: hidden; color: #655950; font: 700 clamp(9px, 2cqw, 14px)/1.2 "Chalkboard SE", "Comic Sans MS", cursive; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
+.diary-book textarea { position: absolute; top: 17.3%; left: 21.6%; width: 73.8%; height: 52.8%; resize: none; border: 0; outline: 0; padding: 0; color: #534c43; background: transparent; font: 500 clamp(12px, 2.4cqw, 18px)/6.75cqw "Chalkboard SE", "Comic Sans MS", cursive; }
+.diary-book textarea::placeholder { color: #98877b; opacity: .82; }
+.diary-status { position: absolute; inset: 0; display: grid; place-items: center; color: #8f7771; font-weight: 800; }
+.diary-pin-form { position: absolute; top: 22%; left: 20%; display: flex; width: 60%; flex-direction: column; justify-content: center; gap: 12px; border: 1px solid #e2cfb5; border-radius: 16px; padding: 18px; color: #715a56; background: rgb(255 251 241 / 96%); box-shadow: 0 5px 20px rgb(104 71 50 / 16%); font-weight: 700; }
+.diary-pin-form input { border: 1px solid #ddc8b8; border-radius: 12px; padding: 12px; color: #594947; background: rgb(255 255 255 / 90%); }
+.diary-pin-form button, .diary-save { border: 0; border-radius: 14px; padding: 11px 18px; color: white; background: #d96196; font-weight: 900; cursor: pointer; }
+.diary-pin-form button:disabled, .diary-save:disabled { opacity: .55; cursor: not-allowed; }
+.diary-error { position: absolute; right: 4%; bottom: 3%; color: #b73851; font-size: 12px; font-weight: 800; }
+.diary-footer { display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding-top: 8px; color: #fff8ec; font-size: 11px; font-weight: 800; }
+.diary-dialog .diary-footer { width: 95%; margin-inline: auto; }
+.diary-save { min-width: 120px; box-shadow: 0 5px 12px rgb(217 97 150 / 24%); }
+.diary-launch { display: flex; width: 100%; align-items: center; gap: 12px; border: 1px solid #614356; border-radius: 20px; padding: 14px 16px; color: #fff0f7; background: linear-gradient(115deg, #3b2a3e, #463044 58%, #493542); text-align: left; box-shadow: 0 5px 16px rgb(17 10 22 / 18%); cursor: pointer; }
+.diary-launch-icon { display: flex; width: 44px; height: 44px; flex: 0 0 auto; align-items: center; justify-content: center; border-radius: 16px; color: #f26cab; background: #553449; }
+.diary-launch span span + span { color: #ccb6cc; }
+@media (max-width: 600px) {
+  .diary-dialog { width: min(100%, 640px); }
+  .diary-book textarea { line-height: 6.75cqw; }
+  .diary-footer { align-items: center; justify-content: space-between; }
+}
 
 /* The cycle tracker is a fixed overlay, so give it its own theme-aware palette. */
 .cycle-tracker[data-theme="light"] {

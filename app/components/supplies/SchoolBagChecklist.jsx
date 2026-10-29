@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { useFamily } from "../../../context/FamilyContext";
 import { Check, Backpack, Bell, ChevronRight, X } from "lucide-react";
 import { KIT_ITEMS } from "../../../lib/data";
-import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
+import { t } from "../../../lib/i18n";
 
 export default function SchoolBagChecklist({ daughter = false }) {
   const [open, setOpen] = useState(false);
@@ -42,17 +42,17 @@ export default function SchoolBagChecklist({ daughter = false }) {
 
   const remindDaughter = async (item) => {
     const itemName = item.label.replace(/\s*\([^)]*\)/g, "").trim();
-    const sent = await sendToTeen(`Цүнхэндээ “${itemName}” хийгээрэй 🎒`, "kit");
+    const sent = await sendToTeen(t(`Цүнхэндээ “${itemName}” хийгээрэй 🎒`, `Put "${itemName}" in your bag 🎒`), "kit");
     if (sent) {
       const savedCopy = await sendToMom(
-        `${daughterName}-д цүнхний сануулга илгээлээ: ${itemName} 🎒`,
+        t(`${daughterName}-д цүнхний сануулга илгээлээ: ${itemName} 🎒`, `Bag reminder sent to ${daughterName}: ${itemName} 🎒`),
         "kit",
         selectedDaughterId,
       );
       setToast(
         savedCopy
-          ? `${daughterName}-д сануулагч очлоо 🎒`
-          : `${daughterName}-д сануулагч очсон ч мэдэгдлийн түүхэд хадгалж чадсангүй.`,
+          ? t(`${daughterName}-д сануулагч очлоо 🎒`, `Reminder sent to ${daughterName} 🎒`)
+          : t(`${daughterName}-д сануулагч очсон ч мэдэгдлийн түүхэд хадгалж чадсангүй.`, `Reminder sent to ${daughterName}, but it couldn't be saved to the history.`),
       );
     }
   };
@@ -96,9 +96,9 @@ export default function SchoolBagChecklist({ daughter = false }) {
             onClick={() => remindDaughter(item)}
             disabled={!linked}
             className="flex shrink-0 items-center gap-1 rounded-full bb-bg-FDE7F1 px-2.5 py-1.5 text-xs font-extrabold bb-text-B83B7E disabled:opacity-50"
-            aria-label={`${item.label}-ийг ${daughterName}-д сануулах`}
+            aria-label={t(`${item.label}-ийг ${daughterName}-д сануулах`, `Remind ${daughterName} about ${item.label}`)}
           >
-            <Bell className="h-3.5 w-3.5" /> Сануулах
+            <Bell className="h-3.5 w-3.5" /> {t("Сануулах", "Remind")}
           </button>
         )}
       </div>
@@ -107,122 +107,121 @@ export default function SchoolBagChecklist({ daughter = false }) {
 
   const completionMessage = (daughter ? draftCount : checkedCount) === KIT_ITEMS.length && (
     <p className="mt-4 rounded-2xl bb-bg-FDE7F1 py-3 text-center text-sm font-extrabold bb-text-B83B7E bloom-pop">
-      {daughter ? "🎉 Цүнхээ бэлдчихлээ!" : "🎉 Охины цүнх бэлэн боллоо!"}
+      {daughter ? t("🎉 Цүнхээ бэлдчихлээ!", "🎉 Your bag is ready!") : t("🎉 Охины цүнх бэлэн боллоо!", "🎉 Her bag is ready!")}
     </p>
   );
 
-  if (daughter) {
-    const openChecklist = () => {
-      setDraftKit(kitChecked);
-      setOpen(true);
-    };
-    const submitChecklist = async () => {
-      setSaving(true);
-      try {
-        const saved = await saveKit(draftKit);
-        if (saved) {
-          setOpen(false);
-          setToast("Цүнхний жагсаалт хадгалагдлаа ✓");
-        }
-      } catch {
-        setToast("Цүнхний жагсаалтыг хадгалж чадсангүй. Дахин оролдоно уу.");
-      } finally {
-        setSaving(false);
-      }
-    };
+  const openChecklist = () => {
+    if (daughter) setDraftKit(kitChecked);
+    setOpen(true);
+  };
 
-    return (
-      <>
-        <Card className="!p-4">
-          <button type="button" onClick={openChecklist} className="w-full text-left" aria-haspopup="dialog">
-            <div className="flex items-center gap-3">
+  const submitChecklist = async () => {
+    setSaving(true);
+    try {
+      const saved = await saveKit(draftKit);
+      if (saved) {
+        setOpen(false);
+        setToast(t("Цүнхний жагсаалт хадгалагдлаа ✓", "Bag list saved ✓"));
+      }
+    } catch (error) {
+      console.warn("[kit_checks] save failed:", error);
+      setToast(t("Цүнхний жагсаалтыг хадгалж чадсангүй. Дахин оролдоно уу.", "Couldn't save the bag list. Try again."));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const modalCount = daughter ? draftCount : checkedCount;
+
+  return (
+    <>
+      <Card className="!p-4">
+        <button type="button" onClick={openChecklist} className="w-full text-left" aria-haspopup="dialog" aria-expanded={open}>
+          <div className="flex items-center gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bb-bg-FDE7F1 bb-text-B83B7E">
+              <Backpack className="h-5 w-5" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-extrabold text-slate-700">
+                {daughter ? t("Миний сургуулийн цүнх", "My school bag") : t(`${daughterName} · сургуулийн цүнх`, `${daughterName} · school bag`)}
+              </span>
+              <span className="mt-0.5 block text-xs font-bold text-slate-400">
+                {daughter ? t("Жагсаалтаа шалгах", "Check my list") : t("Жагсаалт харах, сануулах", "View list & remind")}
+              </span>
+            </span>
+            <span className="text-sm font-extrabold bb-text-B83B7E">{checkedCount}/{KIT_ITEMS.length}</span>
+            <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" />
+          </div>
+          <div className="mt-3">{progressBar(checkedCount)}</div>
+        </button>
+      </Card>
+
+      {open && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center p-3 sm:items-center sm:p-4">
+          <button
+            type="button"
+            aria-label={t("Цүнхний жагсаалт хаах", "Close bag list")}
+            onClick={() => !saving && setOpen(false)}
+            disabled={saving}
+            className="absolute inset-0 bg-slate-950/45 backdrop-blur-sm"
+          />
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="school-bag-title"
+            className="relative z-10 max-h-[88dvh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-5 shadow-2xl bloom-pop"
+          >
+            <div className="mb-4 flex items-center gap-3">
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bb-bg-FDE7F1 bb-text-B83B7E">
                 <Backpack className="h-5 w-5" />
               </span>
-              <span className="min-w-0 flex-1">
-                <span className="block font-extrabold text-slate-700">Миний сургуулийн цүнх</span>
-                <span className="mt-0.5 block text-xs font-bold text-slate-400">Жагсаалтаа шалгах</span>
-              </span>
-              <span className="text-sm font-extrabold bb-text-B83B7E">{checkedCount}/{KIT_ITEMS.length}</span>
-              <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" />
+              <h2 id="school-bag-title" className="flex-1 text-lg font-black text-slate-700">
+                {daughter ? t("Миний сургуулийн цүнх", "My school bag") : t(`${daughterName} · сургуулийн цүнх`, `${daughterName} · school bag`)}
+              </h2>
+              <span className="text-sm font-extrabold bb-text-B83B7E">{modalCount}/{KIT_ITEMS.length}</span>
+              <button
+                type="button"
+                autoFocus
+                onClick={() => setOpen(false)}
+                disabled={saving}
+                aria-label={t("Хаах", "Close")}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
-            <div className="mt-3">{progressBar(checkedCount)}</div>
-          </button>
-        </Card>
-
-        {open && (
-          <div className="fixed inset-0 z-[100] flex items-end justify-center p-3 sm:items-center sm:p-4">
-            <button
-              type="button"
-              aria-label="Цүнхний жагсаалт хаах"
-              onClick={() => setOpen(false)}
-              disabled={saving}
-              className="absolute inset-0 bg-slate-950/45 backdrop-blur-sm"
-            />
-            <section
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="school-bag-title"
-              className="relative z-10 max-h-[88dvh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-5 shadow-2xl bloom-pop"
-            >
-              <div className="mb-4 flex items-center gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bb-bg-FDE7F1 bb-text-B83B7E">
-                  <Backpack className="h-5 w-5" />
-                </span>
-                <h2 id="school-bag-title" className="flex-1 text-lg font-black text-slate-700">Миний сургуулийн цүнх</h2>
-                <span className="text-sm font-extrabold bb-text-B83B7E">{draftCount}/{KIT_ITEMS.length}</span>
-                <button
-                  type="button"
-                  autoFocus
-                  onClick={() => setOpen(false)}
-                  disabled={saving}
-                  aria-label="Хаах"
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-              <div className="mb-4">{progressBar(draftCount)}</div>
-              <div className="space-y-2">{rows}</div>
-              {completionMessage}
-              <div className="mt-5 flex gap-2">
+            <div className="mb-4">{progressBar(modalCount)}</div>
+            <div className="space-y-2">{rows}</div>
+            <p className="mt-3 rounded-2xl bb-bg-FFF7FB px-3 py-2.5 text-xs font-semibold leading-relaxed text-slate-500">
+              {daughter
+                ? t("Ямар нэг зүйлээ авахаа мартсан бол жагсаалтаас сонгоод хадгалаарай.", "If you forgot something, pick it from the list and save.")
+                : t(`${daughterName} ямар нэг зүйлээ авахаа мартсан бол тухайн зүйлийн хажуу дахь “Сануулах” товчийг дараарай. Сануулга зөвхөн ${daughterName}-д очно 💗`, `If ${daughterName} forgot something, tap "Remind" next to it. The reminder only goes to ${daughterName} 💗`)}
+            </p>
+            {completionMessage}
+            <div className="mt-5 flex gap-2">
+              {daughter && (
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
                   disabled={saving}
                   className="flex-1 rounded-2xl bg-slate-100 py-3 text-sm font-extrabold text-slate-600 disabled:opacity-50"
                 >
-                  Болих
+                  {t("Болих", "Cancel")}
                 </button>
-                <button
-                  type="button"
-                  onClick={submitChecklist}
-                  disabled={saving}
-                  className="flex-1 rounded-2xl bb-grad-8 py-3 text-sm font-extrabold text-white disabled:opacity-60"
-                >
-                  {saving ? "Хадгалж байна..." : "Хадгалах"}
-                </button>
-              </div>
-            </section>
-          </div>
-        )}
-      </>
-    );
-  }
-
-  return (
-    <Card>
-      <SectionTitle
-        icon={Backpack}
-        title={daughter ? "Миний сургуулийн цүнх" : `${daughterName} · сургуулийн цүнх`}
-        right={<span className="text-xs font-extrabold bb-text-B83B7E">{checkedCount}/{KIT_ITEMS.length}</span>}
-      />
-      <div className="mb-4">{progressBar(checkedCount)}</div>
-      <div className="space-y-2">{rows}</div>
-      <p className="mt-3 rounded-2xl bb-bg-FFF7FB px-3 py-2.5 text-xs font-semibold leading-relaxed text-slate-500">
-        {daughter ? "Ямар нэг зүйлээ авахаа мартсан бол жагсаалтаас сонгоорой." : `${daughterName} ямар нэг зүйлээ авахаа мартсан бол тухайн зүйлийн хажуу дахь “Сануулах” товчийг дараарай. Сануулга зөвхөн ${daughterName}-д очно 💗`}
-      </p>
-      {completionMessage}
-    </Card>
+              )}
+              <button
+                type="button"
+                onClick={daughter ? submitChecklist : () => setOpen(false)}
+                disabled={saving}
+                className="flex-1 rounded-2xl bb-grad-8 py-3 text-sm font-extrabold text-white disabled:opacity-60"
+              >
+                {daughter ? saving ? t("Хадгалж байна...", "Saving...") : t("Хадгалах", "Save") : t("Хаах", "Close")}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+    </>
   );
 }

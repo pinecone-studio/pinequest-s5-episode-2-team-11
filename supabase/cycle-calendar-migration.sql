@@ -24,7 +24,7 @@ create table if not exists public.period_logs (
   log_date date not null,
   status text not null default 'confirmed' check (status in ('pending', 'confirmed', 'removed')),
   entered_by uuid not null references auth.users (id) on delete cascade,
-  period_length smallint check (period_length is null or period_length between 2 and 7),
+  period_length smallint check (period_length is null or period_length between 1 and 31),
   created_at timestamptz not null default now(),
   confirmed_at timestamptz,
   unique (user_id, log_date)
@@ -123,6 +123,12 @@ as $$
     and child.family_id is not null and child.family_id = guardian.family_id;
 $$;
 
+-- Users are in Asia/Ulaanbaatar (UTC+8); the DB runs in UTC.
+create or replace function public.bloomy_today()
+returns date language sql stable
+as $$ select (now() at time zone 'Asia/Ulaanbaatar')::date $$;
+grant execute on function public.bloomy_today() to authenticated;
+
 create or replace function public.sync_my_period_starts(p_dates date[], p_period_length smallint default 5)
 returns void
 language plpgsql security definer set search_path = public
@@ -133,6 +139,10 @@ begin
   if coalesce(cardinality(p_dates), 0) = 0 then raise exception 'period_start_required'; end if;
   if p_period_length not between 2 and 7 then raise exception 'invalid_period_length'; end if;
   if exists (select 1 from unnest(coalesce(p_dates, '{}'::date[])) d where d > current_date) then raise exception 'invalid_log_date'; end if;
+  -- Treat this RPC as the daughter's complete confirmed-date selection so
+  -- calendar edits can remove old dates. Guardian pending entries stay pending.
+  update public.period_logs set status = 'removed', confirmed_at = null
+  where user_id = auth.uid() and status = 'confirmed' and not (log_date = any(p_dates));
   foreach start_date in array coalesce(p_dates, '{}'::date[]) loop
     insert into public.period_logs(user_id, log_date, status, entered_by, period_length, confirmed_at)
     values (auth.uid(), start_date, 'confirmed', auth.uid(), p_period_length, now())
@@ -152,6 +162,68 @@ begin
     ), 28),
     no_period_yet = false
   where id = auth.uid();
+end $$;
+
+create or replace function public.sync_my_period_days(p_dates date[], p_period_length smallint default 5)
+returns date[]
+language plpgsql security definer set search_path = public
+as $$
+declare
+  v_group record;
+  v_starts date[];
+  v_saved_starts date[];
+begin
+  if auth.uid() is null or not exists (select 1 from public.profiles where id = auth.uid() and role = 'daughter') then
+    raise exception 'daughter_only';
+  end if;
+  if p_period_length not between 2 and 7 then raise exception 'invalid_period_length'; end if;
+  if exists (select 1 from unnest(coalesce(p_dates, '{}'::date[])) d where d > public.bloomy_today()) then
+    raise exception 'invalid_log_date';
+  end if;
+  with selected as (
+    select distinct d::date as log_date from unnest(coalesce(p_dates, '{}'::date[])) d
+  ), grouped as (
+    select log_date, log_date - row_number() over (order by log_date)::int as group_key from selected
+  ), periods as (
+    select min(log_date) as start_date from grouped group by group_key
+  )
+  select coalesce(array_agg(start_date order by start_date), '{}'::date[]) into v_starts from periods;
+
+  update public.period_logs set status = 'removed', confirmed_at = null
+  where user_id = auth.uid() and status = 'confirmed' and not (log_date = any(v_starts));
+
+  for v_group in
+    with selected as (
+      select distinct d::date as log_date from unnest(coalesce(p_dates, '{}'::date[])) d
+    ), grouped as (
+      select log_date, log_date - row_number() over (order by log_date)::int as group_key from selected
+    )
+    select min(log_date) as start_date, count(*)::smallint as period_days
+    from grouped group by group_key order by min(log_date)
+  loop
+    insert into public.period_logs(user_id, log_date, status, entered_by, period_length, confirmed_at)
+    values (auth.uid(), v_group.start_date, 'confirmed', auth.uid(), v_group.period_days, now())
+    on conflict (user_id, log_date) do update set
+      status = 'confirmed', entered_by = auth.uid(), period_length = excluded.period_length, confirmed_at = now()
+    where public.period_logs.status <> 'pending';
+  end loop;
+
+  update public.profiles set
+    last_period_start = (select max(log_date) from public.period_logs where user_id = auth.uid() and status = 'confirmed'),
+    period_length = p_period_length,
+    cycle_length = coalesce((
+      select greatest(21, least(45, round(avg(cycle_days))::int))
+      from (
+        select log_date - lag(log_date) over (order by log_date) as cycle_days
+        from public.period_logs where user_id = auth.uid() and status = 'confirmed'
+      ) lengths where cycle_days between 15 and 60
+    ), 28),
+    no_period_yet = not exists (select 1 from public.period_logs where user_id = auth.uid() and status = 'confirmed')
+  where id = auth.uid();
+  select coalesce(array_agg(log_date order by log_date), '{}'::date[])
+    into v_saved_starts
+  from public.period_logs where user_id = auth.uid() and status = 'confirmed';
+  return v_saved_starts;
 end $$;
 
 create or replace function public.propose_period_start(p_child_id uuid, p_log_date date)
@@ -206,10 +278,12 @@ end $$;
 grant execute on function public.get_my_period_logs(date, date) to authenticated;
 grant execute on function public.get_guardian_period_logs(uuid, date, date) to authenticated;
 grant execute on function public.sync_my_period_starts(date[], smallint) to authenticated;
+grant execute on function public.sync_my_period_days(date[], smallint) to authenticated;
 grant execute on function public.propose_period_start(uuid, date) to authenticated;
 grant execute on function public.respond_period_entry(uuid, boolean) to authenticated;
 revoke all on function public.get_my_period_logs(date, date) from public, anon;
 revoke all on function public.get_guardian_period_logs(uuid, date, date) from public, anon;
 revoke all on function public.sync_my_period_starts(date[], smallint) from public, anon;
+revoke all on function public.sync_my_period_days(date[], smallint) from public, anon;
 revoke all on function public.propose_period_start(uuid, date) from public, anon;
 revoke all on function public.respond_period_entry(uuid, boolean) from public, anon;
