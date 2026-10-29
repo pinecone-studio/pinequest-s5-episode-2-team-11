@@ -259,6 +259,16 @@ body {
 .theme-dark .bb-border-F8D3E6,
 .theme-dark .bb-border-FDE7F1 { border-color: #68445e; }
 .theme-dark .bb-border-F48FB1 { border-color: #9e557b; }
+.theme-dark .role-select-heading { color: #c7b7cf; }
+.theme-dark .role-select-option {
+  border-color: #9e557b;
+  background-color: #382b3b;
+  box-shadow: 0 8px 20px rgb(0 0 0 / 16%);
+}
+.theme-dark .role-select-option:hover { background-color: #433047; }
+.theme-dark .role-select-option-guardian { border-color: #8c76a7; }
+.theme-dark .role-select-option-guardian:hover { border-color: #b794f4; }
+.theme-dark .role-select-option:focus-visible { --tw-ring-offset-color: #302638; }
 .theme-dark .learn-food-hero {
   border-color: #594052;
   background-image: linear-gradient(135deg, #382532, #30263b 65%, #2c263d);
