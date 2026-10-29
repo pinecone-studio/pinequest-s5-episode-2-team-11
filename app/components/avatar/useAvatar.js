@@ -2,8 +2,7 @@
 
 /**
  * useAvatar — дүрийн XP, 🌸 дэлбээ, хувцас, алхалт.
- * ДЕМО: өгөгдөл энэ утасны localStorage-д хадгалагдана (Supabase-гүй).
- * Жинхэнэ апп болоход энэ файлыг л Supabase руу шилжүүлнэ — дэлгэцүүд өөрчлөгдөхгүй.
+ * localStorage нь хурдан нээх болон офлайн нөөц; Supabase нь аккаунтын үндсэн хадгалалт.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -38,6 +37,13 @@ const normalizeSkin = (skin) =>
   Number.isInteger(skin) && skin >= 0 && skin < SKIN_TONES.length ? skin : 0;
 const normalizeBackground = (background) =>
   AVATAR_BACKGROUNDS.some((option) => option.id === background) ? background : "room";
+const nonNegativeInt = (value, fallback = 0) =>
+  Number.isFinite(value) ? Math.max(0, Math.floor(value)) : fallback;
+const normalizeWalk = (walk) => ({
+  date: typeof walk?.date === "string" && walk.date ? walk.date : today(),
+  steps: nonNegativeInt(walk?.steps),
+  xp: nonNegativeInt(walk?.xp),
+});
 
 const fresh = () => ({
   xp: 0,
@@ -98,13 +104,15 @@ export function useAvatar(userId, onToast = () => {}) {
     const loadSharedAvatar = async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("avatar_look, avatar_skin, avatar_background")
+        .select("avatar_look, avatar_skin, avatar_background, avatar_xp, avatar_xp_spent, avatar_petals, avatar_walk, avatar_gift_date")
         .eq("id", userId)
         .maybeSingle();
 
       if (cancelled) return;
       if (error) {
-        toastRef.current(t("Дүрийг серверээс ачаалж чадсангүй. Supabase-ийн тохиргоог шалгана уу.", "Couldn't load your avatar from the server. Check the Supabase setup."));
+        toastRef.current(error.code === "42703"
+          ? t("XP-г серверт хадгалахын тулд supabase/avatar-progress-migration.sql migration ажиллуулаарай.", "Run the supabase/avatar-progress-migration.sql migration to save XP on the server.")
+          : t("Дүрийн мэдээллийг серверээс ачаалж чадсангүй. Интернэтээ шалгана уу.", "Couldn't load your avatar from the server. Check your internet connection."));
         return;
       }
       if (!data) {
@@ -124,12 +132,40 @@ export function useAvatar(userId, onToast = () => {}) {
         remoteSkin !== 0 ||
         remoteBackground !== "room";
       const useLocalAvatar = localHasCustomAvatar && !remoteHasCustomAvatar;
+      const remoteProgress = {
+        xp: nonNegativeInt(data.avatar_xp),
+        xpSpent: nonNegativeInt(data.avatar_xp_spent),
+        petals: nonNegativeInt(data.avatar_petals, START_PETALS),
+        walk: normalizeWalk(data.avatar_walk),
+        giftDate: data.avatar_gift_date,
+      };
+      const remoteHasProgress =
+        remoteProgress.xp > 0 ||
+        remoteProgress.xpSpent > 0 ||
+        remoteProgress.petals !== START_PETALS ||
+        remoteProgress.walk.steps > 0 ||
+        Boolean(remoteProgress.giftDate);
+      const localHasProgress =
+        localState.xp > 0 ||
+        localState.xpSpent > 0 ||
+        localState.petals !== START_PETALS ||
+        localState.walk.steps > 0 ||
+        Boolean(localState.giftDate);
+      const useLocalProgress = localHasProgress && !remoteHasProgress;
+      const mergedXp = Math.max(localState.xp, remoteProgress.xp);
+      const mergedXpSpent = Math.max(localState.xpSpent, remoteProgress.xpSpent);
+      const useLocalPetals = useLocalProgress || localState.xp > remoteProgress.xp;
 
       setState((current) => ({
         ...current,
         look: useLocalAvatar ? localState.look : remoteLook,
         skin: useLocalAvatar ? localState.skin : remoteSkin,
         background: useLocalAvatar ? localState.background : remoteBackground,
+        xp: mergedXp,
+        xpSpent: mergedXpSpent,
+        petals: useLocalPetals ? localState.petals : remoteProgress.petals,
+        walk: useLocalProgress ? localState.walk : remoteProgress.walk,
+        giftDate: useLocalProgress ? localState.giftDate : remoteProgress.giftDate,
       }));
       setAvatarSyncReady(true);
     };
@@ -157,16 +193,23 @@ export function useAvatar(userId, onToast = () => {}) {
           avatar_look: state.look,
           avatar_skin: state.skin,
           avatar_background: state.background,
+          avatar_xp: state.xp,
+          avatar_xp_spent: state.xpSpent ?? 0,
+          avatar_petals: state.petals,
+          avatar_walk: state.walk,
+          avatar_gift_date: state.giftDate,
         })
         .eq("id", userId);
 
       if (error) {
-        toastRef.current(t("Дүрийг найзуудтай синк хийж чадсангүй. Интернэтээ шалгана уу.", "Couldn't sync your avatar with friends. Check your internet."));
+        toastRef.current(error.code === "42703"
+          ? t("XP-г серверт хадгалахын тулд supabase/avatar-progress-migration.sql migration ажиллуулаарай.", "Run the supabase/avatar-progress-migration.sql migration to save XP on the server.")
+          : t("XP болон дүрийг сервертэй синк хийж чадсангүй. Интернэтээ шалгана уу.", "Couldn't sync XP and avatar with the server. Check your internet connection."));
       }
     }, 250);
 
     return () => clearTimeout(timeout);
-  }, [avatarSyncReady, loaded, state.look, state.skin, state.background, userId]);
+  }, [avatarSyncReady, loaded, state.look, state.skin, state.background, state.xp, state.xpSpent, state.petals, state.walk, state.giftDate, userId]);
 
   // XP нэмэх бүрт түвшин ахисан эсэхийг шалгана
   const reward = (s, amount) => {

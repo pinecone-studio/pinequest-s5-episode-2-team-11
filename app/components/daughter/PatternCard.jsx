@@ -8,8 +8,8 @@ import { seasonPatterns } from "../../../lib/patterns";
 import { supabase } from "../../../lib/supabase";
 import Card from "../ui/Card";
 import { t } from "../../../lib/i18n";
+import { CYCLE_PHASES, SEASON_PHASE_KEYS } from "../../../lib/cyclePhases";
 
-const SEASON_LABEL = { get winter() { return t("❄️ Өвөл", "❄️ Winter"); }, get spring() { return t("🌱 Хавар", "🌱 Spring"); }, get summer() { return t("☀️ Зун", "☀️ Summer"); }, get autumn() { return t("🍂 Намар", "🍂 Autumn"); } };
 const label = (pairs, key) => pairs.find(([value]) => value === key)?.[1] ?? key;
 const moodOf = (average) => MOODS.find((option) => option.value === Math.round(average));
 
@@ -49,7 +49,7 @@ export default function PatternCard() {
       {!pattern ? (
         <p className="mt-2 text-sm font-bold text-slate-400">{t("Ачаалж байна…", "Loading…")}</p>
       ) : !pattern.seasons.length ? (
-        <p className="mt-2 text-sm font-semibold leading-relaxed text-slate-500">{t("Нэг бүтэн мөчлөг тэмдэглэвэл чиний улирал бүрийн хэв маяг энд гарна 🌱", "Log one full cycle and your patterns for each season will show here 🌱")}</p>
+        <p className="mt-2 text-sm font-semibold leading-relaxed text-slate-500">{t("Нэг бүтэн мөчлөг тэмдэглэвэл чиний үе бүрийн хэв маяг энд гарна 🌱", "Log one full cycle and your patterns for each phase will show here 🌱")}</p>
       ) : (
         <ul className="mt-3 space-y-2">
           {pattern.seasons.map((season) => {
@@ -62,7 +62,9 @@ export default function PatternCard() {
             ].filter(Boolean);
             return (
               <li key={season.season} className="rounded-2xl bg-slate-50 p-3">
-                <p className="text-xs font-black text-slate-600">{SEASON_LABEL[season.season]}</p>
+                <p className="text-xs font-black text-slate-600">
+                  {CYCLE_PHASES[SEASON_PHASE_KEYS[season.season]].emoji} {CYCLE_PHASES[SEASON_PHASE_KEYS[season.season]].label}
+                </p>
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
                   {chips.length ? chips.map((chip) => <span key={chip} className="rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold text-slate-600">{chip}</span>)
                     : <span className="text-[11px] font-semibold text-slate-400">{t("Онцгой зүйл тэмдэглэгдээгүй", "Nothing special logged")}</span>}

@@ -13,7 +13,6 @@ import IncomingSosCard from "../friends/IncomingSosCard";
 import PeriodCycleTracker from "./PeriodCycleTracker";
 import CyclePredictionCard from "./CyclePredictionCard";
 import TodayMoodCard from "./TodayMoodCard";
-import CycleLegend from "./CycleLegend";
 import CouponRewards from "../avatar/CouponRewards";
 import { t } from "../../../lib/i18n";
 import StoryCards from "../connection/StoryCards";
@@ -83,10 +82,10 @@ export default function DaughterHome() {
               hasHadPeriod={hasCycle && !noPeriodYet}
             />
           </button>
-          <div className="mt-3"><CycleLegend compact /></div>
           {periodPrediction.late && <p className="mt-3 rounded-2xl bb-bg-FDE7F1 px-3 py-2 text-center text-xs font-bold bb-text-B83B7E">{t("Хоцорч байна. Эхний жилүүдэд ингэх нь хэвийн 💗", "Running late. This is normal in the first years 💗")}</p>}
           {periodPrediction.overNinetyDays && <p className="mt-2 rounded-2xl bb-bg-FDE7F1 px-3 py-2 text-xs font-semibold leading-relaxed bb-text-B83B7E">{t("3 сараас удаан ирээгүй байна. Асран хамгаалагчтайгаа ярьж, эмчид үзүүлэхийг зөвлөж байна.", "It hasn't come for over 3 months. Talk with your guardian and consider seeing a doctor.")}</p>}
           {noPeriodYet && <button type="button" onClick={() => { setLearnTab("pad"); setTab("learn"); }} className="mt-2 w-full rounded-2xl border-2 border-slate-100 bg-white py-3 text-sm font-extrabold text-slate-700"><BookOpen className="mr-2 inline h-4 w-4 bb-text-B83B7E" />{t("Анхны сарын тэмдгийн гарын авлага", "First period guide")}</button>}
+          {hasCycle && <div className="mt-3"><CyclePredictionCard phaseKey={phaseKey} day={day} /></div>}
           {!isPeriod && (
             <button
               onClick={startPeriod}
@@ -123,9 +122,7 @@ export default function DaughterHome() {
           </button>
         </Card>
       )}
-
-      {/* Хувийн таамаг — мөчлөгийн өдөр бүр, анхны сарын тэмдгээс өмнө ч харагдана */}
-      <CyclePredictionCard />
+      {!hasCycle && !noPeriodYet && <CyclePredictionCard phaseKey={phaseKey} day={day} />}
 
       <TodayMoodCard />
 

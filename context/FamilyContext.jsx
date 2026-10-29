@@ -77,6 +77,7 @@ export function FamilyProvider({ children }) {
   const [localSupplies, setLocalSupplies] = useState(DEFAULT_SUPPLIES); // гэр бүлгүй үед
   const [localCustomSupplies, setLocalCustomSupplies] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const lastTeenNoticeIdRef = useRef(null);
   const [moodRows, setMoodRows] = useState([]);
   const [kitRows, setKitRows] = useState([]);
   const [localKit, setLocalKit] = useState([]);
@@ -285,6 +286,16 @@ export function FamilyProvider({ children }) {
   const momUnread = momInbox.filter((m) => !m.read).length;
   const latestTeenMsg = teenInbox.find((m) => !m.read);
 
+  useEffect(() => {
+    if (view !== "daughter") {
+      lastTeenNoticeIdRef.current = null;
+      return;
+    }
+    if (!latestTeenMsg || latestTeenMsg.id === lastTeenNoticeIdRef.current) return;
+    lastTeenNoticeIdRef.current = latestTeenMsg.id;
+    setToast("Ээжээс шинэ зурвас ирлээ. Мэдэгдлээ нээгээрэй 💌");
+  }, [view, latestTeenMsg?.id, setToast]);
+
   const kitOwnerId = view === "mother" ? activeChild?.id : userId;
   const kitChecked = familyId
     ? kitRows.filter((row) => row.child_id === kitOwnerId).map((row) => row.item_id)
@@ -437,11 +448,15 @@ export function FamilyProvider({ children }) {
   }, []);
 
   const loadNotifications = useCallback(async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("notifications")
       .select("*")
       .order("created_at", { ascending: false })
       .limit(50);
+    if (error) {
+      console.error("[notifications] inbox refresh failed:", { code: error.code, message: error.message, details: error.details });
+      return;
+    }
     const decoded = (data ?? []).map((notification) => {
       const encodedTarget = notification.kind?.match(/^target:([^:]+):(.+)$/);
       return {
@@ -456,6 +471,14 @@ export function FamilyProvider({ children }) {
         : decoded,
     );
   }, [view, userId]);
+
+  // Realtime is the fast path. Refresh periodically too, so a missed
+  // websocket event still appears in the recipient's in-app inbox.
+  useEffect(() => {
+    if (!supabase || !userId || !familyId) return;
+    const timer = window.setInterval(loadNotifications, 20000);
+    return () => window.clearInterval(timer);
+  }, [userId, familyId, loadNotifications]);
 
   const loadMoods = useCallback(async () => {
     if (!supabase || !userId) return setMoodRows([]);
@@ -693,7 +716,7 @@ export function FamilyProvider({ children }) {
           ? "sent_copy"
           : DAUGHTER_KIND_EVENT[kind] ?? "guardian_signal";
       const { ok, limited } = await sendNotification(session, event, [recipientId], text);
-            if (limited) setToast(t("Хүсэлт аль хэдийн илгээгдсэн байна 💌", "Already sent 💌"));
+      if (limited) setToast(t("Хүсэлт аль хэдийн илгээгдсэн байна 💌", "Already sent 💌"));
       else if (!ok) setToast(t("Илгээж чадсангүй. Интернэтээ шалгаарай.", "Couldn't send. Check your internet."));
       if (ok) loadNotifications();
       return ok;
@@ -885,6 +908,29 @@ export function FamilyProvider({ children }) {
     else console.error("[period_logs] reload after save failed:", result.reloadError);
     await loadProfile();
     pulseSync();
+    return true;
+  };
+
+  const saveChildPeriodDays = async (dates) => {
+    if (!supabase || view !== "mother" || !activeChildId) return false;
+    const selected = [...new Set(dates)].filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(date) && date <= toDateStr()).sort();
+    const { error } = await supabase.rpc("sync_guardian_period_days", {
+      p_child_id: activeChildId,
+      p_dates: selected,
+      p_period_length: Math.min(7, Math.max(2, Number(periodLength) || 5)),
+    });
+    if (error) {
+      console.error("[period_logs] guardian edit failed:", error);
+      setToast(error.code === "PGRST202"
+        ? "Supabase дээр guardian-period-date-edit-migration.sql-ийг ажиллуулаад дахин оролдоно уу."
+        : error.message?.includes("period_request_conflict")
+          ? "Охины баталгаажуулаагүй хүсэлттэй өдөр давхцаж байна. Хүсэлтийг шийдсэний дараа дахин засна уу."
+          : "Сарын тэмдгийн хуанлийг хадгалж чадсангүй. Дахин оролдоно уу.");
+      return false;
+    }
+    await loadPeriodLogs();
+    pulseSync();
+    setToast("Охины сарын тэмдгийн хуанлийг шинэчиллээ.");
     return true;
   };
 
@@ -1295,15 +1341,16 @@ export function FamilyProvider({ children }) {
     if (noPeriodYet)
       return t(`${nameGen} анхны сарын тэмдэг хараахан ирээгүй. «Сурах» хэсгийг хамтдаа үзэж, цүнхэнд нь бэлтгэл хийгээрэй 🌱`, `${nameEn} first period hasn't come yet. Look through the Learn section together and pack her bag ahead of time 🌱`);
     if (!hasCycle) return t(`${daughterName} мөчлөгийнхөө мэдээллийг хараахан оруулаагүй байна.`, `${daughterName} hasn't entered her cycle info yet.`);
+    const phaseStatus = t(`Охин тань одоо ${phase.locative} байна.`, `Your daughter is now in ${phase.name}.`);
     if (isPeriod)
-      return t(`${nameGen} сарын тэмдгийн ${day} дэх өдөр. Өнөөдөр илүү амралт, дулаан халамж хэрэгтэй.`, `Day ${day} of ${nameEn} period. Extra rest and warm care help today.`);
+      return t(`${phaseStatus} Сарын тэмдгийн ${day} дэх өдөр. Өнөөдөр илүү амралт, дулаан халамж хэрэгтэй.`, `${phaseStatus} Period day ${day}. Extra rest and warm care help today.`);
     if (daysLate > 0)
-      return t(`${nameGen} сарын тэмдэг удахгүй ирэх магадлалтай. Өсвөр насанд хэдэн хоног хоцрох нь хэвийн.`, `${nameEn} period will probably come soon. Being a few days late is normal for teens.`);
+      return t(`${phaseStatus} Сарын тэмдэг удахгүй ирэх магадлалтай. Өсвөр насанд хэдэн хоног хоцрох нь хэвийн.`, `${phaseStatus} Her period may come soon. Being a few days late is normal for teens.`);
     if (daysUntil <= 3)
-      return t(`${nameGen} сарын тэмдэг ${daysUntil} хоногийн дараа ирэх магадлалтай. Бэлтгэл хангахад туслаарай.`, `${nameEn} period may come in ${daysUntil} days. Help her get ready.`);
+      return t(`${phaseStatus} Сарын тэмдэг ${daysUntil} хоногийн дараа ирэх магадлалтай. Бэлтгэл хангахад туслаарай.`, `${phaseStatus} Her period may come in ${daysUntil} days. Help her get ready.`);
     if (daysUntil <= 7)
-      return t(`${nameGen} сарын тэмдэг 1 долоо хоногийн дотор ирэх магадлалтай. Хэрэгслээ шалгах сайхан үе.`, `${nameEn} period may come within a week. A good time to check supplies.`);
-    return t(`${daughterName} одоо «${phase.name}»-д байна. Онцгой бэлтгэл хэрэггүй — зүгээр л дэргэд нь байгаарай 🌸`, `${daughterName} is now in "${phase.name}". No special prep needed — just be there for her 🌸`);
+      return t(`${phaseStatus} Сарын тэмдэг 1 долоо хоногийн дотор ирэх магадлалтай. Хэрэгслээ шалгах сайхан үе.`, `${phaseStatus} Her period may come within a week. A good time to check supplies.`);
+    return t(`${phaseStatus} Онцгой бэлтгэл хэрэггүй — зүгээр л дэргэд нь байгаарай 🌸`, `${phaseStatus} No special prep needed — just be there for her 🌸`);
   })();
 
   const value = {
@@ -1379,6 +1426,7 @@ export function FamilyProvider({ children }) {
     periodPrediction,
     savePeriodStartDates,
     savePeriodDays,
+    saveChildPeriodDays,
     day,
     daysLate,
     phaseKey,

@@ -22,7 +22,7 @@ function childSummary(child) {
     : isPeriod
       ? t(`${cycle.displayDay} дэх өдөр`, `Day ${cycle.displayDay}`)
       : t(`${cycle.daysUntil} хоногийн дараа`, `In ${cycle.daysUntil} days`);
-  return { color: PHASE_COLORS[phaseKey], text: `${PHASES[phaseKey].short} · ${detail}` };
+  return { color: PHASE_COLORS[phaseKey], text: `${PHASES[phaseKey].emoji} ${PHASES[phaseKey].short} · ${detail}` };
 }
 
 /** 2+ охинтой үед бүх охины мөчлөгийг нэг дор харуулна. Дарвал тэр охин сонгогдоно. */

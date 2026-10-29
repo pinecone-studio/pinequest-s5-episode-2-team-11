@@ -9,6 +9,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
 import { FORECAST_SYSTEM_PROMPT, forecastUserPrompt, sanitizeStats, validateForecast } from "../../../lib/forecast";
 import { PERIOD_KNOWLEDGE } from "../../../lib/period-knowledge";
+import { CYCLE_PHASES } from "../../../lib/cyclePhases";
 
 export const runtime = "nodejs";
 
@@ -86,10 +87,10 @@ async function generate(
 }
 
 const PHASE_MN: Record<string, string> = {
-  period: "сарын тэмдгийн үе",
-  follicular: "дааврын тэнцвэрт (фолликулын) үе",
-  ovulation: "мөчлөгийн дунд үе",
-  luteal: "сарын тэмдгийн өмнөх (лютейн) үе",
+  period: CYCLE_PHASES.period.label.toLocaleLowerCase("mn"),
+  follicular: CYCLE_PHASES.follicular.label.toLocaleLowerCase("mn"),
+  ovulation: CYCLE_PHASES.ovulation.label.toLocaleLowerCase("mn"),
+  luteal: CYCLE_PHASES.luteal.label.toLocaleLowerCase("mn"),
 };
 const MOOD_MN: Record<string, string> = {
   sad: "гунигтай, уйлмаар",
@@ -150,6 +151,7 @@ const LANG_RULE: Record<Lang, string> = {
 const safety = (lang: Lang) => `Чи "Bloomy" апп-ын зөөлөн, найрсаг туслах. Хэрэглэгчид нь Монголын 8–18 насны охид болон тэдний асран хамгаалагчид.
 Дүрэм:
 ${LANG_RULE[lang]}
+- Овуляци эсвэл үр тогтох боломжтой өдрийг яг таг таамаглаж, өдрийн тоо эсвэл хугацааны цонх бүү хэл.
 - Ямар ч эмийн нэр, тун, хэмжээ бүү зөвлө. Онош бүү тавь.
 - Хүчтэй өвдөлт, хэт их цус алдалт, ухаан балартах зэрэг шинж дурдагдвал том хүн, эмчид хандахыг зөвлө.
 - Хоолны дэглэм, жин хасах, калори тоолох талаар бүү зөвлө.
