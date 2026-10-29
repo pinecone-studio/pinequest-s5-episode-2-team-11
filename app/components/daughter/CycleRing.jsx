@@ -2,15 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { getBloomLevel, getLateStatus, getPrediction, getSeason, localDateKey } from "../../../lib/cycle";
+import { CYCLE_PHASES, SEASON_PHASE_KEYS } from "../../../lib/cyclePhases";
 import { t } from "../../../lib/i18n";
-
-const SEASONS = {
-  winter: { get label() { return t("❄️ Өвөл", "❄️ Winter"); }, color: "#E0679F" },
-  spring: { get label() { return t("🌱 Хавар", "🌱 Spring"); }, color: "#B794F4" },
-  summer: { get label() { return t("☀️ Зун", "☀️ Summer"); }, color: "#F48FB1" },
-  autumn: { get label() { return t("🍂 Намар", "🍂 Autumn"); }, color: "#C9A6D7" },
-};
-const SEGMENT_SEASON = { period: "winter", follicular: "spring", ovulation: "summer", luteal: "autumn" };
 const MONTH_DAY = (key) => `${key.slice(5, 7)}/${key.slice(8, 10)}`;
 const DAY_MS = 86400000;
 
@@ -19,7 +12,8 @@ export default function CycleRing({ day = 1, cycleLength = 28, periodLength = 5,
   const prediction = useMemo(() => getPrediction(periods, today), [periods, today]);
   const cycleInfo = { periods, cycleLength, periodLength: prediction?.periodLength ?? periodLength, hasHadPeriod, prediction };
   const season = hasHadPeriod ? getSeason(today, cycleInfo) : "spring";
-  const seasonUi = SEASONS[season];
+  const phaseKeyForDisplay = hasHadPeriod && CYCLE_PHASES[phaseKey] ? phaseKey : SEASON_PHASE_KEYS[season];
+  const phaseUi = CYCLE_PHASES[phaseKeyForDisplay];
   const lateStatus = getLateStatus(today, prediction, periods);
   const bloomLevel = getBloomLevel(today, cycleInfo);
   const effectiveLate = lateStatus === "late" || lateStatus === "very_late" || daysLate > 0;
@@ -92,15 +86,16 @@ export default function CycleRing({ day = 1, cycleLength = 28, periodLength = 5,
           {segments.map((segment) => {
             const length = ((segment.to - segment.from + 1) / cycleLength) * circumference - gap;
             const offset = -((segment.from - 1) / cycleLength) * circumference;
-            const active = SEGMENT_SEASON[segment.key] === season;
-            return <circle key={segment.key} className="cycle-ring-segment" cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={SEASONS[SEGMENT_SEASON[segment.key]].color} strokeWidth={stroke} strokeOpacity={active ? 1 : 0.34} strokeLinecap="round" strokeDasharray={`${Math.max(length - stroke * 0.6, 1)} ${circumference}`} strokeDashoffset={offset - stroke * 0.3} />;
+            const active = phaseKeyForDisplay === segment.key;
+            const segmentPhase = CYCLE_PHASES[segment.key];
+            return <circle key={segment.key} className="cycle-ring-segment" cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={segmentPhase.color} strokeWidth={stroke} strokeOpacity={active ? 1 : 0.34} strokeLinecap="round" strokeDasharray={`${Math.max(length - stroke * 0.6, 1)} ${circumference}`} strokeDashoffset={offset - stroke * 0.3} />;
           })}
         </g>
-        <circle cx={markerX} cy={markerY} r={17} fill={seasonUi.color} opacity={0.25} />
-        <circle cx={markerX} cy={markerY} r={11} fill="white" stroke={seasonUi.color} strokeWidth={4} />
+        <circle cx={markerX} cy={markerY} r={17} fill={phaseUi.color} opacity={0.25} />
+        <circle cx={markerX} cy={markerY} r={11} fill="white" stroke={phaseUi.color} strokeWidth={4} />
       </svg>
       <div className="cycle-ring-copy absolute inset-0 flex flex-col items-center justify-center px-8 text-center">
-        <span className="rounded-full px-2 py-0.5 text-[10px] font-extrabold text-slate-700" style={{ background: `${seasonUi.color}35` }}>{seasonUi.label}</span>
+        <span className="max-w-[160px] rounded-full px-2 py-0.5 text-[10px] font-extrabold leading-tight text-slate-700" style={{ background: `${phaseUi.color}35` }}>{phaseUi.emoji} {phaseUi.label}</span>
         {periodDay ? (
           <span className="mt-2 text-sm font-black leading-tight text-slate-700">{t(`Сарын тэмдгийн ${periodDay} дахь өдөр`, `Period day ${periodDay}`)}</span>
         ) : !hasHadPeriod ? (

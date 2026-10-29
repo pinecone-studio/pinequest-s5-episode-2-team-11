@@ -12,6 +12,8 @@ import { supabase } from "../../../lib/supabase";
 import { useFamily } from "../../../context/FamilyContext";
 import { t } from "../../../lib/i18n";
 import { useLang } from "../../../context/LanguageContext";
+import { CYCLE_PHASES } from "../../../lib/cyclePhases";
+import CycleLegend from "./CycleLegend";
 
 const AI_TIMEOUT_MS = 5000; // server gives the AI 3 s; this covers the round trip
 const TRANSIENT_ERRORS = new Set(["timeout", "network_error"]);
@@ -25,8 +27,8 @@ const normalizePeriods = (periods) => (periods ?? [])
  * мөчлөгүүдийн ижил өдөр (эсвэл улирлын) бүртгэлээс тооцоолсон статистикийг
  * (нэр, огноо, id, тэмдэглэлгүй) AI руу илгээж, хариуг мөчлөг × өдрөөр кэшлэнэ.
  */
-export default function CyclePredictionCard() {
-  const { view, profile, session, cyclePeriods, cycleLength } = useFamily();
+export default function CyclePredictionCard({ phaseKey: providedPhaseKey, day: providedDay }) {
+  const { view, profile, session, cyclePeriods, cycleLength, hasCycle, phaseKey: currentPhaseKey, day: currentDay } = useFamily();
   const today = localDateKey(new Date());
   const periods = useMemo(() => normalizePeriods(cyclePeriods), [cyclePeriods]);
   const position = useMemo(() => getCyclePosition(today, cyclePeriods ?? [], { cycleLength }), [today, cyclePeriods, cycleLength]);
@@ -121,9 +123,45 @@ export default function CyclePredictionCard() {
   // Level 3 (no usable history) and before the first period use local text only.
   const local = !inCycle ? prepTipFor(today) : logs && !stats ? SEASON_TEXT[position.season] : null;
   const loading = inCycle && (!logs || (stats && !forecast));
+  const phaseKey = providedPhaseKey ?? currentPhaseKey;
+  const day = providedDay ?? currentDay;
+  const phase = CYCLE_PHASES[phaseKey] ?? CYCLE_PHASES.period;
+  const phaseNameEn = {
+    period: "Menstrual phase",
+    follicular: "After-period phase",
+    ovulation: "Mid-cycle phase",
+    luteal: "Premenstrual phase",
+  }[phaseKey] ?? "Cycle phase";
   return (
-    <section className="rounded-3xl border border-pink-200 bg-white p-4 shadow-sm bloom-fade">
-      <h2 className="font-black text-slate-700">{forecastTitle(position)}</h2>
+    <section className="relative rounded-3xl border border-pink-200 bg-white p-3 shadow-sm bloom-fade">
+      {hasCycle && <div className="absolute right-2.5 top-2.5">
+        <CycleLegend />
+      </div>}
+      <h2 className="pr-10 text-sm font-black leading-snug text-slate-700">
+        {hasCycle ? `${phase.emoji} ${t(phase.label, phaseNameEn)} · ${t(`${day} дэх өдөр`, `Day ${day}`)}` : forecastTitle(position)}
+      </h2>
+
+      {hasCycle && (
+        <>
+          <ul className="mt-2 space-y-1.5">
+            {phase.tips.map((tip) => (
+              <li key={tip.category} className="flex items-start gap-2 rounded-xl bb-bg-FFF7FB px-2.5 py-1.5">
+                <span aria-hidden="true" className="mt-0.5 shrink-0 text-base leading-5">{tip.icon}</span>
+                <p className="min-w-0 text-xs font-semibold leading-snug text-slate-600">
+                  <span className="font-extrabold text-slate-700">{t(tip.category, tip.category)} — </span>
+                  {t(tip.text, tip.text)}
+                </p>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-center text-[10px] font-semibold leading-snug text-slate-400">
+            {t("Чиний бие өөрийн хэмнэлтэй. Эдгээр мэдрэмж бүгд заавал илрэхгүй.", "Your body has its own rhythm. You may not experience all of these symptoms.")}
+          </p>
+          <p className="mt-1.5 text-[11px] font-semibold leading-snug text-slate-500">
+            {t("🌱 Тэмдэглэх тусам зөвлөгөө чамд илүү тохирох болно", "🌱 The more you log, the better your tips will fit you")}
+          </p>
+        </>
+      )}
 
       {loading ? (
         <p className="mt-3 flex items-center gap-2 text-sm font-bold text-slate-500"><LoaderCircle className="h-4 w-4 animate-spin" /> {t("Өмнөх бүртгэлээ харж байна…", "Looking at your past logs…")}</p>

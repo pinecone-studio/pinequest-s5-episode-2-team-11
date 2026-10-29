@@ -9,6 +9,7 @@ import {
   addDaysToLocalDateKey as addDays, daysBetweenLocalDateKeys as daysBetween, seasonForCycleDay,
   type CyclePosition, type Season,
 } from "./cycle";
+import { CYCLE_PHASES, SEASON_PHASE_KEYS } from "./cyclePhases";
 import { list, t } from "./i18n";
 
 export const SYMPTOMS = ["cramps", "tired", "acne", "bloating", "breast_tenderness", "headache"] as const;
@@ -163,19 +164,19 @@ export const isGoodPattern = (stats: ForecastStats) =>
 export function forecastTitle(position: CyclePosition): string {
   if (position.phase !== "cycle") return t("🌱 Бэлтгэл үе", "🌱 Getting ready");
   const { season, cycleDay, daysUntilNext, late } = position;
-  if (season === "winter") return t(`❄️ Өвөл · Сарын тэмдгийн ${cycleDay} дэх өдөр`, `❄️ Winter · Period day ${cycleDay}`);
-  if (season === "spring") return t(`🌱 Хавар · ${cycleDay} дэх өдөр`, `🌱 Spring · Day ${cycleDay}`);
-  if (season === "summer") return t(`☀️ Зун · ${cycleDay} дэх өдөр`, `☀️ Summer · Day ${cycleDay}`);
-  if (late) return t("🍂 Намар · Сарын тэмдэг хоцорч байна", "🍂 Autumn · Period is late");
-  if (daysUntilNext != null && daysUntilNext >= 1) return t(`🍂 Намар · Сарын тэмдэг ${daysUntilNext} хоногийн дараа`, `🍂 Autumn · Period in ${daysUntilNext} days`);
-  return t("🍂 Намар · Сарын тэмдэг ойрхон байна", "🍂 Autumn · Period is close");
+  const phase = CYCLE_PHASES[SEASON_PHASE_KEYS[season]];
+  if (late) return `${phase.emoji} ${phase.label} · Сарын тэмдэг хоцорч байна`;
+  if (season === "autumn" && daysUntilNext != null && daysUntilNext >= 1) {
+    return `${phase.emoji} ${phase.label} · Сарын тэмдэг ${daysUntilNext} хоногийн дараа`;
+  }
+  return `${phase.emoji} ${phase.label} · ${cycleDay} дэх өдөр`;
 }
 
 export const SEASON_TEXT: Record<Season, string> = {
-  get winter() { return t("Сарын тэмдгийн үе. Амарч, дулаацах цаг. Өвдвөл дулаан жин тавиарай 🔥", "Period time. Time to rest and stay warm. If it hurts, use a warm compress 🔥"); },
-  get spring() { return t("Ихэнх охид энэ үед эрч хүч нэмэгддэг. Шинэ зүйл туршаад үзээрэй ✨", "Most girls get more energy now. Try something new ✨"); },
-  get summer() { return t("Эрч хүч хамгийн их үе байж болно. Найзуудтайгаа гадаа тоглоорой ☀️", "This may be when you have the most energy. Play outside with friends ☀️"); },
-  get autumn() { return t("Сарын тэмдэг ойртож байна. Ядрах, сэтгэл хөдлөх нь хэвийн. Цүнхэндээ пад хийгээрэй 🎒", "Your period is getting close. Feeling tired or emotional is normal. Put a pad in your bag 🎒"); },
+  get winter() { return CYCLE_PHASES.period.description; },
+  get spring() { return CYCLE_PHASES.follicular.description; },
+  get summer() { return CYCLE_PHASES.ovulation.description; },
+  get autumn() { return CYCLE_PHASES.luteal.description; },
 };
 export const LOG_MORE_HINT = "🌱 Тэмдэглэх тусам зөвлөгөө чамд илүү тохирох болно";
 
@@ -277,10 +278,18 @@ const FEELING = (): Record<Feeling, [string, string]> => ({
   good: [t("чи сэтгэл сайхан, эрч хүчтэй байсан", "you felt happy and energetic"), t("чи ихэвчлэн сэтгэл сайхан, эрч хүчтэй байдаг", "you usually feel happy and energetic")],
   okay: [t("чи гайгүй байсан", "you felt okay"), t("чи ихэвчлэн гайгүй байдаг", "you usually feel okay")],
 });
-const SEASON_OF: Record<Season, string> = { get winter() { return t("Өвлийн", "winter"); }, get spring() { return t("Хаврын", "spring"); }, get summer() { return t("Зуны", "summer"); }, get autumn() { return t("Намрын", "autumn"); } };
+const EN_PHASE: Record<keyof typeof CYCLE_PHASES, string> = {
+  period: "menstrual",
+  follicular: "after-period",
+  ovulation: "mid-cycle",
+  luteal: "premenstrual",
+};
 
 function whenPhrase(stats: ForecastStats): string {
-  if (stats.level === 2) return t(`${SEASON_OF[stats.season]} үед`, `During ${SEASON_OF[stats.season]}`);
+  const phaseKey = SEASON_PHASE_KEYS[stats.season];
+  if (stats.level === 2) {
+    return t(`Өмнөх ${CYCLE_PHASES[phaseKey].locative}`, `During the ${EN_PHASE[phaseKey]} phase,`);
+  }
   const [kind, value] = stats.dayLabel.split("_");
   if (kind === "before") return t(`Өмнө нь сарын тэмдэг ирэхээс ${value} хоногийн өмнө`, `Before, ${value} days before your period`);
   return stats.season === "winter" ? t(`Өмнө нь сарын тэмдгийн ${value} дэх өдөр`, `Before, on day ${value} of your period`) : t(`Өмнө нь мөчлөгийн ${value} дэх өдөр`, `Before, on day ${value} of your cycle`);
@@ -353,17 +362,29 @@ export const FORECAST_SYSTEM_PROMPT = `Чи "Bloomy" апп-д 9–12 наста
 - Энгийн, дулаан монгол хэлээр (кирилл үсгээр) бич. Латин үсэг бүү хэрэглэ.
 - Яг 2 богино өгүүлбэр + 1 практик зөвлөгөө; бүгд нийлээд 220 тэмдэгтээс бүү хэтрүүл.
 - level 1 бол 1-р өгүүлбэр: "Өмнө нь мөчлөгийн {n} дэх өдөр чи … байсан." (before_N бол: "Өмнө нь сарын тэмдэг ирэхээс N хоногийн өмнө чи … байсан.")
-- level 2 бол 1-р өгүүлбэр: "{Улирал}ын үед чи ихэвчлэн … байдаг." (Өвлийн, Хаврын, Зуны, Намрын)
+- level 2 бол 1-р өгүүлбэрт тухайн мөчлөгийн үеийн нэрийг ашигла; улирлын нэр бүү хэрэглэ.
 - 2-р өгүүлбэр: "магадгүй" гэсэн үгтэй зөөлөн таамаг. Жишээ: "Өнөөдөр ч ийм байж магадгүй."
 - top хоосон, avgMood ≥ 4 бол эерэг зүйл хэл (сэтгэл сайхан, эрч хүчтэй).
 - Зөвлөгөөг ЗӨВХӨН "Зөвшөөрөгдсөн зөвлөгөө" жагсаалтаас яг хуулж сонго.
 - Онош бүү тавь. Эмийн нэр, тун бүү дурд. Айлгах үг бүү хэрэглэ. Жин, хоолны дэглэмийн тухай бүү ярь.
+- Овуляци эсвэл үр тогтох боломжтой өдрийг яг таг таамаглаж, өдрийн тоо эсвэл хугацааны цонх бүү хэл.
 - Өгөгдөлд байхгүй зүйл бүү нэм.
 - Хариуг ЗӨВХӨН JSON хэлбэрээр буцаа: {"text": "...", "tip": "..."}`;
 
 /** User prompt: only the stats. */
 export function forecastUserPrompt(stats: ForecastStats): string {
-  return `Өгөгдөл (season: winter = сарын тэмдгийн үе, spring = хавар, summer = зун, autumn = сарын тэмдгийн өмнөх үе; level 1 = яг энэ өдөр, 2 = энэ улиралд; dayLabel: day_8 = мөчлөгийн 8 дахь өдөр, before_2 = сарын тэмдэг ирэхээс 2 хоногийн өмнө; avgPain 0–3; avgMood 1–5; avgSleep = дундаж унтсан цаг (8-аас бага бол бага унтсан); top = давтагдсан шинж; cyclesUsed = харьцуулсан мөчлөгийн тоо):
-${JSON.stringify(stats)}
+  const phase = CYCLE_PHASES[SEASON_PHASE_KEYS[stats.season]];
+  const safeStats = {
+    level: stats.level,
+    dayLabel: stats.dayLabel,
+    top: stats.top,
+    avgPain: stats.avgPain,
+    avgMood: stats.avgMood,
+    lowMood: stats.lowMood,
+    avgSleep: stats.avgSleep,
+    cyclesUsed: stats.cyclesUsed,
+  };
+  return `Өгөгдөл (phase = ${phase.label}; level 1 = яг энэ өдөр, 2 = ижил үед; dayLabel: day_8 = мөчлөгийн 8 дахь өдөр, before_2 = сарын тэмдэг ирэхээс 2 хоногийн өмнө; avgPain 0–3; avgMood 1–5; avgSleep = дундаж унтсан цаг (8-аас бага бол бага унтсан); top = давтагдсан шинж; cyclesUsed = харьцуулсан мөчлөгийн тоо):
+${JSON.stringify({ ...safeStats, phase: phase.label })}
 Зөвшөөрөгдсөн зөвлөгөө: ${JSON.stringify(allowedTips(stats))}`;
 }

@@ -25,6 +25,12 @@ create table if not exists public.profiles (
   birth_date        date,                            -- ордын зурхайд ашиглана
   guardian_gender   text not null default 'unspecified'
                     check (guardian_gender in ('female', 'male', 'unspecified')),
+  onboarding_completed boolean not null default false,
+  avatar_xp         integer not null default 0 check (avatar_xp >= 0),
+  avatar_xp_spent   integer not null default 0 check (avatar_xp_spent >= 0),
+  avatar_petals     integer not null default 30 check (avatar_petals >= 0),
+  avatar_walk       jsonb not null default '{"date":"","steps":0,"xp":0}'::jsonb,
+  avatar_gift_date  date,
   created_at        timestamptz not null default now()
 );
 
@@ -88,6 +94,10 @@ create table if not exists public.kit_checks (
 alter table public.profiles add column if not exists no_period_yet boolean not null default false;
 alter table public.profiles add column if not exists birth_date date;
 alter table public.profiles add column if not exists guardian_gender text not null default 'unspecified';
+alter table public.profiles add column if not exists onboarding_completed boolean;
+update public.profiles set onboarding_completed = true where onboarding_completed is null;
+alter table public.profiles alter column onboarding_completed set default false;
+alter table public.profiles alter column onboarding_completed set not null;
 do $$
 begin
   if not exists (

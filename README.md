@@ -29,7 +29,7 @@ Next.js 16 · React 19 · Tailwind CSS 4 · Supabase (Auth, Postgres, Realtime) 
 
 ## Эхлэх
 
-1. Supabase-ийн SQL Editor дээр `supabase/schema.sql`, хуучин төслийг олон охинтой холбох `supabase/multi-child-guardian.sql`, `supabase/friends.sql`, `supabase/group-photos-migration.sql`, `supabase/child-purchase-restrictions-migration.sql`, өдрийн бүртгэлийн өмнөх миграцууд, `supabase/cycle-calendar-migration.sql`, `supabase/period-start-edit-migration.sql`, дараа нь `supabase/private-note-lock-migration.sql`-ийг ажиллуулна. Одоо байгаа төслийн миграцын дарааллыг `SETUP.md`-ээс харна уу.
+1. Supabase-ийн SQL Editor дээр `supabase/schema.sql`, хуучин төслийг олон охинтой холбох `supabase/multi-child-guardian.sql`, `supabase/friends.sql`, `supabase/group-photos-migration.sql`, `supabase/child-purchase-restrictions-migration.sql`, `supabase/avatar-progress-migration.sql`, `supabase/onboarding-completed-migration.sql`, өдрийн бүртгэлийн өмнөх миграцууд, `supabase/cycle-calendar-migration.sql`, `supabase/period-start-edit-migration.sql`, дараа нь `supabase/private-note-lock-migration.sql`-ийг ажиллуулна. Одоо байгаа төслийн миграцын дарааллыг `SETUP.md`-ээс харна уу.
 2. Төслийн үндсэн фолдерт `.env.local` үүсгэнэ:
 
    ```
@@ -51,6 +51,7 @@ Next.js 16 · React 19 · Tailwind CSS 4 · Supabase (Auth, Postgres, Realtime) 
 
 > AI key байхгүй ч апп ажиллана — AI-ийн оронд бэлэн зөвлөмжүүд харагдана.
 > `SUPABASE_SERVICE_ROLE_KEY` нь нууц түлхүүр тул `NEXT_PUBLIC_` угтвар бүү нэм, GitHub-д бүү оруул.
+> Хүүхдийн дэлгүүрийн каталог болон худалдан авалтын серверийн шалгалтад `SUPABASE_SERVICE_ROLE_KEY` заавал шаардлагатай. Энэ түлхүүрийг зөвхөн `.env.local` болон deploy платформын серверийн environment variables-д тохируулна.
 > `STORE_CATALOG_ADMIN_USER_IDS` нь каталог импортлох эрхтэй хэрэглэгчдийн Supabase Auth UUID-н таслалаар тусгаарласан жагсаалт; шаардлагагүй бол хоосон орхино.
 
 ## Скриптүүд

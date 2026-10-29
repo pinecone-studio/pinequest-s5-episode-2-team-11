@@ -121,7 +121,7 @@ export default function MotherHome() {
             <p className="mt-1 font-extrabold text-lg leading-snug">{careMessage}</p>
             {linked && hasCycle && (
               <span className="inline-block mt-2 text-xs font-extrabold bg-white/25 rounded-full px-2.5 py-1">
-                {phase.name}
+                {phase.emoji} {phase.name}
               </span>
             )}
           </div>

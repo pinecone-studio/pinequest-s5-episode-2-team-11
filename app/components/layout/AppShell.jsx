@@ -14,6 +14,8 @@ import { useT } from "../../../context/LanguageContext";
 import NotificationInbox from "../notifications/NotificationInbox";
 import { useInbox } from "../notifications/useInbox";
 import { syncPushSubscription } from "../../../lib/push-client";
+import { useOnboarding } from "../../../context/OnboardingContext";
+import OnboardingTutorial from "../onboarding/OnboardingTutorial";
 
 // Хаяг → таб
 const TAB_BY_PATH = {
@@ -43,6 +45,7 @@ export default function AppShell() {
   // Хэл солигдоход бүх дэлгэц дахин зурагдана (доорх компонентууд lib/i18n-ийн t()-г шууд ашиглана)
   useT();
   const { unansweredIncoming } = useFriends();
+  const onboarding = useOnboarding();
   const {
     authLoading,
     ready,
@@ -150,6 +153,14 @@ export default function AppShell() {
               setInboxOpen(false);
               if (url) router.push(url);
             }}
+          />
+        )}
+        {onboarding.isOpen && (
+          <OnboardingTutorial
+            role={view}
+            onFinish={onboarding.finishTutorial}
+            isSaving={onboarding.isSaving}
+            error={onboarding.error}
           />
         )}
         {toast && (

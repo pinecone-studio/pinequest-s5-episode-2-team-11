@@ -1,4 +1,5 @@
 import { monthDay, t } from "./i18n";
+import { CYCLE_PHASES } from "./cyclePhases";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -276,9 +277,9 @@ export function getCyclePatternInsight(periods: PeriodLog[], dayLogs: { log_date
   const relevant = dayLogs.filter((row) => row.log_date >= (completedStarts[0] ?? today) && row.log_date < (completedStarts.at(-1) ?? today));
   const moodRows = relevant.filter((row) => Number.isFinite(row.mood) && Number(row.mood) >= 1 && Number(row.mood) <= 5);
   const phaseDefs = [
-    { key: "period", label: t("Сарын тэмдгийн үе (1–5 дахь өдөр)", "Period (days 1–5)"), from: 1, to: 5 },
-    { key: "early", label: t("Дараах үе (6–14 дэх өдөр)", "After the period (days 6–14)"), from: 6, to: 14 },
-    { key: "later", label: t("Мөчлөгийн сүүл хэсэг (15+ дахь өдөр)", "Late cycle (day 15+)"), from: 15, to: 60 },
+    { key: "period", label: t(`${CYCLE_PHASES.period.label} (1–5 дэх өдөр)`, "Period (days 1–5)"), from: 1, to: 5 },
+    { key: "early", label: t(`${CYCLE_PHASES.follicular.label} (6–14 дэх өдөр)`, "After the period (days 6–14)"), from: 6, to: 14 },
+    { key: "later", label: t(`${CYCLE_PHASES.luteal.label} (15+ дэх өдөр)`, "Late cycle (day 15+)"), from: 15, to: 60 },
   ];
   const moodByPhase = phaseDefs.map((phase) => {
     const values = moodRows.filter((row) => {

@@ -249,7 +249,7 @@ export default function PeriodCycleTracker({ onBack, onDayPress, cycleLength: cy
       type="button"
       disabled={editing && key > today}
       onClick={() => editing ? togglePeriodDay(date) : handleDayPress(date)}
-      aria-label={`${dateLabelWithMonth(date)}${isLogged ? t(`, сарын тэмдгийн ${periodNumber} дахь өдөр`, `, period day ${periodNumber}`) : isPredicted ? t(", таамагласан өдөр", ", predicted day") : ""}${isToday ? t(", өнөөдөр", ", today") : ""}${hasLog ? t(", тэмдэглэлтэй", ", has logs") : ""}${isPending ? t(", баталгаажуулах хүсэлттэй", ", needs confirmation") : ""}`}
+      aria-label={`${dateLabelWithMonth(date)}${isLogged ? t(`, сарын тэмдгийн ${periodNumber} дэх өдөр`, `, period day ${periodNumber}`) : isPredicted ? t(", таамагласан өдөр", ", predicted day") : ""}${isToday ? t(", өнөөдөр", ", today") : ""}${hasLog ? t(", тэмдэглэлтэй", ", has logs") : ""}${isPending ? t(", баталгаажуулах хүсэлттэй", ", needs confirmation") : ""}`}
       className={`relative mx-auto flex h-[64px] w-full max-w-[48px] flex-col items-center justify-start pt-1 ${editing && key > today ? "cursor-not-allowed opacity-25" : ""}`}
     >
       {!miniature && hasPeriod && (isLogged || isToday) && !editing && <span className={`absolute left-0 top-0 z-10 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-extrabold ${isLogged ? "bg-[#b83b7e] text-white" : "bg-slate-500 text-white"}`}>{isLogged ? periodNumber : cycleNumber}</span>}

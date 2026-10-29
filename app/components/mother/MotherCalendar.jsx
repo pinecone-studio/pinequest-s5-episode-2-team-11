@@ -8,12 +8,12 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Droplets, Lock, Sparkles, LoaderCircle, X } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Droplets, Lock, Sparkles, LoaderCircle, X, Pencil, Save } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import { supabase } from "../../../lib/supabase";
 import { askAi } from "../../../lib/ai-client";
 import { toDateStr } from "../../../lib/dates";
-import { periodDayKeys, predictPeriodRange } from "../../../lib/cycle";
+import { addDaysToLocalDateKey, periodDayKeys, predictPeriodRange } from "../../../lib/cycle";
 import CycleRing from "../daughter/CycleRing";
 import CycleLegend from "../daughter/CycleLegend";
 import Card from "../ui/Card";
@@ -29,7 +29,7 @@ const MOOD_LABEL = { get 5() { return t("маш сайхан", "great"); }, get 
 const MOOD_EMOJI = { 5: "😄", 4: "🙂", 3: "😐", 2: "😟", 1: "😣" };
 
 export default function MotherCalendar() {
-  const { linked, activeChildId, daughterName, nameGen, hasCycle, cycleLength, periodLength, lastPeriodStart, periodLogs, proposePeriodStart, noPeriodYet, phaseKey, daysUntil, daysLate, day, shareWithMom, session } =
+  const { linked, activeChildId, daughterName, nameGen, hasCycle, cycleLength, periodLength, lastPeriodStart, periodLogs, proposePeriodStart, saveChildPeriodDays, noPeriodYet, phaseKey, daysUntil, daysLate, day, shareWithMom, session } =
     useFamily();
   const today = toDateStr();
   const [month, setMonth] = useState(() => {
@@ -44,6 +44,9 @@ export default function MotherCalendar() {
   const [aiError, setAiError] = useState("");
   const [proposalDate, setProposalDate] = useState(today);
   const [proposalLoading, setProposalLoading] = useState(false);
+  const [editingPeriod, setEditingPeriod] = useState(false);
+  const [editedDays, setEditedDays] = useState(new Set());
+  const [savingPeriod, setSavingPeriod] = useState(false);
 
   // Сүүлийн 60 хоногийн ангилсан бүртгэл (RLS: охин хуваалцсан үед л ирнэ)
   useEffect(() => {
@@ -84,8 +87,25 @@ export default function MotherCalendar() {
   const monthLabel = monthTitle(month.getMonth() + 1, month.getFullYear());
 
   const childStarts = [...new Set([lastPeriodStart, ...(periodLogs ?? []).filter((row) => row.status === "confirmed").map((row) => row.log_date)].filter(Boolean))].sort();
+  const confirmedDays = useMemo(() => {
+    const keys = new Set();
+    (periodLogs ?? []).filter((row) => row.status === "confirmed").forEach((row) => {
+      const duration = Number(row.period_length) || periodLength || 5;
+      for (let offset = 0; offset < duration; offset += 1) keys.add(addDaysToLocalDateKey(row.log_date, offset));
+    });
+    if (lastPeriodStart && !(periodLogs ?? []).some((row) => row.log_date === lastPeriodStart && row.status === "confirmed")) {
+      for (let offset = 0; offset < (periodLength || 5); offset += 1) keys.add(addDaysToLocalDateKey(lastPeriodStart, offset));
+    }
+    return keys;
+  }, [periodLogs, lastPeriodStart, periodLength]);
   const pendingDates = new Set((periodLogs ?? []).filter((row) => row.status === "pending").map((row) => row.log_date));
-  const periodDays = periodDayKeys(childStarts, periodLength, today);
+  const periodDays = periodDayKeys(
+    (periodLogs ?? []).some((row) => row.status === "confirmed")
+      ? (periodLogs ?? []).filter((row) => row.status === "confirmed").map((row) => ({ startDate: row.log_date, duration: row.period_length, status: "confirmed" }))
+      : childStarts,
+    periodLength,
+    today,
+  );
   const prediction = predictPeriodRange({ starts: childStarts, today, hasHadPeriod: Boolean(lastPeriodStart) && !noPeriodYet, periodLength });
   const rangeDates = useMemo(() => {
     const keys = new Set();
@@ -99,6 +119,18 @@ export default function MotherCalendar() {
     setProposalLoading(true);
     await proposePeriodStart(activeChildId, proposalDate);
     setProposalLoading(false);
+  };
+  const beginPeriodEdit = () => {
+    setEditedDays(new Set(confirmedDays));
+    setEditingPeriod(true);
+    setSelected(null);
+  };
+  const savePeriodEdit = async () => {
+    if (savingPeriod) return;
+    setSavingPeriod(true);
+    const saved = await saveChildPeriodDays([...editedDays]);
+    setSavingPeriod(false);
+    if (saved) setEditingPeriod(false);
   };
   const moodCounts = {};
   week.forEach((row) => row.mood && (moodCounts[row.mood] = (moodCounts[row.mood] ?? 0) + 1));
@@ -226,8 +258,21 @@ export default function MotherCalendar() {
               <button onClick={() => setCalendarOpen(false)} aria-label={t("Буцах", "Back")} className="w-10 h-10 rounded-full bg-white border-2 border-slate-100 flex items-center justify-center text-slate-500">
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <h2 className="text-lg font-black text-slate-800">{t(`${nameGen} хуанли`, `${daughterName || "Daughter"}'s calendar`)}</h2>
+              <h2 className="min-w-0 text-lg font-black text-slate-800">{t(`${nameGen} хуанли`, `${daughterName || "Daughter"}'s calendar`)}</h2>
+              {!editingPeriod ? (
+                <button type="button" onClick={beginPeriodEdit} className="ml-auto flex items-center gap-1 rounded-full bg-white px-3 py-2 text-xs font-extrabold text-slate-600 shadow-sm">
+                  <Pencil className="h-3.5 w-3.5" /> Засах
+                </button>
+              ) : (
+                <div className="ml-auto flex items-center gap-2">
+                  <button type="button" onClick={() => setEditingPeriod(false)} className="rounded-full bg-white px-3 py-2 text-xs font-bold text-slate-500">Болих</button>
+                  <button type="button" onClick={savePeriodEdit} disabled={savingPeriod} className="flex items-center gap-1 rounded-full bb-bg-E0679F px-3 py-2 text-xs font-extrabold text-white disabled:opacity-50">
+                    <Save className="h-3.5 w-3.5" /> {savingPeriod ? "Хадгалж байна…" : "Хадгалах"}
+                  </button>
+                </div>
+                )}
             </div>
+            {editingPeriod && <p className="-mt-2 text-center text-xs font-semibold text-slate-500">Өдрүүд дээр дарж охины сарын тэмдгийг хамт засна.</p>}
       <Card className="!p-3">
         <div className="mb-1 flex items-center justify-between">
           <button type="button" aria-label={t("Өмнөх сар", "Previous month")} onClick={() => setMonth((v) => new Date(v.getFullYear(), v.getMonth() - 1, 1))} className="rounded-xl p-2 text-slate-500">
@@ -244,7 +289,7 @@ export default function MotherCalendar() {
         <div className="grid grid-cols-7 gap-y-1">
           {dates.map((date) => {
             const key = toDateStr(date);
-            const kind = dayInfo(key);
+            const kind = editingPeriod ? (editedDays.has(key) ? "period" : null) : dayInfo(key);
             const inMonth = date.getMonth() === month.getMonth();
             const logged = Boolean(byDate[key]);
             const style =
@@ -261,7 +306,14 @@ export default function MotherCalendar() {
               <button
                 key={key}
                 type="button"
-                onClick={() => setSelected(key)}
+                onClick={() => editingPeriod
+                  ? key <= today && setEditedDays((current) => {
+                      const next = new Set(current);
+                      if (next.has(key)) next.delete(key); else next.add(key);
+                      return next;
+                    })
+                  : setSelected(key)}
+                disabled={editingPeriod && key > today}
                 aria-label={dateLabel(date)}
                 className={`relative mx-auto flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold active:scale-90 transition ${style} ${inMonth ? "" : "opacity-40"}`}
                 style={key === today ? { boxShadow: "0 0 0 2px #F48FB1" } : undefined}

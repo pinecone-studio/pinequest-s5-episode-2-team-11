@@ -71,14 +71,14 @@ const TOPIC_TILE_STYLES = {
   pain: { background: "#D63D4D", Icon: HeartPulse },
   products: { background: "#575BC8", Icon: LockKeyhole },
   kit: { background: "#B8740C", Icon: BookOpen },
-  hygiene: { background: "#1F7FB0", Icon: Sparkles },
+  hygiene: { background: "#1F7FB0", Icon: Droplets },
   body: { background: "#218863", Icon: ShieldCheck },
   doctor: { background: "#D63D4D", Icon: TriangleAlert },
   myths: { background: "#D9604F", Icon: CircleHelp },
   "guardian-talk-early": { background: "#DC3F6B", Icon: MessageCircleHeart },
   "guardian-calm-response": { background: "#A64FAD", Icon: HeartHandshake },
   "guardian-growth": { background: "#5B68D8", Icon: Eye },
-  "guardian-teach": { background: "#B8740C", Icon: BookOpen },
+  "guardian-teach": { background: "#B8740C", Icon: Droplets },
   "guardian-supplies": { background: "#1F7FB0", Icon: Package },
   "guardian-pain-mood": { background: "#D63D4D", Icon: HeartPulse },
   "guardian-privacy": { background: "#575BC8", Icon: LockKeyhole },
@@ -206,7 +206,7 @@ function TopicDetail({ category, index, total, counter, onBack, onNext, nextLabe
             <Icon className="h-7 w-7 text-white" aria-hidden="true" />
           </span>
           <div className="min-w-0">
-            <h1 className="text-xl font-black leading-tight text-white">{category.title}</h1>
+            <h1 className="text-xl font-black leading-tight text-white">{category.articleTitle ?? category.title}</h1>
             <p className="mt-0.5 text-sm font-bold text-white/85">{category.subtitle}</p>
           </div>
         </div>
@@ -228,16 +228,29 @@ function TopicDetail({ category, index, total, counter, onBack, onNext, nextLabe
           <div
             role="note"
             className={`flex items-start gap-3 rounded-2xl p-3 text-sm font-extrabold leading-relaxed ${category.warningTone === "soft" ? "border bb-border-F8D3E6 bb-bg-FDE7F1-50" : "border-2"}`}
-            style={category.warningTone === "soft" ? undefined : { borderColor: accent, backgroundColor: `${accent}1F` }}
+            style={category.warningTone === "soft" ? undefined : category.warningTone && TONES[category.warningTone]
+              ? { borderColor: TONES[category.warningTone].color, backgroundColor: TONES[category.warningTone].background }
+              : { borderColor: accent, backgroundColor: `${accent}1F` }}
           >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-white" style={{ backgroundColor: category.warningTone === "soft" ? "#B83B7E" : accent }}>
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-white" style={{ backgroundColor: category.warningTone === "soft" ? "#B83B7E" : category.warningTone && TONES[category.warningTone] ? TONES[category.warningTone].color : accent }}>
               <TriangleAlert className="h-4 w-4" aria-hidden="true" />
             </span>
             <p className="text-slate-700">{category.warningText}</p>
           </div>
         )}
-        {category.points.map((point, pointIndex) => {
-          return (
+        {category.sections ? category.sections.map((section) => (
+          <Card key={`${category.id}-${section.title}`} className="!block !rounded-2xl !p-4">
+            <h2 className="mb-2 text-sm font-black leading-snug text-slate-800">{section.title}</h2>
+            {section.text && (
+              <p className="break-words text-sm font-semibold leading-relaxed text-slate-700">{section.text}</p>
+            )}
+            {section.items && (
+              <ul className="list-disc space-y-1.5 pl-5 text-sm font-semibold leading-relaxed text-slate-700 marker:text-pink-500">
+                {section.items.map((item) => <li key={item} className="break-words pl-0.5">{item}</li>)}
+              </ul>
+            )}
+          </Card>
+        )) : category.points.map((point, pointIndex) => (
             <Card
               key={`${category.id}-${pointIndex}`}
               className="!flex items-start gap-3 !rounded-2xl !p-4"
@@ -250,8 +263,12 @@ function TopicDetail({ category, index, total, counter, onBack, onNext, nextLabe
               </span>
               <p className="min-w-0 flex-1 pt-0.5 text-sm font-semibold leading-relaxed text-slate-700">{point}</p>
             </Card>
-          );
-        })}
+        ))}
+        {category.footer && (
+          <p className="rounded-2xl bb-bg-E9DDFC-50 p-3 text-center text-sm font-bold leading-relaxed bb-text-7C4DCC">
+            {category.footer}
+          </p>
+        )}
       </div>
 
       <div className="space-y-2 px-1 pt-1">
