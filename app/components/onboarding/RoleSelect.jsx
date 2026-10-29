@@ -1,13 +1,20 @@
 "use client";
 
-import { ChevronRight, Heart, Sprout, HeartHandshake } from "lucide-react";
-import InstallAppButton from "../ui/InstallAppButton";
+import { ChevronLeft, ChevronRight, Heart, Sprout, HeartHandshake } from "lucide-react";
 import BloomyLogo from "../ui/BloomyLogo";
 import { t } from "../../../lib/i18n";
 
-export default function RoleSelect({ onPick, onLogin }) {
+export default function RoleSelect({ onPick, onLogin, onBack }) {
   return (
     <div className="px-2 pt-6 pb-10 bloom-fade">
+      <button
+        type="button"
+        onClick={onBack}
+        className="mb-2 inline-flex items-center gap-1 rounded-full py-1.5 pr-3 text-sm font-extrabold text-slate-500 transition hover:bg-pink-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300"
+      >
+        <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+        {t("Буцах", "Back")}
+      </button>
       <div className="flex flex-col items-center text-center">
         <div className="relative">
           <div className="w-24 h-24 rounded-3xl bb-grad-1 flex items-center justify-center shadow-xl bb-shadow-F48FB1-30 bloom-float">
@@ -23,7 +30,7 @@ export default function RoleSelect({ onPick, onLogin }) {
         </p>
       </div>
 
-      <p className="mt-10 mb-3 text-xs font-extrabold uppercase tracking-widest text-slate-400 text-center">
+      <p className="role-select-heading mt-10 mb-3 text-xs font-extrabold uppercase tracking-widest text-slate-400 text-center">
         {t("Шинээр бүртгүүлэх", "Sign up")}
       </p>
 
@@ -31,7 +38,7 @@ export default function RoleSelect({ onPick, onLogin }) {
           <button
             type="button"
             onClick={() => onPick("daughter")}
-            className="group flex w-full items-center gap-4 rounded-3xl border-2 bb-border-FDE7F1 bg-white p-5 text-left shadow-sm transition bb-hover-border-F48FB1 active:scale-95"
+            className="role-select-option group flex w-full items-center gap-4 rounded-3xl border-2 bb-border-FDE7F1 bg-white p-5 text-left shadow-sm transition bb-hover-border-F48FB1 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-300 focus-visible:ring-offset-2"
           >
             <span className="flex h-14 w-14 items-center justify-center rounded-2xl bb-bg-E8F5E9">
               <Sprout className="h-7 w-7 bb-text-4F8A55" aria-hidden="true" />
@@ -43,7 +50,7 @@ export default function RoleSelect({ onPick, onLogin }) {
           <button
             type="button"
             onClick={() => onPick("mother")}
-            className="group flex w-full items-center gap-4 rounded-3xl border-2 bb-border-E9DDFC-70 bg-white p-5 text-left shadow-sm transition bb-hover-border-B794F4 active:scale-95"
+            className="role-select-option role-select-option-guardian group flex w-full items-center gap-4 rounded-3xl border-2 bb-border-E9DDFC-70 bg-white p-5 text-left shadow-sm transition bb-hover-border-B794F4 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2"
           >
             <span className="flex h-14 w-14 items-center justify-center rounded-2xl bb-bg-FFD8CC-50">
               <HeartHandshake className="h-7 w-7 bb-text-C2674F" aria-hidden="true" />
@@ -52,8 +59,6 @@ export default function RoleSelect({ onPick, onLogin }) {
             <ChevronRight className="h-5 w-5 text-slate-300" aria-hidden="true" />
           </button>
       </div>
-
-      <InstallAppButton />
 
       <button
         onClick={onLogin}
