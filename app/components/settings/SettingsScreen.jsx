@@ -11,6 +11,7 @@ import PrivateNotePinSettings from "./PrivateNotePinSettings";
 import PremiumControls from "./PremiumControls";
 import DaughterProfile from "./DaughterProfile";
 import MyFriendCode from "../friends/MyFriendCode";
+import SignOutButton from "./SignOutButton";
 
 export default function SettingsScreen() {
   const { theme, setTheme } = useTheme();
@@ -24,6 +25,7 @@ export default function SettingsScreen() {
         <PageHeader sub={t("Аппын тохиргоо", "App settings")} title={t("Тохиргоо", "Settings")} />
         <DaughterProfile mode="settings" />
         <MyFriendCode />
+        <SignOutButton />
       </div>
     );
   }
@@ -32,7 +34,7 @@ export default function SettingsScreen() {
     <div className="space-y-4">
       <PageHeader sub={t("Аппын тохиргоо", "App settings")} title={t("Тохиргоо", "Settings")} />
 
-      <Card className="p-3">
+      <Card className="!p-3">
         <SectionTitle icon={Languages} title={t("Хэл", "Language")} />
         <div className="grid grid-cols-2 gap-1.5 rounded-xl bb-bg-FFF7FB p-1">
           {[{ id: "mn", label: t("Монгол", "Монгол") }, { id: "en", label: "English" }].map((option) => (
@@ -41,7 +43,7 @@ export default function SettingsScreen() {
               type="button"
               onClick={() => selectLanguage(option.id)}
               aria-pressed={language === option.id}
-              className={`rounded-lg px-3 py-2 text-sm font-extrabold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-400 ${language === option.id ? "bg-white bb-text-B83B7E shadow-sm settings-choice-active" : "text-slate-500"}`}
+              className={`rounded-lg px-3 py-1.5 text-sm font-extrabold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-400 ${language === option.id ? "bg-white bb-text-B83B7E shadow-sm settings-choice-active" : "text-slate-500"}`}
             >
               {option.label}
             </button>
@@ -49,7 +51,7 @@ export default function SettingsScreen() {
         </div>
       </Card>
 
-      <Card className="p-3">
+      <Card className="!p-3">
         <SectionTitle icon={theme === "dark" ? Moon : Sun} title={t("Өнгөний загвар", "Theme")} />
         <div className="grid grid-cols-2 gap-1.5 rounded-xl bb-bg-FFF7FB p-1">
           {[{ id: "light", label: t("Гэрэлтэй", "Light"), Icon: Sun }, { id: "dark", label: t("Бараан", "Dark"), Icon: Moon }].map(({ id, label, Icon }) => (
@@ -58,7 +60,7 @@ export default function SettingsScreen() {
               type="button"
               onClick={() => setTheme(id)}
               aria-pressed={theme === id}
-              className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-extrabold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-400 ${theme === id ? "bg-white bb-text-B83B7E shadow-sm settings-choice-active" : "text-slate-500"}`}
+              className={`flex items-center justify-center gap-2 rounded-lg px-3 py-1.5 text-sm font-extrabold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-400 ${theme === id ? "bg-white bb-text-B83B7E shadow-sm settings-choice-active" : "text-slate-500"}`}
             >
               <Icon className="h-4 w-4" /> {label}
             </button>
@@ -97,6 +99,7 @@ export default function SettingsScreen() {
         <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 bb-text-B83B7E" />
         <p className="text-[11px] font-semibold leading-5 text-slate-600">{t("Таны мэдээлэл зөвхөн таны гэр бүлийн бүлэгт харагдана.", "Your information is only visible to your family group.")}</p>
       </div>
+      <SignOutButton />
 
     </div>
   );

@@ -28,7 +28,7 @@ export default function DaughterHelper({ initial = "chat" }) {
 
   return (
     <div className="space-y-4">
-      <PageHeader sub={t("Асуулт, хэрэгсэл нэг дор", "Questions and supplies in one place")} title={t("Туслах", "Helper")} />
+      <PageHeader title={t("Туслах", "Helper")} />
 
       <div className="grid grid-cols-2 gap-1 rounded-2xl bg-white border border-slate-100 p-1 bloom-fade" role="tablist">
         {SECTIONS.map(({ id, label, Icon }) => {

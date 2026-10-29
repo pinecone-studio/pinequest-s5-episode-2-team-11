@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { AlertCircle, Check, ChevronLeft, Eye, EyeOff, Loader2, Heart, X } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import RoleSelect from "./RoleSelect";
+import InstallGuide from "./InstallGuide";
 import BloomyLogo from "../ui/BloomyLogo";
 import { toDateStr } from "../../../lib/dates";
 import GuardianMaleGuide from "../learn/GuardianMaleGuide";
@@ -13,10 +14,10 @@ const PENDING_GUIDE_PREFIX = "bloom:pending-guardian-guide:";
 // Шинэ бүртгэлийн нууц үгийн доод урт (хуучин 6 тэмдэгттэй бүртгэлүүд нэвтэрсээр байна)
 const MIN_SIGNUP_PASSWORD = 8;
 
-/** Нэвтрэх / бүртгүүлэх. stage: "role" → "signup" | "login" */
+/** Нэвтрэх / бүртгүүлэх. stage: "install" → "role" → "signup" | "login" */
 export default function AuthScreen() {
   const { signUp, signIn } = useFamily();
-  const [stage, setStage] = useState("role");
+  const [stage, setStage] = useState("install");
   const [role, setRole] = useState(null);
   const [guardianGender, setGuardianGender] = useState(null);
   const [onboardingGuideCompleted, setOnboardingGuideCompleted] = useState([]);
@@ -30,16 +31,21 @@ export default function AuthScreen() {
 
   useEffect(() => {
     const returnToRoleSelect = () => {
-      setStage("role");
+      setStage("install");
       setMessage("");
     };
     window.addEventListener("bloomy-auth-back", returnToRoleSelect);
     return () => window.removeEventListener("bloomy-auth-back", returnToRoleSelect);
   }, []);
 
+  if (stage === "install") {
+    return <InstallGuide onContinue={() => setStage("role")} />;
+  }
+
   if (stage === "role") {
     return (
       <RoleSelect
+        onBack={() => setStage("install")}
         onPick={(r, selectedGuardianGender = null) => {
           setRole(r);
           setGuardianGender(selectedGuardianGender);

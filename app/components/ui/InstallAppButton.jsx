@@ -9,6 +9,7 @@ export default function InstallAppButton() {
   const [showInstructions, setShowInstructions] = useState(false);
   const [installed, setInstalled] = useState(false);
   const [isIos, setIsIos] = useState(false);
+  const [isSamsungBrowser, setIsSamsungBrowser] = useState(false);
 
   useEffect(() => {
     const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
@@ -16,6 +17,7 @@ export default function InstallAppButton() {
 
     const ua = window.navigator.userAgent.toLowerCase();
     setIsIos(/iphone|ipad|ipod/.test(ua) || (window.navigator.platform === "MacIntel" && window.navigator.maxTouchPoints > 1));
+    setIsSamsungBrowser(ua.includes("samsungbrowser"));
 
     const handleBeforeInstall = (event) => {
       event.preventDefault();
@@ -37,7 +39,7 @@ export default function InstallAppButton() {
 
   const install = async () => {
     if (!installPrompt) {
-      setShowInstructions((open) => !open);
+      if (isIos || isSamsungBrowser) setShowInstructions((open) => !open);
       return;
     }
 
@@ -56,19 +58,19 @@ export default function InstallAppButton() {
         aria-expanded={showInstructions}
         className="inline-flex items-center gap-2 rounded-full border-2 bb-border-FDE7F1 bg-white px-5 py-3 font-extrabold bb-text-B83B7E shadow-sm active:scale-95 transition"
       >
-        <Plus className="w-5 h-5" /> {t("Нүүр дэлгэцэд нэмэх", "Add to Home Screen")}
+        <Plus className="w-5 h-5" /> {t("Апп татах", "Add to Home Screen")}
       </button>
 
-      {showInstructions && (
+      {showInstructions && (isIos || isSamsungBrowser) && (
         <p className="mt-3 max-w-xs rounded-2xl bb-bg-FDE7F1-70 px-4 py-3 text-center text-xs font-semibold text-slate-600">
           {isIos ? (
             <>
               {t("Safari-ийн", "In Safari, tap")} <Share2 className="inline w-3.5 h-3.5 align-[-2px]" /> {t("Хуваалцах товчийг дараад", "Share, then choose")} {" "}
-              <b>{t("Нүүр дэлгэцэд нэмэх", "Add to Home Screen")}</b>{t("-ийг сонгоно уу.", ".")}
+              <b>{t("Апп татах", "Add to Home Screen")}</b>{t("-ийг сонгоно уу.", ".")}
             </>
           ) : (
             <>
-              {t("Chrome-ийн", "In Chrome, open the")} <b>⋮</b> {t("цэсийг нээгээд", "menu and choose")} <b>{t("Апп суулгах", "Install app")}</b> {t("эсвэл", "or")} <b>{t("Нүүр дэлгэцэд нэмэх", "Add to Home Screen")}</b>{t("-ийг сонгоно уу.", ".")}
+              {t("Samsung Internet-ийн", "In Samsung Internet, tap")} <b>☰</b> {t("цэсийг нээгээд “Хуудсыг нэмэх” → “Нүүр дэлгэц” → “Нэмэх”-ийг сонгоно уу.", "then choose “Add page to” → “Home screen” → “Add”.")}
             </>
           )}
         </p>
