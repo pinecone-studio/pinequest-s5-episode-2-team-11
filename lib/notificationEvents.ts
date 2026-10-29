@@ -11,7 +11,7 @@ export type NotifyData = {
   senderName?: string | null;
   detail?: string | null;
   url?: string | null;
-  /** Always "Асран хамгаалагч" (see lib/relation.ts). */
+  /** "Ээж" / "Аав" / "Асран хамгаалагч", filled in by the server from guardian_gender. */
   relation?: string | null;
   /** Picks one of an event's fixed lock-screen lines (e.g. talk_reply). */
   variant?: string | null;

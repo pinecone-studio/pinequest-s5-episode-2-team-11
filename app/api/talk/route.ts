@@ -8,7 +8,7 @@
 import { TALK_TOPICS, topicLabel } from "../../../lib/connection";
 import { TALK_REPLIES } from "../../../lib/notificationEvents";
 import { notify } from "../../../lib/notify";
-import { GUARDIAN_RELATION } from "../../../lib/relation";
+import { relationWord } from "../../../lib/relation";
 import { authenticatedProfile } from "../../../lib/supabase-admin";
 
 export const runtime = "nodejs";
@@ -46,7 +46,8 @@ export async function POST(request: Request) {
     const { data: talk } = await admin.from("talk_requests").select("id, daughter_id").eq("id", body.id).eq("family_id", profile.family_id).maybeSingle();
     if (!talk) return json({ error: "not_found" }, 404);
     await admin.from("talk_requests").update({ reply: body.reply, replied_by: profile.id, replied_at: new Date().toISOString() }).eq("id", talk.id);
-    const relation = GUARDIAN_RELATION;
+    const { data: me } = await admin.from("profiles").select("guardian_gender").eq("id", profile.id).maybeSingle();
+    const relation = relationWord(me?.guardian_gender);
     await notify(admin, "talk_reply", [talk.daughter_id], {
       senderId: profile.id, senderName: profile.display_name, relation, variant: body.reply, detail: TALK_REPLIES[body.reply].text(relation),
     });
