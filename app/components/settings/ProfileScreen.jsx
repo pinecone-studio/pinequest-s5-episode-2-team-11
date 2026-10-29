@@ -6,7 +6,7 @@ import BottomSheet from "../ui/BottomSheet";
 import { RotateCcw } from "lucide-react";
 import { useOnboarding } from "../../../context/OnboardingContext";
 import Card from "../ui/Card";
-import DaughterProfile, { DeleteAccountSheet } from "./DaughterProfile";
+import DaughterProfile from "./DaughterProfile";
 import FamilyLinkingSection from "./FamilyLinkingSection";
 import NotificationSettings from "./NotificationSettings";
 import { SettingsGroup, SettingsRow } from "./SettingsList";
@@ -17,7 +17,6 @@ import { t } from "../../../lib/i18n";
 export default function ProfileScreen() {
   const { view, signOut } = useFamily();
   const { openTutorial } = useOnboarding();
-  const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const isMother = view === "mother";
 
@@ -36,17 +35,7 @@ export default function ProfileScreen() {
       <h2 className="text-2xl font-black leading-tight text-slate-700 bloom-fade">{t("Профайл", "Profile")}</h2>
 
       {!isMother ? (
-        <>
-          <DaughterProfile mode="profile" />
-          <button
-            type="button"
-            onClick={() => setDeleteAccountOpen(true)}
-            className="w-full rounded-2xl border border-slate-100 bg-white py-3 text-center text-sm font-extrabold text-rose-600 transition active:scale-95"
-          >
-            {t("Бүртгэл устгах", "Delete account")}
-          </button>
-          {deleteAccountOpen && <DeleteAccountSheet onClose={() => setDeleteAccountOpen(false)} />}
-        </>
+        <DaughterProfile mode="profile" />
       ) : (
         <>
           <ProfileCard />

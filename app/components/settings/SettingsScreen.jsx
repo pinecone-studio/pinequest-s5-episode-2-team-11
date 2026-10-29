@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Languages, Moon, Sun, Lock, Unlock, ShieldCheck } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import { useTheme } from "../../../context/ThemeContext";
@@ -9,7 +10,7 @@ import PageHeader from "../ui/PageHeader";
 import SectionTitle from "../ui/SectionTitle";
 import PrivateNotePinSettings from "./PrivateNotePinSettings";
 import PremiumControls from "./PremiumControls";
-import DaughterProfile from "./DaughterProfile";
+import DaughterProfile, { DeleteAccountSheet } from "./DaughterProfile";
 import MyFriendCode from "../friends/MyFriendCode";
 import SignOutButton from "./SignOutButton";
 
@@ -18,6 +19,7 @@ export default function SettingsScreen() {
   const { view, shareWithMom, setShareWithMom } = useFamily();
   const { lang: language, setLang: selectLanguage } = useLang();
   const t = useT();
+  const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
 
   if (view === "daughter") {
     return (
@@ -25,6 +27,14 @@ export default function SettingsScreen() {
         <PageHeader sub={t("Аппын тохиргоо", "App settings")} title={t("Тохиргоо", "Settings")} />
         <DaughterProfile mode="settings" />
         <MyFriendCode />
+        <button
+          type="button"
+          onClick={() => setDeleteAccountOpen(true)}
+          className="w-full rounded-2xl border border-slate-100 bg-white py-3 text-center text-sm font-extrabold text-rose-600 transition active:scale-95"
+        >
+          {t("Бүртгэл устгах", "Delete account")}
+        </button>
+        {deleteAccountOpen && <DeleteAccountSheet onClose={() => setDeleteAccountOpen(false)} />}
         <SignOutButton />
       </div>
     );
