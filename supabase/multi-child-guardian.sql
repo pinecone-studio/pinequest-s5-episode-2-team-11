@@ -19,6 +19,9 @@ begin
   end if;
 end $$;
 
+-- kit_checks is in the realtime publication; without a primary key it needs a replica identity to allow deletes.
+alter table public.kit_checks replica identity full;
+
 insert into public.kit_checks (family_id, child_id, item_id)
 select old.family_id, child.id, old.item_id
 from public.kit_checks old
@@ -29,6 +32,7 @@ on conflict do nothing;
 delete from public.kit_checks where child_id is null;
 alter table public.kit_checks alter column child_id set not null;
 alter table public.kit_checks add primary key (family_id, child_id, item_id);
+alter table public.kit_checks replica identity default;
 
 create index if not exists notifications_recipient_idx
   on public.notifications (recipient_id, created_at desc);

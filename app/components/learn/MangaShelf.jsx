@@ -3,13 +3,17 @@
 /**
  * «Бидний хоорондох зай» манга — Суралцах хэсгийн доор.
  * 1-р бүлэг одоо уншигдана (+ чиби бонус хуудас), 2-р бүлэг RELEASE огнооноос нээгдэнэ.
+ * 3–8-р бүлэг зөвхөн Bloomy Plus эрхтэй охинд нээгдэнэ (plus: true).
  * Зургууд: public/manga/ch{бүлэг}-{хуудас}.webp
  */
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, BookOpen, Check, ChevronRight, LockKeyhole } from "lucide-react";
+import { ArrowLeft, BookOpen, Check, ChevronDown, ChevronRight, Crown, LockKeyhole } from "lucide-react";
 import { localDateKey } from "../../../lib/cycle";
 import Card from "../ui/Card";
+import BottomSheet from "../ui/BottomSheet";
+import { useFamily } from "../../../context/FamilyContext";
+import { usePremium } from "../avatar/usePremium";
 import { t } from "../../../lib/i18n";
 
 const page = (ch, n, w, h) => ({ src: `/manga/ch${ch}-${String(n).padStart(2, "0")}.webp`, w, h });
@@ -45,7 +49,52 @@ const CHAPTERS = [
       page(2, 5, 942, 771),
     ],
   },
+  // Bloomy Plus бүлгүүд — зургийг public/manga/ch{3–8}-NN.webp болгож pages-д нэмнэ
+  {
+    id: 3,
+    get title() { return t("Нууц захидал", "The Secret Letter"); },
+    release: null,
+    plus: true,
+    pages: [],
+  },
+  {
+    id: 4,
+    get title() { return t("Борооны дор", "Under the Rain"); },
+    release: null,
+    plus: true,
+    pages: [],
+  },
+  {
+    id: 5,
+    get title() { return t("Хоёр дахь боломж", "A Second Chance"); },
+    release: null,
+    plus: true,
+    pages: [],
+  },
+  {
+    id: 6,
+    get title() { return t("Сургуулийн наадам", "The School Festival"); },
+    release: null,
+    plus: true,
+    pages: [],
+  },
+  {
+    id: 7,
+    get title() { return t("Хэлээгүй үгс", "Words Left Unsaid"); },
+    release: null,
+    plus: true,
+    pages: [],
+  },
+  {
+    id: 8,
+    get title() { return t("Бидний зай", "Our Distance"); },
+    release: null,
+    plus: true,
+    pages: [],
+  },
 ];
+
+const PLUS_COUNT = CHAPTERS.filter((chapter) => chapter.plus).length;
 
 const READ_KEY = "bloom:manga:read";
 
@@ -55,7 +104,8 @@ const daysUntil = (release, today) =>
 
 const chapterLabel = (id) => t(`${id}-р бүлэг`, `Chapter ${id}`);
 
-const isOpen = (chapter, today) => !chapter.release || chapter.release <= today;
+const isOpen = (chapter, today, plusActive) =>
+  (!chapter.plus || plusActive) && (!chapter.release || chapter.release <= today) && chapter.pages.length > 0;
 
 const releaseLabel = (release, today) => {
   const days = daysUntil(release, today);
@@ -68,6 +118,10 @@ export default function MangaShelf() {
   const today = localDateKey(new Date());
   const [reading, setReading] = useState(null);
   const [readIds, setReadIds] = useState([]);
+  const [plusPrompt, setPlusPrompt] = useState(false);
+  const [showPlus, setShowPlus] = useState(false);
+  const { profile, session } = useFamily();
+  const premium = usePremium(profile?.id ?? session?.user?.id);
 
   useEffect(() => {
     try {
@@ -95,7 +149,7 @@ export default function MangaShelf() {
         next={next}
         today={today}
         onEnd={() => markRead(chapter.id)}
-        onNext={next && isOpen(next, today) ? () => setReading(next.id) : null}
+        onNext={next && isOpen(next, today, premium.active) ? () => setReading(next.id) : null}
         onClose={() => setReading(null)}
       />
     );
@@ -124,15 +178,16 @@ export default function MangaShelf() {
       </div>
 
       <ul className="divide-y divide-slate-100">
-        {CHAPTERS.map((chapter) => {
-          const open = isOpen(chapter, today);
+        {CHAPTERS.filter((chapter) => showPlus || !chapter.plus).map((chapter) => {
+          const open = isOpen(chapter, today, premium.active);
+          const plusLocked = chapter.plus && !premium.active;
           const read = readIds.includes(chapter.id);
           return (
             <li key={chapter.id}>
               <button
                 type="button"
-                disabled={!open}
-                onClick={() => setReading(chapter.id)}
+                disabled={!open && !plusLocked}
+                onClick={() => (plusLocked ? setPlusPrompt(true) : setReading(chapter.id))}
                 className="flex w-full items-center gap-3 px-4 py-3 text-left transition active:scale-[0.98] disabled:active:scale-100"
               >
                 <span
@@ -147,10 +202,16 @@ export default function MangaShelf() {
                   <span className={`block truncate text-sm font-extrabold ${open ? "text-slate-700" : "text-slate-400"}`}>
                     {chapter.title}
                   </span>
-                  {!open && (
-                    <span className="mt-0.5 block text-[11px] font-bold bb-text-7C4DCC">
-                      🔒 {releaseLabel(chapter.release, today)}
+                  {plusLocked ? (
+                    <span className="mt-0.5 inline-flex items-center gap-1 text-[11px] font-bold bb-text-7C4DCC">
+                      <Crown className="h-3 w-3" aria-hidden="true" /> {t("Bloomy Plus-д багтдаг", "Included in Bloomy Plus")}
                     </span>
+                  ) : (
+                    !open && (
+                      <span className="mt-0.5 block text-[11px] font-bold bb-text-7C4DCC">
+                        🔒 {chapter.release ? releaseLabel(chapter.release, today) : t("Тун удахгүй", "Coming soon")}
+                      </span>
+                    )
                   )}
                   {open && chapter.bonus && (
                     <span className="mt-0.5 block text-[11px] font-bold bb-text-B83B7E">{t("+ Чиби бонус хуудас 💗", "+ Chibi bonus page 💗")}</span>
@@ -171,6 +232,48 @@ export default function MangaShelf() {
           );
         })}
       </ul>
+
+      {/* Plus бүлгүүдийг дэлгэх / хураах */}
+      <button
+        type="button"
+        onClick={() => setShowPlus((v) => !v)}
+        aria-expanded={showPlus}
+        className="flex w-full items-center justify-center gap-1.5 border-t border-slate-100 px-4 py-3 text-xs font-black bb-text-7C4DCC transition active:scale-[0.98]"
+      >
+        <Crown className="h-3.5 w-3.5" aria-hidden="true" />
+        {showPlus
+          ? t("Хураах", "Show less")
+          : t(`Цааш үзэх · ${PLUS_COUNT} бүлэг Bloomy Plus`, `View more · ${PLUS_COUNT} Bloomy Plus chapters`)}
+        <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showPlus ? "rotate-180" : ""}`} aria-hidden="true" />
+      </button>
+
+      {plusPrompt && (
+        <BottomSheet title="Bloomy Plus" onClose={() => setPlusPrompt(false)}>
+          <div className="space-y-3 pb-2">
+            <div className="flex items-center gap-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bb-grad-sos text-white">
+                <Crown className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <p className="text-sm font-black text-slate-800">
+                {t("3–8-р бүлэг Bloomy Plus-д багтдаг", "Chapters 3–8 are part of Bloomy Plus")}
+              </p>
+            </div>
+            <p className="text-sm font-semibold leading-relaxed text-slate-600">
+              {t(
+                "Асран хамгаалагч чинь Тохиргоо → Bloomy Plus хэсгээс асааж өгнө. Тэр хүртэл эхний бүлгүүдээ уншаарай 🌸",
+                "Your guardian can turn it on in Settings → Bloomy Plus. Until then, enjoy the first chapters 🌸",
+              )}
+            </p>
+            <button
+              type="button"
+              onClick={() => setPlusPrompt(false)}
+              className="min-h-12 w-full rounded-2xl bb-grad-sos px-4 py-3 text-sm font-extrabold text-white active:scale-[0.99]"
+            >
+              {t("Ойлголоо", "Got it")}
+            </button>
+          </div>
+        </BottomSheet>
+      )}
     </Card>
   );
 }
@@ -303,7 +406,13 @@ function EndCard({ next, today, onNext, onClose, onBack }) {
       <p className="mt-2 text-lg font-black">{t("Бүлэг дууслаа", "End of chapter")}</p>
       {next && !onNext && (
         <p className="mt-2 text-sm font-semibold text-white/70">
-          {chapterLabel(next.id)} «{next.title}» — {releaseLabel(next.release, today).toLowerCase()} 💌
+          {chapterLabel(next.id)} «{next.title}» —{" "}
+          {next.release
+            ? releaseLabel(next.release, today).toLowerCase()
+            : next.plus
+              ? t("Bloomy Plus-д багтдаг", "included in Bloomy Plus")
+              : t("тун удахгүй", "coming soon")}{" "}
+          💌
         </p>
       )}
       <div className="mt-6 flex gap-2">

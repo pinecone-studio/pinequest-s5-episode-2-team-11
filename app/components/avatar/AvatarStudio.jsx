@@ -4,7 +4,7 @@
  * AvatarStudio — бүтэн дэлгэцийн цонх: Алхах · Дэлгүүр · Шүүгээ
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X, Lock, Check, Crown, Footprints, ShoppingBag, Shirt } from "lucide-react";
 import Avatar from "./Avatar";
 import WalkMode from "./WalkMode";
@@ -126,12 +126,16 @@ function Shop({ av }) {
   const preview = tried ? { ...av.look, [tried.slot]: tried.id } : av.look;
   const list = ITEMS.filter((i) => (slot === "plus" ? i.premium : i.slot === slot && i.price > 0 && !i.premium));
   const plusLocked = (item) => item.premium && !av.premium;
+  // 9 бараа (3x3) тутамд нэг хуудас
+  const pages = Array.from({ length: Math.ceil(list.length / 9) }, (_, p) => list.slice(p * 9, p * 9 + 9));
+  const [page, setPage] = useState(0);
+  useEffect(() => setPage(0), [slot]);
 
   return (
     <div className="space-y-4">
       <div
-        className="flex justify-center rounded-3xl border bb-border-F8D3E6 py-3"
-        style={{ background: AVATAR_BACKGROUNDS.find((option) => option.id === av.background)?.background }}
+        className="sticky z-[5] flex justify-center rounded-3xl border bb-border-F8D3E6 py-3 shadow-sm"
+        style={{ top: "var(--studio-header-h, 0px)", background: AVATAR_BACKGROUNDS.find((option) => option.id === av.background)?.background }}
       >
         <Avatar look={preview} skin={av.skin} idle size={100} />
       </div>
@@ -151,29 +155,48 @@ function Shop({ av }) {
         ))}
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
-        {list.map((item) => {
-          const owned = av.owned.includes(item.id);
-          const locked = av.level < item.level || plusLocked(item);
-          return (
-            <ItemTile
-              key={item.id}
-              av={av}
-              item={item}
-              active={tryId === item.id}
-              locked={locked && !owned}
-              onClick={() => setTryId(item.id)}
-              badge={
-                owned
-                  ? t("Байгаа ✓", "Owned ✓")
-                  : av.level < item.level
-                    ? t(`Түв. ${item.level}`, `Lv. ${item.level}`)
-                    : <Price n={item.price} />
-              }
-            />
-          );
-        })}
+      {/* Барааг 3x3 хуудсаар зүүн/баруун тийш гүйлгэнэ — дүр дээрээ байрандаа үлдэнэ */}
+      <div
+        key={slot}
+        onScroll={(e) => {
+          const { scrollLeft, clientWidth } = e.currentTarget;
+          setPage(Math.round(scrollLeft / clientWidth));
+        }}
+        className="flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {pages.map((pageItems, p) => (
+          <div key={p} className="grid w-full shrink-0 snap-start grid-cols-3 content-start gap-2">
+            {pageItems.map((item) => {
+              const owned = av.owned.includes(item.id);
+              const locked = av.level < item.level || plusLocked(item);
+              return (
+                <ItemTile
+                  key={item.id}
+                  av={av}
+                  item={item}
+                  active={tryId === item.id}
+                  locked={locked && !owned}
+                  onClick={() => setTryId(item.id)}
+                  badge={
+                    owned
+                      ? t("Байгаа ✓", "Owned ✓")
+                      : av.level < item.level
+                        ? t(`Түв. ${item.level}`, `Lv. ${item.level}`)
+                        : <Price n={item.price} />
+                  }
+                />
+              );
+            })}
+          </div>
+        ))}
       </div>
+      {pages.length > 1 && (
+        <div className="flex justify-center gap-1.5" aria-label={t(`${page + 1} / ${pages.length} хуудас`, `Page ${page + 1} of ${pages.length}`)}>
+          {pages.map((_, p) => (
+            <span key={p} className={`h-1.5 rounded-full transition-all ${p === page ? "w-4 bb-bg-F48FB1" : "w-1.5 bg-slate-200"}`} />
+          ))}
+        </div>
+      )}
 
       {tried &&
         (av.owned.includes(tried.id) ? (
@@ -316,6 +339,20 @@ function Closet({ av }) {
 }
 
 export default function AvatarStudio({ av, tab, setTab, onClose }) {
+  const dialogRef = useRef(null);
+  const headerRef = useRef(null);
+
+  // Дэлгүүрийн дүр толгойн доор наалдаж үлдэхийн тулд толгойн өндрийг хэмжинэ
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => {
+      dialogRef.current?.style.setProperty("--studio-header-h", `${header.offsetHeight + 8}px`);
+    });
+    ro.observe(header);
+    return () => ro.disconnect();
+  }, []);
+
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -330,12 +367,14 @@ export default function AvatarStudio({ av, tab, setTab, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex justify-center" style={{ background: "rgba(43,34,48,0.35)" }}>
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={t("Миний дүр", "My avatar")}
         className="relative w-full max-w-md h-full overflow-y-auto bb-bg-FFF7FB bloom-fade"
       >
         <div
+          ref={headerRef}
           className="sticky top-0 z-10 bb-bg-FFF7FB-85 backdrop-blur-md border-b border-slate-100 px-4 pb-3 space-y-3"
           style={{ paddingTop: "max(12px, env(safe-area-inset-top))" }}
         >
