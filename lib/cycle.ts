@@ -94,7 +94,7 @@ export function getConfirmedPeriods(periods: PeriodLog[] = [], today = localDate
     .sort((a, b) => periodStart(a)!.localeCompare(periodStart(b)!));
 }
 
-export function getPrediction(confirmedPeriods: PeriodLog[] = [], today = localDateKey(new Date())): Prediction | null {
+export function getPrediction(confirmedPeriods: PeriodLog[] = [], today = localDateKey(new Date()), configuredPeriodLength?: number): Prediction | null {
   const periods = getConfirmedPeriods(confirmedPeriods, today);
   if (!periods.length) return null;
 
@@ -108,11 +108,10 @@ export function getPrediction(confirmedPeriods: PeriodLog[] = [], today = localD
     ? Math.round(cycleLengths.reduce((sum, length) => sum + length, 0) / cycleLengths.length)
     : 28, 21, 45);
   const periodLengths = periods.map(durationOf).filter((length): length is number => length !== null);
-  const periodLength = clamp(
-    periodLengths.length ? Math.round(periodLengths.reduce((sum, length) => sum + length, 0) / periodLengths.length) : 5,
-    2,
-    7,
-  );
+  const loggedPeriodLength = periodLengths.length
+    ? Math.round(periodLengths.reduce((sum, length) => sum + length, 0) / periodLengths.length)
+    : 5;
+  const periodLength = clamp(Number.isFinite(configuredPeriodLength) ? Math.round(configuredPeriodLength!) : loggedPeriodLength, 2, 7);
 
   // A missed predicted start (no newer confirmed log) turns grey up to today;
   // the following cycles keep stepping from that start.
@@ -152,13 +151,14 @@ export function periodsFromLogs(rows: { log_date: string; status?: string; perio
 }
 
 // Compatibility bridge for screens being migrated to the new cycle API.
-export function predictPeriodRange({ starts = [], periods, today = localDateKey(new Date()), hasHadPeriod = true }: {
+export function predictPeriodRange({ starts = [], periods, today = localDateKey(new Date()), hasHadPeriod = true, periodLength }: {
   starts?: string[];
   periods?: PeriodLog[];
   today?: string;
   hasHadPeriod?: boolean;
+  periodLength?: number;
 }) {
-  const prediction = hasHadPeriod ? getPrediction(periods?.length ? periods : starts, today) : null;
+  const prediction = hasHadPeriod ? getPrediction(periods?.length ? periods : starts, today, periodLength) : null;
   return {
     starts: prediction?.starts ?? [],
     rangeStart: prediction?.rangeStart ?? null,

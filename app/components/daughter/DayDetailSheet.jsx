@@ -1,16 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ChevronRight, Lock, Moon, Sun } from "lucide-react";
+import { List, Moon } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import { addDaysToLocalDateKey, getCyclePosition, localDateKey } from "../../../lib/cycle";
 import {
-  CATEGORIES, CATEGORY_BY_KEY, LOG_ENTRIES_CHANGED, SLEEP_QUALITY, categoryColor, fetchEntries, latestOf, splitByTime, summarizeEntry,
+  CATEGORIES, CATEGORY_BY_KEY, LOG_ENTRIES_CHANGED, SLEEP_QUALITY, categoryColor, fetchEntries, latestOf, summarizeEntry,
 } from "../../../lib/log-entries";
 import { supabase } from "../../../lib/supabase";
 import BottomSheet from "../ui/BottomSheet";
 import CategoryLogSheet from "./CategoryLogSheet";
-import PrivateNoteSheet from "./PrivateNoteSheet";
+import PrivateNoteSheet from "./PrivateNoteSheet.jsx";
 import { monthDay, t } from "../../../lib/i18n";
 
 const VISIBLE_PER_COLUMN = 3;
@@ -53,9 +53,8 @@ function TimelineColumn({ label, icon: Icon, entries, onOpen }) {
 }
 
 /**
- * Day detail (calendar tap and the Today page): 5 category circles, AM/PM
- * timeline in Ulaanbaatar time, sleep, and the locked private-note row.
- * Note text is never loaded here.
+ * Day detail (calendar tap and the Today page): 5 category circles, one daily
+ * timeline, and sleep. Private notes are not part of this day sheet.
  */
 export default function DayDetailSheet({ date, pendingPeriod = null, onClose }) {
   const { profile, cyclePeriods, cycleLength, respondPeriodEntry } = useFamily();
@@ -64,7 +63,7 @@ export default function DayDetailSheet({ date, pendingPeriod = null, onClose }) 
   const [entries, setEntries] = useState(null);
   const [loadError, setLoadError] = useState(false);
   const [logging, setLogging] = useState(null); // { category, entry? }
-  const [noteOpen, setNoteOpen] = useState(false);
+  const [journalOpen, setJournalOpen] = useState(false);
   const [responding, setResponding] = useState(false);
 
   useEffect(() => {
@@ -89,7 +88,6 @@ export default function DayDetailSheet({ date, pendingPeriod = null, onClose }) 
   }), [cyclePeriods, date]);
 
   const logged = useMemo(() => new Set((entries ?? []).map((entry) => entry.category)), [entries]);
-  const { morning, evening } = useMemo(() => splitByTime(entries ?? []), [entries]);
   const sleep = useMemo(() => latestOf(entries ?? [], "sleep"), [entries]);
   const sleepQuality = sleep && SLEEP_QUALITY.find(([key]) => key === sleep.value.quality);
 
@@ -139,9 +137,8 @@ export default function DayDetailSheet({ date, pendingPeriod = null, onClose }) 
             {entries == null ? (
               <p className="py-4 text-center text-sm font-bold text-slate-400">{t("Ачаалж байна…", "Loading…")}</p>
             ) : entries.length ? (
-              <div className="grid grid-cols-2 gap-2">
-                <TimelineColumn label={t("Өглөө", "Morning")} icon={Sun} entries={morning} onOpen={(entry) => setLogging({ category: entry.category, entry })} />
-                <TimelineColumn label={t("Орой", "Evening")} icon={Moon} entries={evening} onOpen={(entry) => setLogging({ category: entry.category, entry })} />
+              <div className="grid grid-cols-1 gap-2">
+                <TimelineColumn label={t("Өдрийн тэмдэглэл", "Daily log")} icon={List} entries={entries} onOpen={(entry) => setLogging({ category: entry.category, entry })} />
               </div>
             ) : (
               <p className="rounded-2xl border-2 border-dashed border-slate-200 p-4 text-center text-sm font-bold text-slate-400">{t("Энд тэмдэглэл харагдана", "Your logs will show here")}</p>
@@ -161,15 +158,17 @@ export default function DayDetailSheet({ date, pendingPeriod = null, onClose }) 
             )}
           </section>
 
-          <button type="button" disabled={future} onClick={() => setNoteOpen(true)} className="flex w-full items-center justify-between rounded-2xl bg-slate-50 px-3 py-3 text-left text-sm font-extrabold text-slate-600 disabled:opacity-40">
-            <span className="flex items-center gap-2"><Lock className="h-4 w-4 bb-text-7C4DCC" /> {t("🔒 Нууц тэмдэглэл", "🔒 Private note")}</span>
-            <ChevronRight className="h-4 w-4 text-slate-400" />
-          </button>
+          {!future && <button type="button" onClick={() => setJournalOpen(true)} className="diary-launch">
+            <span aria-hidden="true" className="diary-launch-icon">📖</span>
+            <span className="min-w-0 flex-1"><span className="block text-sm font-black">{t("Өдрийн тэмдэглэлээ бичих", "Write in your diary")}</span><span className="mt-0.5 block text-xs font-semibold">{t("Өнөөдрийнхөө тухай энд бичээрэй", "Write about your day here")}</span></span>
+            <span aria-hidden="true" className="text-xl">›</span>
+          </button>}
+
         </div>
       </BottomSheet>
 
       {logging && <CategoryLogSheet key={`${logging.category}:${logging.entry?.id ?? "new"}`} date={date} category={logging.category} entry={logging.entry ?? null} isPeriodDay={isPeriodDay} onClose={() => setLogging(null)} />}
-      {noteOpen && <PrivateNoteSheet date={date} onClose={() => setNoteOpen(false)} />}
+      {journalOpen && <PrivateNoteSheet date={date} onClose={() => setJournalOpen(false)} />}
     </>
   );
 }

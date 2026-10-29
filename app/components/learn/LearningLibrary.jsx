@@ -49,8 +49,8 @@ import BottomSheet from "../ui/BottomSheet";
 import { usePremium } from "../avatar/usePremium";
 import { t } from "../../../lib/i18n";
 
-// Охины 4–9-р сэдэв зөвхөн Bloomy Plus эрхтэй үед нээгдэнэ (эхний 3 нь үнэгүй)
-const FREE_TOPIC_COUNT = 3;
+// Охины 5-аас хойших сэдэв Bloomy Plus эрхтэй үед нээгдэнэ (эхний 4 нь үнэгүй)
+const FREE_TOPIC_COUNT = 4;
 
 const TONES = {
   lilac: { background: "#E9DDFC", color: "#6A3BB8" },
@@ -68,6 +68,7 @@ const TOPIC_TILE_STYLES = {
   what: { background: "#DC3F6B", Icon: Droplets },
   when: { background: "#A64FAD", Icon: Venus },
   cycle: { background: "#5B68D8", Icon: Moon },
+  pain: { background: "#D63D4D", Icon: HeartPulse },
   products: { background: "#575BC8", Icon: LockKeyhole },
   kit: { background: "#B8740C", Icon: BookOpen },
   hygiene: { background: "#1F7FB0", Icon: Sparkles },
@@ -114,6 +115,9 @@ function TopicCard({ category, index, onClick, tile = false, read = false, locke
           boxShadow: `0 8px 18px -10px ${accent}`,
         }}
       >
+        {locked && (
+          <span aria-hidden="true" className="pointer-events-none absolute inset-0 z-[1]" style={{ background: "linear-gradient(160deg, rgba(36,26,44,0.35) 0%, rgba(36,26,44,0.62) 100%)" }} />
+        )}
         {/* чимэглэл: том бүдэг дүрс, гэрлийн толбо */}
         <Icon className="pointer-events-none absolute -right-3 -bottom-3 h-16 w-16 opacity-20 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6" aria-hidden="true" />
         <span aria-hidden="true" className="pointer-events-none absolute -left-5 -top-6 h-14 w-14 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.18)" }} />
@@ -123,8 +127,8 @@ function TopicCard({ category, index, onClick, tile = false, read = false, locke
             <Icon className="h-[18px] w-[18px] text-white" strokeWidth={2.3} aria-hidden="true" />
           </span>
           {locked ? (
-            <span className="flex h-6 w-6 items-center justify-center rounded-full" style={{ backgroundColor: "#FFFFFF", color: accent }} aria-hidden="true">
-              <Crown className="h-3.5 w-3.5" strokeWidth={2.6} />
+            <span className="relative z-[2] flex h-7 w-7 items-center justify-center rounded-full shadow-md" style={{ backgroundColor: "#FFFFFF", color: "#2B2230" }} aria-hidden="true">
+              <LockKeyhole className="h-3.5 w-3.5" strokeWidth={2.6} />
             </span>
           ) : read ? (
             <span className="flex h-5 w-5 items-center justify-center rounded-full" style={{ backgroundColor: "#FFFFFF", color: accent }} aria-hidden="true">
@@ -137,8 +141,13 @@ function TopicCard({ category, index, onClick, tile = false, read = false, locke
           )}
         </span>
 
-        <span className="relative mt-auto line-clamp-3 w-full text-[12.5px] font-black leading-tight">
-          {category.title}
+        <span className={`relative z-[2] mt-auto w-full ${locked ? "opacity-90" : ""}`}>
+          {locked && (
+            <span className="mb-1 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-black" style={{ backgroundColor: "#FFD45C", color: "#3A2A10" }}>
+              <Crown className="h-2.5 w-2.5" strokeWidth={3} aria-hidden="true" /> Plus
+            </span>
+          )}
+          <span className="line-clamp-3 block text-[12.5px] font-black leading-tight">{category.title}</span>
         </span>
       </button>
     );
@@ -218,10 +227,10 @@ function TopicDetail({ category, index, total, counter, onBack, onNext, nextLabe
         {category.isWarning && category.warningText && (
           <div
             role="note"
-            className="flex items-start gap-3 rounded-2xl border-2 p-3 text-sm font-extrabold leading-relaxed"
-            style={{ borderColor: accent, backgroundColor: `${accent}1F` }}
+            className={`flex items-start gap-3 rounded-2xl p-3 text-sm font-extrabold leading-relaxed ${category.warningTone === "soft" ? "border bb-border-F8D3E6 bb-bg-FDE7F1-50" : "border-2"}`}
+            style={category.warningTone === "soft" ? undefined : { borderColor: accent, backgroundColor: `${accent}1F` }}
           >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-white" style={{ backgroundColor: accent }}>
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-white" style={{ backgroundColor: category.warningTone === "soft" ? "#B83B7E" : accent }}>
               <TriangleAlert className="h-4 w-4" aria-hidden="true" />
             </span>
             <p className="text-slate-700">{category.warningText}</p>

@@ -99,8 +99,25 @@ export default function PeriodCycleTracker({ onBack, onDayPress, cycleLength: cy
     }
     return days;
   }, [editing, draftDays, hasPeriod, cyclePeriods, periodLength, today]);
-  // Same prediction object as the Today ring (FamilyContext.periodPrediction).
-  const predictedPeriodDays = useMemo(() => new Set(hasPeriod ? prediction.predictedDays : []), [hasPeriod, prediction.predictedDays]);
+  const ongoingPeriodForecast = useMemo(() => {
+    if (!hasPeriod) return new Set();
+    const latest = cyclePeriods
+      .map((period) => typeof period === "string" ? period : period.startDate ?? period.log_date)
+      .filter((start) => start && start <= today)
+      .sort()
+      .at(-1);
+    if (!latest) return new Set();
+    const duration = Math.min(7, Math.max(2, Number(periodLength) || 5));
+    const end = addDaysToLocalDateKey(latest, duration - 1);
+    if (today > end) return new Set();
+    const days = new Set();
+    for (let date = addDaysToLocalDateKey(latest, 1); date <= end; date = addDaysToLocalDateKey(date, 1)) {
+      if (date > today) days.add(date);
+    }
+    return days;
+  }, [hasPeriod, cyclePeriods, periodLength, today]);
+  // Keep the Today ring's next-cycle prediction and add remaining days in an ongoing period.
+  const predictedPeriodDays = useMemo(() => new Set(hasPeriod ? [...prediction.predictedDays, ...ongoingPeriodForecast] : []), [hasPeriod, prediction.predictedDays, ongoingPeriodForecast]);
   const overduePeriodDays = useMemo(() => new Set(hasPeriod ? prediction.overdueDays : []), [hasPeriod, prediction.overdueDays]);
   const pendingByDate = useMemo(() => Object.fromEntries((periodLogs ?? []).filter((item) => item.status === "pending").map((item) => [item.log_date, item])), [periodLogs]);
 
@@ -220,7 +237,7 @@ export default function PeriodCycleTracker({ onBack, onDayPress, cycleLength: cy
           : isLatePrediction ? "bg-slate-100 text-slate-400"
           : isPredicted ? "bg-pink-100 text-[#d95791]"
             : "text-slate-700";
-    const dateStyle = isOpen && !isLogged ? { backgroundColor: "var(--selected-day)", color: theme === "dark" ? "#f2a5c9" : undefined }
+    const dateStyle = isOpen && !isLogged ? { backgroundColor: theme === "dark" ? "#b83b7e" : "var(--selected-day)", color: theme === "dark" ? "#ffffff" : undefined }
       : theme === "dark"
       ? isLatePrediction ? { backgroundColor: "#3a3242", color: "#a99aaf" }
         : isPredicted ? { backgroundColor: "#422a3c", color: "#f2a5c9" }
@@ -252,7 +269,7 @@ export default function PeriodCycleTracker({ onBack, onDayPress, cycleLength: cy
 
   const renderMiniMonth = (date) => {
     const dates = monthDates(date);
-    return <button key={monthKey(date)} type="button" onClick={() => openMonth(date)} className="rounded-2xl p-2 text-left text-slate-700 transition hover:bg-pink-50">
+    return <button key={monthKey(date)} type="button" onClick={() => openMonth(date)} className="period-mini-month rounded-2xl p-2 text-left text-slate-700 transition hover:bg-pink-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-400">
       <span className="mb-1 block text-center text-xs font-black text-slate-700">{monthName(date.getMonth() + 1)}</span>
       <span className="grid grid-cols-7 gap-y-0.5">{dates.map((day, index) => day ? renderDay(day, true) : <span key={`mini-empty-${monthKey(date)}-${index}`} aria-hidden="true" className="h-7" />)}</span>
     </button>;

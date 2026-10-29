@@ -124,7 +124,8 @@ export default function SchoolBagChecklist({ daughter = false }) {
         setOpen(false);
         setToast(t("Цүнхний жагсаалт хадгалагдлаа ✓", "Bag list saved ✓"));
       }
-    } catch {
+    } catch (error) {
+      console.warn("[kit_checks] save failed:", error);
       setToast(t("Цүнхний жагсаалтыг хадгалж чадсангүй. Дахин оролдоно уу.", "Couldn't save the bag list. Try again."));
     } finally {
       setSaving(false);

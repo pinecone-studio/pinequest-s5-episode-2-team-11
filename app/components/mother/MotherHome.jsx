@@ -6,7 +6,6 @@ import { Copy, Share2, Users, Check, Lock, HeartHandshake, Send } from "lucide-r
 import { MOM_QUICK_NOTES } from "../../../lib/data";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
-import ChildrenOverview from "./ChildrenOverview";
 import MonthlyCareCarousel from "./MonthlyCareCarousel";
 import { t } from "../../../lib/i18n";
 import StoryRecorderSheet from "../connection/StoryRecorderSheet";
@@ -57,8 +56,6 @@ export default function MotherHome() {
           <h2 className="text-2xl font-black text-slate-700">{t("Гэр бүлийн халамж", "Family care")}</h2>
         </div>
       </div>
-
-      <ChildrenOverview />
 
       {linked && <SharedSignals />}
 
