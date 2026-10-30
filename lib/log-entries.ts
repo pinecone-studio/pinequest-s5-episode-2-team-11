@@ -79,9 +79,11 @@ export const ubTime = (timestamp: string) => UB_TIME.format(new Date(timestamp))
 /** "Өглөө" is before 12:00 Ulaanbaatar time; 12:00 and after is "Орой". */
 export const isMorning = (timestamp: string) => ubHour(timestamp) < 12;
 
-/** Today → now; past days → 20:00 of that day in Ulaanbaatar (UTC+8, no DST). */
+/** Today → now; past days → a timestamp in the current Ulaanbaatar time slot. */
 export function loggedAtFor(date: string, today: string, now = new Date()): string {
-  return date === today ? now.toISOString() : new Date(`${date}T20:00:00+08:00`).toISOString();
+  if (date === today) return now.toISOString();
+  const time = ubHour(now.toISOString()) < 12 ? "09:00" : "20:00";
+  return new Date(`${date}T${time}:00+08:00`).toISOString();
 }
 
 /** Sleep is recorded on the morning after, so the day view shows the latest sleep entry of that day. */
