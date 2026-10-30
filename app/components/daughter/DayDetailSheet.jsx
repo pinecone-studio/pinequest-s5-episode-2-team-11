@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { List, Moon } from "lucide-react";
+import { List, Moon, Pencil } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import { addDaysToLocalDateKey, getCyclePosition, localDateKey } from "../../../lib/cycle";
 import {
@@ -32,6 +32,10 @@ function EntryCard({ entry, onOpen }) {
       <span className="min-w-0 flex-1">
         <span className="block truncate text-xs font-extrabold text-slate-700">{meta.label}</span>
         <span className="block truncate text-[11px] font-semibold text-slate-500">{summary}</span>
+      </span>
+      <span className="flex shrink-0 items-center gap-1 rounded-full bg-pink-50 px-2 py-1 text-[10px] font-extrabold text-pink-700">
+        <Pencil className="h-3 w-3" aria-hidden="true" />
+        {t("Засах", "Edit")}
       </span>
     </button>
   );
