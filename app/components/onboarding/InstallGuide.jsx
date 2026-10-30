@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { ArrowRight, Check, Share } from "lucide-react";
+import Image from "next/image";
 import BloomyLogo from "../ui/BloomyLogo";
 import InstallAppButton from "../ui/InstallAppButton";
 import { t } from "../../../lib/i18n";
@@ -56,6 +58,8 @@ function IosInstallVisuals() {
 }
 
 export default function InstallGuide({ onContinue }) {
+  const [showInstagramQr, setShowInstagramQr] = useState(false);
+
   return (
     <div className="px-2 pt-5 pb-8 bloom-fade">
       <div className="flex flex-col items-center text-center">
@@ -87,6 +91,29 @@ export default function InstallGuide({ onContinue }) {
             <IosInstallVisuals />
         </InstructionCard>
       </div>
+
+      <section className="mt-5 rounded-3xl border border-orange-100 bg-white p-4 text-center shadow-sm">
+        <button
+          type="button"
+          onClick={() => setShowInstagramQr((visible) => !visible)}
+          aria-expanded={showInstagramQr}
+          aria-controls="instagram-qr"
+          className="rounded-full bg-orange-50 px-4 py-2 text-sm font-extrabold text-pink-700 transition hover:bg-orange-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-2"
+        >
+          QR code
+        </button>
+        {showInstagramQr && (
+          <div id="instagram-qr" className="mt-3">
+            <Image
+              src="/instagram-qr.jpg"
+              alt="Instagram QR code"
+              width={837}
+              height={861}
+              className="mx-auto h-auto w-56 rounded-xl sm:w-64"
+            />
+          </div>
+        )}
+      </section>
 
       <button
         type="button"
