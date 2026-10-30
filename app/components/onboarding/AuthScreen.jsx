@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertCircle, Check, ChevronLeft, Eye, EyeOff, Loader2, Heart, Play, X } from "lucide-react";
+import { AlertCircle, Check, ChevronLeft, Eye, EyeOff, Loader2, Heart, X } from "lucide-react";
 import { useFamily } from "../../../context/FamilyContext";
 import RoleSelect from "./RoleSelect";
 import InstallGuide from "./InstallGuide";
@@ -16,7 +16,7 @@ const MIN_SIGNUP_PASSWORD = 8;
 
 /** Нэвтрэх / бүртгүүлэх. stage: "install" → "role" → "signup" | "login" */
 export default function AuthScreen() {
-  const { signUp, signIn, signInAsDemo } = useFamily();
+  const { signUp, signIn } = useFamily();
   const [stage, setStage] = useState("install");
   const [role, setRole] = useState(null);
   const [guardianGender, setGuardianGender] = useState(null);
@@ -56,16 +56,6 @@ export default function AuthScreen() {
         onLogin={() => {
           setStage("login");
           setMessage("");
-        }}
-        busy={busy}
-        message={message}
-        onDemo={async (demoRole) => {
-          if (busy) return;
-          setBusy(true);
-          setMessage("");
-          const err = await signInAsDemo(demoRole);
-          setBusy(false);
-          if (err) setMessage(err);
         }}
       />
     );
@@ -118,15 +108,6 @@ export default function AuthScreen() {
     } else {
       err = await signIn({ email, password });
     }
-    setBusy(false);
-    if (err) setMessage(err);
-  };
-
-  const enterDemo = async () => {
-    if (busy) return;
-    setBusy(true);
-    setMessage("");
-    const err = await signInAsDemo();
     setBusy(false);
     if (err) setMessage(err);
   };
@@ -275,28 +256,6 @@ export default function AuthScreen() {
         {busy && <Loader2 className="w-5 h-5 animate-spin" />}
         {isSignup ? t("Бүртгүүлэх", "Sign up") : t("Нэвтрэх", "Sign in")}
       </button>
-
-      {!isSignup && (
-        <>
-          <div className="my-4 flex items-center gap-3 text-xs font-bold text-slate-400" aria-hidden="true">
-            <span className="h-px flex-1 bg-slate-100" />
-            {t("эсвэл", "or")}
-            <span className="h-px flex-1 bg-slate-100" />
-          </div>
-          <button
-            type="button"
-            onClick={enterDemo}
-            disabled={busy}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-pink-100 bg-white py-3.5 font-extrabold bb-text-B83B7E shadow-sm transition hover:bg-pink-50 active:scale-[0.98] disabled:opacity-60"
-          >
-            {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Play className="h-4 w-4 fill-current" aria-hidden="true" />}
-            {t("Демоор шууд нэвтрэх", "Enter demo without signing up")}
-          </button>
-          <p className="mt-2 text-center text-xs font-semibold text-slate-400">
-            {t("Бүртгэл үүсгэхгүйгээр зочин горимоор орно.", "Explore as a guest. No account details needed.")}
-          </p>
-        </>
-      )}
 
       <button
         type="button"

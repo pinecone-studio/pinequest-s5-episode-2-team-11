@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, Heart, Sprout, HeartHandshake } from "lucide
 import BloomyLogo from "../ui/BloomyLogo";
 import { t } from "../../../lib/i18n";
 
-export default function RoleSelect({ onPick, onLogin, onBack, onDemo, busy, message }) {
+export default function RoleSelect({ onPick, onLogin, onBack }) {
   return (
     <div className="px-2 pt-6 pb-10 bloom-fade">
       <button
@@ -60,15 +60,6 @@ export default function RoleSelect({ onPick, onLogin, onBack, onDemo, busy, mess
           </button>
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-3">
-        <button type="button" onClick={() => onDemo("mother")} disabled={busy} className="rounded-2xl border-2 border-orange-100 bg-white px-3 py-3 font-extrabold text-slate-600 shadow-sm transition hover:bg-orange-50 active:scale-95">
-          {t("Асран хамгаалагчийн демо", "Guardian demo")}
-        </button>
-        <button type="button" onClick={() => onDemo("daughter")} disabled={busy} className="rounded-2xl border-2 border-green-100 bg-white px-3 py-3 font-extrabold text-slate-600 shadow-sm transition hover:bg-green-50 active:scale-95">
-          {t("Охины демо", "Daughter demo")}
-        </button>
-      </div>
-      {message && <p role="alert" className="mt-3 text-center text-sm font-semibold text-rose-600">{message}</p>}
       <button
         onClick={onLogin}
         className="mt-6 w-full rounded-2xl bg-white border-2 border-slate-100 py-4 font-extrabold text-slate-600 active:scale-95 transition"
