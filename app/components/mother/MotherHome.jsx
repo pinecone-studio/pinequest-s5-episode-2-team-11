@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useFamily } from "../../../context/FamilyContext";
-import { Copy, Share2, Users, Check, Lock, HeartHandshake, Send } from "lucide-react";
+import { Copy, Share2, Users, Check, Lock, HeartHandshake, Send, Mic } from "lucide-react";
 import { MOM_QUICK_NOTES } from "../../../lib/data";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
@@ -145,12 +145,13 @@ export default function MotherHome() {
       </div>
 
       {linked && (
-        <button type="button" onClick={() => setStoryOpen(true)} className="flex w-full items-center gap-3 rounded-3xl border-2 border-slate-100 bg-white p-4 text-left active:scale-[0.99]">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bb-bg-FDE7F1 text-xl" aria-hidden="true">🎙️</span>
+        <button type="button" onClick={() => setStoryOpen(true)} className="flex w-full items-center gap-3 rounded-3xl border border-pink-100 bg-gradient-to-r from-pink-50 to-purple-50 p-4 text-left shadow-sm transition active:scale-[0.99]">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white bb-text-B83B7E shadow-sm" aria-hidden="true"><Mic className="h-5 w-5" /></span>
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-black text-slate-700">Миний түүх</span>
-            <span className="block text-xs font-semibold text-slate-500">Өөрийн анхны туршлагаа {daughterName}-д дуу эсвэл бичвэрээр үлдээх</span>
+            <span className="block text-sm font-black text-slate-700">{t(`${daughterName}-д түүхээ үлдээх`, `Leave a story for ${daughterName}`)}</span>
+            <span className="mt-0.5 block text-xs font-semibold leading-relaxed text-slate-500">{t("Дуу хоолойгоор бичих эсвэл бичвэрээр хуваалцах", "Record a voice note or share it in writing")}</span>
           </span>
+          <span className="shrink-0 rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-extrabold bb-text-B83B7E">{t("2 мин", "2 min")}</span>
         </button>
       )}
       {storyOpen && <StoryRecorderSheet onClose={() => setStoryOpen(false)} />}

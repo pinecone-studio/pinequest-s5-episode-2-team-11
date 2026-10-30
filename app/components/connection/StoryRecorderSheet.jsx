@@ -109,10 +109,25 @@ export default function StoryRecorderSheet({ onClose }) {
   return (
     <BottomSheet title={t("🎙️ Миний түүх", "🎙️ My story")} onClose={onClose}>
       <div className="space-y-4 pb-2">
-        <p className="text-xs font-semibold leading-relaxed text-slate-500">{t(`Өөрийн анхны сарын тэмдгийн түүхээ ${daughterName}-д үлдээгээрэй. Зөвхөн та хоёрт харагдана.`, `Share your first period story with ${daughterName}. Only the two of you can see it.`)}</p>
+        <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-pink-50 to-purple-50 p-3.5">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white bb-text-B83B7E shadow-sm">
+            <Mic className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-black text-slate-700">{t(`${daughterName}-д дурсамжаа үлдээгээрэй`, `Leave a memory for ${daughterName}`)}</p>
+            <p className="mt-0.5 text-xs font-semibold leading-relaxed text-slate-500">{t("Зөвхөн та хоёрт харагдана · 2 минут хүртэл", "Only you two can see it · Up to 2 minutes")}</p>
+          </div>
+        </div>
 
         <div className="rounded-2xl bb-bg-FDE7F1-50 p-4">
-          <p className="text-[11px] font-black text-slate-400">{t("Асуулт", "Question")} {prompt + 1}/{STORY_PROMPTS.length}</p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[11px] font-black uppercase tracking-wide text-slate-400">{t("Асуулт", "Question")} {prompt + 1}/{STORY_PROMPTS.length}</p>
+            <div className="flex gap-1" aria-hidden="true">
+              {STORY_PROMPTS.map((_, index) => (
+                <span key={index} className={`h-1.5 w-5 rounded-full ${index === prompt ? "bb-bg-E0679F" : "bg-white"}`} />
+              ))}
+            </div>
+          </div>
           <p className="mt-1 text-lg font-black leading-snug text-slate-800">{lang === "en" ? ENGLISH_STORY_PROMPTS[prompt] : STORY_PROMPTS[prompt]}</p>
           <div className="mt-3 flex gap-2">
             <button type="button" disabled={prompt === 0} onClick={() => setPrompt((value) => value - 1)} className="rounded-xl bg-white px-3 py-2 text-xs font-extrabold text-slate-500 disabled:opacity-40">← {t("Өмнөх", "Previous")}</button>
@@ -131,19 +146,43 @@ export default function StoryRecorderSheet({ onClose }) {
 
         {mode === "audio" ? (
           clip ? (
-            <div className="space-y-2">
+            <div className="rounded-2xl border border-pink-100 bg-white p-3.5">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="text-sm font-black text-slate-700">{t("Бичлэгээ сонсох", "Preview your voice note")}</p>
+                <span className="rounded-full bb-bg-FDE7F1 px-2.5 py-1 text-xs font-extrabold bb-text-B83B7E">{Math.floor(clip.seconds / 60)}:{String(clip.seconds % 60).padStart(2, "0")}</span>
+              </div>
               <audio controls src={clip.url} className="w-full" />
-              <button type="button" onClick={redo} className="flex items-center gap-1.5 text-xs font-extrabold text-slate-500"><RotateCcw className="h-3.5 w-3.5" /> {t("Дахин бичих", "Record again")}</button>
+              <button type="button" onClick={redo} className="mt-2 flex min-h-9 items-center gap-1.5 rounded-xl px-2 text-xs font-extrabold text-slate-500 transition hover:bg-slate-50">
+                <RotateCcw className="h-3.5 w-3.5" /> {t("Дахин бичих", "Record again")}
+              </button>
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-2 py-2">
-              <button type="button" onClick={recording ? stop : start} aria-label={recording ? t("Зогсоох", "Stop") : t("Бичиж эхлэх", "Start recording")}
-                className={`flex h-20 w-20 items-center justify-center rounded-full text-white shadow-lg ${recording ? "bg-rose-500 animate-pulse" : "bb-bg-E0679F"}`}>
-                {recording ? <Square className="h-8 w-8" /> : <Mic className="h-8 w-8" />}
-              </button>
-              <p className="text-sm font-black text-slate-600" aria-live="polite">
-                {recording ? `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")} · ${left} ${t("сек үлдлээ", "sec left")}` : t("Нийт 2 минут хүртэл", "Up to 2 minutes total")}
-              </p>
+            <div className="rounded-2xl border border-pink-100 bg-white px-4 py-5">
+              {audioSupported ? (
+                <>
+                  <div className="flex flex-col items-center gap-3">
+                    <button type="button" onClick={recording ? stop : start} aria-label={recording ? t("Зогсоох", "Stop recording") : t("Бичиж эхлэх", "Start recording")}
+                      className={`flex h-20 w-20 items-center justify-center rounded-full text-white shadow-lg ring-8 ring-pink-50 transition active:scale-95 ${recording ? "bg-rose-500 animate-pulse" : "bb-bg-E0679F"}`}>
+                      {recording ? <Square className="h-7 w-7" /> : <Mic className="h-8 w-8" />}
+                    </button>
+                    <div className="text-center">
+                      <p className="text-sm font-black text-slate-700" aria-live="polite">
+                        {recording ? t("Бичиж байна…", "Recording…") : t("Яриагаа бичиж эхлээрэй", "Tap to record your voice")}
+                      </p>
+                      <p className="mt-1 text-xs font-bold text-slate-400" aria-live="polite">
+                        {recording ? `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")} · ${left} ${t("сек үлдлээ", "sec left")}` : t("Дуусмагц зогсоох товчийг дарна уу", "Tap stop when you are finished")}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-4 h-2 overflow-hidden rounded-full bg-pink-50" role="progressbar" aria-label={t("Бичлэгийн хугацаа", "Recording time")} aria-valuemin={0} aria-valuemax={MAX_SECONDS} aria-valuenow={seconds}>
+                    <div className={`h-full rounded-full transition-[width] duration-500 ${recording ? "bg-rose-400" : "bb-bg-E0679F"}`} style={{ width: `${(seconds / MAX_SECONDS) * 100}%` }} />
+                  </div>
+                </>
+              ) : (
+                <p className="text-center text-sm font-semibold leading-relaxed text-slate-500">
+                  {t("Энэ төхөөрөмжид дуу бичих боломжгүй байна. Та бичвэрээр түүхээ үлдээж болно.", "Voice recording is not available on this device. You can write your story instead.")}
+                </p>
+              )}
             </div>
           )
         ) : (
