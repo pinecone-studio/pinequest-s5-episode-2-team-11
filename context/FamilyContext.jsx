@@ -51,6 +51,7 @@ const AUTH_ERRORS = {
   get "Invalid login credentials"() { return t("Имэйл эсвэл нууц үг буруу байна.", "Wrong email or password."); },
   get "User already registered"() { return t("Энэ имэйлээр аль хэдийн бүртгүүлсэн байна. «Нэвтрэх» дээр дарна уу.", "This email is already registered. Tap \"Sign in\"."); },
   get "Email not confirmed"() { return t("Имэйлээ баталгаажуулна уу (inbox-оо шалгаарай).", "Please confirm your email (check your inbox)."); },
+  get "Anonymous sign-ins are disabled"() { return t("Демо нэвтрэлтийг идэвхжүүлээгүй байна. Supabase Auth тохиргооноос Anonymous Sign-Ins-ийг асаана уу.", "Demo sign-in is disabled. Enable Anonymous Sign-Ins in your Supabase Auth settings."); },
 };
 const authMessage = (e) =>
   AUTH_ERRORS[e?.message] ||
@@ -780,6 +781,21 @@ export function FamilyProvider({ children }) {
     return null;
   };
 
+  const signInAsDemo = async (role = "mother") => {
+    const isDaughter = role === "daughter";
+    const { error } = await supabase.auth.signInAnonymously({
+      options: {
+        data: {
+          role,
+          guardian_gender: isDaughter ? null : "unspecified",
+          display_name: isDaughter ? "Demo Daughter" : "Demo Guardian",
+        },
+      },
+    });
+    if (error) return authMessage(error);
+    setTab("home");
+    return null;
+  };
   const signOut = async () => {
     await supabase.auth.signOut();
     setTab("home");
@@ -1368,6 +1384,7 @@ export function FamilyProvider({ children }) {
     guardianGender: view === "mother" ? guardianGender : null,
     signUp,
     signIn,
+    signInAsDemo,
     signOut,
     updateName,
     updateGuardianGender,
