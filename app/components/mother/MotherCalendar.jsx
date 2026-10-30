@@ -56,14 +56,22 @@ export default function MotherCalendar() {
     if (!supabase || !linked || !activeChildId) return;
     let cancelled = false;
     const since = toDateStr(new Date(Date.now() - 60 * 86400000));
-    supabase
-      .rpc("get_shared_daily_moods", { p_child_id: activeChildId, p_from: since, p_to: today })
-      .then(({ data, error }) => {
-        if (cancelled) return;
-        if (error) console.warn("[day_logs] mother:", error.message);
-        setRows(data ?? []);
-      });
-    return () => { cancelled = true; };
+    const loadSharedMoods = () => {
+      supabase.rpc("get_shared_daily_moods", { p_child_id: activeChildId, p_from: since, p_to: today })
+        .then(({ data, error }) => {
+          if (cancelled) return;
+          if (error) console.warn("[day_logs] mother:", error.message);
+          setRows(data ?? []);
+        });
+    };
+    loadSharedMoods();
+    const refreshTimer = window.setInterval(loadSharedMoods, 30000);
+    window.addEventListener("focus", loadSharedMoods);
+    return () => {
+      cancelled = true;
+      window.clearInterval(refreshTimer);
+      window.removeEventListener("focus", loadSharedMoods);
+    };
   }, [linked, activeChildId, shareWithMom]);
 
   const byDate = useMemo(() => Object.fromEntries(rows.map((r) => [r.log_date, r])), [rows]);

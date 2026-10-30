@@ -11,7 +11,7 @@ import { t } from "../../../lib/i18n";
 
 /** Today's quick mood (one tap = one mood entry) + the same day view the calendar opens. */
 export default function TodayMoodCard() {
-  const { profile, setToast } = useFamily();
+  const { profile, setToast, linked, shareWithMom } = useFamily();
   const date = localDateKey(new Date());
   const [mood, setMood] = useState(null);
   const [open, setOpen] = useState(false);
@@ -32,12 +32,23 @@ export default function TodayMoodCard() {
     if (saving || !profile?.id) return;
     setSaving(true);
     const { error } = await saveEntry(supabase, { userId: profile.id, date, category: "mood", value: { mood: value }, today: date });
-    setSaving(false);
     if (error) {
+      setSaving(false);
       console.error("[log_entries] mood:", error);
       setToast(t("Хадгалж чадсангүй. Дахин оролдоно уу.", "Couldn't save. Please try again."));
       return;
     }
+    if (linked && shareWithMom) {
+      const { error: shareError } = await supabase.rpc("set_my_day_share_mood", { p_log_date: date, p_share: true });
+      if (shareError) {
+        console.error("[day_logs] share_mood:", shareError);
+        setSaving(false);
+        setMood(value);
+        setToast(t("Сэтгэл санааг хадгаллаа, хуваалцаж чадсангүй", "Mood saved, but couldn't share it"));
+        return;
+      }
+    }
+    setSaving(false);
     setMood(value);
     setToast(t("Хадгаллаа", "Saved"));
   };
