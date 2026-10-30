@@ -1,7 +1,8 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useFamily } from "../../../context/FamilyContext";
-import { Package, Check, Plus, Minus, RefreshCw, Trash2 } from "lucide-react";
+import { Link2, Package, Check, Plus, Minus, RefreshCw, Trash2 } from "lucide-react";
 import SectionTitle from "../ui/SectionTitle";
 import Card from "../ui/Card";
 import PageHeader from "../ui/PageHeader";
@@ -14,7 +15,36 @@ const SUPPLY_ACCENTS = { day: "#E0679F", night: "#8B5CF6", liner: "#2E9E74" };
 const EXTRA_ACCENTS = ["#D08712", "#2D8FC7", "#D9604F"];
 
 export default function MotherSupplies() {
-  const { supplies, updateSupply, restock, removeSupply, daughterName } = useFamily();
+  const { supplies, updateSupply, restock, removeSupply, daughterName, linked } = useFamily();
+  const router = useRouter();
+
+  // Охинтой холбогдоогүй үед хэрэглэл, цүнхний жагсаалтыг харуулахгүй
+  if (!linked) {
+    return (
+      <div className="space-y-4">
+        <PageHeader sub={t("Охины хэрэгслийг хянах", "Track your daughter's supplies")} title={t("Хэрэгслийн үлдэгдэл 📦", "Supplies left 📦")} />
+        <Card className="text-center">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bb-bg-FDE7F1 bb-text-B83B7E">
+            <Link2 className="h-7 w-7" aria-hidden="true" />
+          </span>
+          <p className="mt-3 text-base font-black text-slate-700">{t("Эхлээд охинтойгоо холбогдоорой", "Connect with your daughter first")}</p>
+          <p className="mx-auto mt-1 max-w-xs text-sm font-semibold leading-relaxed text-slate-500">
+            {t(
+              "Холбогдсоны дараа охины хэрэглэлийн үлдэгдэл, сургуулийн цүнхний жагсаалт энд харагдана 🌱",
+              "Once connected, your daughter's supplies and school bag checklist will show up here 🌱",
+            )}
+          </p>
+          <button
+            type="button"
+            onClick={() => router.push("/profile")}
+            className="mt-4 w-full rounded-2xl bb-grad-sos py-3 text-sm font-extrabold text-white transition active:scale-95"
+          >
+            {t("Гэр бүлийн код авах", "Get the family code")}
+          </button>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
