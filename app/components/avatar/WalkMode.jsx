@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import { Footprints, Play, Square, Sparkles } from "lucide-react";
+import { Footprints, Sparkles } from "lucide-react";
 import Avatar from "./Avatar";
 import { Cloud, Flower, PetalIcon, Tree, XpIcon } from "./icons";
 import { useStepCounter } from "./useStepCounter";
@@ -21,11 +21,8 @@ const SCENE = `
 @media (prefers-reduced-motion: reduce){.wk-strip,.wk-far{animation:none}}
 `;
 
-const DEMO_STEPS_PER_TICK = 10; // 0.25 секунд тутамд — танилцуулгад хурдасгасан (~1 минутад 2-р түвшин)
-
 export default function WalkMode({ av }) {
   const [moving, setMoving] = useState(false);
-  const [demo, setDemo] = useState(false);
   const stopTimer = useRef(null);
 
   const bump = (n) => {
@@ -40,12 +37,6 @@ export default function WalkMode({ av }) {
   const counter = useStepCounter((n) => bumpRef.current(n));
   const running = counter.status === "running";
 
-  useEffect(() => {
-    if (!demo) return;
-    const t = setInterval(() => bumpRef.current(DEMO_STEPS_PER_TICK), 250);
-    return () => clearInterval(t);
-  }, [demo]);
-
   useEffect(() => () => clearTimeout(stopTimer.current), []);
 
   const w = av.walkToday;
@@ -55,13 +46,7 @@ export default function WalkMode({ av }) {
 
   const toggleSensor = async () => {
     if (running) return counter.stop();
-    setDemo(false);
     await counter.start();
-  };
-
-  const toggleDemo = () => {
-    if (running) counter.stop();
-    setDemo((d) => !d);
   };
 
   return (
@@ -101,7 +86,7 @@ export default function WalkMode({ av }) {
         </div>
         {moving && (
           <span className="absolute top-3 right-3 rounded-full bg-white/90 px-3 py-1 text-xs font-extrabold bb-text-B83B7E">
-            {demo ? t("Демо алхалт", "Demo walk") : t("Алхаж байна…", "Walking…")}
+            {t("Алхаж байна…", "Walking…")}
           </span>
         )}
       </div>
@@ -149,16 +134,6 @@ export default function WalkMode({ av }) {
         {running ? <Square className="w-4 h-4" /> : <Footprints className="w-5 h-5" />}
         {running ? t("Алхалт зогсоох", "Stop walking") : t("Алхалт эхлүүлэх", "Start walking")}
       </button>
-      <button
-        onClick={toggleDemo}
-        className={`w-full rounded-2xl py-3 text-sm font-extrabold flex items-center justify-center gap-2 active:scale-95 transition ${
-          demo ? "bb-bg-B794F4 text-white" : "bb-bg-E9DDFC bb-text-7C4DCC"
-        }`}
-      >
-        {demo ? <Square className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-        {demo ? t("Демо зогсоох", "Stop demo") : t("Демо алхалт (танилцуулгад)", "Demo walk (for presentations)")}
-      </button>
-
       {counter.status === "denied" && (
         <p className="text-xs font-semibold bb-text-7C4DCC text-center">
           {t("Хөдөлгөөн мэдрэгчийн зөвшөөрөл өгөөгүй байна. Демо алхалтаар үзүүлж болно.", "Motion sensor permission wasn't given. You can use the demo walk instead.")}
